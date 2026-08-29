@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Buscar Ligas - Fulbito</title>
+    <style>
+        body { font-family: monospace; background: #111; color: #0f0; padding: 20px; }
+        pre { white-space: pre-wrap; word-wrap: break-word; }
+    </style>
+</head>
+<body>
+
+<h2>Buscar IDs de ligas</h2>
+<pre id="resultado">Cargando...</pre>
+
+<script>
+  // PEGA TU API KEY AQUI ABAJO (la nueva que regeneraste)
+  const API_KEY = "40548aee08674d39b0f3d4b3510fb0cd";
+
+  async function buscarLiga(nombre) {
+    const respuesta = await fetch(`https://v3.football.api-sports.io/leagues?search=${encodeURIComponent(nombre)}`, {
+      headers: { "x-apisports-key": API_KEY }
+    });
+    const datos = await respuesta.json();
+    return datos.response.map(item => `${item.league.id} - ${item.league.name} (${item.country.name})`);
+  }
+
+  async function buscarTodas() {
+    let resultadoFinal = "";
+
+    // Buscar todas las ligas de Perú por país
+    resultadoFinal += `\n--- Todas las ligas de Perú ---\n`;
+    try {
+      const respuesta = await fetch(`https://v3.football.api-sports.io/leagues?country=Peru`, {
+        headers: { "x-apisports-key": API_KEY }
+      });
+      const datos = await respuesta.json();
+      const ligasPeru = datos.response.map(item => `${item.league.id} - ${item.league.name} (${item.league.type})`);
+      resultadoFinal += ligasPeru.join("\n") + "\n";
+    } catch (e) {
+      resultadoFinal += "Error: " + e.message + "\n";
+    }
+
+    document.getElementById('resultado').textContent = resultadoFinal;
+  }
+
+  buscarTodas();
+</script>
+
+</body>
+</html>

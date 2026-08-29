@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Prueba API Fulbito</title>
+    <style>
+        body { font-family: monospace; background: #111; color: #0f0; padding: 20px; }
+        pre { white-space: pre-wrap; word-wrap: break-word; }
+    </style>
+</head>
+<body>
+
+<h2>Prueba de conexión con API-Football</h2>
+<p>Abre la consola del navegador (F12) para ver también el resultado ahí.</p>
+<pre id="resultado">Cargando...</pre>
+
+<script>
+  const API_KEY = "40548aee08674d39b0f3d4b3510fb0cd";
+
+  async function probarAPI() {
+    try {
+      const respuesta = await fetch(`https://v3.football.api-sports.io/fixtures?league=39&season=2026&from=2026-08-28&to=2026-09-05`, {
+        headers: {
+          "x-apisports-key": API_KEY
+        }
+      });
+
+      const datos = await respuesta.json();
+      console.log(datos);
+
+      document.getElementById('resultado').textContent = JSON.stringify(datos, null, 2);
+    } catch (error) {
+      document.getElementById('resultado').textContent = "Error: " + error.message;
+    }
+  }
+
+  probarAPI();
+</script>
+
+</body>
+</html>
