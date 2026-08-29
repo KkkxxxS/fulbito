@@ -936,8 +936,20 @@
       if (contenedor.innerHTML.includes('Cargando partidos')) {
         contenedor.innerHTML = `
           <div class="aviso-servidor">
-            <p><strong>El servidor se está despertando...</strong></p>
-            <p>El backend gratuito se duerme tras un rato sin uso. La primera carga del día puede tardar hasta 50 segundos. Ya casi está.</p>
+            <div class="cancha-mini">
+              <div class="rival rival-1"></div>
+              <div class="rival rival-2"></div>
+              <div class="rival rival-3"></div>
+              <div class="arco">
+                <span class="gol-texto">¡GOL!</span>
+              </div>
+              <div class="confeti">
+                <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+              </div>
+              <div class="pelota">⚽</div>
+            </div>
+            <p><strong>Armando la jugada...</strong></p>
+            <p>El servidor gratuito estaba en el banco y ya está entrando a la cancha. Un momento más.</p>
           </div>
         `;
       }
