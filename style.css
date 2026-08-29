@@ -17,6 +17,16 @@
   --radius: 14px;
   --font-display: 'Bebas Neue', 'Arial Narrow', sans-serif;
   --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+
+  /* identidad de color por mercado, tipo dashboard */
+  --m-fija: #ffc933;
+  --m-fija-ink: #241a02;
+  --m-confe: #2f74e0;
+  --m-confe-ink: #ffffff;
+  --m-sonadora: #17cfa8;
+  --m-sonadora-ink: #052420;
+  --m-extra: #ff4f9a;
+  --m-extra-ink: #2a0416;
 }
 
 * { box-sizing: border-box; }
@@ -204,7 +214,7 @@ body.bloqueado {
   position: absolute;
   top: 0; left: 0; right: 0;
   height: 3px;
-  background: linear-gradient(90deg, var(--green), var(--gold));
+  background: linear-gradient(90deg, var(--m-fija), var(--m-confe), var(--m-sonadora), var(--m-extra));
 }
 
 .encabezado-partido {
@@ -241,6 +251,7 @@ body.bloqueado {
   letter-spacing: 0.01em;
 }
 
+/* ============ TARJETAS DE MERCADO (estilo dashboard, color plano) ============ */
 .lista-mercados {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -253,38 +264,65 @@ body.bloqueado {
 }
 
 .fila-mercado {
-  background: var(--bg-raised);
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  padding: 14px;
+  border-radius: 12px;
+  padding: 14px 15px;
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.fila-mercado::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 100% 0%, rgba(255,255,255,0.16), transparent 60%);
+  z-index: -1;
 }
 
 .fila-header {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 
-.fila-titulo {
-  font-size: 0.68rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text-dim);
+.fila-icono {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.3);
+  flex-shrink: 0;
+}
+
+.fila-icono svg {
+  width: 16px;
+  height: 16px;
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,0.15));
 }
 
 .fila-porcentaje {
   font-family: var(--font-display);
-  font-size: 1.3rem;
-  color: var(--green);
+  font-size: 1.5rem;
   letter-spacing: 0.01em;
 }
 
+.fila-titulo {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+  opacity: 0.85;
+}
+
 .barra-probabilidad {
-  height: 5px;
+  height: 4px;
   border-radius: 999px;
-  background: var(--line);
+  background: rgba(255, 255, 255, 0.22);
   overflow: hidden;
   margin-bottom: 10px;
 }
@@ -292,35 +330,58 @@ body.bloqueado {
 .barra-relleno {
   height: 100%;
   border-radius: 999px;
-  background: linear-gradient(90deg, var(--green-dim), var(--green));
+  background: currentColor;
+  opacity: 0.9;
   transition: width 0.4s ease;
 }
 
 .fila-mercado-nombre {
   margin: 0 0 3px;
-  font-size: 0.72rem;
-  color: var(--text-dim);
+  font-size: 0.68rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
+  opacity: 0.75;
 }
 
 .fila-seleccion {
   margin: 0;
-  font-size: 0.92rem;
-  font-weight: 700;
-  color: var(--text);
+  font-size: 0.9rem;
+  font-weight: 800;
 }
 
-.fila-mercado.riesgo-bajo .fila-porcentaje { color: var(--green); }
-.fila-mercado.riesgo-bajo .barra-relleno { background: linear-gradient(90deg, var(--green-dim), var(--green)); }
+/* colores planos por identidad de mercado */
+.mercado-fija {
+  background: var(--m-fija);
+  color: var(--m-fija-ink);
+}
+.mercado-confe {
+  background: var(--m-confe);
+  color: var(--m-confe-ink);
+}
+.mercado-sonadora {
+  background: var(--m-sonadora);
+  color: var(--m-sonadora-ink);
+}
+.mercado-extra {
+  background: var(--m-extra);
+  color: var(--m-extra-ink);
+}
 
-.fila-mercado.riesgo-medio .fila-porcentaje { color: var(--gold); }
-.fila-mercado.riesgo-medio .barra-relleno { background: linear-gradient(90deg, var(--gold-dim), var(--gold)); }
+/* puntito identificador de mercado, usado en combinadas */
+.punto-mercado {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 6px;
+  flex-shrink: 0;
+}
+.punto-fija { background: var(--m-fija); }
+.punto-confe { background: var(--m-confe); }
+.punto-sonadora { background: var(--m-sonadora); }
+.punto-extra { background: var(--m-extra); }
 
-.fila-mercado.riesgo-alto .fila-porcentaje { color: var(--red); }
-.fila-mercado.riesgo-alto .barra-relleno { background: linear-gradient(90deg, #6b2323, var(--red)); }
-
-/* ============ COMBINACIONES DEL MISMO PARTIDO ============ */
+/* ============ COMBINACIONES DEL MISMO PARTIDO (widget oscuro que contrasta) ============ */
 .combos-partido {
   border-top: 1px dashed var(--line);
   padding: 16px 0 18px;
@@ -338,7 +399,6 @@ body.bloqueado {
 .combo-partido {
   background: var(--bg-raised);
   border: 1px solid var(--line);
-  border-left: 3px solid var(--gold);
   border-radius: 8px;
   padding: 10px 12px;
   margin-bottom: 8px;
@@ -349,7 +409,7 @@ body.bloqueado {
 .combo-partido-header {
   display: flex;
   justify-content: space-between;
-  align-items: baseline;
+  align-items: center;
   font-size: 0.78rem;
   font-weight: 700;
   color: var(--text-muted);
@@ -359,7 +419,7 @@ body.bloqueado {
 .combo-partido-pct {
   font-family: var(--font-display);
   font-size: 1.05rem;
-  color: var(--gold);
+  color: var(--text);
 }
 
 .combo-partido-partes {
@@ -369,7 +429,7 @@ body.bloqueado {
   color: var(--text);
 }
 
-/* ============ COMBINADAS ============ */
+/* ============ COMBINADAS (widgets oscuros) ============ */
 .bloque-combinadas {
   margin-top: 40px;
   padding-top: 32px;
@@ -391,11 +451,12 @@ body.bloqueado {
 }
 
 .tarjeta-combinada {
-  background: var(--card);
+  background: var(--bg-raised);
   border: 1px solid var(--card-border);
   border-radius: var(--radius);
   padding: 18px 20px;
   margin-bottom: 14px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
 }
 
 .tarjeta-combinada .encabezado-combinada {
@@ -419,7 +480,7 @@ body.bloqueado {
 .pierna-combinada {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   padding: 9px 0;
   border-top: 1px solid var(--line);
   font-size: 0.86rem;
@@ -432,7 +493,7 @@ body.bloqueado {
   height: 20px;
   flex-shrink: 0;
   border-radius: 5px;
-  background: var(--bg-raised);
+  background: var(--card);
   color: var(--text-dim);
   font-size: 0.68rem;
   font-weight: 700;

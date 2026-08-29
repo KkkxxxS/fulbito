@@ -231,6 +231,7 @@
       if (p > mejorProb) { mejorProb = p; mejorLinea = linea; }
     });
     const fija = {
+      tipo: "fija",
       titulo: "La Fija",
       mercado: "Total de goles",
       seleccion: `Menos de ${mejorLinea}`,
@@ -239,6 +240,7 @@
 
     const probConFe = favoritoLocal ? (pLocal + pEmpate) : (pVisita + pEmpate);
     const conFe = {
+      tipo: "confe",
       titulo: "Con Fe",
       mercado: "Doble oportunidad",
       seleccion: `${nombreFavorito} o Empate (${favoritoLocal ? '1X' : 'X2'})`,
@@ -248,6 +250,7 @@
     const lambdaFavorito = favoritoLocal ? lambdaLocal : lambdaVisita;
     const probSonadora = 1 - poisson(0, lambdaFavorito);
     const sonadora = {
+      tipo: "sonadora",
       titulo: "La Soñadora",
       mercado: "Equipo marca",
       seleccion: `${nombreFavorito} marca`,
@@ -262,6 +265,7 @@
       }
     }
     const extra = {
+      tipo: "extra",
       titulo: "Extra",
       mercado: "Hándicap asiático",
       seleccion: `${nombreFavorito} -1`,
@@ -295,6 +299,7 @@
     const probA = probabilidadConjunta([esConFe, esFija]);
     combosPartido.push({
       titulo: "Combinada segura",
+      tipos: ["confe", "fija"],
       partes: [conFe.seleccion, fija.seleccion],
       probabilidad: Math.round(probA * 100)
     });
@@ -302,6 +307,7 @@
     const probB = probabilidadConjunta([esSonadora, esConFe]);
     combosPartido.push({
       titulo: "Combinada con gol",
+      tipos: ["sonadora", "confe"],
       partes: [sonadora.seleccion, conFe.seleccion],
       probabilidad: Math.round(probB * 100)
     });
@@ -309,20 +315,31 @@
     return { fija, conFe, sonadora, extra, marcadorProbable, probMarcador: Math.round(marcadorTop.p * 100), combosPartido };
   }
 
-  // ============ AYUDAS DE RIESGO VISUAL ============
-  function nivelRiesgo(probabilidad) {
-    if (probabilidad >= 65) return 'riesgo-bajo';
-    if (probabilidad >= 40) return 'riesgo-medio';
-    return 'riesgo-alto';
+  // ============ ICONOS POR MERCADO ============
+  const ICONOS_MERCADO = {
+    fija: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="0.6" fill="currentColor"/></svg>',
+    confe: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 5v6c0 5 3.4 8.5 8 11 4.6-2.5 8-6 8-11V5l-8-3Z"/><path d="m9 12 2 2 4-4"/></svg>',
+    sonadora: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.5 15 9l7 1-5.2 4.9L18.2 22 12 18.3 5.8 22l1.4-7.1L2 10l7-1 3-6.5Z"/></svg>',
+    extra: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z"/></svg>'
+  };
+
+  function iconoMercado(tipo) {
+    return `<span class="fila-icono">${ICONOS_MERCADO[tipo] || ''}</span>`;
   }
 
+  function puntoMercado(tipo) {
+    return `<span class="punto-mercado punto-${tipo}"></span>`;
+  }
+
+  // ============ RENDER DE TARJETAS ============
   function filaMercado(datos) {
     return `
-      <div class="fila-mercado ${nivelRiesgo(datos.probabilidad)}">
+      <div class="fila-mercado mercado-${datos.tipo}">
         <div class="fila-header">
-          <span class="fila-titulo">${datos.titulo}</span>
+          ${iconoMercado(datos.tipo)}
           <span class="fila-porcentaje">${datos.probabilidad}%</span>
         </div>
+        <span class="fila-titulo">${datos.titulo}</span>
         <div class="barra-probabilidad">
           <div class="barra-relleno" style="width:${datos.probabilidad}%"></div>
         </div>
@@ -333,10 +350,11 @@
   }
 
   function comboPartidoHTML(combo) {
+    const puntos = combo.tipos.map(puntoMercado).join('');
     return `
       <div class="combo-partido">
         <div class="combo-partido-header">
-          <span>${combo.titulo}</span>
+          <span>${puntos}${combo.titulo}</span>
           <span class="combo-partido-pct">${combo.probabilidad}%</span>
         </div>
         <p class="combo-partido-partes">${combo.partes.join(' + ')}</p>
@@ -388,6 +406,7 @@
     opciones.forEach(op => { if (op.probabilidad > mejor.probabilidad) mejor = op; });
     return {
       equipos: `${partido.homeTeam.name} vs ${partido.awayTeam.name}`,
+      tipo: mejor.tipo,
       mercado: mejor.mercado,
       seleccion: mejor.seleccion,
       probabilidad: mejor.probabilidad
@@ -407,6 +426,7 @@
     const piernasHTML = combinada.piernas.map((p, idx) => `
       <div class="pierna-combinada">
         <span class="num">${idx + 1}</span>
+        ${puntoMercado(p.tipo)}
         <span class="detalle"><strong>${p.equipos}</strong><br>${p.mercado}: ${p.seleccion}</span>
         <span class="pct">${p.probabilidad}%</span>
       </div>
