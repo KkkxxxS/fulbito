@@ -78,6 +78,21 @@
     }
   }
 
+  // ============ CONFIABILIDAD DE LA DATA ============
+  // Un equipo con pocos partidos jugados en el rango consultado tiene un promedio
+  // de goles muy ruidoso (ej. 2 partidos y una goleada dispara el numero). El shrinkage
+  // bayesiano "atrae" ese promedio hacia el promedio general de gol de una liga profesional
+  // en proporcion a cuanta data real hay detras. Con 0 partidos, el valor es 100% el promedio
+  // de liga; con PARTIDOS_CONFIANZA_PLENA partidos o mas, se confia 100% en el dato del equipo.
+  const PROMEDIO_LIGA_GOLES = 1.35;
+  const PARTIDOS_CONFIANZA_PLENA = 10;
+  const PARTIDOS_MINIMOS_CONFIABLES = 5;
+
+  function aplicarShrinkage(valor, partidosJugados) {
+    const peso = Math.min(partidosJugados / PARTIDOS_CONFIANZA_PLENA, 1);
+    return valor * peso + PROMEDIO_LIGA_GOLES * (1 - peso);
+  }
+
   // ============ PONDERACION POR RECENCIA ============
   function pesosRecencia(cantidad) {
     const base = [1.0, 0.8, 0.65, 0.5, 0.4, 0.32, 0.26, 0.2];
@@ -145,10 +160,17 @@
       const promTodosFavor = promedioPonderado(golesFavorTodos, pesosTodos);
       const promTodosContra = promedioPonderado(golesContraTodos, pesosTodos);
 
-      const promLocalFavor = golesFavorLocal.length > 0 ? promedioPonderado(golesFavorLocal, pesosLocal) : promTodosFavor;
-      const promLocalContra = golesContraLocal.length > 0 ? promedioPonderado(golesContraLocal, pesosLocal) : promTodosContra;
-      const promVisitaFavor = golesFavorVisita.length > 0 ? promedioPonderado(golesFavorVisita, pesosVisita) : promTodosFavor;
-      const promVisitaContra = golesContraVisita.length > 0 ? promedioPonderado(golesContraVisita, pesosVisita) : promTodosContra;
+      const promLocalFavorCrudo = golesFavorLocal.length > 0 ? promedioPonderado(golesFavorLocal, pesosLocal) : promTodosFavor;
+      const promLocalContraCrudo = golesContraLocal.length > 0 ? promedioPonderado(golesContraLocal, pesosLocal) : promTodosContra;
+      const promVisitaFavorCrudo = golesFavorVisita.length > 0 ? promedioPonderado(golesFavorVisita, pesosVisita) : promTodosFavor;
+      const promVisitaContraCrudo = golesContraVisita.length > 0 ? promedioPonderado(golesContraVisita, pesosVisita) : promTodosContra;
+
+      // Shrinkage: mientras menos partidos como local/visita tenga el equipo,
+      // mas se acerca su promedio al promedio general de la liga (evita numeros disparados por poca muestra).
+      const promLocalFavor = aplicarShrinkage(promLocalFavorCrudo, golesFavorLocal.length);
+      const promLocalContra = aplicarShrinkage(promLocalContraCrudo, golesContraLocal.length);
+      const promVisitaFavor = aplicarShrinkage(promVisitaFavorCrudo, golesFavorVisita.length);
+      const promVisitaContra = aplicarShrinkage(promVisitaContraCrudo, golesContraVisita.length);
 
       const stats = {
         promedioGolesFavor: promTodosFavor,
@@ -179,12 +201,40 @@
     return (Math.pow(lambda, k) * Math.exp(-lambda)) / factorial(k);
   }
 
+  // ============ CORRECCION DIXON-COLES ============
+  // El modelo de Poisson puro asume que los goles del local y del visitante son
+  // totalmente independientes, pero en partidos reales los marcadores bajos (0-0, 1-0,
+  // 0-1, 1-1) estan levemente correlacionados: hay una pizca mas de empates a 0 o 1 gol
+  // de lo que Poisson predice solo. Dixon-Coles corrige justo esas 4 celdas con un
+  // factor tau; el resto de la matriz queda igual. RHO_DIXON_COLES es la fuerza de esa
+  // correlacion, tipicamente entre -0.05 y -0.15 en ligas profesionales de futbol.
+  const RHO_DIXON_COLES = -0.08;
+
+  function tauDixonColes(golesLocal, golesVisita, lambdaLocal, lambdaVisita, rho) {
+    if (golesLocal === 0 && golesVisita === 0) return 1 - (lambdaLocal * lambdaVisita * rho);
+    if (golesLocal === 0 && golesVisita === 1) return 1 + (lambdaLocal * rho);
+    if (golesLocal === 1 && golesVisita === 0) return 1 + (lambdaVisita * rho);
+    if (golesLocal === 1 && golesVisita === 1) return 1 - rho;
+    return 1;
+  }
+
   function matrizMarcadores(lambdaLocal, lambdaVisita, maxGoles = 6) {
     const matriz = [];
+    let sumaTotal = 0;
     for (let i = 0; i <= maxGoles; i++) {
       matriz[i] = [];
       for (let j = 0; j <= maxGoles; j++) {
-        matriz[i][j] = poisson(i, lambdaLocal) * poisson(j, lambdaVisita);
+        const base = poisson(i, lambdaLocal) * poisson(j, lambdaVisita);
+        const ajustado = base * tauDixonColes(i, j, lambdaLocal, lambdaVisita, RHO_DIXON_COLES);
+        matriz[i][j] = ajustado;
+        sumaTotal += ajustado;
+      }
+    }
+    // Renormalizamos para que las probabilidades de toda la matriz sigan sumando 1
+    // (el ajuste de las 4 celdas altera levemente el total).
+    for (let i = 0; i <= maxGoles; i++) {
+      for (let j = 0; j <= maxGoles; j++) {
+        matriz[i][j] = matriz[i][j] / sumaTotal;
       }
     }
     return matriz;
@@ -312,7 +362,14 @@
       probabilidad: Math.round(probB * 100)
     });
 
-    return { fija, conFe, sonadora, extra, marcadorProbable, probMarcador: Math.round(marcadorTop.p * 100), combosPartido };
+    // ============ CONFIABILIDAD DEL PRONOSTICO ============
+    // Si alguno de los dos equipos tiene muy pocos partidos jugados en el rango consultado,
+    // el pronostico se basa en poca evidencia real (aunque el shrinkage ya lo suaviza).
+    // Se lo mostramos al usuario en vez de esconderlo.
+    const partidosMin = Math.min(statsLocal.partidosJugados ?? 0, statsVisita.partidosJugados ?? 0);
+    const pocaData = partidosMin < PARTIDOS_MINIMOS_CONFIABLES;
+
+    return { fija, conFe, sonadora, extra, marcadorProbable, probMarcador: Math.round(marcadorTop.p * 100), combosPartido, partidosMin, pocaData };
   }
 
   // ============ ICONOS POR MERCADO ============
@@ -378,6 +435,7 @@
           <span class="equipo">${visita}</span>
         </div>
         <p class="info-partido">${liga} · ${fechaTexto}, ${horaTexto} · marcador probable ${pronosticos.marcadorProbable}</p>
+        ${pronosticos.pocaData ? `<p class="aviso-datos">⚠ Datos limitados (${pronosticos.partidosMin} partidos analizados) · pronóstico menos confiable</p>` : ''}
 
         <div class="lista-mercados">
           ${filaMercado(pronosticos.fija)}
