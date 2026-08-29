@@ -207,6 +207,12 @@ body.bloqueado {
   padding: 22px 22px 8px;
   position: relative;
   overflow: hidden;
+  animation: aparecerTarjeta 0.45s ease both;
+}
+
+@keyframes aparecerTarjeta {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .tarjeta-partido::before {
@@ -494,6 +500,62 @@ body.bloqueado {
   font-size: 0.86rem;
   font-weight: 600;
   color: var(--text);
+}
+
+.historial-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.historial-header h3 { margin: 0; }
+
+.boton-reiniciar {
+  appearance: none;
+  background: var(--bg-raised);
+  border: 1px solid var(--line);
+  color: var(--text-muted);
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.78rem;
+  padding: 7px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+  flex-shrink: 0;
+}
+
+.boton-reiniciar:hover {
+  background: #3a1414;
+  color: var(--red);
+  border-color: var(--red);
+}
+
+.precision-general {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: var(--bg-raised);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius);
+  padding: 18px 22px;
+  margin-bottom: 18px;
+}
+
+.precision-general-num {
+  font-family: var(--font-display);
+  font-size: 3rem;
+  line-height: 1;
+  color: var(--green);
+  flex-shrink: 0;
+}
+
+.precision-general-label {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  line-height: 1.4;
 }
 
 /* ============ COMBINADAS (widgets oscuros) ============ */

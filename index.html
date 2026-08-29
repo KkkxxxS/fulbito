@@ -773,14 +773,38 @@
       return Math.round((aciertos / verificados.length) * 100);
     }
 
+    // Precisión general: junta los aciertos de los 4 mercados en una sola cifra,
+    // para dar un numero resumen ademas del detalle por mercado.
+    const camposMercado = ['aciertoFija', 'aciertoConFe', 'aciertoSonadora', 'aciertoExtra'];
+    let totalAciertos = 0;
+    let totalEvaluaciones = 0;
+    verificados.forEach(h => {
+      camposMercado.forEach(campo => {
+        totalEvaluaciones++;
+        if (h[campo]) totalAciertos++;
+      });
+    });
+    const general = totalEvaluaciones > 0 ? Math.round((totalAciertos / totalEvaluaciones) * 100) : 0;
+
     return {
       totalVerificados: verificados.length,
+      general,
       fija: pct('aciertoFija'),
       conFe: pct('aciertoConFe'),
       sonadora: pct('aciertoSonadora'),
       extra: pct('aciertoExtra'),
       ultimos: verificados.slice(-8).reverse()
     };
+  }
+
+  function reiniciarHistorial() {
+    if (!confirm('¿Seguro que quieres borrar todo el historial de aciertos guardado en este navegador? Esta acción no se puede deshacer.')) return;
+    try {
+      localStorage.removeItem(CLAVE_HISTORIAL);
+    } catch (e) {
+      console.warn("No se pudo borrar el historial", e);
+    }
+    renderHistorial(null);
   }
 
   function renderHistorial(estadisticas) {
@@ -805,8 +829,16 @@
 
     document.getElementById('bloque-historial').innerHTML = `
       <div class="bloque-combinadas">
-        <h3>Historial de aciertos</h3>
+        <div class="historial-header">
+          <h3>Historial de aciertos</h3>
+          <button class="boton-reiniciar" onclick="reiniciarHistorial()">Reiniciar</button>
+        </div>
         <p class="subtitulo-combinadas">Basado en ${estadisticas.totalVerificados} pronósticos ya verificados en este navegador (se guarda localmente, no se comparte entre dispositivos).</p>
+
+        <div class="precision-general">
+          <span class="precision-general-num">${estadisticas.general}%</span>
+          <span class="precision-general-label">Precisión general del modelo<br>(promedio de los 4 mercados combinados)</span>
+        </div>
 
         <div class="lista-mercados">
           <div class="fila-mercado mercado-fija"><span class="fila-titulo">La Fija</span><span class="fila-porcentaje">${estadisticas.fija}%</span><p class="fila-mercado-nombre">acierto real</p></div>
@@ -821,6 +853,10 @@
         </div>
       </div>
     `;
+  }
+
+  function esperar(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
   }
 
   // ============ CARGA PRINCIPAL ============
@@ -876,7 +912,14 @@
     contenedor.innerHTML = '';
     const seleccionesParaCombinar = [];
 
-    for (const partido of partidos) {
+    for (let idx = 0; idx < partidos.length; idx++) {
+      const partido = partidos[idx];
+
+      // Espaciamos las peticiones entre partido y partido (excepto el primero)
+      // para no disparar varias peticiones de golpe y chocar con el limite
+      // de la API gratuita (10 peticiones por minuto).
+      if (idx > 0) await esperar(700);
+
       const codigoLiga = partido.competition.code;
       const [statsLocal, statsVisita, h2h] = await Promise.all([
         obtenerStatsEquipo(partido.homeTeam.id, codigoLiga),
