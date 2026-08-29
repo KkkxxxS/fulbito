@@ -679,4 +679,104 @@ body.bloqueado {
   line-height: 1.6;
   text-align: center;
   margin: 20px 0 0;
+}/* ===== Escudos de equipos ===== */
+.escudo {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  vertical-align: middle;
+  margin: 0 8px;
+}
+
+/* ===== Animacion al cambiar de pestaña ===== */
+#contenedor-partidos {
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+#contenedor-partidos.visible {
+  opacity: 1;
+}
+
+/* ===== Filtro por liga ===== */
+.filtro-ligas {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+.filtro-liga-btn {
+  background-color: #1a2332;
+  color: #8fa896;
+  border: 1px solid #2a3548;
+  padding: 6px 14px;
+  border-radius: 16px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+.filtro-liga-btn:hover {
+  border-color: #2ecc71;
+}
+.filtro-liga-btn.activa {
+  background-color: #2ecc71;
+  color: #0a1a12;
+  border-color: #2ecc71;
+}
+
+/* ===== Modo compacto / expandido ===== */
+.lista-mercados .mercado-sonadora,
+.lista-mercados .mercado-extra {
+  display: none;
+}
+.lista-mercados.expandido .mercado-sonadora,
+.lista-mercados.expandido .mercado-extra {
+  display: block;
+}
+.boton-expandir {
+  display: block;
+  width: 100%;
+  margin-top: 10px;
+  padding: 8px;
+  background: none;
+  border: 1px dashed #2a3548;
+  color: #8fa896;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+.boton-expandir:hover {
+  border-color: #2ecc71;
+  color: #2ecc71;
+}
+
+/* ===== Skeleton loader ===== */
+.skeleton-tarjeta {
+  background-color: #1c1c1c;
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 500px;
+  margin: 0 auto 30px;
+}
+.skeleton-linea {
+  background: linear-gradient(90deg, #1a2332 25%, #263248 50%, #1a2332 75%);
+  background-size: 200% 100%;
+  animation: skeleton-pulso 1.4s infinite;
+  border-radius: 6px;
+  margin-bottom: 12px;
+}
+@keyframes skeleton-pulso {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ===== Indicador de fuerza por tabla de posiciones ===== */
+.badge-posicion {
+  font-size: 0.7rem;
+  color: #8fa896;
+  background-color: #1a2332;
+  border-radius: 8px;
+  padding: 2px 6px;
+  margin-left: 6px;
 }

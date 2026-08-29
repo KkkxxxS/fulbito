@@ -37,6 +37,8 @@
         <button class="pestaña" onclick="cambiarFecha('semana', event)">Esta semana</button>
     </div>
 
+    <div class="filtro-ligas" id="filtro-ligas"></div>
+
     <div id="contenedor-partidos">
         <p style="text-align:center; color:#8fa896;">Cargando partidos...</p>
     </div>
@@ -55,13 +57,16 @@
   // ============ CONFIGURACION ============
   const BACKEND_URL = "https://fulbito-forh.onrender.com";
   const COMPETICIONES = "PL,PD,BL1,SA,FL1,CL";
+  const NOMBRES_LIGA = {
+    PL: "Premier League", PD: "La Liga", BL1: "Bundesliga",
+    SA: "Serie A", FL1: "Ligue 1", CL: "Champions League"
+  };
+
+  let ligaSeleccionada = 'TODAS';
+  let partidosDelRango = [];
 
   // ============ CACHE PERSISTENTE ENTRE VISITAS ============
-  // Ademas del cache en memoria (que se pierde al recargar), guardamos una copia
-  // en localStorage con fecha de expiracion. Asi, si vuelves a entrar a la pagina
-  // en los proximos minutos, no hace falta esperar ni gastar peticiones de la API
-  // de nuevo para los mismos datos.
-  const DURACION_CACHE_MS = 5 * 60 * 1000; // 5 minutos
+  const DURACION_CACHE_MS = 5 * 60 * 1000;
 
   function leerCachePersistente(clave) {
     try {
@@ -84,9 +89,7 @@
         valor,
         expira: Date.now() + DURACION_CACHE_MS
       }));
-    } catch (e) {
-      // Si localStorage esta lleno o bloqueado, seguimos sin cache persistente
-    }
+    } catch (e) {}
   }
 
   const cache = {};
@@ -137,20 +140,59 @@
     }
   }
 
+  // ============ TABLA DE POSICIONES ============
+  async function obtenerTabla(codigoLiga) {
+    const claveCache = `standings-${codigoLiga}`;
+    if (cache[claveCache]) return cache[claveCache];
+
+    const persistente = leerCachePersistente(claveCache);
+    if (persistente) {
+      cache[claveCache] = persistente;
+      return persistente;
+    }
+
+    try {
+      const url = `${BACKEND_URL}/api/liga/${codigoLiga}/standings`;
+      const resp = await fetch(url);
+      const datos = await resp.json();
+      const tabla = datos.standings?.find(s => s.type === 'TOTAL')?.table || [];
+
+      const mapa = {};
+      let sumaPuntosPorPartido = 0;
+      tabla.forEach(fila => {
+        const ppp = fila.playedGames > 0 ? fila.points / fila.playedGames : 1;
+        mapa[fila.team.id] = { posicion: fila.position, puntosPorPartido: ppp, totalEquipos: tabla.length };
+        sumaPuntosPorPartido += ppp;
+      });
+      const promedioLiga = tabla.length > 0 ? sumaPuntosPorPartido / tabla.length : 1.3;
+
+      const resultado = { mapa, promedioLiga };
+      cache[claveCache] = resultado;
+      guardarCachePersistente(claveCache, resultado);
+      return resultado;
+    } catch (e) {
+      console.warn("No se pudo obtener la tabla de posiciones", e);
+      const vacio = { mapa: {}, promedioLiga: 1.3 };
+      return vacio;
+    }
+  }
+
+  function factorTabla(tabla, teamId) {
+    const info = tabla.mapa[teamId];
+    if (!info || !tabla.promedioLiga) return 1;
+    const ratio = info.puntosPorPartido / tabla.promedioLiga;
+    return Math.max(0.85, Math.min(1.15, ratio));
+  }
+
+  function badgePosicion(tabla, teamId) {
+    const info = tabla.mapa[teamId];
+    if (!info) return '';
+    return `<span class="badge-posicion">#${info.posicion}</span>`;
+  }
+
   // ============ PROMEDIO DE GOLES POR LIGA ============
-  // Cada liga tiene un promedio historico de goles por partido distinto
-  // (la Bundesliga anota bastante mas que la Serie A o la Ligue 1, por ejemplo).
-  // Usar un solo numero generico para todas las ligas hacia el shrinkage menos preciso
-  // en las ligas que se alejan del promedio general. Estos valores son aproximaciones
-  // basadas en promedios historicos reales de goles por partido de cada liga (~ultimas temporadas).
   const PROMEDIO_GOLES_POR_LIGA = {
-    PL: 1.45,   // Premier League
-    PD: 1.35,   // LaLiga
-    BL1: 1.55,  // Bundesliga
-    SA: 1.30,   // Serie A
-    FL1: 1.40,  // Ligue 1
-    CL: 1.40,   // Champions League
-    DEFAULT: 1.40
+    PL: 1.45, PD: 1.35, BL1: 1.55, SA: 1.30, FL1: 1.40, CL: 1.40, DEFAULT: 1.40
   };
 
   function promedioLiga(codigoLiga) {
@@ -187,8 +229,6 @@
   }
 
   // ============ RACHA / TENDENCIA RECIENTE ============
-  // Compara el rendimiento de los ultimos partidos "recientes" contra los mas viejos
-  // de la misma muestra, para saber si el equipo viene mejorando o empeorando.
   function calcularTendencia(partidosOrdenados, teamId) {
     if (partidosOrdenados.length < 4) return { direccion: 'neutral', racha: [] };
 
@@ -212,7 +252,6 @@
     if (promRecientes - promAntiguos >= 0.5) direccion = 'subiendo';
     else if (promAntiguos - promRecientes >= 0.5) direccion = 'bajando';
 
-    // Racha visual: resultados del mas viejo al mas reciente (izquierda a derecha), max 5
     const racha = puntosPorPartido.slice(0, 5).reverse().map(x => x.r);
 
     return { direccion, racha };
@@ -276,11 +315,11 @@
       const promVisitaFavorCrudo = golesFavorVisita.length > 0 ? promedioPonderado(golesFavorVisita, pesosVisita) : promTodosFavor;
       const promVisitaContraCrudo = golesContraVisita.length > 0 ? promedioPonderado(golesContraVisita, pesosVisita) : promTodosContra;
 
-      const promLiga = promedioLiga(codigoLiga);
-      const promLocalFavor = aplicarShrinkage(promLocalFavorCrudo, golesFavorLocal.length, promLiga);
-      const promLocalContra = aplicarShrinkage(promLocalContraCrudo, golesContraLocal.length, promLiga);
-      const promVisitaFavor = aplicarShrinkage(promVisitaFavorCrudo, golesFavorVisita.length, promLiga);
-      const promVisitaContra = aplicarShrinkage(promVisitaContraCrudo, golesContraVisita.length, promLiga);
+      const promLigaVal = promedioLiga(codigoLiga);
+      const promLocalFavor = aplicarShrinkage(promLocalFavorCrudo, golesFavorLocal.length, promLigaVal);
+      const promLocalContra = aplicarShrinkage(promLocalContraCrudo, golesContraLocal.length, promLigaVal);
+      const promVisitaFavor = aplicarShrinkage(promVisitaFavorCrudo, golesFavorVisita.length, promLigaVal);
+      const promVisitaContra = aplicarShrinkage(promVisitaContraCrudo, golesContraVisita.length, promLigaVal);
 
       const tendencia = calcularTendencia(partidosOrdenados, teamId);
 
@@ -304,11 +343,6 @@
     }
   }
 
-  // ============ ENFRENTAMIENTOS DIRECTOS (HEAD TO HEAD) ============
-  // football-data.org expone el historial de enfrentamientos directos entre dos
-  // equipos a traves del endpoint de detalle de partido (head2head). Algunos rivales
-  // tienen patrones particulares entre si que las estadisticas generales no capturan
-  // (un equipo que historicamente le cuesta ganarle a otro, por ejemplo).
   async function obtenerHeadToHead(partidoId) {
     const claveCache = `h2h-${partidoId}`;
     if (cache[claveCache]) return cache[claveCache];
@@ -336,7 +370,7 @@
       cache[claveCache] = resultado;
       return resultado;
     } catch (e) {
-      console.warn("H2H no disponible para este partido (requiere endpoint nuevo en el backend)", e);
+      console.warn("H2H no disponible", e);
       const vacio = { disponible: false };
       cache[claveCache] = vacio;
       return vacio;
@@ -354,7 +388,6 @@
     return (Math.pow(lambda, k) * Math.exp(-lambda)) / factorial(k);
   }
 
-  // ============ CORRECCION DIXON-COLES ============
   const RHO_DIXON_COLES = -0.08;
 
   function tauDixonColes(golesLocal, golesVisita, lambdaLocal, lambdaVisita, rho) {
@@ -387,10 +420,6 @@
 
   const FACTOR_LOCALIA = 1.1;
 
-  // Ajuste leve por H2H: si un equipo domina claramente el historial directo,
-  // le damos un pequeño empujon a su lambda (goles esperados). Es un ajuste
-  // conservador (maximo +/-8%) porque el historial directo es una muestra chica
-  // y no debe pesar mas que el rendimiento general reciente.
   function factorH2H(h2h, esLocal) {
     if (!h2h || !h2h.disponible || h2h.totalPartidos < 3) return 1;
 
@@ -402,7 +431,7 @@
     return esLocal ? (1 + ajuste) : (1 - ajuste);
   }
 
-  function generarPronosticos(statsLocal, statsVisita, nombreLocal, nombreVisita, h2h) {
+  function generarPronosticos(statsLocal, statsVisita, nombreLocal, nombreVisita, h2h, tabla, idLocal, idVisita) {
     let lambdaLocal = (statsLocal.local.golesFavor + statsVisita.visita.golesContra) / 2;
     let lambdaVisita = (statsVisita.visita.golesFavor + statsLocal.local.golesContra) / 2;
 
@@ -410,6 +439,10 @@
 
     lambdaLocal *= factorH2H(h2h, true);
     lambdaVisita *= factorH2H(h2h, false);
+
+    // Ajuste por posicion en la tabla (equipo top vs equipo de fondo no pesan igual)
+    lambdaLocal *= factorTabla(tabla, idLocal);
+    lambdaVisita *= factorTabla(tabla, idVisita);
 
     lambdaLocal = Math.max(lambdaLocal, 0.3);
     lambdaVisita = Math.max(lambdaVisita, 0.3);
@@ -444,18 +477,13 @@
       if (p > mejorProb) { mejorProb = p; mejorLinea = linea; }
     });
     const fija = {
-      tipo: "fija",
-      titulo: "La Fija",
-      mercado: "Total de goles",
-      seleccion: `Menos de ${mejorLinea}`,
-      probabilidad: Math.round(mejorProb * 100)
+      tipo: "fija", titulo: "La Fija", mercado: "Total de goles",
+      seleccion: `Menos de ${mejorLinea}`, probabilidad: Math.round(mejorProb * 100)
     };
 
     const probConFe = favoritoLocal ? (pLocal + pEmpate) : (pVisita + pEmpate);
     const conFe = {
-      tipo: "confe",
-      titulo: "Con Fe",
-      mercado: "Doble oportunidad",
+      tipo: "confe", titulo: "Con Fe", mercado: "Doble oportunidad",
       seleccion: `${nombreFavorito} o Empate (${favoritoLocal ? '1X' : 'X2'})`,
       probabilidad: Math.round(probConFe * 100)
     };
@@ -463,11 +491,8 @@
     const lambdaFavorito = favoritoLocal ? lambdaLocal : lambdaVisita;
     const probSonadora = 1 - poisson(0, lambdaFavorito);
     const sonadora = {
-      tipo: "sonadora",
-      titulo: "La Soñadora",
-      mercado: "Equipo marca",
-      seleccion: `${nombreFavorito} marca`,
-      probabilidad: Math.round(probSonadora * 100)
+      tipo: "sonadora", titulo: "La Soñadora", mercado: "Equipo marca",
+      seleccion: `${nombreFavorito} marca`, probabilidad: Math.round(probSonadora * 100)
     };
 
     let probExtra = 0;
@@ -478,11 +503,8 @@
       }
     }
     const extra = {
-      tipo: "extra",
-      titulo: "Extra",
-      mercado: "Hándicap asiático",
-      seleccion: `${nombreFavorito} -1`,
-      probabilidad: Math.round(probExtra * 100)
+      tipo: "extra", titulo: "Extra", mercado: "Hándicap asiático",
+      seleccion: `${nombreFavorito} -1`, probabilidad: Math.round(probExtra * 100)
     };
 
     const marcadorProbable = `${marcadorTop.i}-${marcadorTop.j}`;
@@ -502,21 +524,16 @@
     const esSonadora = (i, j) => favoritoLocal ? i >= 1 : j >= 1;
 
     const combosPartido = [];
-
     const probA = probabilidadConjunta([esConFe, esFija]);
     combosPartido.push({
-      titulo: "Combinada segura",
-      tipos: ["confe", "fija"],
-      partes: [conFe.seleccion, fija.seleccion],
-      probabilidad: Math.round(probA * 100)
+      titulo: "Combinada segura", tipos: ["confe", "fija"],
+      partes: [conFe.seleccion, fija.seleccion], probabilidad: Math.round(probA * 100)
     });
 
     const probB = probabilidadConjunta([esSonadora, esConFe]);
     combosPartido.push({
-      titulo: "Combinada con gol",
-      tipos: ["sonadora", "confe"],
-      partes: [sonadora.seleccion, conFe.seleccion],
-      probabilidad: Math.round(probB * 100)
+      titulo: "Combinada con gol", tipos: ["sonadora", "confe"],
+      partes: [sonadora.seleccion, conFe.seleccion], probabilidad: Math.round(probB * 100)
     });
 
     const partidosMin = Math.min(statsLocal.partidosJugados ?? 0, statsVisita.partidosJugados ?? 0);
@@ -546,7 +563,6 @@
     return `<span class="punto-mercado punto-${tipo}"></span>`;
   }
 
-  // ============ RENDER DE RACHA / TENDENCIA ============
   function iconoTendencia(direccion) {
     if (direccion === 'subiendo') return '<span class="tendencia tendencia-sube" title="En alza">▲</span>';
     if (direccion === 'bajando') return '<span class="tendencia tendencia-baja" title="En caída">▼</span>';
@@ -558,19 +574,21 @@
     return racha.map(r => `<span class="racha-punto racha-${r}">${r}</span>`).join('');
   }
 
-  function bloqueEquipoHTML(nombre, stats, alineacion) {
+  function bloqueEquipoHTML(nombre, stats, alineacion, escudoUrl, tabla, teamId) {
+    const escudo = escudoUrl ? `<img class="escudo" src="${escudoUrl}" alt="" onerror="this.style.display='none'">` : '';
     return `
       <div class="equipo-info ${alineacion}">
+        ${escudo}
         <div class="equipo-nombre-tend">
           <span class="equipo">${nombre}</span>
           ${iconoTendencia(stats.tendencia.direccion)}
+          ${badgePosicion(tabla, teamId)}
         </div>
         <div class="racha-visual">${rachaHTML(stats.tendencia.racha)}</div>
       </div>
     `;
   }
 
-  // ============ RENDER DE MERCADOS ============
   function filaMercado(datos) {
     return `
       <div class="fila-mercado mercado-${datos.tipo}">
@@ -603,12 +621,10 @@
 
   function h2hHTML(h2h) {
     if (!h2h || !h2h.disponible) return '';
-    return `
-      <p class="info-h2h">Historial directo (${h2h.totalPartidos} partidos): ${h2h.victoriasLocal}V local · ${h2h.empates}E · ${h2h.victoriasVisita}V visita</p>
-    `;
+    return `<p class="info-h2h">Historial directo (${h2h.totalPartidos} partidos): ${h2h.victoriasLocal}V local · ${h2h.empates}E · ${h2h.victoriasVisita}V visita</p>`;
   }
 
-  function crearTarjetaHTML(partido, pronosticos, statsLocal, statsVisita, h2h) {
+  function crearTarjetaHTML(partido, pronosticos, statsLocal, statsVisita, h2h, tabla) {
     const local = partido.homeTeam.name;
     const visita = partido.awayTeam.name;
     const liga = partido.competition.name;
@@ -619,20 +635,21 @@
     return `
       <div class="tarjeta-partido" data-partido-id="${partido.id}">
         <div class="encabezado-partido">
-          ${bloqueEquipoHTML(local, statsLocal, 'alineacion-izq')}
+          ${bloqueEquipoHTML(local, statsLocal, 'alineacion-izq', partido.homeTeam.crest, tabla, partido.homeTeam.id)}
           <span class="vs">VS</span>
-          ${bloqueEquipoHTML(visita, statsVisita, 'alineacion-der')}
+          ${bloqueEquipoHTML(visita, statsVisita, 'alineacion-der', partido.awayTeam.crest, tabla, partido.awayTeam.id)}
         </div>
         <p class="info-partido">${liga} · ${fechaTexto}, ${horaTexto} · marcador probable ${pronosticos.marcadorProbable}</p>
         ${h2hHTML(h2h)}
         ${pronosticos.pocaData ? `<p class="aviso-datos">⚠ Datos limitados (${pronosticos.partidosMin} partidos analizados) · pronóstico menos confiable</p>` : ''}
 
-        <div class="lista-mercados">
+        <div class="lista-mercados" id="mercados-${partido.id}">
           ${filaMercado(pronosticos.fija)}
           ${filaMercado(pronosticos.conFe)}
           ${filaMercado(pronosticos.sonadora)}
           ${filaMercado(pronosticos.extra)}
         </div>
+        <button class="boton-expandir" onclick="toggleMercados(${partido.id})">Ver más mercados</button>
 
         <div class="combos-partido">
           <p class="combos-partido-titulo">Combina en este partido</p>
@@ -642,27 +659,28 @@
     `;
   }
 
-  // ============ GENERADOR DE COMBINADAS ENTRE PARTIDOS ============
+  function toggleMercados(partidoId) {
+    const el = document.getElementById(`mercados-${partidoId}`);
+    if (!el) return;
+    el.classList.toggle('expandido');
+    const btn = el.nextElementSibling;
+    btn.textContent = el.classList.contains('expandido') ? 'Ver menos' : 'Ver más mercados';
+  }
+
   function mejorSeleccionDePartido(partido, pronosticos) {
     const opciones = [pronosticos.fija, pronosticos.conFe, pronosticos.sonadora, pronosticos.extra];
     let mejor = opciones[0];
     opciones.forEach(op => { if (op.probabilidad > mejor.probabilidad) mejor = op; });
     return {
       equipos: `${partido.homeTeam.name} vs ${partido.awayTeam.name}`,
-      tipo: mejor.tipo,
-      mercado: mejor.mercado,
-      seleccion: mejor.seleccion,
-      probabilidad: mejor.probabilidad
+      tipo: mejor.tipo, mercado: mejor.mercado, seleccion: mejor.seleccion, probabilidad: mejor.probabilidad
     };
   }
 
   function armarCombinada(piernas) {
     let probCombinada = 1;
     piernas.forEach(p => { probCombinada *= (p.probabilidad / 100); });
-    return {
-      piernas,
-      probabilidad: Math.round(probCombinada * 100 * 10) / 10
-    };
+    return { piernas, probabilidad: Math.round(probCombinada * 100 * 10) / 10 };
   }
 
   function tarjetaCombinadaHTML(etiqueta, combinada) {
@@ -688,7 +706,6 @@
 
   function renderCombinadas(listaSelecciones) {
     const contenedor = document.getElementById('bloque-combinadas');
-
     if (listaSelecciones.length < 2) {
       contenedor.innerHTML = '';
       return;
@@ -713,7 +730,7 @@
     html += `
         <div class="aviso-riesgo">
           <span class="icono">⚠️</span>
-          <span>Cada pierna que agregas multiplica el riesgo: todas tienen que acertar para ganar la combinada. Estas son de las combinaciones estadísticamente más sólidas con los partidos de hoy, pero ningún pronóstico garantiza un resultado. Apuesta solo lo que estás dispuesto a perder.</span>
+          <span>Cada pierna que agregas multiplica el riesgo: todas tienen que acertar para ganar la combinada. Apuesta solo lo que estás dispuesto a perder.</span>
         </div>
       </div>
     `;
@@ -722,10 +739,6 @@
   }
 
   // ============ TRACKEADOR DE ACIERTOS ============
-  // Guarda cada pronostico generado (partido + mercado + probabilidad + seleccion)
-  // en localStorage. Cuando el partido ya termino (football-data.org lo marca como
-  // FINISHED), comparamos la seleccion contra el resultado real y calculamos si acerto.
-  // Esto le da al usuario evidencia real del desempeño del modelo, no solo promesas.
   const CLAVE_HISTORIAL = 'fulbito_historial_pronosticos';
 
   function leerHistorial() {
@@ -733,40 +746,28 @@
       const crudo = localStorage.getItem(CLAVE_HISTORIAL);
       return crudo ? JSON.parse(crudo) : [];
     } catch (e) {
-      console.warn("No se pudo leer el historial", e);
       return [];
     }
   }
 
   function guardarHistorial(historial) {
     try {
-      // Limitamos a los ultimos 200 registros para no crecer sin control
       const recortado = historial.slice(-200);
       localStorage.setItem(CLAVE_HISTORIAL, JSON.stringify(recortado));
-    } catch (e) {
-      console.warn("No se pudo guardar el historial", e);
-    }
+    } catch (e) {}
   }
 
   function registrarPronostico(partido, pronosticos) {
     const historial = leerHistorial();
-
-    // Evitar duplicados: si ya guardamos este partido, no lo agregamos de nuevo
     const yaExiste = historial.some(h => h.partidoId === partido.id);
     if (yaExiste) return;
 
     historial.push({
-      partidoId: partido.id,
-      local: partido.homeTeam.name,
-      visita: partido.awayTeam.name,
-      fecha: partido.utcDate,
-      liga: partido.competition.name,
-      seleccionFija: pronosticos.fija.seleccion,
-      seleccionConFe: pronosticos.conFe.seleccion,
-      seleccionSonadora: pronosticos.sonadora.seleccion,
-      seleccionExtra: pronosticos.extra.seleccion,
-      favoritoLocal: pronosticos.favoritoLocal,
-      nombreFavorito: pronosticos.nombreFavorito,
+      partidoId: partido.id, local: partido.homeTeam.name, visita: partido.awayTeam.name,
+      fecha: partido.utcDate, liga: partido.competition.name,
+      seleccionFija: pronosticos.fija.seleccion, seleccionConFe: pronosticos.conFe.seleccion,
+      seleccionSonadora: pronosticos.sonadora.seleccion, seleccionExtra: pronosticos.extra.seleccion,
+      favoritoLocal: pronosticos.favoritoLocal, nombreFavorito: pronosticos.nombreFavorito,
       lineaGoles: parseFloat(pronosticos.fija.seleccion.replace('Menos de ', '')),
       verificado: false
     });
@@ -779,12 +780,12 @@
     const golesFavorito = registro.favoritoLocal ? marcadorLocal : marcadorVisita;
     const golesRivalFavorito = registro.favoritoLocal ? marcadorVisita : marcadorLocal;
 
-    const aciertoFija = totalGoles < registro.lineaGoles;
-    const aciertoConFe = registro.favoritoLocal ? (marcadorLocal >= marcadorVisita) : (marcadorVisita >= marcadorLocal);
-    const aciertoSonadora = golesFavorito >= 1;
-    const aciertoExtra = (golesFavorito - golesRivalFavorito) >= 2;
-
-    return { aciertoFija, aciertoConFe, aciertoSonadora, aciertoExtra };
+    return {
+      aciertoFija: totalGoles < registro.lineaGoles,
+      aciertoConFe: registro.favoritoLocal ? (marcadorLocal >= marcadorVisita) : (marcadorVisita >= marcadorLocal),
+      aciertoSonadora: golesFavorito >= 1,
+      aciertoExtra: (golesFavorito - golesRivalFavorito) >= 2
+    };
   }
 
   async function actualizarHistorialConResultados() {
@@ -792,7 +793,6 @@
     const pendientes = historial.filter(h => !h.verificado);
     if (pendientes.length === 0) return leerHistorial();
 
-    // Consultamos partidos ya jugados de los ultimos 10 dias, para cruzar resultados
     const hoy = new Date();
     const hace10dias = new Date(hoy);
     hace10dias.setDate(hace10dias.getDate() - 10);
@@ -837,11 +837,8 @@
       return Math.round((aciertos / verificados.length) * 100);
     }
 
-    // Precisión general: junta los aciertos de los 4 mercados en una sola cifra,
-    // para dar un numero resumen ademas del detalle por mercado.
     const camposMercado = ['aciertoFija', 'aciertoConFe', 'aciertoSonadora', 'aciertoExtra'];
-    let totalAciertos = 0;
-    let totalEvaluaciones = 0;
+    let totalAciertos = 0, totalEvaluaciones = 0;
     verificados.forEach(h => {
       camposMercado.forEach(campo => {
         totalEvaluaciones++;
@@ -851,12 +848,9 @@
     const general = totalEvaluaciones > 0 ? Math.round((totalAciertos / totalEvaluaciones) * 100) : 0;
 
     return {
-      totalVerificados: verificados.length,
-      general,
-      fija: pct('aciertoFija'),
-      conFe: pct('aciertoConFe'),
-      sonadora: pct('aciertoSonadora'),
-      extra: pct('aciertoExtra'),
+      totalVerificados: verificados.length, general,
+      fija: pct('aciertoFija'), conFe: pct('aciertoConFe'),
+      sonadora: pct('aciertoSonadora'), extra: pct('aciertoExtra'),
       ultimos: verificados.slice(-8).reverse()
     };
   }
@@ -865,9 +859,7 @@
     if (!confirm('¿Seguro que quieres borrar todo el historial de aciertos guardado en este navegador? Esta acción no se puede deshacer.')) return;
     try {
       localStorage.removeItem(CLAVE_HISTORIAL);
-    } catch (e) {
-      console.warn("No se pudo borrar el historial", e);
-    }
+    } catch (e) {}
     renderHistorial(null);
   }
 
@@ -891,20 +883,20 @@
       </div>
     `).join('');
 
-    document.getElementById('bloque-historial').innerHTML = `
+    contenedor.innerHTML = `
       <div class="bloque-combinadas">
         <div class="historial-header">
           <h3>Historial de aciertos</h3>
           <button class="boton-reiniciar" onclick="reiniciarHistorial()">Reiniciar</button>
         </div>
-        <p class="subtitulo-combinadas">Basado en ${estadisticas.totalVerificados} pronósticos ya verificados en este navegador (se guarda localmente, no se comparte entre dispositivos).</p>
+        <p class="subtitulo-combinadas">Basado en ${estadisticas.totalVerificados} pronósticos ya verificados en este navegador.</p>
 
         <div class="precision-general">
           <span class="precision-general-num">${estadisticas.general}%</span>
           <span class="precision-general-label">Precisión general del modelo<br>(promedio de los 4 mercados combinados)</span>
         </div>
 
-        <div class="lista-mercados">
+        <div class="lista-mercados expandido">
           <div class="fila-mercado mercado-fija"><span class="fila-titulo">La Fija</span><span class="fila-porcentaje">${estadisticas.fija}%</span><p class="fila-mercado-nombre">acierto real</p></div>
           <div class="fila-mercado mercado-confe"><span class="fila-titulo">Con Fe</span><span class="fila-porcentaje">${estadisticas.conFe}%</span><p class="fila-mercado-nombre">acierto real</p></div>
           <div class="fila-mercado mercado-sonadora"><span class="fila-titulo">La Soñadora</span><span class="fila-porcentaje">${estadisticas.sonadora}%</span><p class="fila-mercado-nombre">acierto real</p></div>
@@ -923,35 +915,108 @@
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 
+  // ============ SKELETON LOADER ============
+  function skeletonHTML() {
+    let bloques = '';
+    for (let i = 0; i < 2; i++) {
+      bloques += `
+        <div class="skeleton-tarjeta">
+          <div class="skeleton-linea" style="height:24px; width:60%; margin:0 auto 20px;"></div>
+          <div class="skeleton-linea" style="height:80px;"></div>
+          <div class="skeleton-linea" style="height:80px;"></div>
+        </div>
+      `;
+    }
+    return bloques;
+  }
+
+  // ============ FILTRO POR LIGA ============
+  function renderFiltroLigas() {
+    const cont = document.getElementById('filtro-ligas');
+    const codigos = COMPETICIONES.split(',');
+    let html = `<button class="filtro-liga-btn ${ligaSeleccionada === 'TODAS' ? 'activa' : ''}" onclick="cambiarLiga('TODAS')">Todas</button>`;
+    codigos.forEach(cod => {
+      html += `<button class="filtro-liga-btn ${ligaSeleccionada === cod ? 'activa' : ''}" onclick="cambiarLiga('${cod}')">${NOMBRES_LIGA[cod] || cod}</button>`;
+    });
+    cont.innerHTML = html;
+  }
+
+  function cambiarLiga(codigo) {
+    ligaSeleccionada = codigo;
+    renderFiltroLigas();
+    renderizarPartidosFiltrados();
+  }
+
+  // ============ RENDER PRINCIPAL DE PARTIDOS ============
+  async function renderizarPartidosFiltrados() {
+    const contenedor = document.getElementById('contenedor-partidos');
+    contenedor.classList.remove('visible');
+
+    let lista = partidosDelRango;
+    if (ligaSeleccionada !== 'TODAS') {
+      lista = lista.filter(p => p.competition.code === ligaSeleccionada);
+    }
+
+    if (lista.length === 0) {
+      contenedor.innerHTML = `<p style="text-align:center; color:#8fa896;">No hay partidos para mostrar con este filtro.</p>`;
+      requestAnimationFrame(() => contenedor.classList.add('visible'));
+      document.getElementById('bloque-combinadas').innerHTML = '';
+      return;
+    }
+
+    lista = lista.slice(0, 5);
+    contenedor.innerHTML = skeletonHTML();
+    requestAnimationFrame(() => contenedor.classList.add('visible'));
+
+    const seleccionesParaCombinar = [];
+    let htmlFinal = '';
+
+    for (let idx = 0; idx < lista.length; idx++) {
+      const partido = lista[idx];
+      if (idx > 0) await esperar(700);
+
+      const codigoLiga = partido.competition.code;
+      const [statsLocal, statsVisita, h2h, tabla] = await Promise.all([
+        obtenerStatsEquipo(partido.homeTeam.id, codigoLiga),
+        obtenerStatsEquipo(partido.awayTeam.id, codigoLiga),
+        obtenerHeadToHead(partido.id),
+        obtenerTabla(codigoLiga)
+      ]);
+
+      const pronosticos = generarPronosticos(
+        statsLocal, statsVisita, partido.homeTeam.name, partido.awayTeam.name,
+        h2h, tabla, partido.homeTeam.id, partido.awayTeam.id
+      );
+
+      htmlFinal += crearTarjetaHTML(partido, pronosticos, statsLocal, statsVisita, h2h, tabla);
+      seleccionesParaCombinar.push(mejorSeleccionDePartido(partido, pronosticos));
+      registrarPronostico(partido, pronosticos);
+    }
+
+    contenedor.innerHTML = htmlFinal;
+    renderCombinadas(seleccionesParaCombinar);
+
+    const historialActualizado = await actualizarHistorialConResultados();
+    renderHistorial(calcularEstadisticasHistorial(historialActualizado));
+  }
+
   // ============ CARGA PRINCIPAL ============
   async function cargarPartidos(tipoFecha) {
     const contenedor = document.getElementById('contenedor-partidos');
     const contenedorCombinadas = document.getElementById('bloque-combinadas');
-    contenedor.innerHTML = '<p style="text-align:center; color:#8fa896;">Cargando partidos...</p>';
+    contenedor.classList.remove('visible');
+    contenedor.innerHTML = skeletonHTML();
     contenedorCombinadas.innerHTML = '';
 
-    // Si el backend (plan gratuito de Render) estaba dormido, la primera respuesta
-    // puede tardar hasta 50 segundos. Avisamos claramente en vez de dejar la duda.
     const avisoDespertar = setTimeout(() => {
-      if (contenedor.innerHTML.includes('Cargando partidos')) {
+      if (contenedor.querySelector('.skeleton-tarjeta')) {
         contenedor.innerHTML = `
           <div class="aviso-servidor">
-            <div class="cancha-mini">
-              <div class="rival rival-1"></div>
-              <div class="rival rival-2"></div>
-              <div class="rival rival-3"></div>
-              <div class="arco">
-                <span class="gol-texto">¡GOL!</span>
-              </div>
-              <div class="confeti">
-                <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
-              </div>
-              <div class="pelota">⚽</div>
-            </div>
             <p><strong>Armando la jugada...</strong></p>
             <p>El servidor gratuito estaba en el banco y ya está entrando a la cancha. Un momento más.</p>
           </div>
         `;
+        requestAnimationFrame(() => contenedor.classList.add('visible'));
       }
     }, 4000);
 
@@ -985,6 +1050,7 @@
 
     if (partidos.error) {
       contenedor.innerHTML = `<p style="text-align:center; color:#ff6b6b;">Error: ${partidos.mensaje}</p>`;
+      requestAnimationFrame(() => contenedor.classList.add('visible'));
       return;
     }
 
@@ -992,42 +1058,10 @@
       partidos = partidos.filter(p => fechaLocalDePartido(p.utcDate) === diaObjetivo);
     }
 
-    if (partidos.length === 0) {
-      contenedor.innerHTML = `<p style="text-align:center; color:#8fa896;">No hay partidos para mostrar en este rango (${fechaInicio} a ${fechaFin}).</p>`;
-      return;
-    }
-
-    partidos = partidos.slice(0, 5);
-
-    contenedor.innerHTML = '';
-    const seleccionesParaCombinar = [];
-
-    for (let idx = 0; idx < partidos.length; idx++) {
-      const partido = partidos[idx];
-
-      // Espaciamos las peticiones entre partido y partido (excepto el primero)
-      // para no disparar varias peticiones de golpe y chocar con el limite
-      // de la API gratuita (10 peticiones por minuto).
-      if (idx > 0) await esperar(700);
-
-      const codigoLiga = partido.competition.code;
-      const [statsLocal, statsVisita, h2h] = await Promise.all([
-        obtenerStatsEquipo(partido.homeTeam.id, codigoLiga),
-        obtenerStatsEquipo(partido.awayTeam.id, codigoLiga),
-        obtenerHeadToHead(partido.id)
-      ]);
-
-      const pronosticos = generarPronosticos(statsLocal, statsVisita, partido.homeTeam.name, partido.awayTeam.name, h2h);
-      contenedor.innerHTML += crearTarjetaHTML(partido, pronosticos, statsLocal, statsVisita, h2h);
-
-      seleccionesParaCombinar.push(mejorSeleccionDePartido(partido, pronosticos));
-      registrarPronostico(partido, pronosticos);
-    }
-
-    renderCombinadas(seleccionesParaCombinar);
-
-    const historialActualizado = await actualizarHistorialConResultados();
-    renderHistorial(calcularEstadisticasHistorial(historialActualizado));
+    partidosDelRango = partidos;
+    ligaSeleccionada = 'TODAS';
+    renderFiltroLigas();
+    await renderizarPartidosFiltrados();
   }
 
   function cambiarFecha(tipo, event) {
