@@ -219,36 +219,90 @@ body.bloqueado {
 
 .encabezado-partido {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   gap: 14px;
   text-align: center;
 }
 
+.equipo-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.equipo-nombre-tend {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: center;
+}
+
 .encabezado-partido .equipo {
   font-family: var(--font-display);
-  font-size: clamp(1.1rem, 4vw, 1.5rem);
+  font-size: clamp(1.05rem, 3.6vw, 1.4rem);
   letter-spacing: 0.01em;
-  flex: 1;
 }
+
+.tendencia {
+  font-size: 0.6rem;
+  line-height: 1;
+}
+
+.tendencia-sube { color: var(--green); }
+.tendencia-baja { color: var(--red); }
+.tendencia-neutral { color: var(--text-dim); }
+
+.racha-visual {
+  display: flex;
+  gap: 3px;
+}
+
+.racha-punto {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  font-size: 0.6rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+}
+
+.racha-G { background: var(--green-dim); color: var(--green); }
+.racha-E { background: var(--bg-raised); color: var(--text-dim); border: 1px solid var(--line); }
+.racha-P { background: #3a1414; color: var(--red); }
 
 .encabezado-partido .vs {
   font-family: var(--font-body);
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   font-weight: 800;
   color: #06170e;
   background: var(--gold);
-  padding: 4px 9px;
+  padding: 4px 8px;
   border-radius: 6px;
   letter-spacing: 0.05em;
+  margin-top: 4px;
+  flex-shrink: 0;
 }
 
 .info-partido {
   text-align: center;
   color: var(--text-dim);
   font-size: 0.82rem;
-  margin: 8px 0 0;
+  margin: 12px 0 0;
   letter-spacing: 0.01em;
+}
+
+.info-h2h {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.76rem;
+  margin: 6px 0 0;
 }
 
 .aviso-datos {
@@ -269,6 +323,7 @@ body.bloqueado {
   grid-template-columns: 1fr 1fr;
   gap: 12px;
   padding-bottom: 14px;
+  margin-top: 16px;
 }
 
 @media (max-width: 480px) {
@@ -393,7 +448,7 @@ body.bloqueado {
 .punto-sonadora { background: var(--m-sonadora); }
 .punto-extra { background: var(--m-extra); }
 
-/* ============ COMBINACIONES DEL MISMO PARTIDO (widget oscuro que contrasta) ============ */
+/* ============ COMBINACIONES DEL MISMO PARTIDO ============ */
 .combos-partido {
   border-top: 1px dashed var(--line);
   padding: 16px 0 18px;

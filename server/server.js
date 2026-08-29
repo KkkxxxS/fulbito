@@ -25,7 +25,22 @@ app.get('/api/partidos', async (req, res) => {
 app.get('/api/equipo/:id/stats', async (req, res) => {
   try {
     const resp = await fetch(
-      `${BASE_URL}/teams/${req.params.id}/matches?status=FINISHED&limit=12`,
+      `${BASE_URL}/teams/${req.params.id}/matches?status=FINISHED&limit=5`,
+      { headers: { "X-Auth-Token": API_KEY } }
+    );
+    const data = await resp.json();
+    res.json(data);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Endpoint: historial de enfrentamientos directos (head-to-head) entre dos equipos
+// football-data.org expone esto directamente en el detalle de un partido especifico.
+app.get('/api/partido/:id/h2h', async (req, res) => {
+  try {
+    const resp = await fetch(
+      `${BASE_URL}/matches/${req.params.id}/head2head?limit=10`,
       { headers: { "X-Auth-Token": API_KEY } }
     );
     const data = await resp.json();
