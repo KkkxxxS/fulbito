@@ -76,6 +76,27 @@
     }
   }
 
+  // ============ PONDERACION POR RECENCIA ============
+  // Los partidos mas recientes pesan mas que los antiguos.
+  function pesosRecencia(cantidad) {
+    const base = [1.0, 0.8, 0.65, 0.5, 0.4, 0.32, 0.26, 0.2];
+    const pesos = [];
+    for (let i = 0; i < cantidad; i++) {
+      pesos.push(base[i] !== undefined ? base[i] : 0.15);
+    }
+    return pesos;
+  }
+
+  function promedioPonderado(valores, pesos) {
+    if (valores.length === 0) return 0;
+    let sumaValores = 0, sumaPesos = 0;
+    for (let i = 0; i < valores.length; i++) {
+      sumaValores += valores[i] * pesos[i];
+      sumaPesos += pesos[i];
+    }
+    return sumaPesos > 0 ? sumaValores / sumaPesos : 0;
+  }
+
   async function obtenerStatsEquipo(teamId) {
     const claveCache = `stats-${teamId}`;
     if (cache[claveCache]) return cache[claveCache];
@@ -86,41 +107,53 @@
       const datos = await resp.json();
       const partidos = datos.matches || [];
 
-      let victorias = 0, empates = 0, derrotas = 0;
-      let golesFavorLocal = 0, golesContraLocal = 0, partidosLocal = 0;
-      let golesFavorVisita = 0, golesContraVisita = 0, partidosVisita = 0;
+      const partidosOrdenados = [...partidos].sort((a, b) => new Date(b.utcDate) - new Date(a.utcDate));
 
-      partidos.forEach(p => {
+      let victorias = 0, empates = 0, derrotas = 0;
+
+      const golesFavorLocal = [], golesContraLocal = [];
+      const golesFavorVisita = [], golesContraVisita = [];
+      const golesFavorTodos = [], golesContraTodos = [];
+
+      partidosOrdenados.forEach(p => {
         const esLocal = p.homeTeam.id === teamId;
-        const golesEquipo = esLocal ? p.score.fullTime.home : p.score.fullTime.away;
-        const golesRival = esLocal ? p.score.fullTime.away : p.score.fullTime.home;
+        const golesEquipo = (esLocal ? p.score.fullTime.home : p.score.fullTime.away) ?? 0;
+        const golesRival = (esLocal ? p.score.fullTime.away : p.score.fullTime.home) ?? 0;
 
         if (golesEquipo > golesRival) victorias++;
         else if (golesEquipo === golesRival) empates++;
         else derrotas++;
 
+        golesFavorTodos.push(golesEquipo);
+        golesContraTodos.push(golesRival);
+
         if (esLocal) {
-          golesFavorLocal += golesEquipo ?? 0;
-          golesContraLocal += golesRival ?? 0;
-          partidosLocal++;
+          golesFavorLocal.push(golesEquipo);
+          golesContraLocal.push(golesRival);
         } else {
-          golesFavorVisita += golesEquipo ?? 0;
-          golesContraVisita += golesRival ?? 0;
-          partidosVisita++;
+          golesFavorVisita.push(golesEquipo);
+          golesContraVisita.push(golesRival);
         }
       });
 
-      const cantidad = partidos.length || 1;
-      const promLocalFavor = partidosLocal > 0 ? golesFavorLocal / partidosLocal : (golesFavorLocal + golesFavorVisita) / cantidad;
-      const promLocalContra = partidosLocal > 0 ? golesContraLocal / partidosLocal : (golesContraLocal + golesContraVisita) / cantidad;
-      const promVisitaFavor = partidosVisita > 0 ? golesFavorVisita / partidosVisita : (golesFavorLocal + golesFavorVisita) / cantidad;
-      const promVisitaContra = partidosVisita > 0 ? golesContraVisita / partidosVisita : (golesContraLocal + golesContraVisita) / cantidad;
+      const cantidad = partidosOrdenados.length || 1;
+      const pesosTodos = pesosRecencia(golesFavorTodos.length);
+      const pesosLocal = pesosRecencia(golesFavorLocal.length);
+      const pesosVisita = pesosRecencia(golesFavorVisita.length);
+
+      const promTodosFavor = promedioPonderado(golesFavorTodos, pesosTodos);
+      const promTodosContra = promedioPonderado(golesContraTodos, pesosTodos);
+
+      const promLocalFavor = golesFavorLocal.length > 0 ? promedioPonderado(golesFavorLocal, pesosLocal) : promTodosFavor;
+      const promLocalContra = golesContraLocal.length > 0 ? promedioPonderado(golesContraLocal, pesosLocal) : promTodosContra;
+      const promVisitaFavor = golesFavorVisita.length > 0 ? promedioPonderado(golesFavorVisita, pesosVisita) : promTodosFavor;
+      const promVisitaContra = golesContraVisita.length > 0 ? promedioPonderado(golesContraVisita, pesosVisita) : promTodosContra;
 
       const stats = {
-        promedioGolesFavor: (golesFavorLocal + golesFavorVisita) / cantidad,
-        promedioGolesContra: (golesContraLocal + golesContraVisita) / cantidad,
+        promedioGolesFavor: promTodosFavor,
+        promedioGolesContra: promTodosContra,
         puntosPromedio: (victorias * 3 + empates) / cantidad,
-        partidosJugados: partidos.length,
+        partidosJugados: partidosOrdenados.length,
         local: { golesFavor: promLocalFavor, golesContra: promLocalContra },
         visita: { golesFavor: promVisitaFavor, golesContra: promVisitaContra }
       };
@@ -129,7 +162,7 @@
       return stats;
     } catch (e) {
       console.error("Error trayendo stats equipo", teamId, e);
-      const fallback = { promedioGolesFavor: 1, promedioGolesContra: 1 };
+      const fallback = { golesFavor: 1, golesContra: 1 };
       return { promedioGolesFavor: 1, promedioGolesContra: 1, puntosPromedio: 1, partidosJugados: 0, local: fallback, visita: fallback };
     }
   }
@@ -156,9 +189,16 @@
     return matriz;
   }
 
+  const FACTOR_LOCALIA = 1.1;
+
   function generarPronosticos(statsLocal, statsVisita, nombreLocal, nombreVisita) {
-    const lambdaLocal = (statsLocal.local.golesFavor + statsVisita.visita.golesContra) / 2;
-    const lambdaVisita = (statsVisita.visita.golesFavor + statsLocal.local.golesContra) / 2;
+    let lambdaLocal = (statsLocal.local.golesFavor + statsVisita.visita.golesContra) / 2;
+    let lambdaVisita = (statsVisita.visita.golesFavor + statsLocal.local.golesContra) / 2;
+
+    lambdaLocal *= FACTOR_LOCALIA;
+
+    lambdaLocal = Math.max(lambdaLocal, 0.3);
+    lambdaVisita = Math.max(lambdaVisita, 0.3);
 
     const matriz = matrizMarcadores(lambdaLocal, lambdaVisita);
     const maxGoles = matriz.length - 1;
