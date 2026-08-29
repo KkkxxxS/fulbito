@@ -25,8 +25,10 @@
     </div>
 
     <div id="contenedor-partidos">
-        <p style="text-align:center; color:#aaa;">Cargando partidos...</p>
+        <p style="text-align:center; color:#8fa896;">Cargando partidos...</p>
     </div>
+
+    <div id="bloque-combinadas"></div>
 
 </section>
 
@@ -77,7 +79,6 @@
   }
 
   // ============ PONDERACION POR RECENCIA ============
-  // Los partidos mas recientes pesan mas que los antiguos.
   function pesosRecencia(cantidad) {
     const base = [1.0, 0.8, 0.65, 0.5, 0.4, 0.32, 0.26, 0.2];
     const pesos = [];
@@ -204,11 +205,14 @@
     const maxGoles = matriz.length - 1;
 
     let pLocal = 0, pEmpate = 0, pVisita = 0;
+    let marcadorTop = { i: 0, j: 0, p: 0 };
     for (let i = 0; i <= maxGoles; i++) {
       for (let j = 0; j <= maxGoles; j++) {
         if (i > j) pLocal += matriz[i][j];
         else if (i === j) pEmpate += matriz[i][j];
         else pVisita += matriz[i][j];
+
+        if (matriz[i][j] > marcadorTop.p) marcadorTop = { i, j, p: matriz[i][j] };
       }
     }
 
@@ -264,12 +268,57 @@
       probabilidad: Math.round(probExtra * 100)
     };
 
-    return { fija, conFe, sonadora, extra };
+    const marcadorProbable = `${marcadorTop.i}-${marcadorTop.j}`;
+
+    // ============ COMBINACIONES DENTRO DEL MISMO PARTIDO ============
+    // A diferencia de combinar partidos distintos (que son eventos independientes),
+    // los mercados de UN MISMO partido estan correlacionados: si el favorito marca,
+    // es mas probable que tambien gane. Por eso NO multiplicamos probabilidades sueltas,
+    // sino que sumamos directamente las celdas de la matriz de marcadores que cumplen
+    // TODAS las condiciones a la vez. Eso da la probabilidad conjunta real.
+    function probabilidadConjunta(condiciones) {
+      let p = 0;
+      for (let i = 0; i <= maxGoles; i++) {
+        for (let j = 0; j <= maxGoles; j++) {
+          if (condiciones.every(cond => cond(i, j))) p += matriz[i][j];
+        }
+      }
+      return p;
+    }
+
+    const esConFe = (i, j) => favoritoLocal ? (i >= j) : (j >= i);
+    const esFija = (i, j) => (i + j) < mejorLinea;
+    const esSonadora = (i, j) => favoritoLocal ? i >= 1 : j >= 1;
+
+    const combosPartido = [];
+
+    const probA = probabilidadConjunta([esConFe, esFija]);
+    combosPartido.push({
+      titulo: "Combinada segura",
+      partes: [conFe.seleccion, fija.seleccion],
+      probabilidad: Math.round(probA * 100)
+    });
+
+    const probB = probabilidadConjunta([esSonadora, esConFe]);
+    combosPartido.push({
+      titulo: "Combinada con gol",
+      partes: [sonadora.seleccion, conFe.seleccion],
+      probabilidad: Math.round(probB * 100)
+    });
+
+    return { fija, conFe, sonadora, extra, marcadorProbable, probMarcador: Math.round(marcadorTop.p * 100), combosPartido };
+  }
+
+  // ============ AYUDAS DE RIESGO VISUAL ============
+  function nivelRiesgo(probabilidad) {
+    if (probabilidad >= 65) return 'riesgo-bajo';
+    if (probabilidad >= 40) return 'riesgo-medio';
+    return 'riesgo-alto';
   }
 
   function filaMercado(datos) {
     return `
-      <div class="fila-mercado">
+      <div class="fila-mercado ${nivelRiesgo(datos.probabilidad)}">
         <div class="fila-header">
           <span class="fila-titulo">${datos.titulo}</span>
           <span class="fila-porcentaje">${datos.probabilidad}%</span>
@@ -279,6 +328,18 @@
         </div>
         <p class="fila-mercado-nombre">${datos.mercado}</p>
         <p class="fila-seleccion">${datos.seleccion}</p>
+      </div>
+    `;
+  }
+
+  function comboPartidoHTML(combo) {
+    return `
+      <div class="combo-partido">
+        <div class="combo-partido-header">
+          <span>${combo.titulo}</span>
+          <span class="combo-partido-pct">${combo.probabilidad}%</span>
+        </div>
+        <p class="combo-partido-partes">${combo.partes.join(' + ')}</p>
       </div>
     `;
   }
@@ -298,7 +359,7 @@
           <span class="vs">VS</span>
           <span class="equipo">${visita}</span>
         </div>
-        <p class="info-partido">${liga} - ${fechaTexto}, ${horaTexto}</p>
+        <p class="info-partido">${liga} · ${fechaTexto}, ${horaTexto} · marcador probable ${pronosticos.marcadorProbable}</p>
 
         <div class="lista-mercados">
           ${filaMercado(pronosticos.fija)}
@@ -306,13 +367,103 @@
           ${filaMercado(pronosticos.sonadora)}
           ${filaMercado(pronosticos.extra)}
         </div>
+
+        <div class="combos-partido">
+          <p class="combos-partido-titulo">Combina en este partido</p>
+          ${pronosticos.combosPartido.map(comboPartidoHTML).join('')}
+        </div>
       </div>
     `;
   }
 
+  // ============ GENERADOR DE COMBINADAS ============
+  // Junta la mejor selección de cada partido (mayor probabilidad individual)
+  // y arma combinadas de 2 y 3 partidos. La probabilidad combinada se calcula
+  // multiplicando las probabilidades individuales (partidos distintos SÍ son
+  // eventos independientes entre sí, a diferencia de mercados del mismo partido),
+  // asi el numero que se muestra es honesto: entre mas piernas, mas baja la probabilidad real.
+  function mejorSeleccionDePartido(partido, pronosticos) {
+    const opciones = [pronosticos.fija, pronosticos.conFe, pronosticos.sonadora, pronosticos.extra];
+    let mejor = opciones[0];
+    opciones.forEach(op => { if (op.probabilidad > mejor.probabilidad) mejor = op; });
+    return {
+      equipos: `${partido.homeTeam.name} vs ${partido.awayTeam.name}`,
+      mercado: mejor.mercado,
+      seleccion: mejor.seleccion,
+      probabilidad: mejor.probabilidad
+    };
+  }
+
+  function armarCombinada(piernas) {
+    let probCombinada = 1;
+    piernas.forEach(p => { probCombinada *= (p.probabilidad / 100); });
+    return {
+      piernas,
+      probabilidad: Math.round(probCombinada * 100 * 10) / 10
+    };
+  }
+
+  function tarjetaCombinadaHTML(etiqueta, combinada) {
+    const piernasHTML = combinada.piernas.map((p, idx) => `
+      <div class="pierna-combinada">
+        <span class="num">${idx + 1}</span>
+        <span class="detalle"><strong>${p.equipos}</strong><br>${p.mercado}: ${p.seleccion}</span>
+        <span class="pct">${p.probabilidad}%</span>
+      </div>
+    `).join('');
+
+    return `
+      <div class="tarjeta-combinada">
+        <div class="encabezado-combinada">
+          <span class="etiqueta-combinada">${etiqueta}</span>
+          <span class="prob-combinada" style="color:${combinada.probabilidad >= 30 ? 'var(--green)' : 'var(--gold)'}">${combinada.probabilidad}%</span>
+        </div>
+        ${piernasHTML}
+      </div>
+    `;
+  }
+
+  function renderCombinadas(listaSelecciones) {
+    const contenedor = document.getElementById('bloque-combinadas');
+
+    if (listaSelecciones.length < 2) {
+      contenedor.innerHTML = '';
+      return;
+    }
+
+    const ordenadas = [...listaSelecciones].sort((a, b) => b.probabilidad - a.probabilidad);
+
+    let html = `
+      <div class="bloque-combinadas">
+        <h3>Combinadas sugeridas</h3>
+        <p class="subtitulo-combinadas">Armadas con la selección más probable de cada partido cargado. La probabilidad mostrada es la combinada real (multiplica cada pierna), no una cuota.</p>
+    `;
+
+    const doble = armarCombinada(ordenadas.slice(0, 2));
+    html += tarjetaCombinadaHTML('Combinada doble', doble);
+
+    if (ordenadas.length >= 3) {
+      const triple = armarCombinada(ordenadas.slice(0, 3));
+      html += tarjetaCombinadaHTML('Combinada triple', triple);
+    }
+
+    html += `
+        <div class="aviso-riesgo">
+          <span class="icono">⚠️</span>
+          <span>Cada pierna que agregas multiplica el riesgo: todas tienen que acertar para ganar la combinada. Estas son de las combinaciones estadísticamente más sólidas con los partidos de hoy, pero ningún pronóstico garantiza un resultado. Apuesta solo lo que estás dispuesto a perder.</span>
+        </div>
+      </div>
+    `;
+
+    contenedor.innerHTML = html;
+  }
+
+  // ============ CARGA PRINCIPAL ============
   async function cargarPartidos(tipoFecha) {
     const contenedor = document.getElementById('contenedor-partidos');
-    contenedor.innerHTML = '<p style="text-align:center; color:#aaa;">Cargando partidos...</p>';
+    const contenedorCombinadas = document.getElementById('bloque-combinadas');
+    contenedor.innerHTML = '<p style="text-align:center; color:#8fa896;">Cargando partidos...</p>';
+    contenedorCombinadas.innerHTML = '';
 
     const hoy = new Date();
     let fechaInicio, fechaFin, diaObjetivo;
@@ -351,13 +502,15 @@
     }
 
     if (partidos.length === 0) {
-      contenedor.innerHTML = `<p style="text-align:center; color:#aaa;">No hay partidos para mostrar en este rango (${fechaInicio} a ${fechaFin}).</p>`;
+      contenedor.innerHTML = `<p style="text-align:center; color:#8fa896;">No hay partidos para mostrar en este rango (${fechaInicio} a ${fechaFin}).</p>`;
       return;
     }
 
     partidos = partidos.slice(0, 5);
 
     contenedor.innerHTML = '';
+    const seleccionesParaCombinar = [];
+
     for (const partido of partidos) {
       const [statsLocal, statsVisita] = await Promise.all([
         obtenerStatsEquipo(partido.homeTeam.id),
@@ -366,7 +519,11 @@
 
       const pronosticos = generarPronosticos(statsLocal, statsVisita, partido.homeTeam.name, partido.awayTeam.name);
       contenedor.innerHTML += crearTarjetaHTML(partido, pronosticos);
+
+      seleccionesParaCombinar.push(mejorSeleccionDePartido(partido, pronosticos));
     }
+
+    renderCombinadas(seleccionesParaCombinar);
   }
 
   function cambiarFecha(tipo, event) {
