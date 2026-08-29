@@ -35,6 +35,7 @@ app.get('/api/equipo/:id/stats', async (req, res) => {
   }
 });
 
-app.listen(3000, () => {
-  console.log('Servidor de fulbito corriendo en http://localhost:3000');
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Servidor de fulbito corriendo en el puerto ${PORT}`);
 });
