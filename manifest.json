@@ -1,0 +1,24 @@
+{
+  "name": "Fulbito - Pronósticos de fútbol",
+  "short_name": "Fulbito",
+  "description": "Pronósticos de fútbol basados en un modelo estadístico real, con historial de aciertos verificado.",
+  "start_url": "./#pronosticos",
+  "display": "standalone",
+  "background_color": "#0a1a12",
+  "theme_color": "#0a1a12",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

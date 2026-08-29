@@ -4,6 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fulbito</title>
+    <meta name="description" content="Pronósticos de fútbol basados en un modelo estadístico (Poisson + Dixon-Coles) sobre las principales ligas europeas. Probabilidades reales, no promesas.">
+
+    <meta property="og:title" content="Fulbito - Pronósticos de fútbol">
+    <meta property="og:description" content="Pronósticos de fútbol basados en un modelo estadístico real, con historial de aciertos verificado.">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="https://kkkxxxs.github.io/fulbito/icon-512.png">
+
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Fulbito - Pronósticos de fútbol">
+    <meta name="twitter:description" content="Pronósticos de fútbol basados en un modelo estadístico real, con historial de aciertos verificado.">
+
+    <meta name="theme-color" content="#0a1a12">
+    <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/x-icon" href="favicon.ico">
     <link rel="stylesheet" href="style.css">
 </head>
@@ -34,10 +47,47 @@
 
 </section>
 
+<footer class="pie-pagina">
+    <p>Fulbito ofrece pronósticos basados en un modelo estadístico, no garantías de resultado. Ningún pronóstico asegura ganancias. Si apuestas, hazlo solo con dinero que puedas permitirte perder, y solo si eres mayor de 18 años.</p>
+</footer>
+
 <script>
   // ============ CONFIGURACION ============
   const BACKEND_URL = "https://fulbito-forh.onrender.com";
   const COMPETICIONES = "PL,PD,BL1,SA,FL1,CL";
+
+  // ============ CACHE PERSISTENTE ENTRE VISITAS ============
+  // Ademas del cache en memoria (que se pierde al recargar), guardamos una copia
+  // en localStorage con fecha de expiracion. Asi, si vuelves a entrar a la pagina
+  // en los proximos minutos, no hace falta esperar ni gastar peticiones de la API
+  // de nuevo para los mismos datos.
+  const DURACION_CACHE_MS = 5 * 60 * 1000; // 5 minutos
+
+  function leerCachePersistente(clave) {
+    try {
+      const crudo = localStorage.getItem(`fulbito_cache_${clave}`);
+      if (!crudo) return null;
+      const { valor, expira } = JSON.parse(crudo);
+      if (Date.now() > expira) {
+        localStorage.removeItem(`fulbito_cache_${clave}`);
+        return null;
+      }
+      return valor;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function guardarCachePersistente(clave, valor) {
+    try {
+      localStorage.setItem(`fulbito_cache_${clave}`, JSON.stringify({
+        valor,
+        expira: Date.now() + DURACION_CACHE_MS
+      }));
+    } catch (e) {
+      // Si localStorage esta lleno o bloqueado, seguimos sin cache persistente
+    }
+  }
 
   const cache = {};
 
@@ -61,6 +111,12 @@
     const claveCache = `matches-${fechaInicio}-${fechaFin}`;
     if (cache[claveCache]) return cache[claveCache];
 
+    const persistente = leerCachePersistente(claveCache);
+    if (persistente) {
+      cache[claveCache] = persistente;
+      return persistente;
+    }
+
     try {
       const url = `${BACKEND_URL}/api/partidos?competitions=${COMPETICIONES}&dateFrom=${fechaInicio}&dateTo=${fechaFin}`;
       const resp = await fetch(url);
@@ -73,6 +129,7 @@
 
       const partidos = (datos.matches || []).filter(p => p.status === 'SCHEDULED' || p.status === 'TIMED');
       cache[claveCache] = partidos;
+      guardarCachePersistente(claveCache, partidos);
       return partidos;
     } catch (e) {
       console.error("Error trayendo partidos", e);
@@ -165,6 +222,12 @@
     const claveCache = `stats-${teamId}`;
     if (cache[claveCache]) return cache[claveCache];
 
+    const persistente = leerCachePersistente(claveCache);
+    if (persistente) {
+      cache[claveCache] = persistente;
+      return persistente;
+    }
+
     try {
       const url = `${BACKEND_URL}/api/equipo/${teamId}/stats`;
       const resp = await fetch(url);
@@ -232,6 +295,7 @@
       };
 
       cache[claveCache] = stats;
+      guardarCachePersistente(claveCache, stats);
       return stats;
     } catch (e) {
       console.error("Error trayendo stats equipo", teamId, e);
@@ -866,6 +930,19 @@
     contenedor.innerHTML = '<p style="text-align:center; color:#8fa896;">Cargando partidos...</p>';
     contenedorCombinadas.innerHTML = '';
 
+    // Si el backend (plan gratuito de Render) estaba dormido, la primera respuesta
+    // puede tardar hasta 50 segundos. Avisamos claramente en vez de dejar la duda.
+    const avisoDespertar = setTimeout(() => {
+      if (contenedor.innerHTML.includes('Cargando partidos')) {
+        contenedor.innerHTML = `
+          <div class="aviso-servidor">
+            <p><strong>El servidor se está despertando...</strong></p>
+            <p>El backend gratuito se duerme tras un rato sin uso. La primera carga del día puede tardar hasta 50 segundos. Ya casi está.</p>
+          </div>
+        `;
+      }
+    }, 4000);
+
     const hoy = new Date();
     let fechaInicio, fechaFin, diaObjetivo;
 
@@ -892,6 +969,7 @@
     }
 
     let partidos = await obtenerPartidos(fechaInicio, fechaFin);
+    clearTimeout(avisoDespertar);
 
     if (partidos.error) {
       contenedor.innerHTML = `<p style="text-align:center; color:#ff6b6b;">Error: ${partidos.mensaje}</p>`;
