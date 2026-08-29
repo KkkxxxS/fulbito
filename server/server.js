@@ -25,7 +25,7 @@ app.get('/api/partidos', async (req, res) => {
 app.get('/api/equipo/:id/stats', async (req, res) => {
   try {
     const resp = await fetch(
-      `${BASE_URL}/teams/${req.params.id}/matches?status=FINISHED&limit=5`,
+      `${BASE_URL}/teams/${req.params.id}/matches?status=FINISHED&limit=12`,
       { headers: { "X-Auth-Token": API_KEY } }
     );
     const data = await resp.json();

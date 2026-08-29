@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fulbito</title>
-    <link rel="stylesheet" href="style.css">
     <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body class="bloqueado">
 
@@ -87,39 +87,51 @@
       const partidos = datos.matches || [];
 
       let victorias = 0, empates = 0, derrotas = 0;
-      let golesFavor = 0, golesContra = 0;
+      let golesFavorLocal = 0, golesContraLocal = 0, partidosLocal = 0;
+      let golesFavorVisita = 0, golesContraVisita = 0, partidosVisita = 0;
 
       partidos.forEach(p => {
         const esLocal = p.homeTeam.id === teamId;
         const golesEquipo = esLocal ? p.score.fullTime.home : p.score.fullTime.away;
         const golesRival = esLocal ? p.score.fullTime.away : p.score.fullTime.home;
 
-        golesFavor += golesEquipo ?? 0;
-        golesContra += golesRival ?? 0;
-
         if (golesEquipo > golesRival) victorias++;
         else if (golesEquipo === golesRival) empates++;
         else derrotas++;
+
+        if (esLocal) {
+          golesFavorLocal += golesEquipo ?? 0;
+          golesContraLocal += golesRival ?? 0;
+          partidosLocal++;
+        } else {
+          golesFavorVisita += golesEquipo ?? 0;
+          golesContraVisita += golesRival ?? 0;
+          partidosVisita++;
+        }
       });
 
       const cantidad = partidos.length || 1;
+      const promLocalFavor = partidosLocal > 0 ? golesFavorLocal / partidosLocal : (golesFavorLocal + golesFavorVisita) / cantidad;
+      const promLocalContra = partidosLocal > 0 ? golesContraLocal / partidosLocal : (golesContraLocal + golesContraVisita) / cantidad;
+      const promVisitaFavor = partidosVisita > 0 ? golesFavorVisita / partidosVisita : (golesFavorLocal + golesFavorVisita) / cantidad;
+      const promVisitaContra = partidosVisita > 0 ? golesContraVisita / partidosVisita : (golesContraLocal + golesContraVisita) / cantidad;
+
       const stats = {
-        promedioGolesFavor: golesFavor / cantidad,
-        promedioGolesContra: golesContra / cantidad,
+        promedioGolesFavor: (golesFavorLocal + golesFavorVisita) / cantidad,
+        promedioGolesContra: (golesContraLocal + golesContraVisita) / cantidad,
         puntosPromedio: (victorias * 3 + empates) / cantidad,
-        partidosJugados: partidos.length
+        partidosJugados: partidos.length,
+        local: { golesFavor: promLocalFavor, golesContra: promLocalContra },
+        visita: { golesFavor: promVisitaFavor, golesContra: promVisitaContra }
       };
 
       cache[claveCache] = stats;
       return stats;
     } catch (e) {
       console.error("Error trayendo stats equipo", teamId, e);
-      return { promedioGolesFavor: 1, promedioGolesContra: 1, puntosPromedio: 1, partidosJugados: 0 };
+      const fallback = { promedioGolesFavor: 1, promedioGolesContra: 1 };
+      return { promedioGolesFavor: 1, promedioGolesContra: 1, puntosPromedio: 1, partidosJugados: 0, local: fallback, visita: fallback };
     }
-  }
-
-  function statsFavorito(favoritoLocal, statsLocal, statsVisita) {
-    return favoritoLocal ? statsLocal : statsVisita;
   }
 
   function generarPronosticos(statsLocal, statsVisita, nombreLocal, nombreVisita) {
@@ -130,8 +142,8 @@
     const nombreFavorito = favoritoLocal ? nombreLocal : nombreVisita;
     const magnitud = Math.abs(diferencia);
 
-    const totalGolesEsperados = (statsLocal.promedioGolesFavor + statsVisita.promedioGolesContra) / 2
-                               + (statsVisita.promedioGolesFavor + statsLocal.promedioGolesContra) / 2;
+    const totalGolesEsperados = (statsLocal.local.golesFavor + statsVisita.visita.golesContra) / 2
+                               + (statsVisita.visita.golesFavor + statsLocal.local.golesContra) / 2;
 
     const lineaGoles = totalGolesEsperados > 3 ? 4.5 : 3.5;
     const probFija = Math.min(0.96, 0.80 + (lineaGoles - totalGolesEsperados) * 0.05);
@@ -150,7 +162,8 @@
       probabilidad: Math.round(probConFe * 100)
     };
 
-    const probSonadora = Math.min(0.85, Math.max(0.15, statsFavorito(favoritoLocal, statsLocal, statsVisita).promedioGolesFavor * 0.35));
+    const golesFavorFavorito = favoritoLocal ? statsLocal.local.golesFavor : statsVisita.visita.golesFavor;
+    const probSonadora = Math.min(0.85, Math.max(0.15, golesFavorFavorito * 0.35));
     const sonadora = {
       titulo: "La Soñadora",
       mercado: "Equipo marca",
@@ -248,7 +261,6 @@
       return;
     }
 
-    // Para hoy/manana filtramos por la fecha LOCAL exacta del partido
     if (diaObjetivo) {
       partidos = partidos.filter(p => fechaLocalDePartido(p.utcDate) === diaObjetivo);
     }
@@ -280,7 +292,6 @@
 
   cargarPartidos('hoy');
 
-  // Si la pagina carga directo en #pronosticos (por refresh o historial), desbloquear el scroll
   if (window.location.hash === '#pronosticos') {
     entrar();
   }
