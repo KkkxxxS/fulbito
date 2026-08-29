@@ -134,27 +134,66 @@
     }
   }
 
+  // ============ MODELO DE POISSON ============
+  function factorial(n) {
+    let r = 1;
+    for (let i = 2; i <= n; i++) r *= i;
+    return r;
+  }
+
+  function poisson(k, lambda) {
+    return (Math.pow(lambda, k) * Math.exp(-lambda)) / factorial(k);
+  }
+
+  function matrizMarcadores(lambdaLocal, lambdaVisita, maxGoles = 6) {
+    const matriz = [];
+    for (let i = 0; i <= maxGoles; i++) {
+      matriz[i] = [];
+      for (let j = 0; j <= maxGoles; j++) {
+        matriz[i][j] = poisson(i, lambdaLocal) * poisson(j, lambdaVisita);
+      }
+    }
+    return matriz;
+  }
+
   function generarPronosticos(statsLocal, statsVisita, nombreLocal, nombreVisita) {
-    const fuerzaLocal = statsLocal.puntosPromedio + 0.3;
-    const fuerzaVisita = statsVisita.puntosPromedio;
-    const diferencia = fuerzaLocal - fuerzaVisita;
-    const favoritoLocal = diferencia >= 0;
+    const lambdaLocal = (statsLocal.local.golesFavor + statsVisita.visita.golesContra) / 2;
+    const lambdaVisita = (statsVisita.visita.golesFavor + statsLocal.local.golesContra) / 2;
+
+    const matriz = matrizMarcadores(lambdaLocal, lambdaVisita);
+    const maxGoles = matriz.length - 1;
+
+    let pLocal = 0, pEmpate = 0, pVisita = 0;
+    for (let i = 0; i <= maxGoles; i++) {
+      for (let j = 0; j <= maxGoles; j++) {
+        if (i > j) pLocal += matriz[i][j];
+        else if (i === j) pEmpate += matriz[i][j];
+        else pVisita += matriz[i][j];
+      }
+    }
+
+    const favoritoLocal = pLocal >= pVisita;
     const nombreFavorito = favoritoLocal ? nombreLocal : nombreVisita;
-    const magnitud = Math.abs(diferencia);
 
-    const totalGolesEsperados = (statsLocal.local.golesFavor + statsVisita.visita.golesContra) / 2
-                               + (statsVisita.visita.golesFavor + statsLocal.local.golesContra) / 2;
-
-    const lineaGoles = totalGolesEsperados > 3 ? 4.5 : 3.5;
-    const probFija = Math.min(0.96, 0.80 + (lineaGoles - totalGolesEsperados) * 0.05);
+    const lineasCandidatas = [1.5, 2.5, 3.5, 4.5];
+    let mejorLinea = 3.5, mejorProb = 0;
+    lineasCandidatas.forEach(linea => {
+      let p = 0;
+      for (let i = 0; i <= maxGoles; i++) {
+        for (let j = 0; j <= maxGoles; j++) {
+          if (i + j < linea) p += matriz[i][j];
+        }
+      }
+      if (p > mejorProb) { mejorProb = p; mejorLinea = linea; }
+    });
     const fija = {
       titulo: "La Fija",
       mercado: "Total de goles",
-      seleccion: `Menos de ${lineaGoles}`,
-      probabilidad: Math.round(probFija * 100)
+      seleccion: `Menos de ${mejorLinea}`,
+      probabilidad: Math.round(mejorProb * 100)
     };
 
-    const probConFe = Math.min(0.92, 0.68 + magnitud * 0.06);
+    const probConFe = favoritoLocal ? (pLocal + pEmpate) : (pVisita + pEmpate);
     const conFe = {
       titulo: "Con Fe",
       mercado: "Doble oportunidad",
@@ -162,8 +201,8 @@
       probabilidad: Math.round(probConFe * 100)
     };
 
-    const golesFavorFavorito = favoritoLocal ? statsLocal.local.golesFavor : statsVisita.visita.golesFavor;
-    const probSonadora = Math.min(0.85, Math.max(0.15, golesFavorFavorito * 0.35));
+    const lambdaFavorito = favoritoLocal ? lambdaLocal : lambdaVisita;
+    const probSonadora = 1 - poisson(0, lambdaFavorito);
     const sonadora = {
       titulo: "La Soñadora",
       mercado: "Equipo marca",
@@ -171,7 +210,13 @@
       probabilidad: Math.round(probSonadora * 100)
     };
 
-    const probExtra = Math.min(0.70, 0.40 + magnitud * 0.07);
+    let probExtra = 0;
+    for (let i = 0; i <= maxGoles; i++) {
+      for (let j = 0; j <= maxGoles; j++) {
+        const margen = favoritoLocal ? (i - j) : (j - i);
+        if (margen >= 2) probExtra += matriz[i][j];
+      }
+    }
     const extra = {
       titulo: "Extra",
       mercado: "Hándicap asiático",
