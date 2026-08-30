@@ -556,6 +556,71 @@ body.bloqueado {
   border-color: var(--red);
 }
 
+.historial-partido {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 10px;
+}
+.historial-partido:last-child { margin-bottom: 0; }
+
+.historial-partido-header {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.historial-partido-equipos {
+  flex: 1;
+  min-width: 140px;
+  font-size: 0.86rem;
+  color: var(--text);
+}
+
+.historial-partido-marcador {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  color: var(--text-muted);
+}
+
+.historial-partido-badge {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  padding: 2px 10px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+.historial-partido-badge.todo-bien { background: var(--green-dim); color: var(--green); }
+.historial-partido-badge.parcial { background: rgba(255, 201, 51, 0.14); color: var(--gold); }
+.historial-partido-badge.todo-mal { background: #3a1414; color: var(--red); }
+
+.historial-partido-mercados {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.historial-mercado-item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.historial-mercado-item.acierto { color: var(--green); }
+.historial-mercado-item.fallo { color: var(--red); opacity: 0.85; }
+
+.historial-mercado-check {
+  font-weight: 800;
+  width: 14px;
+  flex-shrink: 0;
+  text-align: center;
+}
+
 .precision-general {
   display: flex;
   align-items: center;
