@@ -50,54 +50,215 @@ body {
   min-height: 100vh;
 }
 
-body.bloqueado {
-  overflow: hidden;
-  height: 100vh;
+:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: 2px;
 }
 
-/* ============ PANTALLA DE INICIO ============ */
-.contenedor {
-  position: relative;
-  min-height: 100vh;
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+}
+
+/* ============ NAV PRINCIPAL (app shell) ============ */
+.app-nav {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: rgba(10, 26, 18, 0.92);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--line);
+}
+
+.app-nav-fila {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 14px 20px;
   display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.app-nav-marca {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  letter-spacing: 0.02em;
+  color: var(--text);
+  flex-shrink: 0;
+}
+
+.app-nav-buscador {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-raised);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 8px 12px;
+  max-width: 320px;
+  margin-left: auto;
+  transition: border-color 0.15s ease;
+}
+
+.app-nav-buscador:focus-within {
+  border-color: var(--green);
+}
+
+.app-nav-buscador svg {
+  width: 15px;
+  height: 15px;
+  color: var(--text-dim);
+  flex-shrink: 0;
+}
+
+.app-nav-buscador input {
+  background: none;
+  border: none;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  width: 100%;
+  outline: none;
+}
+
+.app-nav-buscador input::placeholder {
+  color: var(--text-dim);
+}
+
+.app-nav-hamburguesa {
+  display: none;
   flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  width: 32px;
+  height: 32px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.app-nav-hamburguesa span {
+  display: block;
+  height: 2px;
+  background: var(--text);
+  border-radius: 2px;
+}
+
+.app-nav-tabs {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 0 20px 12px;
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.app-nav-tabs::-webkit-scrollbar { display: none; }
+
+.nav-tab {
+  appearance: none;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 0.86rem;
+  padding: 8px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.nav-tab-icono {
+  font-size: 0.9rem;
+}
+
+.nav-tab:hover {
+  color: var(--text);
+}
+
+.nav-tab.activa {
+  background: var(--green);
+  color: #06170e;
+}
+
+.contador-favoritos {
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  text-align: center;
-  padding: 32px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--gold);
+  color: #241a02;
+  font-size: 0.65rem;
+  font-weight: 800;
+}
+
+.nav-tab.activa .contador-favoritos {
+  background: #06170e;
+  color: var(--gold);
+}
+
+@media (max-width: 640px) {
+  .app-nav-hamburguesa { display: flex; }
+  .app-nav-buscador { max-width: none; }
+  .app-nav-tabs {
+    max-height: 0;
+    padding: 0 20px;
+    overflow: hidden;
+    transition: max-height 0.2s ease, padding 0.2s ease;
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .app-nav.menu-abierto .app-nav-tabs {
+    max-height: 220px;
+    padding: 4px 20px 14px;
+  }
+  .nav-tab {
+    justify-content: flex-start;
+    border-radius: 8px;
+  }
+}
+
+/* ============ HERO COMPACTO ============ */
+.hero-compacto {
+  position: relative;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 36px 20px 8px;
   overflow: hidden;
 }
 
-.contenedor::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background-image:
-    repeating-linear-gradient(
-      90deg,
-      rgba(255,255,255,0.025) 0px,
-      rgba(255,255,255,0.025) 1px,
-      transparent 1px,
-      transparent 64px
-    );
-  pointer-events: none;
-}
-
-.contenedor::after {
+.hero-compacto::after {
   content: "⚽";
   position: absolute;
-  font-size: 46vw;
+  font-size: 11rem;
   opacity: 0.035;
-  bottom: -14vw;
-  right: -8vw;
+  top: -2.5rem;
+  right: -2rem;
   line-height: 1;
   pointer-events: none;
   filter: grayscale(1);
 }
 
-.contenedor h1 {
+.hero-textos {
+  position: relative;
+  z-index: 1;
+  max-width: 54ch;
+}
+
+.hero-compacto h1 {
   font-family: var(--font-display);
-  font-size: clamp(3rem, 11vw, 6.5rem);
+  font-size: clamp(2.4rem, 7vw, 3.4rem);
   letter-spacing: 0.02em;
   margin: 0;
   line-height: 0.95;
@@ -105,66 +266,98 @@ body.bloqueado {
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  position: relative;
-  z-index: 1;
 }
 
-.contenedor p {
+.hero-compacto p {
   color: var(--text-muted);
-  font-size: 1.05rem;
-  margin: 10px 0 34px;
+  font-size: 0.95rem;
+  margin: 10px 0 26px;
   letter-spacing: 0.01em;
-  position: relative;
-  z-index: 1;
 }
 
-.boton-redireccion {
+.accesos-rapidos {
   position: relative;
   z-index: 1;
-  display: inline-flex;
-  align-items: center;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
   gap: 10px;
-  background: var(--green);
-  color: #06170e;
-  font-weight: 800;
-  text-decoration: none;
-  font-size: 1rem;
-  padding: 16px 34px;
-  border-radius: 999px;
-  letter-spacing: 0.02em;
-  box-shadow: 0 0 0 0 rgba(33, 224, 122, 0.5);
-  transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
 }
 
-.boton-redireccion::after {
-  content: "→";
-  font-size: 1.2rem;
-  transition: transform 0.18s ease;
+@media (max-width: 640px) {
+  .accesos-rapidos { grid-template-columns: 1fr; }
 }
 
-.boton-redireccion:hover {
-  background: #35ec8f;
+.acceso-rapido {
+  appearance: none;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  cursor: pointer;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+  color: var(--text);
+  font-family: var(--font-body);
+}
+
+.acceso-rapido:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 30px -6px rgba(33, 224, 122, 0.55);
+  border-color: var(--green);
 }
 
-.boton-redireccion:hover::after {
-  transform: translateX(4px);
+.acceso-rapido-icono {
+  font-size: 1.3rem;
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-raised);
+  border-radius: 9px;
 }
 
-/* ============ SECCION DE PRONOSTICOS ============ */
-.seccion-pronosticos {
+.acceso-rapido-texto {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  min-width: 0;
+}
+
+.acceso-rapido-texto strong {
+  font-size: 0.92rem;
+  color: var(--text);
+  font-weight: 700;
+}
+
+/* ============ VISTAS ============ */
+main {
   max-width: 720px;
   margin: 0 auto;
-  padding: 48px 20px 90px;
+  padding: 0 20px 40px;
 }
 
-.seccion-pronosticos h2 {
+.vista { display: none; }
+.vista.vista-activa { display: block; padding-top: 28px; }
+
+.vista h2 {
   font-family: var(--font-display);
-  font-size: clamp(2.2rem, 6vw, 3rem);
+  font-size: clamp(2rem, 5.5vw, 2.6rem);
   letter-spacing: 0.02em;
-  margin: 0 0 22px;
+  margin: 0 0 6px;
   color: var(--text);
+}
+
+.subtitulo-vista {
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  max-width: 56ch;
+  margin: 0 0 26px;
 }
 
 .pestañas-fecha {
@@ -199,7 +392,7 @@ body.bloqueado {
   color: #06170e;
 }
 
-#contenedor-partidos {
+#contenedor-partidos, #contenedor-favoritos {
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -530,10 +723,8 @@ body.bloqueado {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 6px;
+  margin-bottom: 18px;
 }
-
-.historial-header h3 { margin: 0; }
 
 .boton-reiniciar {
   appearance: none;
@@ -653,6 +844,12 @@ body.bloqueado {
   border-top: 1px dashed var(--line);
 }
 
+.bloque-combinadas.sin-borde-superior {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
 .bloque-combinadas h3 {
   font-family: var(--font-display);
   font-size: 1.8rem;
@@ -739,7 +936,7 @@ body.bloqueado {
 
 .aviso-riesgo .icono { flex-shrink: 0; font-size: 1.1rem; }
 
-/* ============ AVISO SERVIDOR DESPERTANDO ============ */
+/* ============ AVISO SERVIDOR DESPERTANDO / ESTADOS VACIOS ============ */
 .aviso-servidor {
   text-align: center;
   color: var(--text-muted);
@@ -779,11 +976,11 @@ body.bloqueado {
 }
 
 /* ===== Animacion al cambiar de pestaña ===== */
-#contenedor-partidos {
+#contenedor-partidos, #contenedor-favoritos {
   opacity: 0;
   transition: opacity 0.35s ease;
 }
-#contenedor-partidos.visible {
+#contenedor-partidos.visible, #contenedor-favoritos.visible {
   opacity: 1;
 }
 
@@ -918,9 +1115,6 @@ body.bloqueado {
   .filtro-liga-btn {
     font-size: 0.72rem;
     padding: 5px 10px;
-  }
-  .contenedor h1 {
-    font-size: 2rem;
   }
 }
 

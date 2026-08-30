@@ -34,16 +34,69 @@
     }
     </script>
 </head>
-<body class="bloqueado">
+<body>
 
-<div class="contenedor" id="inicio">
-    <h1>Bienvenido a fulbito</h1>
-    <p>full fulbitoo.</p>
-    <a href="#pronosticos" class="boton-redireccion" onclick="entrar()">entra aqui</a>
-</div>
+<header class="app-nav" id="app-nav">
+    <div class="app-nav-fila">
+        <span class="app-nav-marca">Fulbito</span>
 
-<section id="pronosticos" class="seccion-pronosticos">
-    <h2>Pronósticos de hoy</h2>
+        <button class="app-nav-hamburguesa" id="boton-menu-movil" onclick="toggleMenuMovil()" aria-label="Abrir menú">
+            <span></span><span></span><span></span>
+        </button>
+
+        <div class="app-nav-buscador">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+            <input type="search" id="input-busqueda" placeholder="Buscar equipo o liga…" oninput="onBuscar(this.value)">
+        </div>
+    </div>
+
+    <nav class="app-nav-tabs" id="app-nav-tabs">
+        <button class="nav-tab activa" data-vista="pronosticos" onclick="cambiarVista('pronosticos')">
+            <span class="nav-tab-icono">⚽</span> Pronósticos
+        </button>
+        <button class="nav-tab" data-vista="favoritos" onclick="cambiarVista('favoritos')">
+            <span class="nav-tab-icono">★</span> Favoritos
+            <span class="contador-favoritos" id="contador-favoritos" style="display:none;">0</span>
+        </button>
+        <button class="nav-tab" data-vista="analitica" onclick="cambiarVista('analitica')">
+            <span class="nav-tab-icono">◧</span> Analítica
+        </button>
+    </nav>
+</header>
+
+<section class="hero-compacto">
+    <div class="hero-textos">
+        <h1>Fulbito</h1>
+        <p>Pronósticos calculados con un modelo estadístico — Poisson + Dixon-Coles — sobre las principales ligas europeas y Brasileirão. Probabilidades reales, no promesas.</p>
+    </div>
+    <div class="accesos-rapidos">
+        <button class="acceso-rapido" onclick="cambiarVista('pronosticos')">
+            <span class="acceso-rapido-icono">⚽</span>
+            <span class="acceso-rapido-texto">
+                <strong>Pronósticos de hoy</strong>
+                Partidos analizados por el modelo
+            </span>
+        </button>
+        <button class="acceso-rapido" onclick="cambiarVista('favoritos')">
+            <span class="acceso-rapido-icono">★</span>
+            <span class="acceso-rapido-texto">
+                <strong>Favoritos</strong>
+                Tus equipos, siempre arriba
+            </span>
+        </button>
+        <button class="acceso-rapido" onclick="cambiarVista('analitica')">
+            <span class="acceso-rapido-icono">◧</span>
+            <span class="acceso-rapido-texto">
+                <strong>Analítica</strong>
+                Precisión real del modelo
+            </span>
+        </button>
+    </div>
+</section>
+
+<main>
+
+<section id="vista-pronosticos" class="vista vista-activa">
 
     <div class="pestañas-fecha">
         <button class="pestaña activa" onclick="cambiarFecha('hoy', event)">Hoy</button>
@@ -65,9 +118,23 @@
 
     <div id="bloque-combinadas"></div>
 
-    <div id="bloque-historial"></div>
-
 </section>
+
+<section id="vista-favoritos" class="vista">
+    <h2>Tus favoritos</h2>
+    <p class="subtitulo-vista">Partidos de los próximos 7 días donde juega alguno de tus equipos marcados con ★.</p>
+    <div id="contenedor-favoritos">
+        <p style="text-align:center; color:#8fa896;">Cargando...</p>
+    </div>
+</section>
+
+<section id="vista-analitica" class="vista">
+    <h2>Analítica del modelo</h2>
+    <p class="subtitulo-vista">Cómo de bien acertó Fulbito en partidos que ya terminaron, medido mercado por mercado. El modelo combina Poisson con la corrección Dixon-Coles para marcadores bajos, ajustado por localía, tabla de posiciones y cara-a-cara reciente.</p>
+    <div id="bloque-historial"></div>
+</section>
+
+</main>
 
 <footer class="pie-pagina">
     <p>Fulbito ofrece pronósticos basados en un modelo estadístico, no garantías de resultado. Ningún pronóstico asegura ganancias. Si apuestas, hazlo solo con dinero que puedas permitirte perder, y solo si eres mayor de 18 años.</p>
@@ -86,6 +153,55 @@
   let ligaSeleccionada = 'TODAS';
   let partidosDelRango = [];
 
+  // ============ VISTAS (app shell) ============
+  let vistaActual = 'pronosticos';
+  let favoritosCargadosAlMenosUnaVez = false;
+
+  function cambiarVista(vista, actualizarHash = true) {
+    vistaActual = vista;
+
+    document.querySelectorAll('.vista').forEach(sec => sec.classList.remove('vista-activa'));
+    document.getElementById(`vista-${vista}`).classList.add('vista-activa');
+
+    document.querySelectorAll('.nav-tab').forEach(btn => btn.classList.toggle('activa', btn.dataset.vista === vista));
+
+    const buscador = document.getElementById('input-busqueda');
+    buscador.style.display = vista === 'analitica' ? 'none' : '';
+    buscador.placeholder = vista === 'favoritos' ? 'Buscar en tus favoritos…' : 'Buscar equipo o liga…';
+
+    cerrarMenuMovil();
+    if (actualizarHash) history.replaceState(null, '', `#${vista}`);
+    window.scrollTo({ top: document.querySelector('main').offsetTop - 10, behavior: 'smooth' });
+
+    if (vista === 'favoritos') {
+      cargarFavoritos();
+    } else if (vista === 'analitica') {
+      actualizarHistorialConResultados().then(h => renderHistorial(calcularEstadisticasHistorial(h)));
+    }
+  }
+
+  function toggleMenuMovil() {
+    document.getElementById('app-nav').classList.toggle('menu-abierto');
+  }
+  function cerrarMenuMovil() {
+    document.getElementById('app-nav').classList.remove('menu-abierto');
+  }
+
+  // ============ BUSQUEDA ============
+  let terminoBusqueda = '';
+
+  function onBuscar(valor) {
+    terminoBusqueda = valor.trim().toLowerCase();
+    if (vistaActual === 'pronosticos') renderizarPartidosFiltrados();
+    else if (vistaActual === 'favoritos') renderizarFavoritos();
+  }
+
+  function coincideBusqueda(partido) {
+    if (!terminoBusqueda) return true;
+    const texto = `${partido.homeTeam.name} ${partido.awayTeam.name} ${partido.competition.name}`.toLowerCase();
+    return texto.includes(terminoBusqueda);
+  }
+
   // ============ FAVORITOS DE EQUIPOS ============
   const CLAVE_FAVORITOS = 'fulbito_equipos_favoritos';
 
@@ -102,6 +218,13 @@
     return leerFavoritos().includes(teamId);
   }
 
+  function actualizarContadorFavoritos() {
+    const n = leerFavoritos().length;
+    const badge = document.getElementById('contador-favoritos');
+    badge.style.display = n > 0 ? 'inline-flex' : 'none';
+    badge.textContent = n;
+  }
+
   function toggleFavorito(teamId, event) {
     event.stopPropagation();
     let favoritos = leerFavoritos();
@@ -113,7 +236,9 @@
     try {
       localStorage.setItem(CLAVE_FAVORITOS, JSON.stringify(favoritos));
     } catch (e) {}
-    renderizarPartidosFiltrados();
+    actualizarContadorFavoritos();
+    if (vistaActual === 'pronosticos') renderizarPartidosFiltrados();
+    if (vistaActual === 'favoritos') cargarFavoritos();
   }
 
   function partidoTieneFavorito(partido) {
@@ -159,11 +284,6 @@
 
   function fechaLocalDePartido(utcDateStr) {
     return formatearFecha(new Date(utcDateStr));
-  }
-
-  function entrar() {
-    document.body.classList.remove('bloqueado');
-    document.getElementById('inicio').style.display = 'none';
   }
 
   async function obtenerPartidos(fechaInicio, fechaFin) {
@@ -489,11 +609,6 @@
   }
 
   // ============ BANCO DE MERCADOS (dinamico por partido) ============
-  // En vez de forzar siempre los mismos 4 mercados, generamos un banco de
-  // ~19 mercados posibles repartidos en 7 categorias, calculamos la
-  // probabilidad real de cada uno contra la matriz de Poisson+Dixon-Coles,
-  // y elegimos los 4 con mas probabilidad sin repetir categoria.
-
   const CATEGORIAS_MERCADO = {
     resultado:   { titulo: 'Resultado',        mercado: '1X2' },
     doble:       { titulo: 'Doble Opción',     mercado: 'Doble oportunidad' },
@@ -514,9 +629,6 @@
     return s;
   }
 
-  // Dado un mercado (categoria + parametros) y un marcador i-j, dice si ese
-  // marcador cumple la seleccion. Se usa tanto para calcular probabilidades
-  // sobre la matriz como para verificar aciertos reales en el historial.
   function verificarMercado(categoria, parametros, golesLocal, golesVisita) {
     switch (categoria) {
       case 'resultado':
@@ -555,17 +667,14 @@
     const pEmpate = sumaMatriz(matriz, maxGoles, (i, j) => i === j);
     const pVisita = sumaMatriz(matriz, maxGoles, (i, j) => i < j);
 
-    // --- Resultado (1X2) ---
     candidatos.push({ categoria: 'resultado', parametros: { lado: 'local' }, seleccion: `Gana ${nombreLocal}`, probabilidad: pLocal });
     candidatos.push({ categoria: 'resultado', parametros: { lado: 'empate' }, seleccion: `Empate`, probabilidad: pEmpate });
     candidatos.push({ categoria: 'resultado', parametros: { lado: 'visita' }, seleccion: `Gana ${nombreVisita}`, probabilidad: pVisita });
 
-    // --- Doble oportunidad ---
     candidatos.push({ categoria: 'doble', parametros: { lado: '1X' }, seleccion: `${nombreLocal} o Empate (1X)`, probabilidad: pLocal + pEmpate });
     candidatos.push({ categoria: 'doble', parametros: { lado: 'X2' }, seleccion: `${nombreVisita} o Empate (X2)`, probabilidad: pVisita + pEmpate });
     candidatos.push({ categoria: 'doble', parametros: { lado: '12' }, seleccion: `${nombreLocal} o ${nombreVisita} (12)`, probabilidad: pLocal + pVisita });
 
-    // --- Total de goles (varias lineas, sobre y bajo) ---
     [1.5, 2.5, 3.5].forEach(linea => {
       const pMenos = sumaMatriz(matriz, maxGoles, (i, j) => (i + j) < linea);
       const pMas = sumaMatriz(matriz, maxGoles, (i, j) => (i + j) > linea);
@@ -573,18 +682,15 @@
       candidatos.push({ categoria: 'totalgoles', parametros: { linea, direccion: 'mas' }, seleccion: `Más de ${linea} goles`, probabilidad: pMas });
     });
 
-    // --- Ambos anotan ---
     const pBttsSi = sumaMatriz(matriz, maxGoles, (i, j) => i >= 1 && j >= 1);
     candidatos.push({ categoria: 'btts', parametros: { si: true }, seleccion: `Ambos anotan: Sí`, probabilidad: pBttsSi });
     candidatos.push({ categoria: 'btts', parametros: { si: false }, seleccion: `Ambos anotan: No`, probabilidad: 1 - pBttsSi });
 
-    // --- Equipo marca ---
     const pLocalMarca = sumaMatriz(matriz, maxGoles, (i) => i >= 1);
     const pVisitaMarca = sumaMatriz(matriz, maxGoles, (i, j) => j >= 1);
     candidatos.push({ categoria: 'equipomarca', parametros: { lado: 'local' }, seleccion: `${nombreLocal} marca`, probabilidad: pLocalMarca });
     candidatos.push({ categoria: 'equipomarca', parametros: { lado: 'visita' }, seleccion: `${nombreVisita} marca`, probabilidad: pVisitaMarca });
 
-    // --- Hándicap asiático (sobre el favorito) ---
     const favoritoLocal = pLocal >= pVisita;
     const nombreFavorito = favoritoLocal ? nombreLocal : nombreVisita;
     const ladoFavorito = favoritoLocal ? 'local' : 'visita';
@@ -593,7 +699,6 @@
     candidatos.push({ categoria: 'handicap', parametros: { lado: ladoFavorito, valor: 2 }, seleccion: `${nombreFavorito} -1 (gana por 2+)`, probabilidad: pHandicap1 });
     candidatos.push({ categoria: 'handicap', parametros: { lado: ladoFavorito, valor: 3 }, seleccion: `${nombreFavorito} -2 (gana por 3+)`, probabilidad: pHandicap2 });
 
-    // --- Marcador exacto (el mas probable de toda la matriz) ---
     let marcadorTop = { i: 0, j: 0, p: 0 };
     for (let i = 0; i <= maxGoles; i++) {
       for (let j = 0; j <= maxGoles; j++) {
@@ -611,8 +716,6 @@
     };
   }
 
-  // Ordena por probabilidad y elige los N mercados con mas señal, sin repetir
-  // categoria (asi nunca salen dos mercados de "total de goles" juntos, etc).
   function seleccionarMercados(candidatos, cantidad) {
     const ordenados = [...candidatos].sort((a, b) => b.probabilidad - a.probabilidad);
     const usadas = new Set();
@@ -654,9 +757,6 @@
       m.mercado = CATEGORIAS_MERCADO[m.categoria].mercado;
     });
 
-    // Combinadas del mismo partido: probamos todos los pares entre los 4
-    // mercados elegidos y nos quedamos con los 2 pares de mayor probabilidad
-    // conjunta real (no es solo multiplicar, se lee directo de la matriz).
     const pares = [];
     for (let a = 0; a < seleccionados.length; a++) {
       for (let b = a + 1; b < seleccionados.length; b++) {
@@ -1062,8 +1162,7 @@
 
     if (!estadisticas) {
       contenedor.innerHTML = `
-        <div class="bloque-combinadas">
-          <h3>Historial de aciertos</h3>
+        <div class="bloque-combinadas sin-borde-superior">
           <p class="subtitulo-combinadas">Todavía no hay partidos anteriores verificados en este navegador. A medida que uses la página y los partidos que viste terminen, aquí vas a ver qué tan bien acertó el modelo, con datos reales.</p>
         </div>
       `;
@@ -1101,12 +1200,11 @@
     `).join('');
 
     contenedor.innerHTML = `
-      <div class="bloque-combinadas">
+      <div class="bloque-combinadas sin-borde-superior">
         <div class="historial-header">
-          <h3>Historial de aciertos</h3>
+          <p class="subtitulo-combinadas" style="margin:0;">Basado en ${estadisticas.totalVerificados} pronósticos ya verificados en este navegador.</p>
           <button class="boton-reiniciar" onclick="reiniciarHistorial()">Reiniciar</button>
         </div>
-        <p class="subtitulo-combinadas">Basado en ${estadisticas.totalVerificados} pronósticos ya verificados en este navegador.</p>
 
         <div class="precision-general">
           <span class="precision-general-num">${estadisticas.general}%</span>
@@ -1170,8 +1268,8 @@
     if (ligaSeleccionada !== 'TODAS') {
       lista = lista.filter(p => p.competition.code === ligaSeleccionada);
     }
+    lista = lista.filter(coincideBusqueda);
 
-    // Los partidos con un equipo favorito se muestran primero
     lista = [...lista].sort((a, b) => {
       const favA = partidoTieneFavorito(a) ? 1 : 0;
       const favB = partidoTieneFavorito(b) ? 1 : 0;
@@ -1179,7 +1277,10 @@
     });
 
     if (lista.length === 0) {
-      contenedor.innerHTML = `<p style="text-align:center; color:#8fa896;">No hay partidos para mostrar con este filtro.</p>`;
+      const mensaje = terminoBusqueda
+        ? `No encontramos partidos que coincidan con "${terminoBusqueda}".`
+        : 'No hay partidos para mostrar con este filtro.';
+      contenedor.innerHTML = `<p style="text-align:center; color:#8fa896;">${mensaje}</p>`;
       requestAnimationFrame(() => contenedor.classList.add('visible'));
       document.getElementById('bloque-combinadas').innerHTML = '';
       return;
@@ -1218,7 +1319,7 @@
     renderCombinadas(seleccionesParaCombinar);
 
     const historialActualizado = await actualizarHistorialConResultados();
-    renderHistorial(calcularEstadisticasHistorial(historialActualizado));
+    if (vistaActual === 'analitica') renderHistorial(calcularEstadisticasHistorial(historialActualizado));
   }
 
   // ============ CARGA PRINCIPAL ============
@@ -1334,21 +1435,111 @@
     await renderizarPartidosFiltrados();
   }
 
+  // ============ VISTA DE FAVORITOS ============
+  let partidosFavoritosCache = [];
+
+  function tarjetaFavoritoVaciaHTML() {
+    return `
+      <div class="aviso-servidor">
+        <p><strong>Aún no sigues ningún equipo.</strong></p>
+        <p>Toca la estrella ☆ junto al nombre de un equipo, en cualquier partido de "Pronósticos", y va a aparecer aquí.</p>
+      </div>
+    `;
+  }
+
+  async function cargarFavoritos() {
+    const contenedor = document.getElementById('contenedor-favoritos');
+    const favoritos = leerFavoritos();
+
+    if (favoritos.length === 0) {
+      contenedor.innerHTML = tarjetaFavoritoVaciaHTML();
+      return;
+    }
+
+    contenedor.innerHTML = skeletonHTML();
+
+    const hoy = new Date();
+    const fin = new Date(hoy);
+    fin.setDate(fin.getDate() + 7);
+
+    const partidos = await obtenerPartidos(formatearFecha(hoy), formatearFecha(fin));
+    if (partidos.error) {
+      contenedor.innerHTML = `<p style="text-align:center; color:#ff6b6b;">Error: ${partidos.mensaje}</p>`;
+      return;
+    }
+
+    partidosFavoritosCache = partidos.filter(p =>
+      favoritos.includes(p.homeTeam.id) || favoritos.includes(p.awayTeam.id)
+    );
+
+    await renderizarFavoritos();
+  }
+
+  async function renderizarFavoritos() {
+    const contenedor = document.getElementById('contenedor-favoritos');
+    const favoritos = leerFavoritos();
+
+    if (favoritos.length === 0) {
+      contenedor.innerHTML = tarjetaFavoritoVaciaHTML();
+      return;
+    }
+
+    const lista = partidosFavoritosCache.filter(coincideBusqueda).slice(0, 8);
+
+    if (lista.length === 0) {
+      const mensaje = terminoBusqueda
+        ? `Ninguno de tus favoritos coincide con "${terminoBusqueda}".`
+        : 'Tus equipos favoritos no juegan en los próximos 7 días.';
+      contenedor.innerHTML = `<p style="text-align:center; color:#8fa896;">${mensaje}</p>`;
+      return;
+    }
+
+    contenedor.innerHTML = skeletonHTML();
+
+    let htmlFinal = '';
+    for (let idx = 0; idx < lista.length; idx++) {
+      const partido = lista[idx];
+      if (idx > 0) await esperar(700);
+
+      const codigoLiga = partido.competition.code;
+      const [statsLocal, statsVisita, h2h, tabla] = await Promise.all([
+        obtenerStatsEquipo(partido.homeTeam.id, codigoLiga),
+        obtenerStatsEquipo(partido.awayTeam.id, codigoLiga),
+        obtenerHeadToHead(partido.id),
+        obtenerTabla(codigoLiga)
+      ]);
+
+      const pronosticos = generarPronosticos(
+        statsLocal, statsVisita, partido.homeTeam.name, partido.awayTeam.name,
+        h2h, tabla, partido.homeTeam.id, partido.awayTeam.id
+      );
+
+      htmlFinal += crearTarjetaHTML(partido, pronosticos, statsLocal, statsVisita, h2h, tabla);
+      registrarPronostico(partido, pronosticos);
+    }
+
+    contenedor.innerHTML = htmlFinal;
+  }
+
+  // ============ INICIALIZACION ============
   const inputFechaPersonalizada = document.getElementById('input-fecha-personalizada');
   if (inputFechaPersonalizada) inputFechaPersonalizada.min = formatearFecha(new Date());
 
+  actualizarContadorFavoritos();
   cargarPartidos('hoy');
+
+  const hashInicial = window.location.hash.replace('#', '');
+  if (['favoritos', 'analitica'].includes(hashInicial)) {
+    cambiarVista(hashInicial, false);
+  }
 
   // Auto-actualizacion cada 3 minutos, solo si la pestaña esta visible
   setInterval(() => {
     if (document.visibilityState === 'visible') {
-      cargarPartidos(ultimaFechaCargada);
+      if (vistaActual === 'pronosticos') cargarPartidos(ultimaFechaCargada);
+      else if (vistaActual === 'favoritos') cargarFavoritos();
     }
   }, 3 * 60 * 1000);
-
-  if (window.location.hash === '#pronosticos') {
-    entrar();
-  }
 
   // ============ SERVICE WORKER (PWA / offline básico) ============
   if ('serviceWorker' in navigator) {
