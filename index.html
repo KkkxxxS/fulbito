@@ -19,6 +19,20 @@
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/x-icon" href="favicon.ico">
     <link rel="stylesheet" href="style.css">
+    <link rel="canonical" href="https://kkkxxxs.github.io/fulbito/">
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "Fulbito",
+      "url": "https://kkkxxxs.github.io/fulbito/",
+      "applicationCategory": "SportsApplication",
+      "operatingSystem": "Any",
+      "description": "Pronósticos de fútbol basados en un modelo estadístico (Poisson + Dixon-Coles) sobre las principales ligas europeas, con historial de aciertos verificado.",
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+    }
+    </script>
 </head>
 <body class="bloqueado">
 
@@ -35,6 +49,12 @@
         <button class="pestaña activa" onclick="cambiarFecha('hoy', event)">Hoy</button>
         <button class="pestaña" onclick="cambiarFecha('manana', event)">Mañana</button>
         <button class="pestaña" onclick="cambiarFecha('semana', event)">Esta semana</button>
+        <button class="pestaña" onclick="mostrarSelectorFecha(event)">Otra fecha</button>
+    </div>
+
+    <div class="selector-fecha-personalizada" id="selector-fecha-personalizada" style="display:none;">
+        <input type="date" id="input-fecha-personalizada">
+        <button onclick="aplicarFechaPersonalizada()">Ver partidos</button>
     </div>
 
     <div class="filtro-ligas" id="filtro-ligas"></div>
@@ -65,6 +85,41 @@
 
   let ligaSeleccionada = 'TODAS';
   let partidosDelRango = [];
+
+  // ============ FAVORITOS DE EQUIPOS ============
+  const CLAVE_FAVORITOS = 'fulbito_equipos_favoritos';
+
+  function leerFavoritos() {
+    try {
+      const crudo = localStorage.getItem(CLAVE_FAVORITOS);
+      return crudo ? JSON.parse(crudo) : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function esFavorito(teamId) {
+    return leerFavoritos().includes(teamId);
+  }
+
+  function toggleFavorito(teamId, event) {
+    event.stopPropagation();
+    let favoritos = leerFavoritos();
+    if (favoritos.includes(teamId)) {
+      favoritos = favoritos.filter(id => id !== teamId);
+    } else {
+      favoritos.push(teamId);
+    }
+    try {
+      localStorage.setItem(CLAVE_FAVORITOS, JSON.stringify(favoritos));
+    } catch (e) {}
+    renderizarPartidosFiltrados();
+  }
+
+  function partidoTieneFavorito(partido) {
+    const favoritos = leerFavoritos();
+    return favoritos.includes(partido.homeTeam.id) || favoritos.includes(partido.awayTeam.id);
+  }
 
   // ============ CACHE PERSISTENTE ENTRE VISITAS ============
   const DURACION_CACHE_MS = 5 * 60 * 1000;
@@ -442,7 +497,6 @@
     lambdaLocal *= factorH2H(h2h, true);
     lambdaVisita *= factorH2H(h2h, false);
 
-    // Ajuste por posicion en la tabla (equipo top vs equipo de fondo no pesan igual)
     lambdaLocal *= factorTabla(tabla, idLocal);
     lambdaVisita *= factorTabla(tabla, idVisita);
 
@@ -582,6 +636,11 @@
     return racha.map(r => `<span class="racha-punto racha-${r}">${r}</span>`).join('');
   }
 
+  function estrellaFavorito(teamId) {
+    const activa = esFavorito(teamId);
+    return `<button class="estrella-favorito ${activa ? 'activa' : ''}" onclick="toggleFavorito(${teamId}, event)" title="${activa ? 'Quitar de favoritos' : 'Marcar como favorito'}">${activa ? '★' : '☆'}</button>`;
+  }
+
   function bloqueEquipoHTML(nombre, stats, alineacion, escudoUrl, tabla, teamId) {
     const escudo = escudoUrl ? `<img class="escudo" src="${escudoUrl}" alt="" onerror="this.style.display='none'">` : '';
     return `
@@ -591,10 +650,16 @@
           <span class="equipo">${nombre}</span>
           ${iconoTendencia(stats.tendencia.direccion)}
           ${badgePosicion(tabla, teamId)}
+          ${estrellaFavorito(teamId)}
         </div>
         <div class="racha-visual">${rachaHTML(stats.tendencia.racha)}</div>
       </div>
     `;
+  }
+
+  function cuotaImplicita(probabilidad) {
+    if (!probabilidad || probabilidad <= 0) return '—';
+    return (100 / probabilidad).toFixed(2);
   }
 
   function filaMercado(datos) {
@@ -610,6 +675,7 @@
         </div>
         <p class="fila-mercado-nombre">${datos.mercado}</p>
         <p class="fila-seleccion">${datos.seleccion}</p>
+        <p class="cuota-implicita">Cuota justa: ${cuotaImplicita(datos.probabilidad)}</p>
       </div>
     `;
   }
@@ -998,6 +1064,13 @@
       lista = lista.filter(p => p.competition.code === ligaSeleccionada);
     }
 
+    // Los partidos con un equipo favorito se muestran primero
+    lista = [...lista].sort((a, b) => {
+      const favA = partidoTieneFavorito(a) ? 1 : 0;
+      const favB = partidoTieneFavorito(b) ? 1 : 0;
+      return favB - favA;
+    });
+
     if (lista.length === 0) {
       contenedor.innerHTML = `<p style="text-align:center; color:#8fa896;">No hay partidos para mostrar con este filtro.</p>`;
       requestAnimationFrame(() => contenedor.classList.add('visible'));
@@ -1110,8 +1183,40 @@
   function cambiarFecha(tipo, event) {
     document.querySelectorAll('.pestaña').forEach(btn => btn.classList.remove('activa'));
     event.target.classList.add('activa');
+    document.getElementById('selector-fecha-personalizada').style.display = 'none';
     ultimaFechaCargada = tipo;
     cargarPartidos(tipo);
+  }
+
+  function mostrarSelectorFecha(event) {
+    document.querySelectorAll('.pestaña').forEach(btn => btn.classList.remove('activa'));
+    event.target.classList.add('activa');
+    const selector = document.getElementById('selector-fecha-personalizada');
+    selector.style.display = selector.style.display === 'none' ? 'flex' : 'none';
+  }
+
+  async function aplicarFechaPersonalizada() {
+    const valor = document.getElementById('input-fecha-personalizada').value;
+    if (!valor) return;
+
+    const contenedor = document.getElementById('contenedor-partidos');
+    const contenedorCombinadas = document.getElementById('bloque-combinadas');
+    contenedor.classList.remove('visible');
+    contenedor.innerHTML = skeletonHTML();
+    contenedorCombinadas.innerHTML = '';
+
+    let partidos = await obtenerPartidos(valor, valor);
+    if (partidos.error) {
+      contenedor.innerHTML = `<p style="text-align:center; color:#ff6b6b;">Error: ${partidos.mensaje}</p>`;
+      requestAnimationFrame(() => contenedor.classList.add('visible'));
+      return;
+    }
+
+    partidos = partidos.filter(p => fechaLocalDePartido(p.utcDate) === valor);
+    partidosDelRango = partidos;
+    ligaSeleccionada = 'TODAS';
+    renderFiltroLigas();
+    await renderizarPartidosFiltrados();
   }
 
   cargarPartidos('hoy');
@@ -1125,6 +1230,13 @@
 
   if (window.location.hash === '#pronosticos') {
     entrar();
+  }
+
+  // ============ SERVICE WORKER (PWA / offline básico) ============
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').catch(e => console.warn('No se pudo registrar el service worker', e));
+    });
   }
 </script>
 
