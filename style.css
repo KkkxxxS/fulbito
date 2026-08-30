@@ -18,15 +18,21 @@
   --font-display: 'Bebas Neue', 'Arial Narrow', sans-serif;
   --font-body: 'Inter', system-ui, -apple-system, sans-serif;
 
-  /* identidad de color por mercado, tipo dashboard */
-  --m-fija: #ffc933;
-  --m-fija-ink: #241a02;
-  --m-confe: #2f74e0;
-  --m-confe-ink: #ffffff;
-  --m-sonadora: #17cfa8;
-  --m-sonadora-ink: #052420;
-  --m-extra: #ff4f9a;
-  --m-extra-ink: #2a0416;
+  /* identidad de color por categoria de mercado (banco dinamico de ~19 mercados / 7 categorias) */
+  --m-resultado: #ffc933;
+  --m-resultado-ink: #241a02;
+  --m-doble: #2f74e0;
+  --m-doble-ink: #ffffff;
+  --m-totalgoles: #17cfa8;
+  --m-totalgoles-ink: #052420;
+  --m-btts: #ff4f9a;
+  --m-btts-ink: #2a0416;
+  --m-equipomarca: #9b6bff;
+  --m-equipomarca-ink: #1c0d3d;
+  --m-handicap: #ff8a3d;
+  --m-handicap-ink: #331400;
+  --m-marcador: #4dd0ff;
+  --m-marcador-ink: #04222c;
 }
 
 * { box-sizing: border-box; }
@@ -220,7 +226,9 @@ body.bloqueado {
   position: absolute;
   top: 0; left: 0; right: 0;
   height: 3px;
-  background: linear-gradient(90deg, var(--m-fija), var(--m-confe), var(--m-sonadora), var(--m-extra));
+  background: linear-gradient(90deg,
+    var(--m-resultado), var(--m-doble), var(--m-totalgoles), var(--m-btts),
+    var(--m-equipomarca), var(--m-handicap), var(--m-marcador));
 }
 
 .encabezado-partido {
@@ -422,22 +430,34 @@ body.bloqueado {
   font-weight: 800;
 }
 
-/* colores planos por identidad de mercado */
-.mercado-fija {
-  background: var(--m-fija);
-  color: var(--m-fija-ink);
+/* colores planos por identidad de categoria de mercado */
+.mercado-resultado {
+  background: var(--m-resultado);
+  color: var(--m-resultado-ink);
 }
-.mercado-confe {
-  background: var(--m-confe);
-  color: var(--m-confe-ink);
+.mercado-doble {
+  background: var(--m-doble);
+  color: var(--m-doble-ink);
 }
-.mercado-sonadora {
-  background: var(--m-sonadora);
-  color: var(--m-sonadora-ink);
+.mercado-totalgoles {
+  background: var(--m-totalgoles);
+  color: var(--m-totalgoles-ink);
 }
-.mercado-extra {
-  background: var(--m-extra);
-  color: var(--m-extra-ink);
+.mercado-btts {
+  background: var(--m-btts);
+  color: var(--m-btts-ink);
+}
+.mercado-equipomarca {
+  background: var(--m-equipomarca);
+  color: var(--m-equipomarca-ink);
+}
+.mercado-handicap {
+  background: var(--m-handicap);
+  color: var(--m-handicap-ink);
+}
+.mercado-marcador {
+  background: var(--m-marcador);
+  color: var(--m-marcador-ink);
 }
 
 /* puntito identificador de mercado, usado en combinadas */
@@ -449,10 +469,13 @@ body.bloqueado {
   margin-right: 6px;
   flex-shrink: 0;
 }
-.punto-fija { background: var(--m-fija); }
-.punto-confe { background: var(--m-confe); }
-.punto-sonadora { background: var(--m-sonadora); }
-.punto-extra { background: var(--m-extra); }
+.punto-resultado { background: var(--m-resultado); }
+.punto-doble { background: var(--m-doble); }
+.punto-totalgoles { background: var(--m-totalgoles); }
+.punto-btts { background: var(--m-btts); }
+.punto-equipomarca { background: var(--m-equipomarca); }
+.punto-handicap { background: var(--m-handicap); }
+.punto-marcador { background: var(--m-marcador); }
 
 /* ============ COMBINACIONES DEL MISMO PARTIDO ============ */
 .combos-partido {
@@ -728,13 +751,14 @@ body.bloqueado {
   border-color: var(--green);
 }
 
-/* ===== Modo compacto / expandido ===== */
-.lista-mercados .mercado-sonadora,
-.lista-mercados .mercado-extra {
+/* ===== Modo compacto / expandido =====
+   Como los 4 mercados mostrados por partido ahora son dinamicos (7 categorias
+   posibles, se eligen las 4 con mas señal), ocultamos por posicion (3er y 4to
+   elemento) en vez de por nombre de clase de mercado. */
+.lista-mercados .fila-mercado:nth-child(n + 3) {
   display: none;
 }
-.lista-mercados.expandido .mercado-sonadora,
-.lista-mercados.expandido .mercado-extra {
+.lista-mercados.expandido .fila-mercado:nth-child(n + 3) {
   display: block;
 }
 .boton-expandir {

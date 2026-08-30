@@ -488,6 +488,144 @@
     return esLocal ? (1 + ajuste) : (1 - ajuste);
   }
 
+  // ============ BANCO DE MERCADOS (dinamico por partido) ============
+  // En vez de forzar siempre los mismos 4 mercados, generamos un banco de
+  // ~19 mercados posibles repartidos en 7 categorias, calculamos la
+  // probabilidad real de cada uno contra la matriz de Poisson+Dixon-Coles,
+  // y elegimos los 4 con mas probabilidad sin repetir categoria.
+
+  const CATEGORIAS_MERCADO = {
+    resultado:   { titulo: 'Resultado',        mercado: '1X2' },
+    doble:       { titulo: 'Doble Opción',     mercado: 'Doble oportunidad' },
+    totalgoles:  { titulo: 'Total de Goles',   mercado: 'Total de goles' },
+    btts:        { titulo: 'Ambos Anotan',     mercado: 'Ambos equipos anotan' },
+    equipomarca: { titulo: 'Equipo Marca',     mercado: 'Equipo marca' },
+    handicap:    { titulo: 'Hándicap',         mercado: 'Hándicap asiático' },
+    marcador:    { titulo: 'Marcador Exacto',  mercado: 'Resultado exacto' }
+  };
+
+  function sumaMatriz(matriz, maxGoles, condicion) {
+    let s = 0;
+    for (let i = 0; i <= maxGoles; i++) {
+      for (let j = 0; j <= maxGoles; j++) {
+        if (condicion(i, j)) s += matriz[i][j];
+      }
+    }
+    return s;
+  }
+
+  // Dado un mercado (categoria + parametros) y un marcador i-j, dice si ese
+  // marcador cumple la seleccion. Se usa tanto para calcular probabilidades
+  // sobre la matriz como para verificar aciertos reales en el historial.
+  function verificarMercado(categoria, parametros, golesLocal, golesVisita) {
+    switch (categoria) {
+      case 'resultado':
+        if (parametros.lado === 'local') return golesLocal > golesVisita;
+        if (parametros.lado === 'visita') return golesVisita > golesLocal;
+        return golesLocal === golesVisita;
+      case 'doble':
+        if (parametros.lado === '1X') return golesLocal >= golesVisita;
+        if (parametros.lado === 'X2') return golesVisita >= golesLocal;
+        return golesLocal !== golesVisita;
+      case 'totalgoles': {
+        const total = golesLocal + golesVisita;
+        return parametros.direccion === 'menos' ? total < parametros.linea : total > parametros.linea;
+      }
+      case 'btts': {
+        const ambos = golesLocal >= 1 && golesVisita >= 1;
+        return parametros.si ? ambos : !ambos;
+      }
+      case 'equipomarca':
+        return parametros.lado === 'local' ? golesLocal >= 1 : golesVisita >= 1;
+      case 'handicap': {
+        const margen = parametros.lado === 'local' ? (golesLocal - golesVisita) : (golesVisita - golesLocal);
+        return margen >= parametros.valor;
+      }
+      case 'marcador':
+        return golesLocal === parametros.gl && golesVisita === parametros.gv;
+      default:
+        return false;
+    }
+  }
+
+  function generarCandidatosMercado(matriz, maxGoles, nombreLocal, nombreVisita) {
+    const candidatos = [];
+
+    const pLocal = sumaMatriz(matriz, maxGoles, (i, j) => i > j);
+    const pEmpate = sumaMatriz(matriz, maxGoles, (i, j) => i === j);
+    const pVisita = sumaMatriz(matriz, maxGoles, (i, j) => i < j);
+
+    // --- Resultado (1X2) ---
+    candidatos.push({ categoria: 'resultado', parametros: { lado: 'local' }, seleccion: `Gana ${nombreLocal}`, probabilidad: pLocal });
+    candidatos.push({ categoria: 'resultado', parametros: { lado: 'empate' }, seleccion: `Empate`, probabilidad: pEmpate });
+    candidatos.push({ categoria: 'resultado', parametros: { lado: 'visita' }, seleccion: `Gana ${nombreVisita}`, probabilidad: pVisita });
+
+    // --- Doble oportunidad ---
+    candidatos.push({ categoria: 'doble', parametros: { lado: '1X' }, seleccion: `${nombreLocal} o Empate (1X)`, probabilidad: pLocal + pEmpate });
+    candidatos.push({ categoria: 'doble', parametros: { lado: 'X2' }, seleccion: `${nombreVisita} o Empate (X2)`, probabilidad: pVisita + pEmpate });
+    candidatos.push({ categoria: 'doble', parametros: { lado: '12' }, seleccion: `${nombreLocal} o ${nombreVisita} (12)`, probabilidad: pLocal + pVisita });
+
+    // --- Total de goles (varias lineas, sobre y bajo) ---
+    [1.5, 2.5, 3.5].forEach(linea => {
+      const pMenos = sumaMatriz(matriz, maxGoles, (i, j) => (i + j) < linea);
+      const pMas = sumaMatriz(matriz, maxGoles, (i, j) => (i + j) > linea);
+      candidatos.push({ categoria: 'totalgoles', parametros: { linea, direccion: 'menos' }, seleccion: `Menos de ${linea} goles`, probabilidad: pMenos });
+      candidatos.push({ categoria: 'totalgoles', parametros: { linea, direccion: 'mas' }, seleccion: `Más de ${linea} goles`, probabilidad: pMas });
+    });
+
+    // --- Ambos anotan ---
+    const pBttsSi = sumaMatriz(matriz, maxGoles, (i, j) => i >= 1 && j >= 1);
+    candidatos.push({ categoria: 'btts', parametros: { si: true }, seleccion: `Ambos anotan: Sí`, probabilidad: pBttsSi });
+    candidatos.push({ categoria: 'btts', parametros: { si: false }, seleccion: `Ambos anotan: No`, probabilidad: 1 - pBttsSi });
+
+    // --- Equipo marca ---
+    const pLocalMarca = sumaMatriz(matriz, maxGoles, (i) => i >= 1);
+    const pVisitaMarca = sumaMatriz(matriz, maxGoles, (i, j) => j >= 1);
+    candidatos.push({ categoria: 'equipomarca', parametros: { lado: 'local' }, seleccion: `${nombreLocal} marca`, probabilidad: pLocalMarca });
+    candidatos.push({ categoria: 'equipomarca', parametros: { lado: 'visita' }, seleccion: `${nombreVisita} marca`, probabilidad: pVisitaMarca });
+
+    // --- Hándicap asiático (sobre el favorito) ---
+    const favoritoLocal = pLocal >= pVisita;
+    const nombreFavorito = favoritoLocal ? nombreLocal : nombreVisita;
+    const ladoFavorito = favoritoLocal ? 'local' : 'visita';
+    const pHandicap1 = sumaMatriz(matriz, maxGoles, (i, j) => (favoritoLocal ? (i - j) : (j - i)) >= 2);
+    const pHandicap2 = sumaMatriz(matriz, maxGoles, (i, j) => (favoritoLocal ? (i - j) : (j - i)) >= 3);
+    candidatos.push({ categoria: 'handicap', parametros: { lado: ladoFavorito, valor: 2 }, seleccion: `${nombreFavorito} -1 (gana por 2+)`, probabilidad: pHandicap1 });
+    candidatos.push({ categoria: 'handicap', parametros: { lado: ladoFavorito, valor: 3 }, seleccion: `${nombreFavorito} -2 (gana por 3+)`, probabilidad: pHandicap2 });
+
+    // --- Marcador exacto (el mas probable de toda la matriz) ---
+    let marcadorTop = { i: 0, j: 0, p: 0 };
+    for (let i = 0; i <= maxGoles; i++) {
+      for (let j = 0; j <= maxGoles; j++) {
+        if (matriz[i][j] > marcadorTop.p) marcadorTop = { i, j, p: matriz[i][j] };
+      }
+    }
+    candidatos.push({ categoria: 'marcador', parametros: { gl: marcadorTop.i, gv: marcadorTop.j }, seleccion: `${marcadorTop.i}-${marcadorTop.j}`, probabilidad: marcadorTop.p });
+
+    return {
+      candidatos,
+      marcadorProbable: `${marcadorTop.i}-${marcadorTop.j}`,
+      probMarcador: marcadorTop.p,
+      favoritoLocal,
+      nombreFavorito
+    };
+  }
+
+  // Ordena por probabilidad y elige los N mercados con mas señal, sin repetir
+  // categoria (asi nunca salen dos mercados de "total de goles" juntos, etc).
+  function seleccionarMercados(candidatos, cantidad) {
+    const ordenados = [...candidatos].sort((a, b) => b.probabilidad - a.probabilidad);
+    const usadas = new Set();
+    const seleccionados = [];
+    for (const c of ordenados) {
+      if (usadas.has(c.categoria)) continue;
+      usadas.add(c.categoria);
+      seleccionados.push(c);
+      if (seleccionados.length >= cantidad) break;
+    }
+    return seleccionados;
+  }
+
   function generarPronosticos(statsLocal, statsVisita, nombreLocal, nombreVisita, h2h, tabla, idLocal, idVisita) {
     let lambdaLocal = (statsLocal.local.golesFavor + statsVisita.visita.golesContra) / 2;
     let lambdaVisita = (statsVisita.visita.golesFavor + statsLocal.local.golesContra) / 2;
@@ -506,98 +644,48 @@
     const matriz = matrizMarcadores(lambdaLocal, lambdaVisita);
     const maxGoles = matriz.length - 1;
 
-    let pLocal = 0, pEmpate = 0, pVisita = 0;
-    let marcadorTop = { i: 0, j: 0, p: 0 };
-    for (let i = 0; i <= maxGoles; i++) {
-      for (let j = 0; j <= maxGoles; j++) {
-        if (i > j) pLocal += matriz[i][j];
-        else if (i === j) pEmpate += matriz[i][j];
-        else pVisita += matriz[i][j];
+    const { candidatos, marcadorProbable, probMarcador, favoritoLocal, nombreFavorito } =
+      generarCandidatosMercado(matriz, maxGoles, nombreLocal, nombreVisita);
 
-        if (matriz[i][j] > marcadorTop.p) marcadorTop = { i, j, p: matriz[i][j] };
-      }
-    }
-
-    const favoritoLocal = pLocal >= pVisita;
-    const nombreFavorito = favoritoLocal ? nombreLocal : nombreVisita;
-
-    const lineasCandidatas = [1.5, 2.5, 3.5, 4.5];
-    let mejorLinea = 3.5, mejorProb = 0;
-    lineasCandidatas.forEach(linea => {
-      let p = 0;
-      for (let i = 0; i <= maxGoles; i++) {
-        for (let j = 0; j <= maxGoles; j++) {
-          if (i + j < linea) p += matriz[i][j];
-        }
-      }
-      if (p > mejorProb) { mejorProb = p; mejorLinea = linea; }
-    });
-    const fija = {
-      tipo: "fija", titulo: "La Fija", mercado: "Total de goles",
-      seleccion: `Menos de ${mejorLinea}`, probabilidad: Math.round(mejorProb * 100)
-    };
-
-    const probConFe = favoritoLocal ? (pLocal + pEmpate) : (pVisita + pEmpate);
-    const conFe = {
-      tipo: "confe", titulo: "Con Fe", mercado: "Doble oportunidad",
-      seleccion: `${nombreFavorito} o Empate (${favoritoLocal ? '1X' : 'X2'})`,
-      probabilidad: Math.round(probConFe * 100)
-    };
-
-    const lambdaFavorito = favoritoLocal ? lambdaLocal : lambdaVisita;
-    const probSonadora = 1 - poisson(0, lambdaFavorito);
-    const sonadora = {
-      tipo: "sonadora", titulo: "La Soñadora", mercado: "Equipo marca",
-      seleccion: `${nombreFavorito} marca`, probabilidad: Math.round(probSonadora * 100)
-    };
-
-    let probExtra = 0;
-    for (let i = 0; i <= maxGoles; i++) {
-      for (let j = 0; j <= maxGoles; j++) {
-        const margen = favoritoLocal ? (i - j) : (j - i);
-        if (margen >= 2) probExtra += matriz[i][j];
-      }
-    }
-    const extra = {
-      tipo: "extra", titulo: "Extra", mercado: "Hándicap asiático",
-      seleccion: `${nombreFavorito} -1`, probabilidad: Math.round(probExtra * 100)
-    };
-
-    const marcadorProbable = `${marcadorTop.i}-${marcadorTop.j}`;
-
-    function probabilidadConjunta(condiciones) {
-      let p = 0;
-      for (let i = 0; i <= maxGoles; i++) {
-        for (let j = 0; j <= maxGoles; j++) {
-          if (condiciones.every(cond => cond(i, j))) p += matriz[i][j];
-        }
-      }
-      return p;
-    }
-
-    const esConFe = (i, j) => favoritoLocal ? (i >= j) : (j >= i);
-    const esFija = (i, j) => (i + j) < mejorLinea;
-    const esSonadora = (i, j) => favoritoLocal ? i >= 1 : j >= 1;
-
-    const combosPartido = [];
-    const probA = probabilidadConjunta([esConFe, esFija]);
-    combosPartido.push({
-      titulo: "Combinada segura", tipos: ["confe", "fija"],
-      partes: [conFe.seleccion, fija.seleccion], probabilidad: Math.round(probA * 100)
+    const seleccionados = seleccionarMercados(candidatos, 4);
+    seleccionados.forEach(m => {
+      m.tipo = m.categoria;
+      m.titulo = CATEGORIAS_MERCADO[m.categoria].titulo;
+      m.mercado = CATEGORIAS_MERCADO[m.categoria].mercado;
     });
 
-    const probB = probabilidadConjunta([esSonadora, esConFe]);
-    combosPartido.push({
-      titulo: "Combinada con gol", tipos: ["sonadora", "confe"],
-      partes: [sonadora.seleccion, conFe.seleccion], probabilidad: Math.round(probB * 100)
-    });
+    // Combinadas del mismo partido: probamos todos los pares entre los 4
+    // mercados elegidos y nos quedamos con los 2 pares de mayor probabilidad
+    // conjunta real (no es solo multiplicar, se lee directo de la matriz).
+    const pares = [];
+    for (let a = 0; a < seleccionados.length; a++) {
+      for (let b = a + 1; b < seleccionados.length; b++) {
+        const m1 = seleccionados[a], m2 = seleccionados[b];
+        const pConjunta = sumaMatriz(matriz, maxGoles, (i, j) =>
+          verificarMercado(m1.categoria, m1.parametros, i, j) &&
+          verificarMercado(m2.categoria, m2.parametros, i, j)
+        );
+        pares.push({
+          tipos: [m1.categoria, m2.categoria],
+          partes: [m1.seleccion, m2.seleccion],
+          probabilidad: Math.round(pConjunta * 100)
+        });
+      }
+    }
+    pares.sort((a, b) => b.probabilidad - a.probabilidad);
+    const combosPartido = pares.slice(0, 2).map((p, idx) => ({
+      titulo: idx === 0 ? 'Combinada segura' : 'Combinada extra',
+      tipos: p.tipos, partes: p.partes, probabilidad: p.probabilidad
+    }));
 
     const partidosMin = Math.min(statsLocal.partidosJugados ?? 0, statsVisita.partidosJugados ?? 0);
     const pocaData = partidosMin < PARTIDOS_MINIMOS_CONFIABLES;
 
+    seleccionados.forEach(m => { m.probabilidad = Math.round(m.probabilidad * 100); });
+
     return {
-      fija, conFe, sonadora, extra,
-      marcadorProbable, probMarcador: Math.round(marcadorTop.p * 100),
+      seleccionados,
+      marcadorProbable, probMarcador: Math.round(probMarcador * 100),
       combosPartido, partidosMin, pocaData,
       favoritoLocal, nombreFavorito,
       parametrosModelo: {
@@ -611,10 +699,13 @@
 
   // ============ ICONOS POR MERCADO ============
   const ICONOS_MERCADO = {
-    fija: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="0.6" fill="currentColor"/></svg>',
-    confe: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 5v6c0 5 3.4 8.5 8 11 4.6-2.5 8-6 8-11V5l-8-3Z"/><path d="m9 12 2 2 4-4"/></svg>',
-    sonadora: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.5 15 9l7 1-5.2 4.9L18.2 22 12 18.3 5.8 22l1.4-7.1L2 10l7-1 3-6.5Z"/></svg>',
-    extra: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z"/></svg>'
+    resultado: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="0.6" fill="currentColor"/></svg>',
+    doble: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 5v6c0 5 3.4 8.5 8 11 4.6-2.5 8-6 8-11V5l-8-3Z"/><path d="m9 12 2 2 4-4"/></svg>',
+    totalgoles: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10"/><path d="M12 20V4"/><path d="M20 20v-6"/></svg>',
+    btts: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7 3 11l4 4"/><path d="M3 11h12"/><path d="m17 17 4-4-4-4"/><path d="M21 13H9"/></svg>',
+    equipomarca: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.5 15 9l7 1-5.2 4.9L18.2 22 12 18.3 5.8 22l1.4-7.1L2 10l7-1 3-6.5Z"/></svg>',
+    handicap: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z"/></svg>',
+    marcador: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg>'
   };
 
   function iconoMercado(tipo) {
@@ -718,10 +809,7 @@
         ${pronosticos.pocaData ? `<p class="aviso-datos">⚠ Datos limitados (${pronosticos.partidosMin} partidos analizados) · pronóstico menos confiable</p>` : ''}
 
         <div class="lista-mercados" id="mercados-${partido.id}">
-          ${filaMercado(pronosticos.fija)}
-          ${filaMercado(pronosticos.conFe)}
-          ${filaMercado(pronosticos.sonadora)}
-          ${filaMercado(pronosticos.extra)}
+          ${pronosticos.seleccionados.map(filaMercado).join('')}
         </div>
         <button class="boton-expandir" onclick="toggleMercados(${partido.id})">Ver más mercados</button>
 
@@ -742,12 +830,11 @@
   }
 
   function mejorSeleccionDePartido(partido, pronosticos) {
-    const opciones = [pronosticos.fija, pronosticos.conFe, pronosticos.sonadora, pronosticos.extra];
-    let mejor = opciones[0];
-    opciones.forEach(op => { if (op.probabilidad > mejor.probabilidad) mejor = op; });
+    let mejor = pronosticos.seleccionados[0];
+    pronosticos.seleccionados.forEach(op => { if (op.probabilidad > mejor.probabilidad) mejor = op; });
     return {
       equipos: `${partido.homeTeam.name} vs ${partido.awayTeam.name}`,
-      tipo: mejor.tipo, mercado: mejor.mercado, seleccion: mejor.seleccion, probabilidad: mejor.probabilidad
+      tipo: mejor.categoria, mercado: mejor.mercado, seleccion: mejor.seleccion, probabilidad: mejor.probabilidad
     };
   }
 
@@ -871,10 +958,11 @@
     historial.push({
       partidoId: partido.id, local: partido.homeTeam.name, visita: partido.awayTeam.name,
       fecha: partido.utcDate, liga: partido.competition.name,
-      seleccionFija: pronosticos.fija.seleccion, seleccionConFe: pronosticos.conFe.seleccion,
-      seleccionSonadora: pronosticos.sonadora.seleccion, seleccionExtra: pronosticos.extra.seleccion,
+      mercados: pronosticos.seleccionados.map(m => ({
+        categoria: m.categoria, parametros: m.parametros,
+        seleccion: m.seleccion, probabilidad: m.probabilidad
+      })),
       favoritoLocal: pronosticos.favoritoLocal, nombreFavorito: pronosticos.nombreFavorito,
-      lineaGoles: parseFloat(pronosticos.fija.seleccion.replace('Menos de ', '')),
       parametrosModelo: pronosticos.parametrosModelo,
       verificado: false
     });
@@ -882,17 +970,11 @@
     guardarHistorial(historial);
   }
 
-  function evaluarPronostico(registro, marcadorLocal, marcadorVisita) {
-    const totalGoles = marcadorLocal + marcadorVisita;
-    const golesFavorito = registro.favoritoLocal ? marcadorLocal : marcadorVisita;
-    const golesRivalFavorito = registro.favoritoLocal ? marcadorVisita : marcadorLocal;
-
-    return {
-      aciertoFija: totalGoles < registro.lineaGoles,
-      aciertoConFe: registro.favoritoLocal ? (marcadorLocal >= marcadorVisita) : (marcadorVisita >= marcadorLocal),
-      aciertoSonadora: golesFavorito >= 1,
-      aciertoExtra: (golesFavorito - golesRivalFavorito) >= 2
-    };
+  function evaluarMercadosPronostico(mercados, marcadorLocal, marcadorVisita) {
+    return mercados.map(m => ({
+      ...m,
+      acierto: verificarMercado(m.categoria, m.parametros, marcadorLocal, marcadorVisita)
+    }));
   }
 
   async function actualizarHistorialConResultados() {
@@ -919,11 +1001,10 @@
         const partido = mapaResultados[registro.partidoId];
         if (!partido || !partido.score || partido.score.fullTime.home === null) return;
 
-        const evaluacion = evaluarPronostico(registro, partido.score.fullTime.home, partido.score.fullTime.away);
-        Object.assign(registro, evaluacion, {
-          verificado: true,
-          marcadorFinal: `${partido.score.fullTime.home}-${partido.score.fullTime.away}`
-        });
+        const gl = partido.score.fullTime.home, gv = partido.score.fullTime.away;
+        registro.mercados = evaluarMercadosPronostico(registro.mercados, gl, gv);
+        registro.verificado = true;
+        registro.marcadorFinal = `${gl}-${gv}`;
         cambios = true;
       });
 
@@ -939,25 +1020,31 @@
     const verificados = historial.filter(h => h.verificado);
     if (verificados.length === 0) return null;
 
-    function pct(campo) {
-      const aciertos = verificados.filter(h => h[campo]).length;
-      return Math.round((aciertos / verificados.length) * 100);
-    }
-
-    const camposMercado = ['aciertoFija', 'aciertoConFe', 'aciertoSonadora', 'aciertoExtra'];
     let totalAciertos = 0, totalEvaluaciones = 0;
+    const porCategoria = {};
+
     verificados.forEach(h => {
-      camposMercado.forEach(campo => {
+      h.mercados.forEach(m => {
         totalEvaluaciones++;
-        if (h[campo]) totalAciertos++;
+        if (m.acierto) totalAciertos++;
+        if (!porCategoria[m.categoria]) porCategoria[m.categoria] = { aciertos: 0, total: 0 };
+        porCategoria[m.categoria].total++;
+        if (m.acierto) porCategoria[m.categoria].aciertos++;
       });
     });
+
     const general = totalEvaluaciones > 0 ? Math.round((totalAciertos / totalEvaluaciones) * 100) : 0;
 
+    const categorias = Object.keys(porCategoria)
+      .map(cat => ({
+        categoria: cat,
+        titulo: CATEGORIAS_MERCADO[cat]?.titulo || cat,
+        porcentaje: Math.round((porCategoria[cat].aciertos / porCategoria[cat].total) * 100)
+      }))
+      .sort((a, b) => b.porcentaje - a.porcentaje);
+
     return {
-      totalVerificados: verificados.length, general,
-      fija: pct('aciertoFija'), conFe: pct('aciertoConFe'),
-      sonadora: pct('aciertoSonadora'), extra: pct('aciertoExtra'),
+      totalVerificados: verificados.length, general, categorias,
       ultimos: verificados.slice(-8).reverse()
     };
   }
@@ -983,11 +1070,18 @@
       return;
     }
 
-    const filasUltimos = estadisticas.ultimos.map(h => `
+    const filasUltimos = estadisticas.ultimos.map(h => {
+      const aciertos = h.mercados.filter(m => m.acierto).length;
+      return `
       <div class="pierna-combinada">
-        <span class="num">${h.aciertoConFe ? '✓' : '✕'}</span>
-        <span class="detalle"><strong>${h.local} vs ${h.visita}</strong><br>Resultado: ${h.marcadorFinal} · Favorito: ${h.nombreFavorito}</span>
+        <span class="num">${aciertos}/${h.mercados.length}</span>
+        <span class="detalle"><strong>${h.local} vs ${h.visita}</strong><br>Resultado: ${h.marcadorFinal}</span>
       </div>
+    `;
+    }).join('');
+
+    const filasCategorias = estadisticas.categorias.map(c => `
+      <div class="fila-mercado mercado-${c.categoria}"><span class="fila-titulo">${c.titulo}</span><span class="fila-porcentaje">${c.porcentaje}%</span><p class="fila-mercado-nombre">acierto real</p></div>
     `).join('');
 
     contenedor.innerHTML = `
@@ -1000,14 +1094,11 @@
 
         <div class="precision-general">
           <span class="precision-general-num">${estadisticas.general}%</span>
-          <span class="precision-general-label">Precisión general del modelo<br>(promedio de los 4 mercados combinados)</span>
+          <span class="precision-general-label">Precisión general del modelo<br>(promedio de todos los mercados usados)</span>
         </div>
 
         <div class="lista-mercados expandido">
-          <div class="fila-mercado mercado-fija"><span class="fila-titulo">La Fija</span><span class="fila-porcentaje">${estadisticas.fija}%</span><p class="fila-mercado-nombre">acierto real</p></div>
-          <div class="fila-mercado mercado-confe"><span class="fila-titulo">Con Fe</span><span class="fila-porcentaje">${estadisticas.conFe}%</span><p class="fila-mercado-nombre">acierto real</p></div>
-          <div class="fila-mercado mercado-sonadora"><span class="fila-titulo">La Soñadora</span><span class="fila-porcentaje">${estadisticas.sonadora}%</span><p class="fila-mercado-nombre">acierto real</p></div>
-          <div class="fila-mercado mercado-extra"><span class="fila-titulo">Extra</span><span class="fila-porcentaje">${estadisticas.extra}%</span><p class="fila-mercado-nombre">acierto real</p></div>
+          ${filasCategorias}
         </div>
 
         <div class="tarjeta-combinada" style="margin-top:16px;">
