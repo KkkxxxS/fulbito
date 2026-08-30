@@ -779,4 +779,46 @@ body.bloqueado {
   border-radius: 8px;
   padding: 2px 6px;
   margin-left: 6px;
+}/* ===== Boton compartir combinada ===== */
+.boton-compartir {
+  display: block;
+  width: 100%;
+  margin-top: 12px;
+  padding: 8px;
+  background-color: #2ecc71;
+  color: #0a1a12;
+  border: none;
+  border-radius: 8px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+.boton-compartir:hover {
+  background-color: #27ae60;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 600px) {
+  .tarjeta-partido, .skeleton-tarjeta, .bloque-combinadas {
+    max-width: 100%;
+    margin-left: 12px;
+    margin-right: 12px;
+    padding: 16px;
+  }
+  .encabezado-partido {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .escudo {
+    width: 24px;
+    height: 24px;
+  }
+  .filtro-liga-btn {
+    font-size: 0.72rem;
+    padding: 5px 10px;
+  }
+  .contenedor h1 {
+    font-size: 2rem;
+  }
 }

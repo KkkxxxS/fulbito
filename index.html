@@ -56,10 +56,11 @@
 <script>
   // ============ CONFIGURACION ============
   const BACKEND_URL = "https://fulbito-forh.onrender.com";
-  const COMPETICIONES = "PL,PD,BL1,SA,FL1,CL";
+  const COMPETICIONES = "PL,PD,BL1,SA,FL1,CL,DED,ELC,BSA";
   const NOMBRES_LIGA = {
     PL: "Premier League", PD: "La Liga", BL1: "Bundesliga",
-    SA: "Serie A", FL1: "Ligue 1", CL: "Champions League"
+    SA: "Serie A", FL1: "Ligue 1", CL: "Champions League",
+    DED: "Eredivisie", ELC: "Championship", BSA: "Brasileirão"
   };
 
   let ligaSeleccionada = 'TODAS';
@@ -192,7 +193,8 @@
 
   // ============ PROMEDIO DE GOLES POR LIGA ============
   const PROMEDIO_GOLES_POR_LIGA = {
-    PL: 1.45, PD: 1.35, BL1: 1.55, SA: 1.30, FL1: 1.40, CL: 1.40, DEFAULT: 1.40
+    PL: 1.45, PD: 1.35, BL1: 1.55, SA: 1.30, FL1: 1.40, CL: 1.40,
+    DED: 1.60, ELC: 1.30, BSA: 1.25, DEFAULT: 1.40
   };
 
   function promedioLiga(codigoLiga) {
@@ -543,7 +545,13 @@
       fija, conFe, sonadora, extra,
       marcadorProbable, probMarcador: Math.round(marcadorTop.p * 100),
       combosPartido, partidosMin, pocaData,
-      favoritoLocal, nombreFavorito
+      favoritoLocal, nombreFavorito,
+      parametrosModelo: {
+        lambdaLocal: Math.round(lambdaLocal * 1000) / 1000,
+        lambdaVisita: Math.round(lambdaVisita * 1000) / 1000,
+        rhoDixonColes: RHO_DIXON_COLES,
+        factorLocalia: FACTOR_LOCALIA
+      }
     };
   }
 
@@ -683,7 +691,34 @@
     return { piernas, probabilidad: Math.round(probCombinada * 100 * 10) / 10 };
   }
 
-  function tarjetaCombinadaHTML(etiqueta, combinada) {
+  function textoParaCompartir(etiqueta, combinada) {
+    const lineas = combinada.piernas.map((p, idx) => `${idx + 1}. ${p.equipos} — ${p.mercado}: ${p.seleccion} (${p.probabilidad}%)`);
+    return `${etiqueta} - Fulbito\nProbabilidad combinada: ${combinada.probabilidad}%\n\n${lineas.join('\n')}\n\nfulbito.github.io`;
+  }
+
+  async function compartirCombinada(boton, etiqueta, indice) {
+    const combinada = window.__combinadasActuales?.[indice];
+    if (!combinada) return;
+    const texto = textoParaCompartir(etiqueta, combinada);
+
+    if (navigator.share) {
+      try {
+        await navigator.share({ text: texto });
+        return;
+      } catch (e) { /* el usuario cancelo, no hacemos nada */ }
+    }
+
+    try {
+      await navigator.clipboard.writeText(texto);
+      const original = boton.textContent;
+      boton.textContent = 'Copiado ✓';
+      setTimeout(() => { boton.textContent = original; }, 1800);
+    } catch (e) {
+      console.warn("No se pudo copiar", e);
+    }
+  }
+
+  function tarjetaCombinadaHTML(etiqueta, combinada, indice) {
     const piernasHTML = combinada.piernas.map((p, idx) => `
       <div class="pierna-combinada">
         <span class="num">${idx + 1}</span>
@@ -700,6 +735,7 @@
           <span class="prob-combinada" style="color:${combinada.probabilidad >= 30 ? 'var(--green)' : 'var(--gold)'}">${combinada.probabilidad}%</span>
         </div>
         ${piernasHTML}
+        <button class="boton-compartir" onclick="compartirCombinada(this, '${etiqueta}', ${indice})">Compartir</button>
       </div>
     `;
   }
@@ -708,10 +744,12 @@
     const contenedor = document.getElementById('bloque-combinadas');
     if (listaSelecciones.length < 2) {
       contenedor.innerHTML = '';
+      window.__combinadasActuales = [];
       return;
     }
 
     const ordenadas = [...listaSelecciones].sort((a, b) => b.probabilidad - a.probabilidad);
+    window.__combinadasActuales = [];
 
     let html = `
       <div class="bloque-combinadas">
@@ -720,11 +758,13 @@
     `;
 
     const doble = armarCombinada(ordenadas.slice(0, 2));
-    html += tarjetaCombinadaHTML('Combinada doble', doble);
+    window.__combinadasActuales.push(doble);
+    html += tarjetaCombinadaHTML('Combinada doble', doble, window.__combinadasActuales.length - 1);
 
     if (ordenadas.length >= 3) {
       const triple = armarCombinada(ordenadas.slice(0, 3));
-      html += tarjetaCombinadaHTML('Combinada triple', triple);
+      window.__combinadasActuales.push(triple);
+      html += tarjetaCombinadaHTML('Combinada triple', triple, window.__combinadasActuales.length - 1);
     }
 
     html += `
@@ -769,6 +809,7 @@
       seleccionSonadora: pronosticos.sonadora.seleccion, seleccionExtra: pronosticos.extra.seleccion,
       favoritoLocal: pronosticos.favoritoLocal, nombreFavorito: pronosticos.nombreFavorito,
       lineaGoles: parseFloat(pronosticos.fija.seleccion.replace('Menos de ', '')),
+      parametrosModelo: pronosticos.parametrosModelo,
       verificado: false
     });
 
@@ -1064,13 +1105,23 @@
     await renderizarPartidosFiltrados();
   }
 
+  let ultimaFechaCargada = 'hoy';
+
   function cambiarFecha(tipo, event) {
     document.querySelectorAll('.pestaña').forEach(btn => btn.classList.remove('activa'));
     event.target.classList.add('activa');
+    ultimaFechaCargada = tipo;
     cargarPartidos(tipo);
   }
 
   cargarPartidos('hoy');
+
+  // Auto-actualizacion cada 3 minutos, solo si la pestaña esta visible
+  setInterval(() => {
+    if (document.visibilityState === 'visible') {
+      cargarPartidos(ultimaFechaCargada);
+    }
+  }, 3 * 60 * 1000);
 
   if (window.location.hash === '#pronosticos') {
     entrar();
