@@ -679,7 +679,9 @@ body.bloqueado {
   line-height: 1.6;
   text-align: center;
   margin: 20px 0 0;
-}/* ===== Escudos de equipos ===== */
+}
+
+/* ===== Escudos de equipos ===== */
 .escudo {
   width: 32px;
   height: 32px;
@@ -706,9 +708,9 @@ body.bloqueado {
   margin-bottom: 20px;
 }
 .filtro-liga-btn {
-  background-color: #1a2332;
-  color: #8fa896;
-  border: 1px solid #2a3548;
+  background-color: var(--bg-raised);
+  color: var(--text-muted);
+  border: 1px solid var(--line);
   padding: 6px 14px;
   border-radius: 16px;
   cursor: pointer;
@@ -717,12 +719,13 @@ body.bloqueado {
   transition: all 0.2s ease;
 }
 .filtro-liga-btn:hover {
-  border-color: #2ecc71;
+  border-color: var(--green);
+  color: var(--text);
 }
 .filtro-liga-btn.activa {
-  background-color: #2ecc71;
-  color: #0a1a12;
-  border-color: #2ecc71;
+  background-color: var(--green);
+  color: #06170e;
+  border-color: var(--green);
 }
 
 /* ===== Modo compacto / expandido ===== */
@@ -740,27 +743,28 @@ body.bloqueado {
   margin-top: 10px;
   padding: 8px;
   background: none;
-  border: 1px dashed #2a3548;
-  color: #8fa896;
+  border: 1px dashed var(--line);
+  color: var(--text-muted);
   border-radius: 8px;
   cursor: pointer;
   font-size: 0.85rem;
 }
 .boton-expandir:hover {
-  border-color: #2ecc71;
-  color: #2ecc71;
+  border-color: var(--green);
+  color: var(--green);
 }
 
 /* ===== Skeleton loader ===== */
 .skeleton-tarjeta {
-  background-color: #1c1c1c;
+  background-color: var(--card);
+  border: 1px solid var(--card-border);
   border-radius: 12px;
   padding: 24px;
   max-width: 500px;
   margin: 0 auto 30px;
 }
 .skeleton-linea {
-  background: linear-gradient(90deg, #1a2332 25%, #263248 50%, #1a2332 75%);
+  background: linear-gradient(90deg, var(--bg-raised) 25%, var(--card-border) 50%, var(--bg-raised) 75%);
   background-size: 200% 100%;
   animation: skeleton-pulso 1.4s infinite;
   border-radius: 6px;
@@ -774,18 +778,20 @@ body.bloqueado {
 /* ===== Indicador de fuerza por tabla de posiciones ===== */
 .badge-posicion {
   font-size: 0.7rem;
-  color: #8fa896;
-  background-color: #1a2332;
+  color: var(--text-muted);
+  background-color: var(--bg-raised);
   border-radius: 8px;
   padding: 2px 6px;
   margin-left: 6px;
-}/* ===== Boton compartir combinada ===== */
+}
+
+/* ===== Boton compartir combinada ===== */
 .boton-compartir {
   display: block;
   width: 100%;
   margin-top: 12px;
   padding: 8px;
-  background-color: #2ecc71;
+  background-color: var(--green);
   color: #0a1a12;
   border: none;
   border-radius: 8px;
@@ -794,7 +800,7 @@ body.bloqueado {
   transition: background-color 0.2s ease;
 }
 .boton-compartir:hover {
-  background-color: #27ae60;
+  background-color: #35ec8f;
 }
 
 /* ===== Responsive ===== */
@@ -806,9 +812,15 @@ body.bloqueado {
     padding: 16px;
   }
   .encabezado-partido {
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: 8px;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: start;
+    flex-wrap: unset;
+    gap: 6px;
+  }
+  .encabezado-partido .equipo {
+    font-size: 0.95rem;
+    line-height: 1.15;
   }
   .escudo {
     width: 24px;
