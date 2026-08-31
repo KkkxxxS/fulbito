@@ -94,6 +94,33 @@
     </div>
 </section>
 
+<section class="como-funciona">
+    <p class="como-funciona-eyebrow">Cómo funciona Fulbito</p>
+    <div class="como-funciona-pasos">
+        <div class="como-funciona-paso">
+            <span class="como-funciona-num">01</span>
+            <div>
+                <strong>Datos</strong>
+                <p>Últimos partidos, tabla de posiciones y cara-a-cara de football-data.org, con más peso a lo reciente.</p>
+            </div>
+        </div>
+        <div class="como-funciona-paso">
+            <span class="como-funciona-num">02</span>
+            <div>
+                <strong>Modelo</strong>
+                <p>Poisson + corrección Dixon-Coles calcula la probabilidad real de ~19 mercados posibles por partido.</p>
+            </div>
+        </div>
+        <div class="como-funciona-paso">
+            <span class="como-funciona-num">03</span>
+            <div>
+                <strong>Auto-calibración</strong>
+                <p>Cada pronóstico verificado ajusta el modelo solo, comparando lo predicho contra lo que pasó de verdad.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
 <main>
 
 <section id="vista-pronosticos" class="vista vista-activa">
@@ -1249,11 +1276,15 @@
     if (pendientes.length === 0) return leerHistorial();
 
     const hoy = new Date();
-    const hace10dias = new Date(hoy);
-    hace10dias.setDate(hace10dias.getDate() - 10);
+    const fechasPendientes = pendientes.map(h => new Date(h.fecha).getTime());
+    let fechaDesde = new Date(Math.min(...fechasPendientes));
+    const limiteMs = 90 * 24 * 60 * 60 * 1000;
+    if (hoy.getTime() - fechaDesde.getTime() > limiteMs) {
+      fechaDesde = new Date(hoy.getTime() - limiteMs);
+    }
 
     try {
-      const url = `${BACKEND_URL}/api/partidos?competitions=${COMPETICIONES}&dateFrom=${formatearFecha(hace10dias)}&dateTo=${formatearFecha(hoy)}`;
+      const url = `${BACKEND_URL}/api/partidos?competitions=${COMPETICIONES}&dateFrom=${formatearFecha(fechaDesde)}&dateTo=${formatearFecha(hoy)}`;
       const resp = await fetch(url);
       const datos = await resp.json();
       const finalizados = (datos.matches || []).filter(p => p.status === 'FINISHED');
