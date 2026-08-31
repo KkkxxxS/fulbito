@@ -740,6 +740,74 @@ main {
   color: var(--text);
 }
 
+.calibracion-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: var(--bg-raised);
+  border: 1px solid var(--card-border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.calibracion-item-titulo {
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.calibracion-item-valor {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  color: var(--gold);
+}
+
+.calibracion-categorias {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.calibracion-fila {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  padding: 9px 12px;
+  font-size: 0.82rem;
+}
+
+.calibracion-fila-titulo {
+  flex: 1;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.calibracion-fila-factor {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+}
+
+.calibracion-fila-factor.sube { color: var(--gold); }
+.calibracion-fila-factor.baja { color: var(--red); }
+
+.calibracion-fila-muestras {
+  color: var(--text-dim);
+  font-size: 0.7rem;
+  white-space: nowrap;
+}
+
+.calibracion-vacio {
+  color: var(--text-muted);
+  font-size: 0.84rem;
+  margin: 0;
+}
+
 .historial-header {
   display: flex;
   align-items: center;

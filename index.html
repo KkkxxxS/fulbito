@@ -176,7 +176,7 @@
     if (vista === 'favoritos') {
       cargarFavoritos();
     } else if (vista === 'analitica') {
-      actualizarHistorialConResultados().then(h => renderHistorial(calcularEstadisticasHistorial(h)));
+      actualizarHistorialYCalibracion().then(h => renderHistorial(calcularEstadisticasHistorial(h)));
     }
   }
 
@@ -595,7 +595,99 @@
     return matriz;
   }
 
-  const FACTOR_LOCALIA = 1.1;
+  const FACTOR_LOCALIA_BASE = 1.1;
+
+  // ============ AUTO-CALIBRACION (usa tu propio historial de aciertos) ============
+  // Cada vez que se verifican resultados nuevos, comparamos lo que el modelo
+  // predijo contra lo que realmente pasó y ajustamos dos cosas:
+  //  1) el factor de localía (¿cuánto pesa jugar de local en TUS ligas?)
+  //  2) la probabilidad mostrada por categoría de mercado (si un mercado viene
+  //     sobre- o sub-estimado de forma consistente, se corrige antes de mostrarlo)
+  // Todo esto se recalcula solo, en el navegador, con datos ya guardados.
+  const CLAVE_CALIBRACION = 'fulbito_calibracion';
+  const MUESTRA_MINIMA_LOCALIA = 20;
+  const MUESTRA_MINIMA_CATEGORIA = 15;
+  const LIMITES_FACTOR_LOCALIA = [1.0, 1.25];
+  const LIMITES_FACTOR_CATEGORIA = [0.75, 1.25];
+
+  function calibracionPorDefecto() {
+    return { factorLocalia: FACTOR_LOCALIA_BASE, muestrasLocalia: 0, porCategoria: {}, actualizadoEn: null };
+  }
+
+  function leerCalibracion() {
+    try {
+      const crudo = localStorage.getItem(CLAVE_CALIBRACION);
+      return crudo ? JSON.parse(crudo) : calibracionPorDefecto();
+    } catch (e) {
+      return calibracionPorDefecto();
+    }
+  }
+
+  function guardarCalibracion(calibracion) {
+    try {
+      localStorage.setItem(CLAVE_CALIBRACION, JSON.stringify(calibracion));
+    } catch (e) {}
+  }
+
+  let calibracionActual = leerCalibracion();
+
+  function recalcularCalibracion() {
+    const verificados = leerHistorial().filter(h => h.verificado && h.marcadorFinal && h.parametrosModelo);
+    const calibracion = calibracionPorDefecto();
+
+    // --- factor de localia, comparando diferencia de goles real vs la que el modelo
+    //     hubiera predicho SIN aplicar ninguna ventaja de local ---
+    if (verificados.length >= MUESTRA_MINIMA_LOCALIA) {
+      let sumaDifReal = 0, sumaDifModeloNeutral = 0, sumaLambdaLocalNeutral = 0;
+      verificados.forEach(h => {
+        const [gl, gv] = h.marcadorFinal.split('-').map(Number);
+        const factorUsado = h.parametrosModelo.factorLocalia || FACTOR_LOCALIA_BASE;
+        const lambdaLocalNeutral = h.parametrosModelo.lambdaLocal / factorUsado;
+        sumaDifReal += (gl - gv);
+        sumaDifModeloNeutral += (lambdaLocalNeutral - h.parametrosModelo.lambdaVisita);
+        sumaLambdaLocalNeutral += lambdaLocalNeutral;
+      });
+      const n = verificados.length;
+      const ventajaLocaliaReal = (sumaDifReal / n) - (sumaDifModeloNeutral / n);
+      const lambdaLocalNeutralProm = Math.max(sumaLambdaLocalNeutral / n, 0.5);
+      let factorSugerido = 1 + (ventajaLocaliaReal / lambdaLocalNeutralProm);
+      factorSugerido = Math.max(LIMITES_FACTOR_LOCALIA[0], Math.min(LIMITES_FACTOR_LOCALIA[1], factorSugerido));
+      calibracion.factorLocalia = Math.round(factorSugerido * 1000) / 1000;
+      calibracion.muestrasLocalia = n;
+    }
+
+    // --- factor por categoria de mercado: probabilidad predicha promedio vs acierto real ---
+    const acumulado = {};
+    verificados.forEach(h => {
+      h.mercados.forEach(m => {
+        if (!acumulado[m.categoria]) acumulado[m.categoria] = { sumaPredicha: 0, aciertos: 0, total: 0 };
+        acumulado[m.categoria].sumaPredicha += m.probabilidad / 100;
+        acumulado[m.categoria].total++;
+        if (m.acierto) acumulado[m.categoria].aciertos++;
+      });
+    });
+    Object.keys(acumulado).forEach(cat => {
+      const d = acumulado[cat];
+      if (d.total < MUESTRA_MINIMA_CATEGORIA) return;
+      const predichoProm = d.sumaPredicha / d.total;
+      const realProm = d.aciertos / d.total;
+      if (predichoProm <= 0) return;
+      let factor = realProm / predichoProm;
+      factor = Math.max(LIMITES_FACTOR_CATEGORIA[0], Math.min(LIMITES_FACTOR_CATEGORIA[1], factor));
+      calibracion.porCategoria[cat] = { factor: Math.round(factor * 1000) / 1000, muestras: d.total };
+    });
+
+    calibracion.actualizadoEn = Date.now();
+    guardarCalibracion(calibracion);
+    calibracionActual = calibracion;
+    return calibracion;
+  }
+
+  async function actualizarHistorialYCalibracion() {
+    const historial = await actualizarHistorialConResultados();
+    recalcularCalibracion();
+    return historial;
+  }
 
   function factorH2H(h2h, esLocal) {
     if (!h2h || !h2h.disponible || h2h.totalPartidos < 3) return 1;
@@ -733,7 +825,8 @@
     let lambdaLocal = (statsLocal.local.golesFavor + statsVisita.visita.golesContra) / 2;
     let lambdaVisita = (statsVisita.visita.golesFavor + statsLocal.local.golesContra) / 2;
 
-    lambdaLocal *= FACTOR_LOCALIA;
+    const factorLocaliaUsado = calibracionActual.factorLocalia || FACTOR_LOCALIA_BASE;
+    lambdaLocal *= factorLocaliaUsado;
 
     lambdaLocal *= factorH2H(h2h, true);
     lambdaVisita *= factorH2H(h2h, false);
@@ -781,6 +874,12 @@
     const partidosMin = Math.min(statsLocal.partidosJugados ?? 0, statsVisita.partidosJugados ?? 0);
     const pocaData = partidosMin < PARTIDOS_MINIMOS_CONFIABLES;
 
+    // Corrección por auto-calibración: si un mercado viene sobre o sub-estimado
+    // de forma sostenida en TU historial real, se ajusta antes de mostrarlo.
+    seleccionados.forEach(m => {
+      const ajuste = calibracionActual.porCategoria[m.categoria]?.factor || 1;
+      m.probabilidad = Math.min(0.97, Math.max(0.03, m.probabilidad * ajuste));
+    });
     seleccionados.forEach(m => { m.probabilidad = Math.round(m.probabilidad * 100); });
 
     return {
@@ -792,7 +891,7 @@
         lambdaLocal: Math.round(lambdaLocal * 1000) / 1000,
         lambdaVisita: Math.round(lambdaVisita * 1000) / 1000,
         rhoDixonColes: RHO_DIXON_COLES,
-        factorLocalia: FACTOR_LOCALIA
+        factorLocalia: factorLocaliaUsado
       }
     };
   }
@@ -1150,11 +1249,50 @@
   }
 
   function reiniciarHistorial() {
-    if (!confirm('¿Seguro que quieres borrar todo el historial de aciertos guardado en este navegador? Esta acción no se puede deshacer.')) return;
+    if (!confirm('¿Seguro que quieres borrar todo el historial de aciertos guardado en este navegador? Esta acción no se puede deshacer. También se reinicia la auto-calibración.')) return;
     try {
       localStorage.removeItem(CLAVE_HISTORIAL);
+      localStorage.removeItem(CLAVE_CALIBRACION);
     } catch (e) {}
+    calibracionActual = calibracionPorDefecto();
     renderHistorial(null);
+  }
+
+  function panelCalibracionHTML() {
+    const c = calibracionActual;
+    const categorias = Object.keys(c.porCategoria);
+
+    const filasCat = categorias.length > 0
+      ? categorias.map(cat => {
+          const info = c.porCategoria[cat];
+          const titulo = CATEGORIAS_MERCADO[cat]?.titulo || cat;
+          const pct = Math.round((info.factor - 1) * 100);
+          const signo = pct > 0 ? '+' : '';
+          return `
+            <div class="calibracion-fila">
+              <span class="calibracion-fila-titulo">${titulo}</span>
+              <span class="calibracion-fila-factor ${info.factor >= 1 ? 'sube' : 'baja'}">${signo}${pct}%</span>
+              <span class="calibracion-fila-muestras">${info.muestras} verificados</span>
+            </div>
+          `;
+        }).join('')
+      : `<p class="calibracion-vacio">Aún no hay suficientes pronósticos verificados por categoría (mínimo ${MUESTRA_MINIMA_CATEGORIA} cada una) para ajustarlas.</p>`;
+
+    const localiaTexto = c.muestrasLocalia >= MUESTRA_MINIMA_LOCALIA
+      ? `${c.factorLocalia.toFixed(2)}× <span class="calibracion-fila-muestras">(${c.muestrasLocalia} partidos, base 1.10×)</span>`
+      : `1.10× por defecto <span class="calibracion-fila-muestras">(faltan ${MUESTRA_MINIMA_LOCALIA - c.muestrasLocalia} partidos verificados para autoajustar)</span>`;
+
+    return `
+      <div class="bloque-combinadas sin-borde-superior">
+        <h3 style="font-size:1.4rem;">Auto-calibración</h3>
+        <p class="subtitulo-combinadas">El modelo se corrige solo, comparando lo que predijo contra lo que realmente pasó en tus partidos ya verificados. Estos son los ajustes activos ahora mismo, sobre las probabilidades crudas del modelo:</p>
+        <div class="calibracion-item">
+          <span class="calibracion-item-titulo">Ventaja de jugar de local</span>
+          <span class="calibracion-item-valor">${localiaTexto}</span>
+        </div>
+        <div class="calibracion-categorias">${filasCat}</div>
+      </div>
+    `;
   }
 
   function renderHistorial(estadisticas) {
@@ -1165,6 +1303,7 @@
         <div class="bloque-combinadas sin-borde-superior">
           <p class="subtitulo-combinadas">Todavía no hay partidos anteriores verificados en este navegador. A medida que uses la página y los partidos que viste terminen, aquí vas a ver qué tan bien acertó el modelo, con datos reales.</p>
         </div>
+        ${panelCalibracionHTML()}
       `;
       return;
     }
@@ -1220,6 +1359,7 @@
           ${filasUltimos}
         </div>
       </div>
+      ${panelCalibracionHTML()}
     `;
   }
 
@@ -1318,7 +1458,7 @@
     contenedor.innerHTML = htmlFinal;
     renderCombinadas(seleccionesParaCombinar);
 
-    const historialActualizado = await actualizarHistorialConResultados();
+    const historialActualizado = await actualizarHistorialYCalibracion();
     if (vistaActual === 'analitica') renderHistorial(calcularEstadisticasHistorial(historialActualizado));
   }
 
