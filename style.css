@@ -1272,4 +1272,64 @@ main {
   font-size: 0.66rem;
   opacity: 0.7;
   font-weight: 600;
+}.fila-sin-apuesta {
+  opacity: 0.75;
 }
+.fila-porcentaje-nobet {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  color: var(--text-dim);
+}
+.fila-razones {
+  margin: 6px 0;
+}
+.fila-razon {
+  margin: 0 0 2px;
+  font-size: 0.68rem;
+  opacity: 0.85;
+  line-height: 1.4;
+}
+.marcadores-probables-titulo {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin: 14px 0 8px;
+}
+.marcadores-probables {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+.marcador-chip {
+  background: var(--bg-raised);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 5px 10px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text);
+}
+.marcador-chip em {
+  font-style: normal;
+  color: var(--gold);
+  margin-left: 4px;
+}
+.catalogo-completo {
+  background: var(--bg-raised);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin-top: 10px;
+}
+.catalogo-fila {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+.catalogo-fila:last-child { border-bottom: none; }

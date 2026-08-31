@@ -143,11 +143,12 @@
 <script>
   // ============ CONFIGURACION ============
   const BACKEND_URL = "https://fulbito-forh.onrender.com";
-  const COMPETICIONES = "PL,PD,BL1,SA,FL1,CL,DED,ELC,BSA";
+  const COMPETICIONES = "PL,PD,BL1,SA,FL1,CL,DED,ELC,BSA,PPL";
   const NOMBRES_LIGA = {
     PL: "Premier League", PD: "La Liga", BL1: "Bundesliga",
     SA: "Serie A", FL1: "Ligue 1", CL: "Champions League",
-    DED: "Eredivisie", ELC: "Championship", BSA: "Brasileirão"
+    DED: "Eredivisie", ELC: "Championship", BSA: "Brasileirão",
+    PPL: "Primeira Liga"
   };
 
   let ligaSeleccionada = 'TODAS';
@@ -369,7 +370,7 @@
   // ============ PROMEDIO DE GOLES POR LIGA ============
   const PROMEDIO_GOLES_POR_LIGA = {
     PL: 1.45, PD: 1.35, BL1: 1.55, SA: 1.30, FL1: 1.40, CL: 1.40,
-    DED: 1.60, ELC: 1.30, BSA: 1.25, DEFAULT: 1.40
+    DED: 1.60, ELC: 1.30, BSA: 1.25, PPL: 1.35, DEFAULT: 1.40
   };
 
   function promedioLiga(codigoLiga) {
@@ -598,12 +599,6 @@
   const FACTOR_LOCALIA_BASE = 1.1;
 
   // ============ AUTO-CALIBRACION (usa tu propio historial de aciertos) ============
-  // Cada vez que se verifican resultados nuevos, comparamos lo que el modelo
-  // predijo contra lo que realmente pasó y ajustamos dos cosas:
-  //  1) el factor de localía (¿cuánto pesa jugar de local en TUS ligas?)
-  //  2) la probabilidad mostrada por categoría de mercado (si un mercado viene
-  //     sobre- o sub-estimado de forma consistente, se corrige antes de mostrarlo)
-  // Todo esto se recalcula solo, en el navegador, con datos ya guardados.
   const CLAVE_CALIBRACION = 'fulbito_calibracion';
   const MUESTRA_MINIMA_LOCALIA = 20;
   const MUESTRA_MINIMA_CATEGORIA = 15;
@@ -635,8 +630,6 @@
     const verificados = leerHistorial().filter(h => h.verificado && h.marcadorFinal && h.parametrosModelo);
     const calibracion = calibracionPorDefecto();
 
-    // --- factor de localia, comparando diferencia de goles real vs la que el modelo
-    //     hubiera predicho SIN aplicar ninguna ventaja de local ---
     if (verificados.length >= MUESTRA_MINIMA_LOCALIA) {
       let sumaDifReal = 0, sumaDifModeloNeutral = 0, sumaLambdaLocalNeutral = 0;
       verificados.forEach(h => {
@@ -656,7 +649,6 @@
       calibracion.muestrasLocalia = n;
     }
 
-    // --- factor por categoria de mercado: probabilidad predicha promedio vs acierto real ---
     const acumulado = {};
     verificados.forEach(h => {
       h.mercados.forEach(m => {
@@ -791,18 +783,23 @@
     candidatos.push({ categoria: 'handicap', parametros: { lado: ladoFavorito, valor: 2 }, seleccion: `${nombreFavorito} -1 (gana por 2+)`, probabilidad: pHandicap1 });
     candidatos.push({ categoria: 'handicap', parametros: { lado: ladoFavorito, valor: 3 }, seleccion: `${nombreFavorito} -2 (gana por 3+)`, probabilidad: pHandicap2 });
 
-    let marcadorTop = { i: 0, j: 0, p: 0 };
+    let celdas = [];
     for (let i = 0; i <= maxGoles; i++) {
       for (let j = 0; j <= maxGoles; j++) {
-        if (matriz[i][j] > marcadorTop.p) marcadorTop = { i, j, p: matriz[i][j] };
+        celdas.push({ i, j, p: matriz[i][j] });
       }
     }
+    celdas.sort((a, b) => b.p - a.p);
+    const marcadorTop = celdas[0];
+    const top3Marcadores = celdas.slice(0, 3).map(c => ({ marcador: `${c.i}-${c.j}`, probabilidad: Math.round(c.p * 100) }));
+
     candidatos.push({ categoria: 'marcador', parametros: { gl: marcadorTop.i, gv: marcadorTop.j }, seleccion: `${marcadorTop.i}-${marcadorTop.j}`, probabilidad: marcadorTop.p });
 
     return {
       candidatos,
       marcadorProbable: `${marcadorTop.i}-${marcadorTop.j}`,
       probMarcador: marcadorTop.p,
+      top3Marcadores,
       favoritoLocal,
       nombreFavorito
     };
@@ -819,6 +816,35 @@
       if (seleccionados.length >= cantidad) break;
     }
     return seleccionados;
+  }
+
+  function razonesParaMercado(m, ctx) {
+    const razones = [];
+    const favoreceLocal = m.seleccion.includes(ctx.nombreLocal) && !m.seleccion.includes(ctx.nombreVisita);
+    const favoreceVisita = m.seleccion.includes(ctx.nombreVisita) && !m.seleccion.includes(ctx.nombreLocal);
+
+    if (favoreceLocal) {
+      razones.push(`${ctx.nombreLocal} promedia ${ctx.statsLocal.local.golesFavor.toFixed(1)} goles a favor jugando de local.`);
+      if (ctx.statsLocal.tendencia.direccion === 'subiendo') razones.push(`${ctx.nombreLocal} viene en alza en sus últimos partidos.`);
+    } else if (favoreceVisita) {
+      razones.push(`${ctx.nombreVisita} promedia ${ctx.statsVisita.visita.golesFavor.toFixed(1)} goles a favor jugando de visita.`);
+      if (ctx.statsVisita.tendencia.direccion === 'subiendo') razones.push(`${ctx.nombreVisita} viene en alza en sus últimos partidos.`);
+    }
+
+    const fLocal = factorTabla(ctx.tabla, ctx.idLocal);
+    const fVisita = factorTabla(ctx.tabla, ctx.idVisita);
+    if (Math.abs(fLocal - 1) > 0.05 || Math.abs(fVisita - 1) > 0.05) {
+      const mejorUbicado = fLocal > fVisita ? ctx.nombreLocal : ctx.nombreVisita;
+      razones.push(`${mejorUbicado} está mejor ubicado en la tabla de posiciones.`);
+    }
+
+    if (ctx.h2h && ctx.h2h.disponible && ctx.h2h.totalPartidos >= 3) {
+      if (ctx.h2h.victoriasLocal > ctx.h2h.victoriasVisita) razones.push(`El historial directo favorece a ${ctx.nombreLocal} (${ctx.h2h.victoriasLocal}V-${ctx.h2h.empates}E-${ctx.h2h.victoriasVisita}V).`);
+      else if (ctx.h2h.victoriasVisita > ctx.h2h.victoriasLocal) razones.push(`El historial directo favorece a ${ctx.nombreVisita} (${ctx.h2h.victoriasVisita}V-${ctx.h2h.empates}E-${ctx.h2h.victoriasLocal}V).`);
+    }
+
+    if (razones.length === 0) razones.push(`Calculado con el modelo estadístico (Poisson + Dixon-Coles) según los datos disponibles.`);
+    return razones.slice(0, 2);
   }
 
   function generarPronosticos(statsLocal, statsVisita, nombreLocal, nombreVisita, h2h, tabla, idLocal, idVisita) {
@@ -840,14 +866,17 @@
     const matriz = matrizMarcadores(lambdaLocal, lambdaVisita);
     const maxGoles = matriz.length - 1;
 
-    const { candidatos, marcadorProbable, probMarcador, favoritoLocal, nombreFavorito } =
+    const { candidatos, marcadorProbable, probMarcador, top3Marcadores, favoritoLocal, nombreFavorito } =
       generarCandidatosMercado(matriz, maxGoles, nombreLocal, nombreVisita);
 
     const seleccionados = seleccionarMercados(candidatos, 4);
+    const UMBRAL_MINIMO_MERCADO = 0.55;
+    const contextoRazones = { statsLocal, statsVisita, tabla, h2h, idLocal, idVisita, nombreLocal, nombreVisita };
     seleccionados.forEach(m => {
       m.tipo = m.categoria;
       m.titulo = CATEGORIAS_MERCADO[m.categoria].titulo;
       m.mercado = CATEGORIAS_MERCADO[m.categoria].mercado;
+      m.razones = razonesParaMercado(m, contextoRazones);
     });
 
     const pares = [];
@@ -874,17 +903,22 @@
     const partidosMin = Math.min(statsLocal.partidosJugados ?? 0, statsVisita.partidosJugados ?? 0);
     const pocaData = partidosMin < PARTIDOS_MINIMOS_CONFIABLES;
 
-    // Corrección por auto-calibración: si un mercado viene sobre o sub-estimado
-    // de forma sostenida en TU historial real, se ajusta antes de mostrarlo.
+    seleccionados.forEach(m => { m.sinApuesta = m.probabilidad < UMBRAL_MINIMO_MERCADO; });
+
     seleccionados.forEach(m => {
       const ajuste = calibracionActual.porCategoria[m.categoria]?.factor || 1;
       m.probabilidad = Math.min(0.97, Math.max(0.03, m.probabilidad * ajuste));
     });
     seleccionados.forEach(m => { m.probabilidad = Math.round(m.probabilidad * 100); });
 
+    const catalogoCompleto = candidatos
+      .map(c => ({ seleccion: c.seleccion, probabilidad: Math.round(c.probabilidad * 100) }))
+      .sort((a, b) => b.probabilidad - a.probabilidad);
+
     return {
       seleccionados,
       marcadorProbable, probMarcador: Math.round(probMarcador * 100),
+      top3Marcadores, catalogoCompleto,
       combosPartido, partidosMin, pocaData,
       favoritoLocal, nombreFavorito,
       parametrosModelo: {
@@ -953,6 +987,20 @@
   }
 
   function filaMercado(datos) {
+    if (datos.sinApuesta) {
+      return `
+        <div class="fila-mercado mercado-${datos.tipo} fila-sin-apuesta">
+          <div class="fila-header">
+            ${iconoMercado(datos.tipo)}
+            <span class="fila-porcentaje-nobet">NO BET</span>
+          </div>
+          <span class="fila-titulo">${datos.titulo}</span>
+          <p class="fila-mercado-nombre">${datos.mercado}</p>
+          <p class="fila-seleccion">Sin apuesta</p>
+          <p class="cuota-implicita">Ningún mercado de esta categoría supera el umbral mínimo (${datos.probabilidad}% real).</p>
+        </div>
+      `;
+    }
     return `
       <div class="fila-mercado mercado-${datos.tipo}">
         <div class="fila-header">
@@ -965,6 +1013,7 @@
         </div>
         <p class="fila-mercado-nombre">${datos.mercado}</p>
         <p class="fila-seleccion">${datos.seleccion}</p>
+        <div class="fila-razones">${(datos.razones || []).map(r => `<p class="fila-razon">+ ${r}</p>`).join('')}</div>
         <p class="cuota-implicita">Cuota justa: ${cuotaImplicita(datos.probabilidad)}</p>
       </div>
     `;
@@ -1016,6 +1065,16 @@
           <p class="combos-partido-titulo">Combina en este partido</p>
           ${pronosticos.combosPartido.map(comboPartidoHTML).join('')}
         </div>
+
+        <p class="marcadores-probables-titulo">Marcadores más probables</p>
+        <div class="marcadores-probables">
+          ${pronosticos.top3Marcadores.map(m => `<span class="marcador-chip">${m.marcador} <em>${m.probabilidad}%</em></span>`).join('')}
+        </div>
+
+        <button class="boton-expandir" onclick="toggleCatalogo(${partido.id})">Ver los ${pronosticos.catalogoCompleto.length} mercados evaluados</button>
+        <div class="catalogo-completo" id="catalogo-${partido.id}" style="display:none;">
+          ${pronosticos.catalogoCompleto.map(c => `<div class="catalogo-fila"><span>${c.seleccion}</span><span>${c.probabilidad}%</span></div>`).join('')}
+        </div>
       </div>
     `;
   }
@@ -1028,9 +1087,17 @@
     btn.textContent = el.classList.contains('expandido') ? 'Ver menos' : 'Ver más mercados';
   }
 
+  function toggleCatalogo(partidoId) {
+    const el = document.getElementById(`catalogo-${partidoId}`);
+    if (!el) return;
+    el.style.display = el.style.display === 'none' ? 'block' : 'none';
+  }
+
   function mejorSeleccionDePartido(partido, pronosticos) {
-    let mejor = pronosticos.seleccionados[0];
-    pronosticos.seleccionados.forEach(op => { if (op.probabilidad > mejor.probabilidad) mejor = op; });
+    const validos = pronosticos.seleccionados.filter(op => !op.sinApuesta);
+    if (validos.length === 0) return null;
+    let mejor = validos[0];
+    validos.forEach(op => { if (op.probabilidad > mejor.probabilidad) mejor = op; });
     return {
       equipos: `${partido.homeTeam.name} vs ${partido.awayTeam.name}`,
       tipo: mejor.categoria, mercado: mejor.mercado, seleccion: mejor.seleccion, probabilidad: mejor.probabilidad
@@ -1451,7 +1518,8 @@
       );
 
       htmlFinal += crearTarjetaHTML(partido, pronosticos, statsLocal, statsVisita, h2h, tabla);
-      seleccionesParaCombinar.push(mejorSeleccionDePartido(partido, pronosticos));
+      const mejorSel = mejorSeleccionDePartido(partido, pronosticos);
+      if (mejorSel) seleccionesParaCombinar.push(mejorSel);
       registrarPronostico(partido, pronosticos);
     }
 
