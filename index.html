@@ -58,6 +58,10 @@
             <span class="nav-tab-icono">★</span> Favoritos
             <span class="contador-favoritos" id="contador-favoritos" style="display:none;">0</span>
         </button>
+        <button class="nav-tab" data-vista="mispredicciones" onclick="cambiarVista('mispredicciones')">
+            <span class="nav-tab-icono">📌</span> Mis Predicciones
+            <span class="contador-favoritos" id="contador-mispredicciones" style="display:none;">0</span>
+        </button>
         <button class="nav-tab" data-vista="analitica" onclick="cambiarVista('analitica')">
             <span class="nav-tab-icono">◧</span> Analítica
         </button>
@@ -82,6 +86,13 @@
             <span class="acceso-rapido-texto">
                 <strong>Favoritos</strong>
                 Tus equipos, siempre arriba
+            </span>
+        </button>
+        <button class="acceso-rapido" onclick="cambiarVista('mispredicciones')">
+            <span class="acceso-rapido-icono">📌</span>
+            <span class="acceso-rapido-texto">
+                <strong>Mis Predicciones</strong>
+                Los picks que marcaste
             </span>
         </button>
         <button class="acceso-rapido" onclick="cambiarVista('analitica')">
@@ -155,6 +166,12 @@
     </div>
 </section>
 
+<section id="vista-mispredicciones" class="vista">
+    <h2>Mis predicciones</h2>
+    <p class="subtitulo-vista">Los mercados que marcaste con 📌 en cualquier partido. Se confirman solos cuando el partido termina, y ahí ves si acertaste o no.</p>
+    <div id="contenedor-mispredicciones"></div>
+</section>
+
 <section id="vista-analitica" class="vista">
     <h2>Analítica del modelo</h2>
     <p class="subtitulo-vista">Cómo de bien acertó Fulbito en partidos que ya terminaron, medido mercado por mercado. El modelo combina Poisson con la corrección Dixon-Coles para marcadores bajos, ajustado por localía, tabla de posiciones y cara-a-cara reciente.</p>
@@ -194,7 +211,7 @@
     document.querySelectorAll('.nav-tab').forEach(btn => btn.classList.toggle('activa', btn.dataset.vista === vista));
 
     const buscador = document.getElementById('input-busqueda');
-    buscador.style.display = vista === 'analitica' ? 'none' : '';
+    buscador.style.display = (vista === 'analitica' || vista === 'mispredicciones') ? 'none' : '';
     buscador.placeholder = vista === 'favoritos' ? 'Buscar en tus favoritos…' : 'Buscar equipo o liga…';
 
     cerrarMenuMovil();
@@ -205,6 +222,8 @@
       cargarFavoritos();
     } else if (vista === 'analitica') {
       actualizarHistorialYCalibracion().then(h => renderHistorial(calcularEstadisticasHistorial(h)));
+    } else if (vista === 'mispredicciones') {
+      actualizarHistorialYCalibracion().then(() => renderMisPredicciones());
     }
   }
 
@@ -272,6 +291,143 @@
   function partidoTieneFavorito(partido) {
     const favoritos = leerFavoritos();
     return favoritos.includes(partido.homeTeam.id) || favoritos.includes(partido.awayTeam.id);
+  }
+
+  // ============ MIS PREDICCIONES (picks que el usuario marca a mano) ============
+  const CLAVE_MIS_PREDICCIONES = 'fulbito_mis_predicciones';
+
+  function leerMisPredicciones() {
+    try {
+      const crudo = localStorage.getItem(CLAVE_MIS_PREDICCIONES);
+      return crudo ? JSON.parse(crudo) : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function guardarMisPredicciones(lista) {
+    try {
+      localStorage.setItem(CLAVE_MIS_PREDICCIONES, JSON.stringify(lista));
+    } catch (e) {}
+  }
+
+  function esMiPrediccion(partidoId, categoria) {
+    return leerMisPredicciones().some(p => p.partidoId === partidoId && p.categoria === categoria);
+  }
+
+  function actualizarContadorMisPredicciones() {
+    const historial = leerHistorial();
+    const mias = leerMisPredicciones();
+    const pendientes = mias.filter(p => {
+      const h = historial.find(x => x.partidoId === p.partidoId);
+      return !h || !h.verificado;
+    });
+    const badge = document.getElementById('contador-mispredicciones');
+    badge.style.display = pendientes.length > 0 ? 'inline-flex' : 'none';
+    badge.textContent = pendientes.length;
+  }
+
+  function toggleMiPrediccion(partidoId, categoria, event) {
+    event.stopPropagation();
+    let mias = leerMisPredicciones();
+    if (mias.some(p => p.partidoId === partidoId && p.categoria === categoria)) {
+      mias = mias.filter(p => !(p.partidoId === partidoId && p.categoria === categoria));
+    } else {
+      mias.push({ partidoId, categoria, guardadoEn: Date.now() });
+    }
+    guardarMisPredicciones(mias);
+    actualizarContadorMisPredicciones();
+
+    const boton = event.currentTarget;
+    if (boton) {
+      const activa = mias.some(p => p.partidoId === partidoId && p.categoria === categoria);
+      boton.classList.toggle('activa', activa);
+      boton.title = activa ? 'Quitar de Mis Predicciones' : 'Marcar como mi predicción';
+    }
+    if (vistaActual === 'mispredicciones') renderMisPredicciones();
+  }
+
+  function botonMiPrediccion(partidoId, categoria) {
+    const activa = esMiPrediccion(partidoId, categoria);
+    return `<button class="boton-pick ${activa ? 'activa' : ''}" onclick="toggleMiPrediccion(${partidoId}, '${categoria}', event)" title="${activa ? 'Quitar de Mis Predicciones' : 'Marcar como mi predicción'}">📌</button>`;
+  }
+
+  function renderMisPredicciones() {
+    const contenedor = document.getElementById('contenedor-mispredicciones');
+    const mias = leerMisPredicciones();
+
+    if (mias.length === 0) {
+      contenedor.innerHTML = `
+        <div class="aviso-servidor">
+          <p><strong>Todavía no marcaste ninguna predicción.</strong></p>
+          <p>Toca el pin 📌 en cualquier mercado, dentro de una tarjeta de partido en "Pronósticos" o "Favoritos", y va a aparecer acá.</p>
+        </div>
+      `;
+      return;
+    }
+
+    const historial = leerHistorial();
+    const entradas = mias.map(p => {
+      const h = historial.find(x => x.partidoId === p.partidoId);
+      const mercado = h ? h.mercados.find(m => m.categoria === p.categoria) : null;
+      return { pick: p, historial: h, mercado };
+    }).filter(e => e.mercado);
+
+    entradas.sort((a, b) => (b.pick.guardadoEn || 0) - (a.pick.guardadoEn || 0));
+
+    const pendientes = entradas.filter(e => !e.historial.verificado);
+    const verificadas = entradas.filter(e => e.historial.verificado);
+
+    let precisionHTML = '';
+    if (verificadas.length > 0) {
+      const aciertos = verificadas.filter(e => e.mercado.acierto).length;
+      const pct = Math.round((aciertos / verificadas.length) * 100);
+      precisionHTML = `
+        <div class="precision-general">
+          <span class="precision-general-num">${pct}%</span>
+          <span class="precision-general-label">Tu precisión personal<br>(${aciertos}/${verificadas.length} predicciones marcadas por ti, ya verificadas)</span>
+        </div>
+      `;
+    }
+
+    const filaPick = (e, verificada) => {
+      const h = e.historial, m = e.mercado;
+      let badge = '';
+      if (verificada) {
+        badge = `<span class="historial-partido-badge ${m.acierto ? 'todo-bien' : 'todo-mal'}">${m.acierto ? '✓ Acertó' : '✕ Falló'}</span>`;
+      } else {
+        badge = `<span class="historial-partido-badge parcial">Pendiente</span>`;
+      }
+      return `
+        <div class="historial-partido">
+          <div class="historial-partido-header">
+            <span class="historial-partido-equipos"><strong>${h.local} vs ${h.visita}</strong></span>
+            ${verificada ? `<span class="historial-partido-marcador">${h.marcadorFinal}</span>` : ''}
+            ${badge}
+          </div>
+          <div class="historial-partido-mercados">
+            <span class="historial-mercado-item ${verificada ? (m.acierto ? 'acierto' : 'fallo') : ''}">
+              ${CATEGORIAS_MERCADO[m.categoria]?.titulo || m.categoria}: <strong>${m.seleccion}</strong> (${m.probabilidad}%)
+            </span>
+          </div>
+          <button class="boton-reiniciar" style="margin-top:10px;" onclick="toggleMiPrediccion(${h.partidoId}, '${m.categoria}', event); renderMisPredicciones();">Quitar</button>
+        </div>
+      `;
+    };
+
+    contenedor.innerHTML = `
+      <div class="bloque-combinadas sin-borde-superior">
+        ${precisionHTML}
+        ${pendientes.length > 0 ? `
+          <p class="combos-partido-titulo">Pendientes (${pendientes.length})</p>
+          ${pendientes.map(e => filaPick(e, false)).join('')}
+        ` : ''}
+        ${verificadas.length > 0 ? `
+          <p class="combos-partido-titulo" style="margin-top:18px;">Verificadas (${verificadas.length})</p>
+          ${verificadas.map(e => filaPick(e, true)).join('')}
+        ` : ''}
+      </div>
+    `;
   }
 
   // ============ CACHE PERSISTENTE ENTRE VISITAS ============
@@ -705,6 +861,7 @@
   async function actualizarHistorialYCalibracion() {
     const historial = await actualizarHistorialConResultados();
     recalcularCalibracion();
+    actualizarContadorMisPredicciones();
     return historial;
   }
 
@@ -1013,7 +1170,7 @@
     return (100 / probabilidad).toFixed(2);
   }
 
-  function filaMercado(datos) {
+  function filaMercado(datos, partidoId) {
     if (datos.sinApuesta) {
       return `
         <div class="fila-mercado mercado-${datos.tipo} fila-sin-apuesta">
@@ -1033,6 +1190,7 @@
         <div class="fila-header">
           ${iconoMercado(datos.tipo)}
           <span class="fila-porcentaje">${datos.probabilidad}%</span>
+          ${botonMiPrediccion(partidoId, datos.categoria)}
         </div>
         <span class="fila-titulo">${datos.titulo}</span>
         <div class="barra-probabilidad">
@@ -1084,7 +1242,7 @@
         ${pronosticos.pocaData ? `<p class="aviso-datos">⚠ Datos limitados (${pronosticos.partidosMin} partidos analizados) · pronóstico menos confiable</p>` : ''}
 
         <div class="lista-mercados" id="mercados-${partido.id}">
-          ${pronosticos.seleccionados.map(filaMercado).join('')}
+          ${pronosticos.seleccionados.map(m => filaMercado(m, partido.id)).join('')}
         </div>
         <button class="boton-expandir" onclick="toggleMercados(${partido.id})">Ver más mercados</button>
 
@@ -1765,10 +1923,11 @@
   if (inputFechaPersonalizada) inputFechaPersonalizada.min = formatearFecha(new Date());
 
   actualizarContadorFavoritos();
+  actualizarContadorMisPredicciones();
   cargarPartidos('hoy');
 
   const hashInicial = window.location.hash.replace('#', '');
-  if (['favoritos', 'analitica'].includes(hashInicial)) {
+  if (['favoritos', 'analitica', 'mispredicciones'].includes(hashInicial)) {
     cambiarVista(hashInicial, false);
   }
 
@@ -1777,6 +1936,7 @@
     if (document.visibilityState === 'visible') {
       if (vistaActual === 'pronosticos') cargarPartidos(ultimaFechaCargada);
       else if (vistaActual === 'favoritos') cargarFavoritos();
+      else if (vistaActual === 'mispredicciones') actualizarHistorialYCalibracion().then(() => renderMisPredicciones());
     }
   }, 3 * 60 * 1000);
 
