@@ -1388,3 +1388,67 @@ main {
   color: var(--text-muted);
 }
 .catalogo-fila:last-child { border-bottom: none; }
+.calibracion-rango-fila {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 10px;
+}
+.calibracion-rango-fila.pocas-muestras {
+  opacity: 0.6;
+}
+.calibracion-rango-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.calibracion-rango-label {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  color: var(--text);
+}
+.calibracion-barra-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.calibracion-barra-etiqueta {
+  width: 120px;
+  flex-shrink: 0;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+.calibracion-barra-fondo {
+  flex: 1;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--bg-raised);
+  overflow: hidden;
+}
+.calibracion-barra-relleno {
+  height: 100%;
+  border-radius: 999px;
+}
+.calibracion-barra-relleno.predicho {
+  background: var(--text-dim);
+}
+.calibracion-barra-relleno.real.bien {
+  background: var(--green);
+}
+.calibracion-barra-relleno.real.sobreestimado {
+  background: var(--red);
+}
+.calibracion-barra-relleno.real.subestimado {
+  background: var(--gold);
+}
+.calibracion-barra-valor {
+  width: 40px;
+  flex-shrink: 0;
+  text-align: right;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text);
+}

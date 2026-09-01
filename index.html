@@ -220,8 +220,8 @@
 
     if (vista === 'favoritos') {
       cargarFavoritos();
-    } else if (vista === 'analitica') {
-      actualizarHistorialYCalibracion().then(h => renderHistorial(calcularEstadisticasHistorial(h)));
+     } else if (vista === 'analitica') {
+      actualizarHistorialYCalibracion().then(h => renderHistorial(calcularEstadisticasHistorial(h), h));
     } else if (vista === 'mispredicciones') {
       actualizarHistorialYCalibracion().then(() => renderMisPredicciones());
     }
@@ -1503,7 +1503,82 @@
       ultimos: verificados.slice(-8).reverse()
     };
   }
+  const MUESTRA_MINIMA_CALIBRACION_RANGO = 5;
 
+  function calcularCalibracionRangos(historial) {
+    const verificados = historial.filter(h => h.verificado);
+    const buckets = [
+      { min: 50, max: 60, label: '50-60%' },
+      { min: 60, max: 70, label: '60-70%' },
+      { min: 70, max: 80, label: '70-80%' },
+      { min: 80, max: 90, label: '80-90%' },
+      { min: 90, max: 101, label: '90-100%' }
+    ];
+    const datos = buckets.map(b => ({ ...b, total: 0, aciertos: 0, sumaProb: 0 }));
+
+    verificados.forEach(h => {
+      h.mercados.forEach(m => {
+        const b = datos.find(d => m.probabilidad >= d.min && m.probabilidad < d.max);
+        if (!b) return;
+        b.total++;
+        b.sumaProb += m.probabilidad;
+        if (m.acierto) b.aciertos++;
+      });
+    });
+
+    return datos
+      .filter(d => d.total > 0)
+      .map(d => ({
+        label: d.label,
+        muestras: d.total,
+        predichoProm: Math.round(d.sumaProb / d.total),
+        realPct: Math.round((d.aciertos / d.total) * 100)
+      }));
+  }
+
+  function filaCalibracionRango(d) {
+    const suficiente = d.muestras >= MUESTRA_MINIMA_CALIBRACION_RANGO;
+    const diff = d.realPct - d.predichoProm;
+    const claseDiff = Math.abs(diff) <= 8 ? 'bien' : (diff < 0 ? 'sobreestimado' : 'subestimado');
+    return `
+      <div class="calibracion-rango-fila ${!suficiente ? 'pocas-muestras' : ''}">
+        <div class="calibracion-rango-header">
+          <span class="calibracion-rango-label">${d.label}</span>
+          <span class="calibracion-fila-muestras">${d.muestras} pronósticos</span>
+        </div>
+        <div class="calibracion-barra-item">
+          <span class="calibracion-barra-etiqueta">Predicho (promedio)</span>
+          <div class="calibracion-barra-fondo"><div class="calibracion-barra-relleno predicho" style="width:${d.predichoProm}%"></div></div>
+          <span class="calibracion-barra-valor">${d.predichoProm}%</span>
+        </div>
+        <div class="calibracion-barra-item">
+          <span class="calibracion-barra-etiqueta">Acertó de verdad</span>
+          <div class="calibracion-barra-fondo"><div class="calibracion-barra-relleno real ${claseDiff}" style="width:${d.realPct}%"></div></div>
+          <span class="calibracion-barra-valor">${d.realPct}%</span>
+        </div>
+        ${!suficiente ? `<p class="calibracion-vacio">Menos de ${MUESTRA_MINIMA_CALIBRACION_RANGO} muestras — dato aún poco confiable.</p>` : ''}
+      </div>
+    `;
+  }
+
+  function panelCalibracionRangosHTML(historial) {
+    const datos = calcularCalibracionRangos(historial);
+    if (datos.length === 0) {
+      return `
+        <div class="bloque-combinadas sin-borde-superior">
+          <h3 style="font-size:1.4rem;">Calibración por rango de probabilidad</h3>
+          <p class="subtitulo-combinadas">Todavía no hay suficientes pronósticos verificados para armar este análisis.</p>
+        </div>
+      `;
+    }
+    return `
+      <div class="bloque-combinadas sin-borde-superior">
+        <h3 style="font-size:1.4rem;">Calibración por rango de probabilidad</h3>
+        <p class="subtitulo-combinadas">Un modelo bien calibrado debería acertar ~80% de las veces cuando dice "80%". Aquí comparamos lo que el modelo predijo contra lo que pasó de verdad, agrupado por rango de confianza.</p>
+        ${datos.map(filaCalibracionRango).join('')}
+      </div>
+    `;
+  }
   function reiniciarHistorial() {
     if (!confirm('¿Seguro que quieres borrar todo el historial de aciertos guardado en este navegador? Esta acción no se puede deshacer. También se reinicia la auto-calibración.')) return;
     try {
@@ -1551,7 +1626,7 @@
     `;
   }
 
-  function renderHistorial(estadisticas) {
+    function renderHistorial(estadisticas, historial) {
     const contenedor = document.getElementById('bloque-historial');
 
     if (!estadisticas) {
@@ -1615,6 +1690,7 @@
           ${filasUltimos}
         </div>
       </div>
+      ${panelCalibracionRangosHTML(historial)}
       ${panelCalibracionHTML()}
     `;
   }
@@ -1715,8 +1791,8 @@
     contenedor.innerHTML = htmlFinal;
     renderCombinadas(seleccionesParaCombinar);
 
-    const historialActualizado = await actualizarHistorialYCalibracion();
-    if (vistaActual === 'analitica') renderHistorial(calcularEstadisticasHistorial(historialActualizado));
+        const historialActualizado = await actualizarHistorialYCalibracion();
+    if (vistaActual === 'analitica') renderHistorial(calcularEstadisticasHistorial(historialActualizado), historialActualizado);
   }
 
   // ============ CARGA PRINCIPAL ============
