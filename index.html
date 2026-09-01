@@ -141,6 +141,7 @@
         <button class="pestaña" onclick="cambiarFecha('manana', event)">Mañana</button>
         <button class="pestaña" onclick="cambiarFecha('semana', event)">Esta semana</button>
         <button class="pestaña" onclick="mostrarSelectorFecha(event)">Otra fecha</button>
+        <button class="pestaña pestaña-finalizados" onclick="cambiarFecha('finalizados', event)">Finalizados</button>
     </div>
 
     <div class="selector-fecha-personalizada" id="selector-fecha-personalizada" style="display:none;">
@@ -239,7 +240,10 @@
 
   function onBuscar(valor) {
     terminoBusqueda = valor.trim().toLowerCase();
-    if (vistaActual === 'pronosticos') renderizarPartidosFiltrados();
+    if (vistaActual === 'pronosticos') {
+      if (ultimaFechaCargada === 'finalizados') renderizarFinalizados();
+      else renderizarPartidosFiltrados();
+    }
     else if (vistaActual === 'favoritos') renderizarFavoritos();
   }
 
@@ -247,6 +251,11 @@
     if (!terminoBusqueda) return true;
     const texto = `${partido.homeTeam.name} ${partido.awayTeam.name} ${partido.competition.name}`.toLowerCase();
     return texto.includes(terminoBusqueda);
+  }
+
+  function coincideBusquedaTexto(local, visita, liga) {
+    if (!terminoBusqueda) return true;
+    return `${local} ${visita} ${liga}`.toLowerCase().includes(terminoBusqueda);
   }
 
   // ============ FAVORITOS DE EQUIPOS ============
@@ -496,6 +505,35 @@
       return partidos;
     } catch (e) {
       console.error("Error trayendo partidos", e);
+      return { error: true, mensaje: e.message };
+    }
+  }
+
+  async function obtenerPartidosFinalizados(fechaInicio, fechaFin) {
+    const claveCache = `finalizados-${fechaInicio}-${fechaFin}`;
+    if (cache[claveCache]) return cache[claveCache];
+
+    const persistente = leerCachePersistente(claveCache);
+    if (persistente) {
+      cache[claveCache] = persistente;
+      return persistente;
+    }
+
+    try {
+      const url = `${BACKEND_URL}/api/partidos?competitions=${COMPETICIONES}&dateFrom=${fechaInicio}&dateTo=${fechaFin}`;
+      const resp = await fetch(url);
+      const datos = await resp.json();
+
+      if (datos.error || datos.errorCode) {
+        return { error: true, mensaje: datos.message || datos.error || "Error desconocido de la API" };
+      }
+
+      const partidos = (datos.matches || []).filter(p => p.status === 'FINISHED');
+      cache[claveCache] = partidos;
+      guardarCachePersistente(claveCache, partidos);
+      return partidos;
+    } catch (e) {
+      console.error("Error trayendo partidos finalizados", e);
       return { error: true, mensaje: e.message };
     }
   }
@@ -1728,7 +1766,8 @@
   function cambiarLiga(codigo) {
     ligaSeleccionada = codigo;
     renderFiltroLigas();
-    renderizarPartidosFiltrados();
+    if (ultimaFechaCargada === 'finalizados') renderizarFinalizados();
+    else renderizarPartidosFiltrados();
   }
 
   // ============ RENDER PRINCIPAL DE PARTIDOS ============
@@ -1795,8 +1834,96 @@
     if (vistaActual === 'analitica') renderHistorial(calcularEstadisticasHistorial(historialActualizado), historialActualizado);
   }
 
+  // ============ FINALIZADOS (pronostico vs resultado real, dentro de Pronosticos) ============
+  let partidosFinalizadosCache = [];
+
+  function tarjetaFinalizadoHTML(entrada) {
+    const h = entrada;
+    const aciertos = h.mercados.filter(m => m.acierto).length;
+    const total = h.mercados.length;
+    let claseBadge = 'parcial';
+    if (aciertos === total) claseBadge = 'todo-bien';
+    else if (aciertos === 0) claseBadge = 'todo-mal';
+
+    const itemsMercados = h.mercados.map(m => `
+      <span class="historial-mercado-item ${m.acierto ? 'acierto' : 'fallo'}">
+        <span class="historial-mercado-check">${m.acierto ? '✓' : '✕'}</span>
+        ${CATEGORIAS_MERCADO[m.categoria]?.titulo || m.categoria}: ${m.seleccion} (${m.probabilidad}%)
+      </span>
+    `).join('');
+
+    return `
+      <div class="historial-partido">
+        <div class="historial-partido-header">
+          <span class="historial-partido-equipos"><strong>${h.local} vs ${h.visita}</strong></span>
+          <span class="historial-partido-marcador">${h.marcadorFinal}</span>
+          <span class="historial-partido-badge ${claseBadge}">${aciertos}/${total}</span>
+        </div>
+        <p class="info-partido" style="margin:0 0 8px;">${h.liga}</p>
+        <div class="historial-partido-mercados">${itemsMercados}</div>
+      </div>
+    `;
+  }
+
+  async function cargarFinalizados() {
+    const contenedor = document.getElementById('contenedor-partidos');
+    const contenedorCombinadas = document.getElementById('bloque-combinadas');
+    contenedor.classList.remove('visible');
+    contenedor.innerHTML = skeletonHTML();
+    contenedorCombinadas.innerHTML = '';
+
+    const hoy = new Date();
+    const hace7dias = new Date(hoy);
+    hace7dias.setDate(hace7dias.getDate() - 7);
+
+    const partidos = await obtenerPartidosFinalizados(formatearFecha(hace7dias), formatearFecha(hoy));
+    if (partidos.error) {
+      contenedor.innerHTML = `<p style="text-align:center; color:#ff6b6b;">Error: ${partidos.mensaje}</p>`;
+      requestAnimationFrame(() => contenedor.classList.add('visible'));
+      return;
+    }
+
+    // Solo nos interesan los partidos que ya pronosticamos (aparecen en el historial local)
+    const historial = await actualizarHistorialYCalibracion();
+    const idsFinalizados = new Set(partidos.map(p => p.id));
+    partidosFinalizadosCache = historial
+      .filter(h => h.verificado && idsFinalizados.has(h.partidoId))
+      .sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+
+    renderFiltroLigas();
+    renderizarFinalizados();
+  }
+
+  function renderizarFinalizados() {
+    const contenedor = document.getElementById('contenedor-partidos');
+    contenedor.classList.remove('visible');
+
+    let lista = partidosFinalizadosCache;
+    if (ligaSeleccionada !== 'TODAS') {
+      lista = lista.filter(h => NOMBRES_LIGA[ligaSeleccionada] === h.liga);
+    }
+    lista = lista.filter(h => coincideBusquedaTexto(h.local, h.visita, h.liga));
+
+    if (lista.length === 0) {
+      const mensaje = terminoBusqueda
+        ? `No encontramos partidos finalizados que coincidan con "${terminoBusqueda}".`
+        : 'Todavía no hay partidos finalizados y verificados en los últimos 7 días. A medida que veas partidos en "Hoy"/"Mañana" y esos terminen, van a aparecer acá con su resultado real.';
+      contenedor.innerHTML = `<p style="text-align:center; color:#8fa896;">${mensaje}</p>`;
+      requestAnimationFrame(() => contenedor.classList.add('visible'));
+      return;
+    }
+
+    contenedor.innerHTML = lista.slice(0, 10).map(tarjetaFinalizadoHTML).join('');
+    requestAnimationFrame(() => contenedor.classList.add('visible'));
+  }
+
   // ============ CARGA PRINCIPAL ============
   async function cargarPartidos(tipoFecha) {
+    if (tipoFecha === 'finalizados') {
+      await cargarFinalizados();
+      return;
+    }
+
     const contenedor = document.getElementById('contenedor-partidos');
     const contenedorCombinadas = document.getElementById('bloque-combinadas');
     contenedor.classList.remove('visible');
@@ -1880,6 +2007,7 @@
     const valor = document.getElementById('input-fecha-personalizada').value;
     if (!valor) return;
 
+    ultimaFechaCargada = 'otra';
     const contenedor = document.getElementById('contenedor-partidos');
     const contenedorCombinadas = document.getElementById('bloque-combinadas');
     contenedor.classList.remove('visible');
@@ -1896,7 +2024,7 @@
     partidos = partidos.filter(p => fechaLocalDePartido(p.utcDate) === valor);
 
     if (partidos.length === 0 && valor < formatearFecha(new Date())) {
-      contenedor.innerHTML = `<p style="text-align:center; color:#8fa896;">Esa fecha ya pasó, así que esos partidos ya se jugaron (o ya no están programados). Elige hoy o una fecha futura para ver pronósticos.</p>`;
+      contenedor.innerHTML = `<p style="text-align:center; color:#8fa896;">Esa fecha ya pasó, así que esos partidos ya se jugaron (o ya no están programados). Elige hoy o una fecha futura para ver pronósticos, o mira la pestaña "Finalizados" para ver resultados verificados.</p>`;
       requestAnimationFrame(() => contenedor.classList.add('visible'));
       document.getElementById('bloque-combinadas').innerHTML = '';
       return;
@@ -2010,7 +2138,7 @@
   // Auto-actualizacion cada 3 minutos, solo si la pestaña esta visible
   setInterval(() => {
     if (document.visibilityState === 'visible') {
-      if (vistaActual === 'pronosticos') cargarPartidos(ultimaFechaCargada);
+      if (vistaActual === 'pronosticos') cargarPartidos(ultimaFechaCargada === 'otra' ? 'hoy' : ultimaFechaCargada);
       else if (vistaActual === 'favoritos') cargarFavoritos();
       else if (vistaActual === 'mispredicciones') actualizarHistorialYCalibracion().then(() => renderMisPredicciones());
     }
