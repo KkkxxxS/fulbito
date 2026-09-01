@@ -1483,6 +1483,7 @@
       const url = `${BACKEND_URL}/api/partidos?competitions=${COMPETICIONES}&dateFrom=${formatearFecha(fechaDesde)}&dateTo=${formatearFecha(hoy)}`;
       const resp = await fetch(url);
       const datos = await resp.json();
+      if (datos.error) { console.warn("Error de la API al verificar historial:", datos.mensaje); return leerHistorial(); }
       const finalizados = (datos.matches || []).filter(p => p.status === 'FINISHED');
 
       const mapaResultados = {};
@@ -2003,7 +2004,7 @@
     selector.style.display = selector.style.display === 'none' ? 'flex' : 'none';
   }
 
-  async function aplicarFechaPersonalizada() {
+   async function aplicarFechaPersonalizada() {
     const valor = document.getElementById('input-fecha-personalizada').value;
     if (!valor) return;
 
@@ -2014,7 +2015,13 @@
     contenedor.innerHTML = skeletonHTML();
     contenedorCombinadas.innerHTML = '';
 
-    let partidos = await obtenerPartidos(valor, valor);
+    const fechaObjetivo = new Date(valor + 'T12:00:00');
+    const inicioConsulta = new Date(fechaObjetivo);
+    inicioConsulta.setDate(inicioConsulta.getDate() - 1);
+    const finConsulta = new Date(fechaObjetivo);
+    finConsulta.setDate(finConsulta.getDate() + 1);
+
+    let partidos = await obtenerPartidos(formatearFecha(inicioConsulta), formatearFecha(finConsulta));
     if (partidos.error) {
       contenedor.innerHTML = `<p style="text-align:center; color:#ff6b6b;">Error: ${partidos.mensaje}</p>`;
       requestAnimationFrame(() => contenedor.classList.add('visible'));
@@ -2035,7 +2042,6 @@
     renderFiltroLigas();
     await renderizarPartidosFiltrados();
   }
-
   // ============ VISTA DE FAVORITOS ============
   let partidosFavoritosCache = [];
 
