@@ -234,7 +234,7 @@ body {
     align-items: stretch;
   }
   .app-nav.menu-abierto .app-nav-tabs {
-    max-height: 260px;
+    max-height: 320px;
     padding: 4px 20px 14px;
   }
   .nav-tab {
@@ -1516,3 +1516,221 @@ main {
   color: var(--text-muted);
 }
 .catalogo-fila:last-child { border-bottom: none; }
+
+/* ============ VISTA "HISTORIAL" (tablero de picks liquidados) ============ */
+.resumen-historial-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 22px;
+}
+
+@media (max-width: 720px) {
+  .resumen-historial-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+.resumen-card {
+  background: linear-gradient(180deg, var(--card) 0%, var(--bg-raised) 130%);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-sm);
+  padding: 16px 17px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  box-shadow: var(--shadow-card);
+}
+
+.resumen-card-titulo {
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.resumen-card-valor {
+  font-family: var(--font-display);
+  font-size: 2.1rem;
+  line-height: 1;
+  color: var(--text);
+}
+
+.resumen-card-valor.color-verde { color: var(--green); }
+.resumen-card-valor.color-cyan { color: var(--m-marcador); }
+.resumen-card-valor.color-gold { color: var(--gold); }
+
+.resumen-card-sub {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.resumen-card-barra {
+  height: 5px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.08);
+  overflow: hidden;
+  margin-top: 2px;
+}
+
+.resumen-card-barra div {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--green);
+}
+
+.historial-filtros-barra {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.historial-filtros-chips {
+  display: flex;
+  gap: 8px;
+  background: var(--bg-raised);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 4px;
+  width: fit-content;
+}
+
+.chip-filtro {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 0.8rem;
+  padding: 7px 16px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.chip-filtro:hover { color: var(--text); }
+
+.chip-filtro.activo {
+  background: var(--green);
+  color: var(--ink-on-accent);
+}
+
+.historial-conteo-resultados {
+  color: var(--text-dim);
+  font-size: 0.78rem;
+  margin: 0 0 14px;
+}
+
+.lista-eval-historial {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.eval-historial-fila {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: 13px;
+  padding: 13px 16px;
+  flex-wrap: wrap;
+}
+
+.eval-historial-liga {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  flex-shrink: 0;
+  width: 118px;
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  font-weight: 600;
+}
+
+.badge-final {
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: var(--green);
+  background: var(--green-dim);
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.eval-historial-cuerpo {
+  flex: 1;
+  min-width: 200px;
+}
+
+.eval-historial-partido {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: var(--text);
+  flex-wrap: wrap;
+}
+
+.eval-historial-partido .eval-marcador {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  color: var(--m-marcador);
+  background: var(--bg-raised);
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  padding: 1px 9px;
+}
+
+.eval-mercado-titulo {
+  margin: 4px 0 0;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.eval-mercado-titulo em {
+  font-style: normal;
+  color: var(--text);
+  font-weight: 700;
+}
+
+.eval-historial-resultado {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.eval-icono {
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.95rem;
+}
+
+.eval-icono.ok { background: var(--green-dim); color: var(--green); }
+.eval-icono.no { background: #3a1414; color: var(--red); }
+
+.eval-confianza {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  color: var(--text-muted);
+  min-width: 46px;
+  text-align: right;
+}
+
+@media (max-width: 560px) {
+  .eval-historial-liga { width: auto; flex-direction: row; align-items: center; }
+  .eval-historial-resultado { margin-left: 0; width: 100%; justify-content: space-between; }
+}

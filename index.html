@@ -65,6 +65,9 @@
         <button class="nav-tab" data-vista="analitica" onclick="cambiarVista('analitica')">
             <span class="nav-tab-icono">◧</span> Analítica
         </button>
+        <button class="nav-tab" data-vista="historial" onclick="cambiarVista('historial')">
+            <span class="nav-tab-icono">🕘</span> Historial
+        </button>
     </nav>
 </header>
 
@@ -95,11 +98,11 @@
                 Los picks que marcaste
             </span>
         </button>
-        <button class="acceso-rapido" onclick="cambiarVista('analitica')">
-            <span class="acceso-rapido-icono">◧</span>
+        <button class="acceso-rapido" onclick="cambiarVista('historial')">
+            <span class="acceso-rapido-icono">🕘</span>
             <span class="acceso-rapido-texto">
-                <strong>Analítica</strong>
-                Precisión real del modelo
+                <strong>Historial</strong>
+                Todos los picks liquidados
             </span>
         </button>
     </div>
@@ -179,6 +182,12 @@
     <div id="bloque-historial"></div>
 </section>
 
+<section id="vista-historial" class="vista">
+    <h2>Historial</h2>
+    <p class="subtitulo-vista">Todos los picks que Fulbito liquidó, con su resultado real. Filtra por ganados, perdidos o busca un equipo o liga arriba.</p>
+    <div id="bloque-historial-completo"></div>
+</section>
+
 </main>
 
 <footer class="pie-pagina">
@@ -202,6 +211,7 @@
   // ============ VISTAS (app shell) ============
   let vistaActual = 'pronosticos';
   let favoritosCargadosAlMenosUnaVez = false;
+  let filtroHistorial = 'todos';
 
   function cambiarVista(vista, actualizarHash = true) {
     vistaActual = vista;
@@ -212,8 +222,8 @@
     document.querySelectorAll('.nav-tab').forEach(btn => btn.classList.toggle('activa', btn.dataset.vista === vista));
 
     const buscador = document.getElementById('input-busqueda');
-    buscador.style.display = (vista === 'analitica' || vista === 'mispredicciones') ? 'none' : '';
-    buscador.placeholder = vista === 'favoritos' ? 'Buscar en tus favoritos…' : 'Buscar equipo o liga…';
+    buscador.style.display = (vista === 'mispredicciones') ? 'none' : '';
+    buscador.placeholder = vista === 'favoritos' ? 'Buscar en tus favoritos…' : (vista === 'analitica' || vista === 'historial') ? 'Buscar equipo o liga en el historial…' : 'Buscar equipo o liga…';
 
     cerrarMenuMovil();
     if (actualizarHash) history.replaceState(null, '', `#${vista}`);
@@ -223,6 +233,8 @@
       cargarFavoritos();
      } else if (vista === 'analitica') {
       actualizarHistorialYCalibracion().then(h => renderHistorial(calcularEstadisticasHistorial(h), h));
+    } else if (vista === 'historial') {
+      actualizarHistorialYCalibracion().then(h => renderHistorialCompleto(h));
     } else if (vista === 'mispredicciones') {
       actualizarHistorialYCalibracion().then(() => renderMisPredicciones());
     }
@@ -245,6 +257,8 @@
       else renderizarPartidosFiltrados();
     }
     else if (vistaActual === 'favoritos') renderizarFavoritos();
+    else if (vistaActual === 'analitica') { const h = leerHistorial(); renderHistorial(calcularEstadisticasHistorial(h), h); }
+    else if (vistaActual === 'historial') { renderHistorialCompleto(leerHistorial()); }
   }
 
   function coincideBusqueda(partido) {
@@ -1770,6 +1784,7 @@ async function obtenerStatsEquipo(teamId, codigoLiga, tabla) {
     } catch (e) {}
     calibracionActual = calibracionPorDefecto();
     renderHistorial(null);
+    renderHistorialCompleto([]);
   }
 
   function panelCalibracionHTML() {
@@ -1886,6 +1901,138 @@ async function obtenerStatsEquipo(teamId, codigoLiga, tabla) {
     `;
   }
 
+  // ============ HISTORIAL COMPLETO (vista "Historial", estilo tablero de picks liquidados) ============
+  function calcularResumenHistorial(historial) {
+    const verificados = historial.filter(h => h.verificado);
+    let total = 0, aciertos = 0, sumaProb = 0;
+    verificados.forEach(h => {
+      h.mercados.forEach(m => {
+        total++;
+        sumaProb += m.probabilidad;
+        if (m.acierto) aciertos++;
+      });
+    });
+    const tasa = total > 0 ? Math.round((aciertos / total) * 100) : 0;
+    const confianzaMedia = total > 0 ? Math.round(sumaProb / total) : 0;
+    return { totalPicks: total, aciertos, perdidos: total - aciertos, tasa, confianzaMedia, partidosVerificados: verificados.length };
+  }
+
+  function resumenHistorialCardsHTML(r) {
+    return `
+      <div class="resumen-historial-grid">
+        <div class="resumen-card">
+          <span class="resumen-card-titulo">Picks liquidados</span>
+          <span class="resumen-card-valor">${r.totalPicks}</span>
+          <span class="resumen-card-sub">${r.aciertos} ganados · ${r.perdidos} perdidos</span>
+        </div>
+        <div class="resumen-card">
+          <span class="resumen-card-titulo">Aciertos</span>
+          <span class="resumen-card-valor color-verde">${r.aciertos}</span>
+          <div class="resumen-card-barra"><div style="width:${r.tasa}%"></div></div>
+        </div>
+        <div class="resumen-card">
+          <span class="resumen-card-titulo">Tasa de acierto</span>
+          <span class="resumen-card-valor color-cyan">${r.tasa}%</span>
+          <div class="resumen-card-barra"><div style="width:${r.tasa}%; background:var(--m-marcador);"></div></div>
+        </div>
+        <div class="resumen-card">
+          <span class="resumen-card-titulo">Confianza media</span>
+          <span class="resumen-card-valor color-gold">${r.confianzaMedia}%</span>
+          <span class="resumen-card-sub">Promedio de todos los picks filtrados</span>
+        </div>
+      </div>
+    `;
+  }
+
+  function cambiarFiltroHistorial(filtro) {
+    filtroHistorial = filtro;
+    renderHistorialCompleto(leerHistorial());
+  }
+
+  function obtenerEvaluacionesHistorial(historial) {
+    const verificados = historial.filter(h => h.verificado);
+    let evaluaciones = [];
+    verificados.forEach(h => {
+      h.mercados.forEach(m => {
+        evaluaciones.push({
+          ...m,
+          local: h.local, visita: h.visita, liga: h.liga,
+          marcadorFinal: h.marcadorFinal, fecha: h.fecha
+        });
+      });
+    });
+
+    if (filtroHistorial === 'ganados') evaluaciones = evaluaciones.filter(e => e.acierto);
+    if (filtroHistorial === 'perdidos') evaluaciones = evaluaciones.filter(e => !e.acierto);
+    if (terminoBusqueda) evaluaciones = evaluaciones.filter(e => coincideBusquedaTexto(e.local, e.visita, e.liga));
+
+    evaluaciones.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+    return evaluaciones;
+  }
+
+  function filaEvaluacionHistorialHTML(ev) {
+    const gano = ev.acierto;
+    return `
+      <div class="eval-historial-fila">
+        <div class="eval-historial-liga">
+          <span>${ev.liga}</span>
+          <span class="badge-final">FINAL</span>
+        </div>
+        <div class="eval-historial-cuerpo">
+          <div class="eval-historial-partido">
+            <strong>${ev.local}</strong>
+            <span class="eval-marcador">${ev.marcadorFinal || '—'}</span>
+            <strong>${ev.visita}</strong>
+          </div>
+          <p class="eval-mercado-titulo">${CATEGORIAS_MERCADO[ev.categoria]?.titulo || ev.categoria} · <em>${ev.seleccion}</em></p>
+        </div>
+        <div class="eval-historial-resultado">
+          <span class="eval-icono ${gano ? 'ok' : 'no'}">${gano ? '✓' : '✕'}</span>
+          <span class="eval-confianza">${ev.probabilidad}%</span>
+        </div>
+      </div>
+    `;
+  }
+
+  const LIMITE_HISTORIAL_COMPLETO = 60;
+
+  function renderHistorialCompleto(historial) {
+    const contenedor = document.getElementById('bloque-historial-completo');
+    if (!contenedor) return;
+
+    const resumen = calcularResumenHistorial(historial);
+
+    if (resumen.totalPicks === 0) {
+      contenedor.innerHTML = `
+        <div class="aviso-servidor">
+          <p><strong>Todavía no hay picks liquidados en este navegador.</strong></p>
+          <p>A medida que los partidos que Fulbito pronosticó terminen, van a aparecer acá con su resultado real.</p>
+        </div>
+      `;
+      return;
+    }
+
+    const evaluaciones = obtenerEvaluacionesHistorial(historial);
+    const mostrar = evaluaciones.slice(0, LIMITE_HISTORIAL_COMPLETO);
+
+    contenedor.innerHTML = `
+      ${resumenHistorialCardsHTML(resumen)}
+      <div class="historial-filtros-barra">
+        <div class="historial-filtros-chips">
+          <button class="chip-filtro ${filtroHistorial === 'todos' ? 'activo' : ''}" onclick="cambiarFiltroHistorial('todos')">Todos</button>
+          <button class="chip-filtro ${filtroHistorial === 'ganados' ? 'activo' : ''}" onclick="cambiarFiltroHistorial('ganados')">Ganados</button>
+          <button class="chip-filtro ${filtroHistorial === 'perdidos' ? 'activo' : ''}" onclick="cambiarFiltroHistorial('perdidos')">Perdidos</button>
+        </div>
+        <button class="boton-reiniciar" onclick="reiniciarHistorial()">Reiniciar historial</button>
+      </div>
+      <p class="historial-conteo-resultados">${evaluaciones.length} picks encontrados${terminoBusqueda ? ` para "${terminoBusqueda}"` : ''}</p>
+      <div class="lista-eval-historial">
+        ${mostrar.length > 0 ? mostrar.map(filaEvaluacionHistorialHTML).join('') : `<p style="text-align:center; color:var(--text-dim); padding:20px 0;">Ningún pick coincide con este filtro.</p>`}
+      </div>
+      ${evaluaciones.length > LIMITE_HISTORIAL_COMPLETO ? `<p class="historial-conteo-resultados">Mostrando ${mostrar.length} de ${evaluaciones.length}. Usa el buscador para acotar.</p>` : ''}
+    `;
+  }
+
   function esperar(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
@@ -1987,6 +2134,7 @@ async function obtenerStatsEquipo(teamId, codigoLiga, tabla) {
 
         const historialActualizado = await actualizarHistorialYCalibracion();
     if (vistaActual === 'analitica') renderHistorial(calcularEstadisticasHistorial(historialActualizado), historialActualizado);
+    if (vistaActual === 'historial') renderHistorialCompleto(historialActualizado);
   }
 
   // ============ FINALIZADOS (pronostico vs resultado real, dentro de Pronosticos) ============
@@ -2293,7 +2441,7 @@ async function obtenerStatsEquipo(teamId, codigoLiga, tabla) {
   cargarPartidos('hoy');
 
   const hashInicial = window.location.hash.replace('#', '');
-  if (['favoritos', 'analitica', 'mispredicciones'].includes(hashInicial)) {
+  if (['favoritos', 'analitica', 'mispredicciones', 'historial'].includes(hashInicial)) {
     cambiarVista(hashInicial, false);
   }
 
@@ -2303,6 +2451,7 @@ async function obtenerStatsEquipo(teamId, codigoLiga, tabla) {
       if (vistaActual === 'pronosticos') cargarPartidos(ultimaFechaCargada === 'otra' ? 'hoy' : ultimaFechaCargada);
       else if (vistaActual === 'favoritos') cargarFavoritos();
       else if (vistaActual === 'mispredicciones') actualizarHistorialYCalibracion().then(() => renderMisPredicciones());
+      else if (vistaActual === 'historial') actualizarHistorialYCalibracion().then(h => renderHistorialCompleto(h));
     }
   }, 3 * 60 * 1000);
 
