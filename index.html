@@ -15,7 +15,7 @@
     <meta name="twitter:title" content="Fulbito - Pronósticos de fútbol">
     <meta name="twitter:description" content="Pronósticos de fútbol basados en un modelo estadístico real, con historial de aciertos verificado.">
 
-    <meta name="theme-color" content="#0a1a12">
+    <meta name="theme-color" content="#0a0f1c">
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/x-icon" href="favicon.ico">
     <link rel="stylesheet" href="style.css">
@@ -557,20 +557,43 @@
 
       const mapa = {};
       let sumaPuntosPorPartido = 0;
+      let sumaGolesFavor = 0, sumaGolesContra = 0, sumaPartidosParaGoles = 0;
+      let hayDatosGoles = true;
+
       tabla.forEach(fila => {
         const ppp = fila.playedGames > 0 ? fila.points / fila.playedGames : 1;
-        mapa[fila.team.id] = { posicion: fila.position, puntosPorPartido: ppp, totalEquipos: tabla.length };
         sumaPuntosPorPartido += ppp;
-      });
-      const promedioLiga = tabla.length > 0 ? sumaPuntosPorPartido / tabla.length : 1.3;
 
-      const resultado = { mapa, promedioLiga };
+        const tieneGoles = typeof fila.goalsFor === 'number' && typeof fila.goalsAgainst === 'number' && fila.playedGames > 0;
+        if (tieneGoles) {
+          sumaGolesFavor += fila.goalsFor;
+          sumaGolesContra += fila.goalsAgainst;
+          sumaPartidosParaGoles += fila.playedGames;
+        } else {
+          hayDatosGoles = false;
+        }
+
+        mapa[fila.team.id] = {
+          posicion: fila.position,
+          puntosPorPartido: ppp,
+          totalEquipos: tabla.length,
+          partidosJugados: fila.playedGames || 0,
+          golesFavorPorPartido: tieneGoles ? fila.goalsFor / fila.playedGames : null,
+          golesContraPorPartido: tieneGoles ? fila.goalsAgainst / fila.playedGames : null
+        };
+      });
+
+      const promedioLigaPuntos = tabla.length > 0 ? sumaPuntosPorPartido / tabla.length : 1.3;
+      const promedioLigaGolesFavor = (hayDatosGoles && sumaPartidosParaGoles > 0) ? sumaGolesFavor / sumaPartidosParaGoles : null;
+      const promedioLigaGolesContra = (hayDatosGoles && sumaPartidosParaGoles > 0) ? sumaGolesContra / sumaPartidosParaGoles : null;
+
+      const resultado = { mapa, promedioLiga: promedioLigaPuntos, promedioLigaGolesFavor, promedioLigaGolesContra };
       cache[claveCache] = resultado;
       guardarCachePersistente(claveCache, resultado);
       return resultado;
     } catch (e) {
       console.warn("No se pudo obtener la tabla de posiciones", e);
-      const vacio = { mapa: {}, promedioLiga: 1.3 };
+      const vacio = { mapa: {}, promedioLiga: 1.3, promedioLigaGolesFavor: null, promedioLigaGolesContra: null };
       return vacio;
     }
   }
@@ -579,7 +602,33 @@
     const info = tabla.mapa[teamId];
     if (!info || !tabla.promedioLiga) return 1;
     const ratio = info.puntosPorPartido / tabla.promedioLiga;
-    return Math.max(0.85, Math.min(1.15, ratio));
+    // Rango mas angosto que antes: la fuerza de ataque/defensa (ver mas abajo) ya
+    // captura gran parte de esta señal a partir de goles reales, asi que la tabla
+    // de posiciones ahora es solo una correccion residual (rendimiento vs. resultado).
+    return Math.max(0.94, Math.min(1.06, ratio));
+  }
+
+  // ============ FUERZA DE ATAQUE / DEFENSA RELATIVA A LA LIGA (temporada completa) ============
+  // Complementa el promedio de partidos recientes: compara los goles reales de
+  // cada equipo en la tabla de posiciones contra el promedio real de la liga esta
+  // temporada (no un numero fijo), igual que hacen los modelos Dixon-Coles serios.
+  function shrinkageHaciaUno(valor, partidosJugados) {
+    const peso = Math.min(partidosJugados / PARTIDOS_CONFIANZA_PLENA, 1);
+    return valor * peso + 1 * (1 - peso);
+  }
+
+  function fuerzaAtaqueDefensa(tabla, teamId) {
+    const info = tabla.mapa[teamId];
+    if (!info || !tabla.promedioLigaGolesFavor || !tabla.promedioLigaGolesContra || info.golesFavorPorPartido === null) {
+      return { ataque: 1, defensa: 1 };
+    }
+    let ataque = info.golesFavorPorPartido / tabla.promedioLigaGolesFavor;
+    let defensa = info.golesContraPorPartido / tabla.promedioLigaGolesContra;
+    ataque = shrinkageHaciaUno(ataque, info.partidosJugados);
+    defensa = shrinkageHaciaUno(defensa, info.partidosJugados);
+    ataque = Math.max(0.5, Math.min(1.8, ataque));
+    defensa = Math.max(0.5, Math.min(1.8, defensa));
+    return { ataque, defensa };
   }
 
   function badgePosicion(tabla, teamId) {
@@ -1072,6 +1121,15 @@
   function generarPronosticos(statsLocal, statsVisita, nombreLocal, nombreVisita, h2h, tabla, idLocal, idVisita) {
     let lambdaLocal = (statsLocal.local.golesFavor + statsVisita.visita.golesContra) / 2;
     let lambdaVisita = (statsVisita.visita.golesFavor + statsLocal.local.golesContra) / 2;
+
+    // Segundo estimador: fuerza de ataque/defensa de temporada completa (tabla de
+    // posiciones, goles reales), como correccion moderada sobre el estimador de
+    // partidos recientes de arriba. Raiz cuadrada para que sea un ajuste, no una
+    // duplicacion de la señal.
+    const fuerzaLocal = fuerzaAtaqueDefensa(tabla, idLocal);
+    const fuerzaVisita = fuerzaAtaqueDefensa(tabla, idVisita);
+    lambdaLocal *= Math.sqrt(fuerzaLocal.ataque * fuerzaVisita.defensa);
+    lambdaVisita *= Math.sqrt(fuerzaVisita.ataque * fuerzaLocal.defensa);
 
     const factorLocaliaUsado = calibracionActual.factorLocalia || FACTOR_LOCALIA_BASE;
     lambdaLocal *= factorLocaliaUsado;
@@ -2156,6 +2214,7 @@
       navigator.serviceWorker.register('sw.js').catch(e => console.warn('No se pudo registrar el service worker', e));
     });
   }
+
 </script>
 
 </body>

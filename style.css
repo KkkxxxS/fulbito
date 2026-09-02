@@ -1,36 +1,40 @@
-@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800;900&display=swap');
 
 :root {
-  --bg: #171330;
-  --bg-raised: #201a42;
-  --card: #251e4d;
-  --card-border: #3d3468;
-  --line: #332a5c;
-  --text: #f3eefb;
-  --text-muted: #a79fcf;
-  --text-dim: #6e6597;
+  /* Paleta "sala VIP" — navy profundo + acento dorado + acento teal para datos */
+  --bg: #0a0f1c;
+  --bg-raised: #101828;
+  --card: #131c2e;
+  --card-border: #23304a;
+  --line: #1c2740;
+  --text: #f5f7fb;
+  --text-muted: #9aa7c2;
+  --text-dim: #5c6a8a;
   --gold: #ffb238;
-  --gold-dim: #8a5a17;
-  --green: #ff5a36;
-  --green-dim: #5c2413;
+  --gold-dim: #6b4a15;
+  --green: #00d9a3;
+  --green-dim: #073d31;
   --red: #ff4d6a;
-  --ink-on-accent: #2a0e04;
-  --radius: 14px;
+  --ink-on-accent: #06110d;
+  --radius: 16px;
+  --radius-sm: 10px;
+  --shadow-card: 0 1px 0 rgba(255,255,255,0.04) inset, 0 10px 30px -12px rgba(0,0,0,0.55);
+  --shadow-lift: 0 18px 40px -14px rgba(0,0,0,0.65);
   --font-display: 'Bebas Neue', 'Arial Narrow', sans-serif;
   --font-body: 'Inter', system-ui, -apple-system, sans-serif;
 
   /* identidad de color por categoria de mercado (banco dinamico de ~19 mercados / 7 categorias) */
   --m-resultado: #ffc933;
   --m-resultado-ink: #241a02;
-  --m-doble: #2f74e0;
-  --m-doble-ink: #ffffff;
-  --m-totalgoles: #17cfa8;
-  --m-totalgoles-ink: #052420;
-  --m-btts: #ff4f9a;
+  --m-doble: #4f8dff;
+  --m-doble-ink: #04122c;
+  --m-totalgoles: #17e0b8;
+  --m-totalgoles-ink: #032420;
+  --m-btts: #ff5fa8;
   --m-btts-ink: #2a0416;
-  --m-equipomarca: #9b6bff;
+  --m-equipomarca: #a97bff;
   --m-equipomarca-ink: #1c0d3d;
-  --m-handicap: #ff8a3d;
+  --m-handicap: #ff9a4d;
   --m-handicap-ink: #331400;
   --m-marcador: #4dd0ff;
   --m-marcador-ink: #04222c;
@@ -43,13 +47,14 @@ html { scroll-behavior: smooth; }
 body {
   margin: 0;
   background:
-    radial-gradient(ellipse 900px 500px at 50% -10%, rgba(255, 90, 54, 0.14), transparent 60%),
-    radial-gradient(ellipse 700px 500px at 90% 10%, rgba(255, 178, 56, 0.06), transparent 60%),
+    radial-gradient(ellipse 900px 520px at 12% -8%, rgba(0, 217, 163, 0.10), transparent 60%),
+    radial-gradient(ellipse 800px 560px at 92% 6%, rgba(255, 178, 56, 0.09), transparent 60%),
     var(--bg);
   color: var(--text);
   font-family: var(--font-body);
   line-height: 1.5;
   min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
 }
 
 :focus-visible {
@@ -67,13 +72,13 @@ body {
   position: sticky;
   top: 0;
   z-index: 40;
-  background: rgba(10, 26, 18, 0.92);
-  backdrop-filter: blur(10px);
+  background: rgba(10, 15, 28, 0.85);
+  backdrop-filter: blur(14px) saturate(140%);
   border-bottom: 1px solid var(--line);
 }
 
 .app-nav-fila {
-  max-width: 760px;
+  max-width: 780px;
   margin: 0 auto;
   padding: 14px 20px;
   display: flex;
@@ -83,10 +88,14 @@ body {
 
 .app-nav-marca {
   font-family: var(--font-display);
-  font-size: 1.5rem;
-  letter-spacing: 0.02em;
+  font-size: 1.55rem;
+  letter-spacing: 0.03em;
   color: var(--text);
   flex-shrink: 0;
+  background: linear-gradient(135deg, #ffffff, var(--green) 140%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 .app-nav-buscador {
@@ -97,14 +106,15 @@ body {
   background: var(--bg-raised);
   border: 1px solid var(--line);
   border-radius: 10px;
-  padding: 8px 12px;
+  padding: 9px 13px;
   max-width: 320px;
   margin-left: auto;
-  transition: border-color 0.15s ease;
+  transition: border-color 0.15s ease, background 0.15s ease;
 }
 
 .app-nav-buscador:focus-within {
   border-color: var(--green);
+  background: var(--card);
 }
 
 .app-nav-buscador svg {
@@ -149,7 +159,7 @@ body {
 }
 
 .app-nav-tabs {
-  max-width: 760px;
+  max-width: 780px;
   margin: 0 auto;
   padding: 0 20px 12px;
   display: flex;
@@ -163,19 +173,19 @@ body {
 .nav-tab {
   appearance: none;
   background: none;
-  border: none;
+  border: 1px solid transparent;
   color: var(--text-muted);
   font-family: var(--font-body);
   font-weight: 700;
   font-size: 0.86rem;
-  padding: 8px 14px;
+  padding: 8px 15px;
   border-radius: 999px;
   cursor: pointer;
   white-space: nowrap;
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition: background 0.15s ease, color 0.15s ease, border-color .15s ease;
 }
 
 .nav-tab-icono {
@@ -184,11 +194,13 @@ body {
 
 .nav-tab:hover {
   color: var(--text);
+  border-color: var(--line);
 }
 
 .nav-tab.activa {
   background: var(--green);
   color: var(--ink-on-accent);
+  box-shadow: 0 4px 16px -4px rgba(0, 217, 163, 0.55);
 }
 
 .contador-favoritos {
@@ -222,7 +234,7 @@ body {
     align-items: stretch;
   }
   .app-nav.menu-abierto .app-nav-tabs {
-    max-height: 220px;
+    max-height: 260px;
     padding: 4px 20px 14px;
   }
   .nav-tab {
@@ -234,21 +246,21 @@ body {
 /* ============ HERO COMPACTO ============ */
 .hero-compacto {
   position: relative;
-  max-width: 760px;
+  max-width: 780px;
   margin: 0 auto;
-  padding: 36px 20px 8px;
+  padding: 44px 20px 10px;
   overflow: hidden;
 }
 
 .hero-compacto::before {
   content: "";
   position: absolute;
-  width: 420px;
-  height: 420px;
-  top: -140px;
-  left: -100px;
-  background: radial-gradient(circle, rgba(255, 90, 54, 0.30), transparent 70%);
-  filter: blur(30px);
+  width: 460px;
+  height: 460px;
+  top: -160px;
+  left: -110px;
+  background: radial-gradient(circle, rgba(0, 217, 163, 0.24), transparent 70%);
+  filter: blur(34px);
   z-index: 0;
   pointer-events: none;
   animation: flotar-reflector 16s ease-in-out infinite alternate;
@@ -262,29 +274,29 @@ body {
 .hero-compacto::after {
   content: "⚽";
   position: absolute;
-  font-size: 11rem;
-  opacity: 0.05;
+  font-size: 11.5rem;
+  opacity: 0.045;
   top: -2.5rem;
   right: -2rem;
   line-height: 1;
   pointer-events: none;
-  filter: grayscale(1) brightness(1.6);
+  filter: grayscale(1) brightness(1.8);
   z-index: 0;
 }
 
 .hero-textos {
   position: relative;
   z-index: 1;
-  max-width: 54ch;
+  max-width: 56ch;
 }
 
 .hero-compacto h1 {
   font-family: var(--font-display);
-  font-size: clamp(2.4rem, 7vw, 3.4rem);
+  font-size: clamp(2.6rem, 7.5vw, 3.7rem);
   letter-spacing: 0.02em;
   margin: 0;
   line-height: 0.95;
-  background: linear-gradient(180deg, #ffffff 0%, #b9d6c4 100%);
+  background: linear-gradient(180deg, #ffffff 0%, #b9e8d6 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -292,8 +304,8 @@ body {
 
 .hero-compacto p {
   color: var(--text-muted);
-  font-size: 0.95rem;
-  margin: 10px 0 26px;
+  font-size: 0.96rem;
+  margin: 12px 0 28px;
   letter-spacing: 0.01em;
 }
 
@@ -301,11 +313,15 @@ body {
   position: relative;
   z-index: 1;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 10px;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 760px) {
+  .accesos-rapidos { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 460px) {
   .accesos-rapidos { grid-template-columns: 1fr; }
 }
 
@@ -315,31 +331,34 @@ body {
   display: flex;
   align-items: center;
   gap: 12px;
-  background: var(--card);
+  background: linear-gradient(180deg, var(--card), var(--bg-raised));
   border: 1px solid var(--card-border);
-  border-radius: 12px;
-  padding: 14px 16px;
+  border-radius: 14px;
+  padding: 15px 16px;
   cursor: pointer;
-  transition: transform 0.15s ease, border-color 0.15s ease;
+  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow .18s ease;
   color: var(--text);
   font-family: var(--font-body);
+  box-shadow: var(--shadow-card);
 }
 
 .acceso-rapido:hover {
-  transform: translateY(-2px);
+  transform: translateY(-3px);
   border-color: var(--green);
+  box-shadow: var(--shadow-lift);
 }
 
 .acceso-rapido-icono {
-  font-size: 1.3rem;
+  font-size: 1.25rem;
   flex-shrink: 0;
-  width: 36px;
-  height: 36px;
+  width: 38px;
+  height: 38px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: var(--bg-raised);
-  border-radius: 9px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
 }
 
 .acceso-rapido-texto {
@@ -357,19 +376,19 @@ body {
   font-weight: 700;
 }
 
-/* ============ COMO FUNCIONA (3 pasos, estilo choco.bet) ============ */
+/* ============ COMO FUNCIONA (3 pasos) ============ */
 .como-funciona {
-  max-width: 760px;
+  max-width: 780px;
   margin: 0 auto;
-  padding: 24px 20px 4px;
+  padding: 30px 20px 4px;
 }
 
 .como-funciona-eyebrow {
   font-size: 0.68rem;
   font-weight: 800;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--text-dim);
+  color: var(--green);
   margin: 0 0 14px;
 }
 
@@ -388,13 +407,16 @@ body {
   gap: 12px;
   background: var(--card);
   border: 1px solid var(--card-border);
-  border-radius: 12px;
-  padding: 14px 16px;
+  border-radius: 14px;
+  padding: 16px 17px;
+  transition: border-color .18s ease;
 }
+
+.como-funciona-paso:hover { border-color: var(--card-border); }
 
 .como-funciona-num {
   font-family: var(--font-display);
-  font-size: 1.6rem;
+  font-size: 1.7rem;
   color: var(--green);
   flex-shrink: 0;
   line-height: 1.1;
@@ -402,31 +424,31 @@ body {
 
 .como-funciona-paso strong {
   display: block;
-  font-size: 0.92rem;
+  font-size: 0.93rem;
   color: var(--text);
   margin-bottom: 4px;
 }
 
 .como-funciona-paso p {
   margin: 0;
-  font-size: 0.78rem;
+  font-size: 0.79rem;
   color: var(--text-muted);
   line-height: 1.5;
 }
 
 /* ============ VISTAS ============ */
 main {
-  max-width: 720px;
+  max-width: 740px;
   margin: 0 auto;
   padding: 0 20px 40px;
 }
 
 .vista { display: none; }
-.vista.vista-activa { display: block; padding-top: 28px; }
+.vista.vista-activa { display: block; padding-top: 32px; }
 
 .vista h2 {
   font-family: var(--font-display);
-  font-size: clamp(2rem, 5.5vw, 2.6rem);
+  font-size: clamp(2.1rem, 5.5vw, 2.7rem);
   letter-spacing: 0.02em;
   margin: 0 0 6px;
   color: var(--text);
@@ -448,6 +470,8 @@ main {
   border-radius: 999px;
   border: 1px solid var(--line);
   width: fit-content;
+  max-width: 100%;
+  overflow-x: auto;
 }
 
 .pestaña {
@@ -461,6 +485,7 @@ main {
   padding: 9px 18px;
   border-radius: 999px;
   cursor: pointer;
+  white-space: nowrap;
   transition: background 0.15s ease, color 0.15s ease;
 }
 
@@ -474,18 +499,19 @@ main {
 #contenedor-partidos, #contenedor-favoritos {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 22px;
 }
 
 /* ============ TARJETA DE PARTIDO ============ */
 .tarjeta-partido {
-  background: var(--card);
+  background: linear-gradient(180deg, var(--card) 0%, var(--bg-raised) 130%);
   border: 1px solid var(--card-border);
   border-radius: var(--radius);
-  padding: 22px 22px 8px;
+  padding: 24px 24px 8px;
   position: relative;
   overflow: hidden;
   animation: aparecerTarjeta 0.45s ease both;
+  box-shadow: var(--shadow-card);
 }
 
 @keyframes aparecerTarjeta {
@@ -529,7 +555,7 @@ main {
 
 .encabezado-partido .equipo {
   font-family: var(--font-display);
-  font-size: clamp(1.05rem, 3.6vw, 1.4rem);
+  font-size: clamp(1.05rem, 3.6vw, 1.42rem);
   letter-spacing: 0.01em;
 }
 
@@ -580,7 +606,7 @@ main {
   text-align: center;
   color: var(--text-dim);
   font-size: 0.82rem;
-  margin: 12px 0 0;
+  margin: 14px 0 0;
   letter-spacing: 0.01em;
 }
 
@@ -603,13 +629,13 @@ main {
   margin: 12px 0 20px;
 }
 
-/* ============ TARJETAS DE MERCADO (estilo dashboard, color plano) ============ */
+/* ============ TARJETAS DE MERCADO ============ */
 .lista-mercados {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
   padding-bottom: 14px;
-  margin-top: 16px;
+  margin-top: 18px;
 }
 
 @media (max-width: 480px) {
@@ -617,18 +643,19 @@ main {
 }
 
 .fila-mercado {
-  border-radius: 12px;
-  padding: 14px 15px;
+  border-radius: 13px;
+  padding: 15px 16px;
   position: relative;
   overflow: hidden;
   isolation: isolate;
+  transition: transform .15s ease;
 }
 
 .fila-mercado::after {
   content: "";
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at 100% 0%, rgba(255,255,255,0.16), transparent 60%);
+  background: radial-gradient(circle at 100% 0%, rgba(255,255,255,0.18), transparent 60%);
   z-index: -1;
 }
 
@@ -658,7 +685,7 @@ main {
 
 .fila-porcentaje {
   font-family: var(--font-display);
-  font-size: 1.5rem;
+  font-size: 1.55rem;
   letter-spacing: 0.01em;
 }
 
@@ -673,7 +700,7 @@ main {
 }
 
 .barra-probabilidad {
-  height: 4px;
+  height: 5px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.22);
   overflow: hidden;
@@ -698,7 +725,7 @@ main {
 
 .fila-seleccion {
   margin: 0;
-  font-size: 0.9rem;
+  font-size: 0.92rem;
   font-weight: 800;
 }
 
@@ -767,8 +794,8 @@ main {
 .combo-partido {
   background: var(--bg-raised);
   border: 1px solid var(--line);
-  border-radius: 8px;
-  padding: 10px 12px;
+  border-radius: 10px;
+  padding: 11px 13px;
   margin-bottom: 8px;
 }
 
@@ -786,8 +813,8 @@ main {
 
 .combo-partido-pct {
   font-family: var(--font-display);
-  font-size: 1.05rem;
-  color: var(--text);
+  font-size: 1.08rem;
+  color: var(--green);
 }
 
 .combo-partido-partes {
@@ -804,8 +831,8 @@ main {
   gap: 12px;
   background: var(--bg-raised);
   border: 1px solid var(--card-border);
-  border-radius: 10px;
-  padding: 12px 14px;
+  border-radius: 12px;
+  padding: 13px 15px;
   margin-bottom: 10px;
   flex-wrap: wrap;
 }
@@ -834,7 +861,7 @@ main {
   gap: 10px;
   background: var(--card);
   border: 1px solid var(--card-border);
-  border-radius: 8px;
+  border-radius: 10px;
   padding: 9px 12px;
   font-size: 0.82rem;
 }
@@ -863,6 +890,64 @@ main {
   color: var(--text-muted);
   font-size: 0.84rem;
   margin: 0;
+}
+
+/* ============ Calibracion por rango (barras predicho vs real) ============ */
+.calibracion-rango-fila {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 10px;
+}
+.calibracion-rango-fila.pocas-muestras { opacity: 0.7; }
+.calibracion-rango-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.calibracion-rango-label {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  letter-spacing: 0.02em;
+  color: var(--text);
+}
+.calibracion-barra-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+.calibracion-barra-item:last-child { margin-bottom: 0; }
+.calibracion-barra-etiqueta {
+  width: 130px;
+  flex-shrink: 0;
+  font-size: 0.72rem;
+  color: var(--text-dim);
+}
+.calibracion-barra-fondo {
+  flex: 1;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--bg-raised);
+  overflow: hidden;
+}
+.calibracion-barra-relleno {
+  height: 100%;
+  border-radius: 999px;
+}
+.calibracion-barra-relleno.predicho { background: var(--text-dim); }
+.calibracion-barra-relleno.real.bien { background: var(--green); }
+.calibracion-barra-relleno.real.sobreestimado { background: var(--red); }
+.calibracion-barra-relleno.real.subestimado { background: var(--gold); }
+.calibracion-barra-valor {
+  width: 38px;
+  text-align: right;
+  flex-shrink: 0;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text);
 }
 
 .historial-header {
@@ -897,8 +982,8 @@ main {
 .historial-partido {
   background: var(--card);
   border: 1px solid var(--card-border);
-  border-radius: 10px;
-  padding: 12px 14px;
+  border-radius: 12px;
+  padding: 13px 15px;
   margin-bottom: 10px;
 }
 .historial-partido:last-child { margin-bottom: 0; }
@@ -963,16 +1048,17 @@ main {
   display: flex;
   align-items: center;
   gap: 16px;
-  background: var(--bg-raised);
+  background: linear-gradient(135deg, var(--bg-raised), var(--card));
   border: 1px solid var(--card-border);
   border-radius: var(--radius);
-  padding: 18px 22px;
+  padding: 20px 24px;
   margin-bottom: 18px;
+  box-shadow: var(--shadow-card);
 }
 
 .precision-general-num {
   font-family: var(--font-display);
-  font-size: 3rem;
+  font-size: 3.2rem;
   line-height: 1;
   color: var(--green);
   flex-shrink: 0;
@@ -986,8 +1072,8 @@ main {
 
 /* ============ COMBINADAS (widgets oscuros) ============ */
 .bloque-combinadas {
-  margin-top: 40px;
-  padding-top: 32px;
+  margin-top: 44px;
+  padding-top: 34px;
   border-top: 1px dashed var(--line);
 }
 
@@ -999,7 +1085,7 @@ main {
 
 .bloque-combinadas h3 {
   font-family: var(--font-display);
-  font-size: 1.8rem;
+  font-size: 1.9rem;
   letter-spacing: 0.02em;
   margin: 0 0 6px;
 }
@@ -1012,12 +1098,12 @@ main {
 }
 
 .tarjeta-combinada {
-  background: var(--bg-raised);
+  background: linear-gradient(180deg, var(--bg-raised), var(--card));
   border: 1px solid var(--card-border);
   border-radius: var(--radius);
-  padding: 18px 20px;
+  padding: 19px 21px;
   margin-bottom: 14px;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
+  box-shadow: var(--shadow-card);
 }
 
 .tarjeta-combinada .encabezado-combinada {
@@ -1029,13 +1115,14 @@ main {
 
 .tarjeta-combinada .etiqueta-combinada {
   font-family: var(--font-display);
-  font-size: 1.15rem;
+  font-size: 1.18rem;
   letter-spacing: 0.02em;
+  color: var(--gold);
 }
 
 .tarjeta-combinada .prob-combinada {
   font-family: var(--font-display);
-  font-size: 1.5rem;
+  font-size: 1.55rem;
 }
 
 .pierna-combinada {
@@ -1053,8 +1140,9 @@ main {
   width: 20px;
   height: 20px;
   flex-shrink: 0;
-  border-radius: 5px;
+  border-radius: 6px;
   background: var(--card);
+  border: 1px solid var(--line);
   color: var(--text-dim);
   font-size: 0.68rem;
   font-weight: 700;
@@ -1073,8 +1161,8 @@ main {
   align-items: flex-start;
   background: rgba(255, 178, 56, 0.07);
   border: 1px solid var(--gold-dim);
-  border-radius: 10px;
-  padding: 12px 14px;
+  border-radius: 12px;
+  padding: 13px 15px;
   margin-top: 16px;
   font-size: 0.8rem;
   color: var(--text-muted);
@@ -1090,7 +1178,7 @@ main {
   background: var(--bg-raised);
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  padding: 24px;
+  padding: 26px;
   font-size: 0.88rem;
   line-height: 1.6;
 }
@@ -1099,9 +1187,9 @@ main {
 
 /* ============ PIE DE PAGINA ============ */
 .pie-pagina {
-  max-width: 720px;
+  max-width: 740px;
   margin: 0 auto;
-  padding: 24px 20px 60px;
+  padding: 26px 20px 60px;
   border-top: 1px solid var(--line);
 }
 
@@ -1120,6 +1208,7 @@ main {
   object-fit: contain;
   vertical-align: middle;
   margin: 0 8px;
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.4));
 }
 
 /* ===== Animacion al cambiar de pestaña ===== */
@@ -1137,14 +1226,14 @@ main {
   flex-wrap: wrap;
   justify-content: center;
   gap: 8px;
-  margin-bottom: 20px;
+  margin-bottom: 22px;
 }
 .filtro-liga-btn {
   background-color: var(--bg-raised);
   color: var(--text-muted);
   border: 1px solid var(--line);
-  padding: 6px 14px;
-  border-radius: 16px;
+  padding: 7px 15px;
+  border-radius: 999px;
   cursor: pointer;
   font-size: 0.8rem;
   font-weight: 600;
@@ -1171,13 +1260,14 @@ main {
   display: block;
   width: 100%;
   margin-top: 10px;
-  padding: 8px;
+  padding: 9px;
   background: none;
   border: 1px dashed var(--line);
   color: var(--text-muted);
-  border-radius: 8px;
+  border-radius: 10px;
   cursor: pointer;
   font-size: 0.85rem;
+  transition: border-color .15s ease, color .15s ease;
 }
 .boton-expandir:hover {
   border-color: var(--green);
@@ -1188,7 +1278,7 @@ main {
 .skeleton-tarjeta {
   background-color: var(--card);
   border: 1px solid var(--card-border);
-  border-radius: 12px;
+  border-radius: 14px;
   padding: 24px;
   max-width: 500px;
   margin: 0 auto 30px;
@@ -1210,6 +1300,7 @@ main {
   font-size: 0.7rem;
   color: var(--text-muted);
   background-color: var(--bg-raised);
+  border: 1px solid var(--line);
   border-radius: 8px;
   padding: 2px 6px;
   margin-left: 6px;
@@ -1220,17 +1311,18 @@ main {
   display: block;
   width: 100%;
   margin-top: 12px;
-  padding: 8px;
+  padding: 9px;
   background-color: var(--green);
   color: var(--ink-on-accent);
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   font-weight: 700;
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition: background-color 0.2s ease, transform .12s ease;
 }
 .boton-compartir:hover {
-  background-color: #ff7a52;
+  background-color: #22f0c1;
+  transform: translateY(-1px);
 }
 
 /* ===== Responsive ===== */
@@ -1283,6 +1375,26 @@ main {
   color: var(--gold);
 }
 
+/* ===== Boton "mi prediccion" (pin) ===== */
+.boton-pick {
+  appearance: none;
+  background: rgba(255,255,255,0.28);
+  border: none;
+  border-radius: 8px;
+  width: 26px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: transform .12s ease, background .15s ease;
+}
+.boton-pick:hover { transform: scale(1.12); }
+.boton-pick.activa {
+  background: var(--ink-on-accent);
+}
+
 /* ===== Selector de fecha personalizada ===== */
 .selector-fecha-personalizada {
   display: flex;
@@ -1297,8 +1409,8 @@ main {
   color: var(--text);
   font-family: var(--font-body);
   font-size: 0.85rem;
-  padding: 8px 12px;
-  border-radius: 8px;
+  padding: 9px 12px;
+  border-radius: 10px;
   flex: 1;
 }
 
@@ -1310,14 +1422,14 @@ main {
   font-family: var(--font-body);
   font-weight: 700;
   font-size: 0.85rem;
-  padding: 8px 16px;
-  border-radius: 8px;
+  padding: 9px 16px;
+  border-radius: 10px;
   cursor: pointer;
   white-space: nowrap;
 }
 
 .selector-fecha-personalizada button:hover {
-  background: #ff7a52;
+  background: #22f0c1;
 }
 
 /* ===== Cuota implicita (probabilidad expresada como cuota decimal) ===== */
@@ -1350,7 +1462,7 @@ main {
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--text-dim);
-  margin: 14px 0 8px;
+  margin: 16px 0 8px;
 }
 .marcadores-probables {
   display: flex;
@@ -1361,7 +1473,7 @@ main {
 .marcador-chip {
   background: var(--bg-raised);
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: 9px;
   padding: 5px 10px;
   font-size: 0.82rem;
   font-weight: 700;
@@ -1375,7 +1487,7 @@ main {
 .catalogo-completo {
   background: var(--bg-raised);
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: 12px;
   padding: 10px 14px;
   margin-top: 10px;
 }
