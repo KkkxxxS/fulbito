@@ -554,6 +554,33 @@
       const resp = await fetch(url);
       const datos = await resp.json();
       const tabla = datos.standings?.find(s => s.type === 'TOTAL')?.table || [];
+      const tablaHome = datos.standings?.find(s => s.type === 'HOME')?.table || [];
+      const tablaAway = datos.standings?.find(s => s.type === 'AWAY')?.table || [];
+
+      function procesarContexto(tablaContexto) {
+        let sumaFavor = 0, sumaContra = 0, sumaPartidos = 0;
+        const mapaContexto = {};
+        tablaContexto.forEach(fila => {
+          const tieneGoles = typeof fila.goalsFor === 'number' && typeof fila.goalsAgainst === 'number' && fila.playedGames > 0;
+          if (tieneGoles) {
+            sumaFavor += fila.goalsFor;
+            sumaContra += fila.goalsAgainst;
+            sumaPartidos += fila.playedGames;
+            mapaContexto[fila.team.id] = {
+              golesFavorPorPartido: fila.goalsFor / fila.playedGames,
+              golesContraPorPartido: fila.goalsAgainst / fila.playedGames,
+              partidosJugados: fila.playedGames
+            };
+          }
+        });
+        return {
+          mapa: mapaContexto,
+          promedioGolesFavor: sumaPartidos > 0 ? sumaFavor / sumaPartidos : null,
+          promedioGolesContra: sumaPartidos > 0 ? sumaContra / sumaPartidos : null
+        };
+      }
+      const contextoLocal = procesarContexto(tablaHome);
+      const contextoVisita = procesarContexto(tablaAway);
 
       const mapa = {};
       let sumaPuntosPorPartido = 0;
@@ -587,25 +614,25 @@
       const promedioLigaGolesFavor = (hayDatosGoles && sumaPartidosParaGoles > 0) ? sumaGolesFavor / sumaPartidosParaGoles : null;
       const promedioLigaGolesContra = (hayDatosGoles && sumaPartidosParaGoles > 0) ? sumaGolesContra / sumaPartidosParaGoles : null;
 
-      const resultado = { mapa, promedioLiga: promedioLigaPuntos, promedioLigaGolesFavor, promedioLigaGolesContra };
+      const resultado = { mapa, promedioLiga: promedioLigaPuntos, promedioLigaGolesFavor, promedioLigaGolesContra, contextoLocal, contextoVisita };
       cache[claveCache] = resultado;
       guardarCachePersistente(claveCache, resultado);
       return resultado;
     } catch (e) {
       console.warn("No se pudo obtener la tabla de posiciones", e);
-      const vacio = { mapa: {}, promedioLiga: 1.3, promedioLigaGolesFavor: null, promedioLigaGolesContra: null };
+      const vacio = { mapa: {}, promedioLiga: 1.3, promedioLigaGolesFavor: null, promedioLigaGolesContra: null, contextoLocal: { mapa: {}, promedioGolesFavor: null, promedioGolesContra: null }, contextoVisita: { mapa: {}, promedioGolesFavor: null, promedioGolesContra: null } };
       return vacio;
     }
   }
 
+  // La amplitud se auto-calibra (ver recalcularAmplitudTabla); por defecto ±6%.
   function factorTabla(tabla, teamId) {
     const info = tabla.mapa[teamId];
     if (!info || !tabla.promedioLiga) return 1;
     const ratio = info.puntosPorPartido / tabla.promedioLiga;
-    // Rango mas angosto que antes: la fuerza de ataque/defensa (ver mas abajo) ya
-    // captura gran parte de esta señal a partir de goles reales, asi que la tabla
-    // de posiciones ahora es solo una correccion residual (rendimiento vs. resultado).
-    return Math.max(0.94, Math.min(1.06, ratio));
+    const amplitud = calibracionActual.amplitudTabla ?? 1;
+    const desviacion = (ratio - 1) * amplitud;
+    return 1 + Math.max(-0.06, Math.min(0.06, desviacion));
   }
 
   // ============ FUERZA DE ATAQUE / DEFENSA RELATIVA A LA LIGA (temporada completa) ============
@@ -656,15 +683,35 @@
     return valor * peso + promedioLigaEquipo * (1 - peso);
   }
 
-  // ============ PONDERACION POR RECENCIA ============
-  function pesosRecencia(cantidad) {
-    const base = [1.0, 0.8, 0.65, 0.5, 0.4, 0.32, 0.26, 0.2];
-    const pesos = [];
-    for (let i = 0; i < cantidad; i++) {
-      pesos.push(base[i] !== undefined ? base[i] : 0.15);
-    }
-    return pesos;
+// ============ PONDERACION POR RECENCIA (por dias reales, no por orden de lista) ============
+function pesosRecenciaPorFecha(registros, fechaReferencia = new Date()) {
+  const VIDA_MEDIA_DIAS = 45; // a los 45 dias el peso de un partido cae a la mitad
+  return registros.map(r => {
+    const dias = Math.max(0, (fechaReferencia - new Date(r.fecha)) / (1000 * 60 * 60 * 24));
+    return Math.pow(0.5, dias / VIDA_MEDIA_DIAS);
+  });
+}
+// ============ AJUSTE POR FUERZA DEL RIVAL (opponent-adjusted goals) ============
+function factorFuerzaRival(tabla, rivalId, ladoRival) {
+  const info = tabla.mapa[rivalId];
+  if (!info) return 1;
+  if (ladoRival === 'defensa') {
+    if (info.golesContraPorPartido === null || !tabla.promedioLigaGolesContra) return 1;
+    // el rival concede menos que el promedio -> anotarle vale mas
+    const ratio = tabla.promedioLigaGolesContra / Math.max(info.golesContraPorPartido, 0.15);
+    return Math.max(0.65, Math.min(1.5, ratio));
+  } else {
+    if (info.golesFavorPorPartido === null || !tabla.promedioLigaGolesFavor) return 1;
+    // el rival ataca mas que el promedio -> que te haga un gol pesa menos en tu contra
+    const ratio = tabla.promedioLigaGolesFavor / Math.max(info.golesFavorPorPartido, 0.15);
+    return Math.max(0.65, Math.min(1.5, ratio));
   }
+}
+
+function golAjustado(golCrudo, factor) {
+  // mezcla 50/50 con el gol crudo para no sobre-corregir con muestras chicas
+  return golCrudo * (0.5 + 0.5 * factor);
+}
 
   function promedioPonderado(valores, pesos) {
     if (valores.length === 0) return 0;
@@ -705,92 +752,91 @@
     return { direccion, racha };
   }
 
-  async function obtenerStatsEquipo(teamId, codigoLiga) {
-    const claveCache = `stats-${teamId}`;
-    if (cache[claveCache]) return cache[claveCache];
+async function obtenerStatsEquipo(teamId, codigoLiga, tabla) {
+  const claveCache = `stats-${teamId}`;
+  if (cache[claveCache]) return cache[claveCache];
 
-    const persistente = leerCachePersistente(claveCache);
-    if (persistente) {
-      cache[claveCache] = persistente;
-      return persistente;
-    }
-
-    try {
-      const url = `${BACKEND_URL}/api/equipo/${teamId}/stats`;
-      const resp = await fetch(url);
-      const datos = await resp.json();
-      const partidos = datos.matches || [];
-
-      const partidosOrdenados = [...partidos].sort((a, b) => new Date(b.utcDate) - new Date(a.utcDate));
-
-      let victorias = 0, empates = 0, derrotas = 0;
-
-      const golesFavorLocal = [], golesContraLocal = [];
-      const golesFavorVisita = [], golesContraVisita = [];
-      const golesFavorTodos = [], golesContraTodos = [];
-
-      partidosOrdenados.forEach(p => {
-        const esLocal = p.homeTeam.id === teamId;
-        const golesEquipo = (esLocal ? p.score.fullTime.home : p.score.fullTime.away) ?? 0;
-        const golesRival = (esLocal ? p.score.fullTime.away : p.score.fullTime.home) ?? 0;
-
-        if (golesEquipo > golesRival) victorias++;
-        else if (golesEquipo === golesRival) empates++;
-        else derrotas++;
-
-        golesFavorTodos.push(golesEquipo);
-        golesContraTodos.push(golesRival);
-
-        if (esLocal) {
-          golesFavorLocal.push(golesEquipo);
-          golesContraLocal.push(golesRival);
-        } else {
-          golesFavorVisita.push(golesEquipo);
-          golesContraVisita.push(golesRival);
-        }
-      });
-
-      const cantidad = partidosOrdenados.length || 1;
-      const pesosTodos = pesosRecencia(golesFavorTodos.length);
-      const pesosLocal = pesosRecencia(golesFavorLocal.length);
-      const pesosVisita = pesosRecencia(golesFavorVisita.length);
-
-      const promTodosFavor = promedioPonderado(golesFavorTodos, pesosTodos);
-      const promTodosContra = promedioPonderado(golesContraTodos, pesosTodos);
-
-      const promLocalFavorCrudo = golesFavorLocal.length > 0 ? promedioPonderado(golesFavorLocal, pesosLocal) : promTodosFavor;
-      const promLocalContraCrudo = golesContraLocal.length > 0 ? promedioPonderado(golesContraLocal, pesosLocal) : promTodosContra;
-      const promVisitaFavorCrudo = golesFavorVisita.length > 0 ? promedioPonderado(golesFavorVisita, pesosVisita) : promTodosFavor;
-      const promVisitaContraCrudo = golesContraVisita.length > 0 ? promedioPonderado(golesContraVisita, pesosVisita) : promTodosContra;
-
-      const promLigaVal = promedioLiga(codigoLiga);
-      const promLocalFavor = aplicarShrinkage(promLocalFavorCrudo, golesFavorLocal.length, promLigaVal);
-      const promLocalContra = aplicarShrinkage(promLocalContraCrudo, golesContraLocal.length, promLigaVal);
-      const promVisitaFavor = aplicarShrinkage(promVisitaFavorCrudo, golesFavorVisita.length, promLigaVal);
-      const promVisitaContra = aplicarShrinkage(promVisitaContraCrudo, golesContraVisita.length, promLigaVal);
-
-      const tendencia = calcularTendencia(partidosOrdenados, teamId);
-
-      const stats = {
-        promedioGolesFavor: promTodosFavor,
-        promedioGolesContra: promTodosContra,
-        puntosPromedio: (victorias * 3 + empates) / cantidad,
-        partidosJugados: partidosOrdenados.length,
-        local: { golesFavor: promLocalFavor, golesContra: promLocalContra },
-        visita: { golesFavor: promVisitaFavor, golesContra: promVisitaContra },
-        tendencia
-      };
-
-      cache[claveCache] = stats;
-      guardarCachePersistente(claveCache, stats);
-      return stats;
-    } catch (e) {
-      console.error("Error trayendo stats equipo", teamId, e);
-      const fallback = { golesFavor: 1, golesContra: 1 };
-      return { promedioGolesFavor: 1, promedioGolesContra: 1, puntosPromedio: 1, partidosJugados: 0, local: fallback, visita: fallback, tendencia: { direccion: 'neutral', racha: [] } };
-    }
+  const persistente = leerCachePersistente(claveCache);
+  if (persistente) {
+    cache[claveCache] = persistente;
+    return persistente;
   }
 
+  try {
+    const url = `${BACKEND_URL}/api/equipo/${teamId}/stats`;
+    const resp = await fetch(url);
+    const datos = await resp.json();
+    const partidos = datos.matches || [];
+
+    const partidosOrdenados = [...partidos].sort((a, b) => new Date(b.utcDate) - new Date(a.utcDate));
+
+    let victorias = 0, empates = 0, derrotas = 0;
+    const registrosTodos = [], registrosLocal = [], registrosVisita = [];
+
+    partidosOrdenados.forEach(p => {
+      const esLocal = p.homeTeam.id === teamId;
+      const rivalId = esLocal ? p.awayTeam.id : p.homeTeam.id;
+      const golesEquipoCrudo = (esLocal ? p.score.fullTime.home : p.score.fullTime.away) ?? 0;
+      const golesRivalCrudo = (esLocal ? p.score.fullTime.away : p.score.fullTime.home) ?? 0;
+
+      if (golesEquipoCrudo > golesRivalCrudo) victorias++;
+      else if (golesEquipoCrudo === golesRivalCrudo) empates++;
+      else derrotas++;
+
+      // Un gol contra una defensa solida vale mas; un gol recibido de un ataque
+      // flojo pesa mas en contra tuya. Sin tabla disponible, factor neutro (1).
+      const fDefensaRival = tabla ? factorFuerzaRival(tabla, rivalId, 'defensa') : 1;
+      const fAtaqueRival = tabla ? factorFuerzaRival(tabla, rivalId, 'ataque') : 1;
+
+      const registro = {
+        favor: golAjustado(golesEquipoCrudo, fDefensaRival),
+        contra: golAjustado(golesRivalCrudo, fAtaqueRival),
+        fecha: p.utcDate
+      };
+      registrosTodos.push(registro);
+      (esLocal ? registrosLocal : registrosVisita).push(registro);
+    });
+
+    const cantidad = partidosOrdenados.length || 1;
+    const pesosTodos = pesosRecenciaPorFecha(registrosTodos);
+    const pesosLocal = pesosRecenciaPorFecha(registrosLocal);
+    const pesosVisita = pesosRecenciaPorFecha(registrosVisita);
+
+    const promTodosFavor = promedioPonderado(registrosTodos.map(r => r.favor), pesosTodos);
+    const promTodosContra = promedioPonderado(registrosTodos.map(r => r.contra), pesosTodos);
+
+    const promLocalFavorCrudo = registrosLocal.length > 0 ? promedioPonderado(registrosLocal.map(r => r.favor), pesosLocal) : promTodosFavor;
+    const promLocalContraCrudo = registrosLocal.length > 0 ? promedioPonderado(registrosLocal.map(r => r.contra), pesosLocal) : promTodosContra;
+    const promVisitaFavorCrudo = registrosVisita.length > 0 ? promedioPonderado(registrosVisita.map(r => r.favor), pesosVisita) : promTodosFavor;
+    const promVisitaContraCrudo = registrosVisita.length > 0 ? promedioPonderado(registrosVisita.map(r => r.contra), pesosVisita) : promTodosContra;
+
+    const promLigaVal = promedioLiga(codigoLiga);
+    const promLocalFavor = aplicarShrinkage(promLocalFavorCrudo, registrosLocal.length, promLigaVal);
+    const promLocalContra = aplicarShrinkage(promLocalContraCrudo, registrosLocal.length, promLigaVal);
+    const promVisitaFavor = aplicarShrinkage(promVisitaFavorCrudo, registrosVisita.length, promLigaVal);
+    const promVisitaContra = aplicarShrinkage(promVisitaContraCrudo, registrosVisita.length, promLigaVal);
+
+    const tendencia = calcularTendencia(partidosOrdenados, teamId);
+
+    const stats = {
+      promedioGolesFavor: promTodosFavor,
+      promedioGolesContra: promTodosContra,
+      puntosPromedio: (victorias * 3 + empates) / cantidad,
+      partidosJugados: partidosOrdenados.length,
+      local: { golesFavor: promLocalFavor, golesContra: promLocalContra },
+      visita: { golesFavor: promVisitaFavor, golesContra: promVisitaContra },
+      tendencia
+    };
+
+    cache[claveCache] = stats;
+    guardarCachePersistente(claveCache, stats);
+    return stats;
+  } catch (e) {
+    console.error("Error trayendo stats equipo", teamId, e);
+    const fallback = { golesFavor: 1, golesContra: 1 };
+    return { promedioGolesFavor: 1, promedioGolesContra: 1, puntosPromedio: 1, partidosJugados: 0, local: fallback, visita: fallback, tendencia: { direccion: 'neutral', racha: [] } };
+  }
+}
   async function obtenerHeadToHead(partidoId) {
     const claveCache = `h2h-${partidoId}`;
     if (cache[claveCache]) return cache[claveCache];
@@ -846,25 +892,25 @@
     return 1;
   }
 
-  function matrizMarcadores(lambdaLocal, lambdaVisita, maxGoles = 6) {
-    const matriz = [];
-    let sumaTotal = 0;
-    for (let i = 0; i <= maxGoles; i++) {
-      matriz[i] = [];
-      for (let j = 0; j <= maxGoles; j++) {
-        const base = poisson(i, lambdaLocal) * poisson(j, lambdaVisita);
-        const ajustado = base * tauDixonColes(i, j, lambdaLocal, lambdaVisita, RHO_DIXON_COLES);
-        matriz[i][j] = ajustado;
-        sumaTotal += ajustado;
-      }
+ function matrizMarcadores(lambdaLocal, lambdaVisita, maxGoles = 8, rho = RHO_DIXON_COLES) {
+  const matriz = [];
+  let sumaTotal = 0;
+  for (let i = 0; i <= maxGoles; i++) {
+    matriz[i] = [];
+    for (let j = 0; j <= maxGoles; j++) {
+      const base = poisson(i, lambdaLocal) * poisson(j, lambdaVisita);
+      const ajustado = base * tauDixonColes(i, j, lambdaLocal, lambdaVisita, rho);
+      matriz[i][j] = ajustado;
+      sumaTotal += ajustado;
     }
-    for (let i = 0; i <= maxGoles; i++) {
-      for (let j = 0; j <= maxGoles; j++) {
-        matriz[i][j] = matriz[i][j] / sumaTotal;
-      }
-    }
-    return matriz;
   }
+  for (let i = 0; i <= maxGoles; i++) {
+    for (let j = 0; j <= maxGoles; j++) {
+      matriz[i][j] = matriz[i][j] / sumaTotal;
+    }
+  }
+  return matriz;
+}
 
   const FACTOR_LOCALIA_BASE = 1.1;
 
@@ -874,10 +920,12 @@
   const MUESTRA_MINIMA_CATEGORIA = 15;
   const LIMITES_FACTOR_LOCALIA = [1.0, 1.25];
   const LIMITES_FACTOR_CATEGORIA = [0.75, 1.25];
+  const MUESTRA_MINIMA_RHO = 40;
+  const LIMITES_RHO = [-0.20, 0.05];
 
   function calibracionPorDefecto() {
-    return { factorLocalia: FACTOR_LOCALIA_BASE, muestrasLocalia: 0, porCategoria: {}, actualizadoEn: null };
-  }
+  return { factorLocalia: FACTOR_LOCALIA_BASE, muestrasLocalia: 0, rhoDixonColes: RHO_DIXON_COLES, muestrasRho: 0, porCategoria: {}, actualizadoEn: null };
+}
 
   function leerCalibracion() {
     try {
@@ -895,6 +943,37 @@
   }
 
   let calibracionActual = leerCalibracion();
+
+  function recalcularCalibracionRho(verificados) {
+    const conParametros = verificados.filter(h => h.parametrosModelo && h.marcadorFinal);
+    let sumaBoostReal = 0, sumaBoostEsperado = 0, n = 0;
+
+    conParametros.forEach(h => {
+      const [gl, gv] = h.marcadorFinal.split('-').map(Number);
+      const esBoost = (gl === 0 && gv === 0) || (gl === 1 && gv === 1);
+      const esReduce = (gl === 1 && gv === 0) || (gl === 0 && gv === 1);
+      if (!esBoost && !esReduce) return;
+
+      const { lambdaLocal, lambdaVisita, rhoDixonColes } = h.parametrosModelo;
+      const rho = rhoDixonColes ?? RHO_DIXON_COLES;
+      const pBoost = poisson(0, lambdaLocal) * poisson(0, lambdaVisita) * (1 - lambdaLocal * lambdaVisita * rho)
+        + poisson(1, lambdaLocal) * poisson(1, lambdaVisita) * (1 - rho);
+      const pReduce = poisson(0, lambdaLocal) * poisson(1, lambdaVisita) * (1 + lambdaLocal * rho)
+        + poisson(1, lambdaLocal) * poisson(0, lambdaVisita) * (1 + lambdaVisita * rho);
+      const total = pBoost + pReduce;
+
+      n++;
+      sumaBoostReal += esBoost ? 1 : 0;
+      sumaBoostEsperado += total > 0 ? (pBoost / total) : 0.5;
+    });
+
+    if (n < MUESTRA_MINIMA_RHO) return null;
+
+    const diferencia = (sumaBoostReal / n) - (sumaBoostEsperado / n);
+    let nuevoRho = (calibracionActual.rhoDixonColes ?? RHO_DIXON_COLES) - diferencia * 0.3;
+    nuevoRho = Math.max(LIMITES_RHO[0], Math.min(LIMITES_RHO[1], nuevoRho));
+    return { rho: Math.round(nuevoRho * 1000) / 1000, muestras: n };
+  }
 
   function recalcularCalibracion() {
     const verificados = leerHistorial().filter(h => h.verificado && h.marcadorFinal && h.parametrosModelo);
@@ -938,6 +1017,12 @@
       factor = Math.max(LIMITES_FACTOR_CATEGORIA[0], Math.min(LIMITES_FACTOR_CATEGORIA[1], factor));
       calibracion.porCategoria[cat] = { factor: Math.round(factor * 1000) / 1000, muestras: d.total };
     });
+
+    const resultadoRho = recalcularCalibracionRho(verificados);
+    if (resultadoRho) {
+      calibracion.rhoDixonColes = resultadoRho.rho;
+      calibracion.muestrasRho = resultadoRho.muestras;
+    }
 
     calibracion.actualizadoEn = Date.now();
     guardarCalibracion(calibracion);
@@ -1143,7 +1228,8 @@
     lambdaLocal = Math.max(lambdaLocal, 0.3);
     lambdaVisita = Math.max(lambdaVisita, 0.3);
 
-    const matriz = matrizMarcadores(lambdaLocal, lambdaVisita);
+    const rhoUsado = calibracionActual.rhoDixonColes ?? RHO_DIXON_COLES;
+    const matriz = matrizMarcadores(lambdaLocal, lambdaVisita, 8, rhoUsado);
     const maxGoles = matriz.length - 1;
 
     const { candidatos, marcadorProbable, probMarcador, top3Marcadores, favoritoLocal, nombreFavorito } =
@@ -1204,7 +1290,7 @@
       parametrosModelo: {
         lambdaLocal: Math.round(lambdaLocal * 1000) / 1000,
         lambdaVisita: Math.round(lambdaVisita * 1000) / 1000,
-        rhoDixonColes: RHO_DIXON_COLES,
+        rhoDixonColes: rhoUsado,
         factorLocalia: factorLocaliaUsado
       }
     };
@@ -1710,6 +1796,10 @@
       ? `${c.factorLocalia.toFixed(2)}× <span class="calibracion-fila-muestras">(${c.muestrasLocalia} partidos, base 1.10×)</span>`
       : `1.10× por defecto <span class="calibracion-fila-muestras">(faltan ${MUESTRA_MINIMA_LOCALIA - c.muestrasLocalia} partidos verificados para autoajustar)</span>`;
 
+    const rhoTexto = c.muestrasRho >= MUESTRA_MINIMA_RHO
+      ? `${c.rhoDixonColes.toFixed(3)} <span class="calibracion-fila-muestras">(${c.muestrasRho} partidos, base -0.080)</span>`
+      : `-0.080 por defecto <span class="calibracion-fila-muestras">(faltan ${MUESTRA_MINIMA_RHO - c.muestrasRho} partidos verificados para autoajustar)</span>`;
+
     return `
       <div class="bloque-combinadas sin-borde-superior">
         <h3 style="font-size:1.4rem;">Auto-calibración</h3>
@@ -1717,6 +1807,10 @@
         <div class="calibracion-item">
           <span class="calibracion-item-titulo">Ventaja de jugar de local</span>
           <span class="calibracion-item-valor">${localiaTexto}</span>
+        </div>
+        <div class="calibracion-item">
+          <span class="calibracion-item-titulo">Correlación marcadores bajos (ρ Dixon-Coles)</span>
+          <span class="calibracion-item-valor">${rhoTexto}</span>
         </div>
         <div class="calibracion-categorias">${filasCat}</div>
       </div>
@@ -1868,11 +1962,13 @@
       if (idx > 0) await esperar(700);
 
       const codigoLiga = partido.competition.code;
-      const [statsLocal, statsVisita, h2h, tabla] = await Promise.all([
-        obtenerStatsEquipo(partido.homeTeam.id, codigoLiga),
-        obtenerStatsEquipo(partido.awayTeam.id, codigoLiga),
-        obtenerHeadToHead(partido.id),
-        obtenerTabla(codigoLiga)
+      const [h2h, tabla] = await Promise.all([
+       obtenerHeadToHead(partido.id),
+       obtenerTabla(codigoLiga)
+     ]);
+      const [statsLocal, statsVisita] = await Promise.all([
+        obtenerStatsEquipo(partido.homeTeam.id, codigoLiga, tabla),
+        obtenerStatsEquipo(partido.awayTeam.id, codigoLiga, tabla)
       ]);
 
       const pronosticos = generarPronosticos(
@@ -2167,11 +2263,13 @@
       if (idx > 0) await esperar(700);
 
       const codigoLiga = partido.competition.code;
-      const [statsLocal, statsVisita, h2h, tabla] = await Promise.all([
-        obtenerStatsEquipo(partido.homeTeam.id, codigoLiga),
-        obtenerStatsEquipo(partido.awayTeam.id, codigoLiga),
+      const [h2h, tabla] = await Promise.all([
         obtenerHeadToHead(partido.id),
         obtenerTabla(codigoLiga)
+      ]);
+      const [statsLocal, statsVisita] = await Promise.all([
+        obtenerStatsEquipo(partido.homeTeam.id, codigoLiga, tabla),
+        obtenerStatsEquipo(partido.awayTeam.id, codigoLiga, tabla)
       ]);
 
       const pronosticos = generarPronosticos(
