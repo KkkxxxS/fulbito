@@ -194,6 +194,8 @@
     <p>Fulbito ofrece pronósticos basados en un modelo estadístico, no garantías de resultado. Ningún pronóstico asegura ganancias. Si apuestas, hazlo solo con dinero que puedas permitirte perder, y solo si eres mayor de 18 años.</p>
 </footer>
 
+<input type="file" id="input-importar-datos" accept="application/json" style="display:none" onchange="importarDatos(event)">
+
 <script>
   // ============ CONFIGURACION ============
   const BACKEND_URL = "https://fulbito-forh.onrender.com";
@@ -639,14 +641,16 @@
     }
   }
 
-  // La amplitud se auto-calibra (ver recalcularAmplitudTabla); por defecto ±6%.
+  // La amplitud del ajuste por tabla de posiciones se auto-calibra
+  // (ver recalcularCalibracionTabla), comparando qué tan bien predice la
+  // posición en la tabla el resultado real de tus partidos verificados.
   function factorTabla(tabla, teamId) {
     const info = tabla.mapa[teamId];
     if (!info || !tabla.promedioLiga) return 1;
     const ratio = info.puntosPorPartido / tabla.promedioLiga;
-    const amplitud = calibracionActual.amplitudTabla ?? 1;
-    const desviacion = (ratio - 1) * amplitud;
-    return 1 + Math.max(-0.06, Math.min(0.06, desviacion));
+    const limite = calibracionActual.limiteTabla ?? LIMITE_TABLA_BASE;
+    const desviacion = ratio - 1;
+    return 1 + Math.max(-limite, Math.min(limite, desviacion));
   }
 
   // ============ FUERZA DE ATAQUE / DEFENSA RELATIVA A LA LIGA (temporada completa) ============
@@ -670,6 +674,55 @@
     ataque = Math.max(0.5, Math.min(1.8, ataque));
     defensa = Math.max(0.5, Math.min(1.8, defensa));
     return { ataque, defensa };
+  }
+
+  // ============ "SIN NADA EN JUEGO" (titulo o descenso ya resueltos) ============
+  // Heuristica: cerca del final de temporada (pocas fechas restantes), si un
+  // equipo ya no puede alcanzar (ni ser alcanzado por) al rival mas cercano que
+  // define su suerte -titulo o descenso- el partido pesa menos para el modelo:
+  // suele haber mas rotacion, mas relajo o, al reves, mas urgencia irregular del
+  // rival. En ambos casos, la señal historica (goles, tabla) es menos confiable.
+  function construirRankingTabla(tabla) {
+    return Object.entries(tabla.mapa)
+      .map(([id, info]) => ({ id: Number(id), ...info }))
+      .filter(f => f.posicion)
+      .sort((a, b) => a.posicion - b.posicion);
+  }
+
+  function equipoSinNadaEnJuego(tabla, teamId) {
+    const info = tabla.mapa[teamId];
+    if (!info || !info.partidosJugados || !info.totalEquipos) return false;
+
+    const ranking = construirRankingTabla(tabla);
+    const totalEquipos = info.totalEquipos;
+    if (totalEquipos < 10) return false;
+
+    const partidosTotalesTemporada = (totalEquipos - 1) * 2;
+    const restantes = Math.max(0, partidosTotalesTemporada - info.partidosJugados);
+    if (restantes === 0 || restantes > 6) return false;
+
+    const puntosEquipo = Math.round(info.puntosPorPartido * info.partidosJugados);
+    const margenMax = restantes * 3;
+
+    if (info.posicion === 1) {
+      const segundo = ranking.find(r => r.posicion === 2);
+      if (segundo) {
+        const puntosSegundo = Math.round(segundo.puntosPorPartido * segundo.partidosJugados);
+        if (puntosEquipo - puntosSegundo > margenMax) return true;
+      }
+    }
+
+    const numDescenso = Math.max(1, Math.round(totalEquipos * 0.15));
+    const posicionCorteDescenso = totalEquipos - numDescenso;
+    if (info.posicion > posicionCorteDescenso) {
+      const salvacion = ranking.find(r => r.posicion === posicionCorteDescenso);
+      if (salvacion) {
+        const puntosSalvacion = Math.round(salvacion.puntosPorPartido * salvacion.partidosJugados);
+        if (puntosSalvacion - puntosEquipo > margenMax) return true;
+      }
+    }
+
+    return false;
   }
 
   function badgePosicion(tabla, teamId) {
@@ -954,9 +1007,12 @@ async function obtenerStatsEquipo(teamId, codigoLiga, tabla) {
   const LIMITES_FACTOR_CATEGORIA = [0.75, 1.25];
   const MUESTRA_MINIMA_RHO = 40;
   const LIMITES_RHO = [-0.20, 0.05];
+  const LIMITE_TABLA_BASE = 0.06;
+  const LIMITES_LIMITE_TABLA = [0.03, 0.12];
+  const MUESTRA_MINIMA_TABLA = 25;
 
   function calibracionPorDefecto() {
-  return { factorLocalia: FACTOR_LOCALIA_BASE, muestrasLocalia: 0, rhoDixonColes: RHO_DIXON_COLES, muestrasRho: 0, porCategoria: {}, actualizadoEn: null };
+  return { factorLocalia: FACTOR_LOCALIA_BASE, muestrasLocalia: 0, rhoDixonColes: RHO_DIXON_COLES, muestrasRho: 0, limiteTabla: LIMITE_TABLA_BASE, muestrasTabla: 0, porCategoria: {}, actualizadoEn: null };
 }
 
   function leerCalibracion() {
@@ -1007,6 +1063,37 @@ async function obtenerStatsEquipo(teamId, codigoLiga, tabla) {
     return { rho: Math.round(nuevoRho * 1000) / 1000, muestras: n };
   }
 
+  // Compara, en partidos verificados donde la tabla de posiciones claramente
+  // favorecía a un lado, si ese lado terminó ganando de verdad. Si el acierto
+  // de dirección se aleja bastante de 50% (el azar), la señal de la tabla es
+  // confiable y ampliamos el límite; si está cerca de 50%, lo reducimos.
+  function recalcularCalibracionTabla(verificados) {
+    const conParametros = verificados.filter(h => h.parametrosModelo?.tablaInfo && h.marcadorFinal);
+    let aciertosDireccion = 0, totalConSenal = 0;
+
+    conParametros.forEach(h => {
+      const { fLocal, fVisita } = h.parametrosModelo.tablaInfo;
+      const desviacion = fLocal - fVisita;
+      if (Math.abs(desviacion) < 0.015) return;
+
+      const [gl, gv] = h.marcadorFinal.split('-').map(Number);
+      if (gl === gv) return;
+
+      totalConSenal++;
+      const favoreceLocal = desviacion > 0;
+      const ganoLocal = gl > gv;
+      if (favoreceLocal === ganoLocal) aciertosDireccion++;
+    });
+
+    if (totalConSenal < MUESTRA_MINIMA_TABLA) return null;
+
+    const tasaAcierto = aciertosDireccion / totalConSenal;
+    const señal = (tasaAcierto - 0.5) * 2;
+    let nuevoLimite = LIMITE_TABLA_BASE * (1 + señal * 1.5);
+    nuevoLimite = Math.max(LIMITES_LIMITE_TABLA[0], Math.min(LIMITES_LIMITE_TABLA[1], nuevoLimite));
+    return { limite: Math.round(nuevoLimite * 1000) / 1000, muestras: totalConSenal };
+  }
+
   function recalcularCalibracion() {
     const verificados = leerHistorial().filter(h => h.verificado && h.marcadorFinal && h.parametrosModelo);
     const calibracion = calibracionPorDefecto();
@@ -1054,6 +1141,12 @@ async function obtenerStatsEquipo(teamId, codigoLiga, tabla) {
     if (resultadoRho) {
       calibracion.rhoDixonColes = resultadoRho.rho;
       calibracion.muestrasRho = resultadoRho.muestras;
+    }
+
+    const resultadoTabla = recalcularCalibracionTabla(verificados);
+    if (resultadoTabla) {
+      calibracion.limiteTabla = resultadoTabla.limite;
+      calibracion.muestrasTabla = resultadoTabla.muestras;
     }
 
     calibracion.actualizadoEn = Date.now();
@@ -1290,7 +1383,7 @@ async function obtenerStatsEquipo(teamId, codigoLiga, tabla) {
     return razones.slice(0, 2);
   }
 
-  function generarPronosticos(statsLocal, statsVisita, nombreLocal, nombreVisita, h2h, tabla, idLocal, idVisita) {
+  function generarPronosticos(statsLocal, statsVisita, nombreLocal, nombreVisita, h2h, tabla, idLocal, idVisita, codigoLiga) {
     let lambdaLocal = (statsLocal.local.golesFavor + statsVisita.visita.golesContra) / 2;
     let lambdaVisita = (statsVisita.visita.golesFavor + statsLocal.local.golesContra) / 2;
 
@@ -1315,8 +1408,23 @@ async function obtenerStatsEquipo(teamId, codigoLiga, tabla) {
     lambdaLocal *= factorH2H(h2h, true);
     lambdaVisita *= factorH2H(h2h, false);
 
-    lambdaLocal *= factorTabla(tabla, idLocal);
-    lambdaVisita *= factorTabla(tabla, idVisita);
+    const fTablaLocal = factorTabla(tabla, idLocal);
+    const fTablaVisita = factorTabla(tabla, idVisita);
+    lambdaLocal *= fTablaLocal;
+    lambdaVisita *= fTablaVisita;
+
+    // Partidos donde uno de los dos equipos ya no se juega nada (titulo o descenso
+    // matematicamente resuelto, a falta de pocas fechas): el modelo confia menos y
+    // regresa los lambdas un poco hacia el promedio de la liga, ademas de exigir
+    // mas probabilidad para mostrar un mercado como apostable (ver UMBRAL abajo).
+    const sinNadaLocal = equipoSinNadaEnJuego(tabla, idLocal);
+    const sinNadaVisita = equipoSinNadaEnJuego(tabla, idVisita);
+    const partidoSinNadaEnJuego = sinNadaLocal || sinNadaVisita;
+    if (partidoSinNadaEnJuego) {
+      const promLigaGoles = promedioLiga(codigoLiga);
+      lambdaLocal = lambdaLocal * 0.85 + promLigaGoles * 0.15;
+      lambdaVisita = lambdaVisita * 0.85 + promLigaGoles * 0.15;
+    }
 
     lambdaLocal = Math.max(lambdaLocal, 0.3);
     lambdaVisita = Math.max(lambdaVisita, 0.3);
@@ -1329,7 +1437,7 @@ async function obtenerStatsEquipo(teamId, codigoLiga, tabla) {
       generarCandidatosMercado(matriz, maxGoles, nombreLocal, nombreVisita);
 
     const seleccionados = seleccionarMercados(candidatos, 4);
-    const UMBRAL_MINIMO_MERCADO = 0.55;
+    const UMBRAL_MINIMO_MERCADO = partidoSinNadaEnJuego ? 0.62 : 0.55;
     const contextoRazones = { statsLocal, statsVisita, tabla, h2h, idLocal, idVisita, nombreLocal, nombreVisita };
     seleccionados.forEach(m => {
       m.tipo = m.categoria;
@@ -1380,11 +1488,13 @@ async function obtenerStatsEquipo(teamId, codigoLiga, tabla) {
       top3Marcadores, catalogoCompleto,
       combosPartido, partidosMin, pocaData,
       favoritoLocal, nombreFavorito,
+      sinNadaEnJuego: partidoSinNadaEnJuego,
       parametrosModelo: {
         lambdaLocal: Math.round(lambdaLocal * 1000) / 1000,
         lambdaVisita: Math.round(lambdaVisita * 1000) / 1000,
         rhoDixonColes: rhoUsado,
-        factorLocalia: factorLocaliaUsado
+        factorLocalia: factorLocaliaUsado,
+        tablaInfo: { fLocal: Math.round(fTablaLocal * 1000) / 1000, fVisita: Math.round(fTablaVisita * 1000) / 1000 }
       }
     };
   }
@@ -1515,6 +1625,7 @@ async function obtenerStatsEquipo(teamId, codigoLiga, tabla) {
         <p class="info-partido">${liga} · ${fechaTexto}, ${horaTexto} · marcador probable ${pronosticos.marcadorProbable}</p>
         ${h2hHTML(h2h)}
         ${pronosticos.pocaData ? `<p class="aviso-datos">⚠ Datos limitados (${pronosticos.partidosMin} partidos analizados) · pronóstico menos confiable</p>` : ''}
+        ${pronosticos.sinNadaEnJuego ? `<p class="aviso-datos">⚠ Uno de los equipos ya no se juega nada en la tabla (título o descenso resuelto) · pronóstico menos confiable</p>` : ''}
 
         <div class="lista-mercados" id="mercados-${partido.id}">
           ${pronosticos.seleccionados.map(m => filaMercado(m, partido.id)).join('')}
@@ -1881,6 +1992,64 @@ async function obtenerStatsEquipo(teamId, codigoLiga, tabla) {
     renderHistorialCompleto([]);
   }
 
+  // ============ EXPORTAR / IMPORTAR DATOS (respaldo entre navegadores) ============
+  const CLAVES_EXPORTABLES = [CLAVE_FAVORITOS, CLAVE_MIS_PREDICCIONES, CLAVE_HISTORIAL, CLAVE_CALIBRACION];
+
+  function exportarDatos() {
+    const datos = { __app: 'fulbito', __version: 1, __exportadoEn: new Date().toISOString() };
+    CLAVES_EXPORTABLES.forEach(clave => {
+      const valor = localStorage.getItem(clave);
+      if (valor) {
+        try { datos[clave] = JSON.parse(valor); } catch (e) {}
+      }
+    });
+
+    const blob = new Blob([JSON.stringify(datos, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `fulbito-backup-${formatearFecha(new Date())}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  function importarDatos(event) {
+    const archivo = event.target.files[0];
+    if (!archivo) return;
+
+    const lector = new FileReader();
+    lector.onload = (e) => {
+      try {
+        const datos = JSON.parse(e.target.result);
+        if (datos.__app !== 'fulbito') {
+          alert('Ese archivo no parece un backup de Fulbito.');
+          return;
+        }
+        const tieneAlgo = CLAVES_EXPORTABLES.some(clave => datos[clave] !== undefined);
+        if (!tieneAlgo) {
+          alert('Ese archivo no tiene datos reconocibles de Fulbito.');
+          return;
+        }
+        if (!confirm('Esto va a reemplazar tus favoritos, mis predicciones, historial y calibración guardados en este navegador con los del archivo. ¿Continuar?')) return;
+
+        CLAVES_EXPORTABLES.forEach(clave => {
+          if (datos[clave] !== undefined) {
+            localStorage.setItem(clave, JSON.stringify(datos[clave]));
+          }
+        });
+
+        alert('Datos importados correctamente. La página se va a recargar.');
+        location.reload();
+      } catch (err) {
+        alert('No se pudo leer ese archivo como backup de Fulbito.');
+      }
+    };
+    lector.readAsText(archivo);
+    event.target.value = '';
+  }
+
   function panelCalibracionHTML() {
     const c = calibracionActual;
     const categorias = Object.keys(c.porCategoria);
@@ -1909,6 +2078,10 @@ async function obtenerStatsEquipo(teamId, codigoLiga, tabla) {
       ? `${c.rhoDixonColes.toFixed(3)} <span class="calibracion-fila-muestras">(${c.muestrasRho} partidos, base -0.080)</span>`
       : `-0.080 por defecto <span class="calibracion-fila-muestras">(faltan ${MUESTRA_MINIMA_RHO - c.muestrasRho} partidos verificados para autoajustar)</span>`;
 
+    const tablaTexto = c.muestrasTabla >= MUESTRA_MINIMA_TABLA
+      ? `±${Math.round(c.limiteTabla * 100)}% <span class="calibracion-fila-muestras">(${c.muestrasTabla} partidos, base ±6%)</span>`
+      : `±6% por defecto <span class="calibracion-fila-muestras">(faltan ${MUESTRA_MINIMA_TABLA - c.muestrasTabla} partidos verificados para autoajustar)</span>`;
+
     return `
       <div class="bloque-combinadas sin-borde-superior">
         <h3 style="font-size:1.4rem;">Auto-calibración</h3>
@@ -1920,6 +2093,10 @@ async function obtenerStatsEquipo(teamId, codigoLiga, tabla) {
         <div class="calibracion-item">
           <span class="calibracion-item-titulo">Correlación marcadores bajos (ρ Dixon-Coles)</span>
           <span class="calibracion-item-valor">${rhoTexto}</span>
+        </div>
+        <div class="calibracion-item">
+          <span class="calibracion-item-titulo">Peso de la tabla de posiciones</span>
+          <span class="calibracion-item-valor">${tablaTexto}</span>
         </div>
         <div class="calibracion-categorias">${filasCat}</div>
       </div>
@@ -2111,6 +2288,13 @@ async function obtenerStatsEquipo(teamId, codigoLiga, tabla) {
           <p><strong>Todavía no hay picks liquidados en este navegador.</strong></p>
           <p>A medida que los partidos que Fulbito pronosticó terminen, van a aparecer acá con su resultado real.</p>
         </div>
+        <div class="historial-filtros-barra" style="margin-top:16px;">
+          <span></span>
+          <div style="display:flex; gap:8px;">
+            <button class="boton-reiniciar" onclick="exportarDatos()">Exportar mis datos</button>
+            <button class="boton-reiniciar" onclick="document.getElementById('input-importar-datos').click()">Importar datos</button>
+          </div>
+        </div>
       `;
       return;
     }
@@ -2126,7 +2310,11 @@ async function obtenerStatsEquipo(teamId, codigoLiga, tabla) {
           <button class="chip-filtro ${filtroHistorial === 'ganados' ? 'activo' : ''}" onclick="cambiarFiltroHistorial('ganados')">Ganados</button>
           <button class="chip-filtro ${filtroHistorial === 'perdidos' ? 'activo' : ''}" onclick="cambiarFiltroHistorial('perdidos')">Perdidos</button>
         </div>
-        <button class="boton-reiniciar" onclick="reiniciarHistorial()">Reiniciar historial</button>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button class="boton-reiniciar" onclick="exportarDatos()">Exportar mis datos</button>
+          <button class="boton-reiniciar" onclick="document.getElementById('input-importar-datos').click()">Importar datos</button>
+          <button class="boton-reiniciar" onclick="reiniciarHistorial()">Reiniciar historial</button>
+        </div>
       </div>
       <p class="historial-conteo-resultados">${evaluaciones.length} picks encontrados${terminoBusqueda ? ` para "${terminoBusqueda}"` : ''}</p>
       <div class="lista-eval-historial">
@@ -2223,7 +2411,7 @@ async function obtenerStatsEquipo(teamId, codigoLiga, tabla) {
 
       const pronosticos = generarPronosticos(
         statsLocal, statsVisita, partido.homeTeam.name, partido.awayTeam.name,
-        h2h, tabla, partido.homeTeam.id, partido.awayTeam.id
+        h2h, tabla, partido.homeTeam.id, partido.awayTeam.id, codigoLiga
       );
 
       htmlFinal += crearTarjetaHTML(partido, pronosticos, statsLocal, statsVisita, h2h, tabla);
@@ -2525,7 +2713,7 @@ async function obtenerStatsEquipo(teamId, codigoLiga, tabla) {
 
       const pronosticos = generarPronosticos(
         statsLocal, statsVisita, partido.homeTeam.name, partido.awayTeam.name,
-        h2h, tabla, partido.homeTeam.id, partido.awayTeam.id
+        h2h, tabla, partido.homeTeam.id, partido.awayTeam.id, codigoLiga
       );
 
       htmlFinal += crearTarjetaHTML(partido, pronosticos, statsLocal, statsVisita, h2h, tabla);
