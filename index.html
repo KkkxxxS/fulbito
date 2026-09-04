@@ -997,7 +997,7 @@ async function obtenerStatsEquipo(teamId, codigoLiga, tabla) {
   return matriz;
 }
 
-  const FACTOR_LOCALIA_BASE = 1.1;
+  const FACTOR_LOCALIA_BASE = 1.05; // los promedios local/visita de cada equipo ya reflejan parte de la ventaja de jugar en casa; este factor solo cubre el resto, para no duplicarla
 
   // ============ AUTO-CALIBRACION (usa tu propio historial de aciertos) ============
   const CLAVE_CALIBRACION = 'fulbito_calibracion';
@@ -1163,11 +1163,11 @@ async function obtenerStatsEquipo(teamId, codigoLiga, tabla) {
   }
 
   function factorH2H(h2h, esLocal) {
-    if (!h2h || !h2h.disponible || h2h.totalPartidos < 3) return 1;
+    if (!h2h || !h2h.disponible || h2h.totalPartidos < 5) return 1;
 
     const total = h2h.totalPartidos;
     const dominioLocal = (h2h.victoriasLocal - h2h.victoriasVisita) / total;
-    const ajusteMax = 0.08;
+    const ajusteMax = 0.06;
     const ajuste = Math.max(-ajusteMax, Math.min(ajusteMax, dominioLocal * ajusteMax * 2));
 
     return esLocal ? (1 + ajuste) : (1 - ajuste);
@@ -1386,6 +1386,8 @@ async function obtenerStatsEquipo(teamId, codigoLiga, tabla) {
   function generarPronosticos(statsLocal, statsVisita, nombreLocal, nombreVisita, h2h, tabla, idLocal, idVisita, codigoLiga) {
     let lambdaLocal = (statsLocal.local.golesFavor + statsVisita.visita.golesContra) / 2;
     let lambdaVisita = (statsVisita.visita.golesFavor + statsLocal.local.golesContra) / 2;
+    const lambdaLocalBase = lambdaLocal;
+    const lambdaVisitaBase = lambdaVisita;
 
     // Segundo estimador: fuerza de ataque/defensa de temporada completa (tabla de
     // posiciones, goles reales), como correccion moderada sobre el estimador de
@@ -1425,6 +1427,28 @@ async function obtenerStatsEquipo(teamId, codigoLiga, tabla) {
       lambdaLocal = lambdaLocal * 0.85 + promLigaGoles * 0.15;
       lambdaVisita = lambdaVisita * 0.85 + promLigaGoles * 0.15;
     }
+
+    // Poca data del equipo (menos de PARTIDOS_MINIMOS_CONFIABLES partidos) -> el
+    // modelo confía menos y regresa el lambda hacia el promedio de la liga, en
+    // proporción a cuántos partidos hay disponibles (shrinkage bayesiano). Antes
+    // esto solo se mostraba como aviso visual; ahora también afecta el cálculo.
+    const partidosMinTemprano = Math.min(statsLocal.partidosJugados ?? 0, statsVisita.partidosJugados ?? 0);
+    if (partidosMinTemprano < PARTIDOS_MINIMOS_CONFIABLES) {
+      const promLigaGolesShrink = promedioLiga(codigoLiga);
+      const pesoConfianza = Math.max(0.35, partidosMinTemprano / PARTIDOS_MINIMOS_CONFIABLES);
+      lambdaLocal = lambdaLocal * pesoConfianza + promLigaGolesShrink * (1 - pesoConfianza);
+      lambdaVisita = lambdaVisita * pesoConfianza + promLigaGolesShrink * (1 - pesoConfianza);
+    }
+
+    // Límite de deriva: ningún combo de factores (tabla, tendencia, descanso,
+    // h2h, localía, sin-nada-en-juego...) debería mover el lambda base -estimado
+    // solo con los goles recientes- más de un 45% hacia arriba o abajo. Sin esto,
+    // varios ajustes pequeños que apuntan en la misma dirección se multiplican
+    // entre sí y pueden llevar la predicción a un extremo poco realista por puro
+    // ruido, especialmente con partidos de pocos datos.
+    const LIMITE_DRIFT_LAMBDA = 0.45;
+    lambdaLocal = Math.max(lambdaLocalBase * (1 - LIMITE_DRIFT_LAMBDA), Math.min(lambdaLocalBase * (1 + LIMITE_DRIFT_LAMBDA), lambdaLocal));
+    lambdaVisita = Math.max(lambdaVisitaBase * (1 - LIMITE_DRIFT_LAMBDA), Math.min(lambdaVisitaBase * (1 + LIMITE_DRIFT_LAMBDA), lambdaVisita));
 
     lambdaLocal = Math.max(lambdaLocal, 0.3);
     lambdaVisita = Math.max(lambdaVisita, 0.3);
@@ -1751,10 +1775,12 @@ async function obtenerStatsEquipo(teamId, codigoLiga, tabla) {
     window.__combinadasActuales.push(doble);
     html += tarjetaCombinadaHTML('Combinada doble', doble, window.__combinadasActuales.length - 1);
 
-    if (ordenadas.length >= 3) {
-      const triple = armarCombinada(ordenadas.slice(0, 3));
-      window.__combinadasActuales.push(triple);
-      html += tarjetaCombinadaHTML('Combinada triple', triple, window.__combinadasActuales.length - 1);
+    const ETIQUETAS_COMBO = { 3: 'Combinada triple', 4: 'Combinada cuádruple', 5: 'Combinada quíntuple' };
+    const maxPiernas = Math.min(5, ordenadas.length);
+    for (let n = 3; n <= maxPiernas; n++) {
+      const combo = armarCombinada(ordenadas.slice(0, n));
+      window.__combinadasActuales.push(combo);
+      html += tarjetaCombinadaHTML(ETIQUETAS_COMBO[n] || `Combinada de ${n}`, combo, window.__combinadasActuales.length - 1);
     }
 
     html += `
