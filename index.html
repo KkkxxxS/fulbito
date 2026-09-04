@@ -1193,32 +1193,60 @@ async function obtenerStatsEquipo(teamId, codigoLiga, tabla) {
     };
   }
 
-  const FAMILIA_MERCADO = {
-    resultado: 'ganador', doble: 'ganador',
-    totalgoles: 'goles', btts: 'goles',
-    equipomarca: 'goleador', handicap: 'goleador',
-    marcador: 'marcador'
-  };
-
-  // Doble Oportunidad y Equipo Marca casi siempre ganan por probabilidad cruda;
-  // esto les resta un poco para que Resultado/Hándicap/Marcador puedan aparecer.
-  const AJUSTE_DIVERSIDAD = {
-    doble: -0.06, equipomarca: -0.04, handicap: 0.02, marcador: 0.03
-  };
-
+  // En vez de un ajuste fijo por categoría, comparamos cada par de mercados de la
+  // misma familia según qué tan parejo/desigual está ESE partido. Así el mercado que
+  // se muestra realmente varía según el partido, no siempre gana el mismo por defecto.
   function seleccionarMercados(candidatos, cantidad) {
-    const porFamilia = {};
-    candidatos.forEach(c => {
-      const familia = FAMILIA_MERCADO[c.categoria] || c.categoria;
-      const score = c.probabilidad + (AJUSTE_DIVERSIDAD[c.categoria] || 0);
-      if (!porFamilia[familia] || score > porFamilia[familia].score) {
-        porFamilia[familia] = { candidato: c, score };
-      }
-    });
+    const seleccionados = [];
 
-    const seleccionados = Object.values(porFamilia)
-      .sort((a, b) => b.score - a.score)
-      .map(f => f.candidato);
+    // --- Familia "ganador": Resultado directo vs Doble Oportunidad ---
+    const mejorResultado = candidatos
+      .filter(c => c.categoria === 'resultado')
+      .sort((a, b) => b.probabilidad - a.probabilidad)[0];
+    const mejorDoble = candidatos
+      .filter(c => c.categoria === 'doble')
+      .sort((a, b) => b.probabilidad - a.probabilidad)[0];
+
+    if (mejorResultado && mejorDoble) {
+      const relacionada = mejorResultado.parametros.lado === 'local' ? '1X'
+        : mejorResultado.parametros.lado === 'visita' ? 'X2' : null;
+      const dobleRelacionada = relacionada
+        ? candidatos.find(c => c.categoria === 'doble' && c.parametros.lado === relacionada)
+        : null;
+      // Si el resultado directo se acerca bastante a su doble oportunidad relacionada,
+      // hay un favorito claro -> mostramos el resultado directo (más informativo).
+      // Si no, el partido está parejo -> tiene más sentido la doble oportunidad.
+      const ratio = dobleRelacionada ? mejorResultado.probabilidad / dobleRelacionada.probabilidad : 0;
+      seleccionados.push(ratio >= 0.62 ? mejorResultado : mejorDoble);
+    } else {
+      seleccionados.push(mejorResultado || mejorDoble);
+    }
+
+    // --- Familia "goles": Total de Goles vs Ambos Anotan ---
+    const mejorGoles = candidatos
+      .filter(c => c.categoria === 'totalgoles' || c.categoria === 'btts')
+      .map(c => ({ c, score: c.probabilidad + (c.categoria === 'btts' ? -0.03 : 0) }))
+      .sort((a, b) => b.score - a.score)[0];
+    if (mejorGoles) seleccionados.push(mejorGoles.c);
+
+    // --- Familia "goleador": Equipo Marca vs Hándicap ---
+    const mejorHandicap = candidatos
+      .filter(c => c.categoria === 'handicap')
+      .sort((a, b) => b.probabilidad - a.probabilidad)[0];
+    const mejorEquipoMarca = candidatos
+      .filter(c => c.categoria === 'equipomarca')
+      .sort((a, b) => b.probabilidad - a.probabilidad)[0];
+    if (mejorHandicap && mejorEquipoMarca) {
+      // Si el favorito tiene una probabilidad decente de ganar por 2+, ese dato es
+      // más interesante que "el equipo marca" (que casi siempre es altísimo igual).
+      seleccionados.push(mejorHandicap.probabilidad >= 0.32 ? mejorHandicap : mejorEquipoMarca);
+    } else {
+      seleccionados.push(mejorHandicap || mejorEquipoMarca);
+    }
+
+    // --- Marcador exacto: ya varía solo según el partido ---
+    const mejorMarcador = candidatos.filter(c => c.categoria === 'marcador')[0];
+    if (mejorMarcador) seleccionados.push(mejorMarcador);
 
     if (seleccionados.length < cantidad) {
       const usadas = new Set(seleccionados.map(c => c.categoria));
