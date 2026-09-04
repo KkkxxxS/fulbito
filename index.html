@@ -766,6 +766,19 @@ function golAjustado(golCrudo, factor) {
     return { direccion, racha };
   }
 
+function factorTendencia(direccion) {
+  if (direccion === 'subiendo') return 1.04;
+  if (direccion === 'bajando') return 0.96;
+  return 1;
+}
+
+function factorDescanso(dias) {
+  if (dias === null || dias === undefined) return 1;
+  if (dias <= 3) return 0.97;   // poco descanso -> ligera penalización
+  if (dias >= 8) return 1.02;   // bien descansado -> ligero impulso
+  return 1;
+}
+
 async function obtenerStatsEquipo(teamId, codigoLiga, tabla) {
   const claveCache = `stats-${teamId}`;
   if (cache[claveCache]) return cache[claveCache];
@@ -783,6 +796,10 @@ async function obtenerStatsEquipo(teamId, codigoLiga, tabla) {
     const partidos = datos.matches || [];
 
     const partidosOrdenados = [...partidos].sort((a, b) => new Date(b.utcDate) - new Date(a.utcDate));
+
+    const diasDescansoUltimoPartido = partidosOrdenados.length > 0
+      ? (Date.now() - new Date(partidosOrdenados[0].utcDate)) / (1000 * 60 * 60 * 24)
+      : null;
 
     let victorias = 0, empates = 0, derrotas = 0;
     const registrosTodos = [], registrosLocal = [], registrosVisita = [];
@@ -839,7 +856,8 @@ async function obtenerStatsEquipo(teamId, codigoLiga, tabla) {
       partidosJugados: partidosOrdenados.length,
       local: { golesFavor: promLocalFavor, golesContra: promLocalContra },
       visita: { golesFavor: promVisitaFavor, golesContra: promVisitaContra },
-      tendencia
+      tendencia,
+      diasDescansoUltimoPartido
     };
 
     cache[claveCache] = stats;
@@ -1175,17 +1193,44 @@ async function obtenerStatsEquipo(teamId, codigoLiga, tabla) {
     };
   }
 
+  const FAMILIA_MERCADO = {
+    resultado: 'ganador', doble: 'ganador',
+    totalgoles: 'goles', btts: 'goles',
+    equipomarca: 'goleador', handicap: 'goleador',
+    marcador: 'marcador'
+  };
+
+  // Doble Oportunidad y Equipo Marca casi siempre ganan por probabilidad cruda;
+  // esto les resta un poco para que Resultado/Hándicap/Marcador puedan aparecer.
+  const AJUSTE_DIVERSIDAD = {
+    doble: -0.06, equipomarca: -0.04, handicap: 0.02, marcador: 0.03
+  };
+
   function seleccionarMercados(candidatos, cantidad) {
-    const ordenados = [...candidatos].sort((a, b) => b.probabilidad - a.probabilidad);
-    const usadas = new Set();
-    const seleccionados = [];
-    for (const c of ordenados) {
-      if (usadas.has(c.categoria)) continue;
-      usadas.add(c.categoria);
-      seleccionados.push(c);
-      if (seleccionados.length >= cantidad) break;
+    const porFamilia = {};
+    candidatos.forEach(c => {
+      const familia = FAMILIA_MERCADO[c.categoria] || c.categoria;
+      const score = c.probabilidad + (AJUSTE_DIVERSIDAD[c.categoria] || 0);
+      if (!porFamilia[familia] || score > porFamilia[familia].score) {
+        porFamilia[familia] = { candidato: c, score };
+      }
+    });
+
+    const seleccionados = Object.values(porFamilia)
+      .sort((a, b) => b.score - a.score)
+      .map(f => f.candidato);
+
+    if (seleccionados.length < cantidad) {
+      const usadas = new Set(seleccionados.map(c => c.categoria));
+      const ordenados = [...candidatos].sort((a, b) => b.probabilidad - a.probabilidad);
+      for (const c of ordenados) {
+        if (usadas.has(c.categoria)) continue;
+        usadas.add(c.categoria);
+        seleccionados.push(c);
+        if (seleccionados.length >= cantidad) break;
+      }
     }
-    return seleccionados;
+    return seleccionados.slice(0, cantidad);
   }
 
   function razonesParaMercado(m, ctx) {
@@ -1229,6 +1274,12 @@ async function obtenerStatsEquipo(teamId, codigoLiga, tabla) {
     const fuerzaVisita = fuerzaAtaqueDefensa(tabla, idVisita);
     lambdaLocal *= Math.sqrt(fuerzaLocal.ataque * fuerzaVisita.defensa);
     lambdaVisita *= Math.sqrt(fuerzaVisita.ataque * fuerzaLocal.defensa);
+
+    lambdaLocal *= factorTendencia(statsLocal.tendencia.direccion);
+    lambdaVisita *= factorTendencia(statsVisita.tendencia.direccion);
+
+    lambdaLocal *= factorDescanso(statsLocal.diasDescansoUltimoPartido);
+    lambdaVisita *= factorDescanso(statsVisita.diasDescansoUltimoPartido);
 
     const factorLocaliaUsado = calibracionActual.factorLocalia || FACTOR_LOCALIA_BASE;
     lambdaLocal *= factorLocaliaUsado;
@@ -1700,6 +1751,21 @@ async function obtenerStatsEquipo(teamId, codigoLiga, tabla) {
       ultimos: verificados.slice(-8).reverse()
     };
   }
+  function calcularBrierScore(historial) {
+    const verificados = historial.filter(h => h.verificado);
+    let sumaError = 0, total = 0;
+    verificados.forEach(h => {
+      h.mercados.forEach(m => {
+        const p = m.probabilidad / 100;
+        const resultado = m.acierto ? 1 : 0;
+        sumaError += Math.pow(p - resultado, 2);
+        total++;
+      });
+    });
+    if (total === 0) return null;
+    return { brier: Math.round((sumaError / total) * 1000) / 1000, total };
+  }
+
   const MUESTRA_MINIMA_CALIBRACION_RANGO = 5;
 
   function calcularCalibracionRangos(historial) {
@@ -1875,6 +1941,14 @@ async function obtenerStatsEquipo(teamId, codigoLiga, tabla) {
       <div class="fila-mercado mercado-${c.categoria}"><span class="fila-titulo">${c.titulo}</span><span class="fila-porcentaje">${c.porcentaje}%</span><p class="fila-mercado-nombre">acierto real</p></div>
     `).join('');
 
+    const brier = calcularBrierScore(historial);
+    const brierHTML = brier ? `
+      <div class="precision-general" style="margin-top:12px;">
+        <span class="precision-general-num" style="color:var(--m-marcador);">${brier.brier}</span>
+        <span class="precision-general-label">Brier Score<br>(0 = calibración perfecta, 0.25 = azar en mercados binarios; basado en ${brier.total} evaluaciones)</span>
+      </div>
+    ` : '';
+
     contenedor.innerHTML = `
       <div class="bloque-combinadas sin-borde-superior">
         <div class="historial-header">
@@ -1886,6 +1960,7 @@ async function obtenerStatsEquipo(teamId, codigoLiga, tabla) {
           <span class="precision-general-num">${estadisticas.general}%</span>
           <span class="precision-general-label">Precisión general del modelo<br>(promedio de todos los mercados usados)</span>
         </div>
+        ${brierHTML}
 
         <div class="lista-mercados expandido">
           ${filasCategorias}
