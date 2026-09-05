@@ -9,13 +9,14 @@ const ORIGENES_PERMITIDOS = new Set([
   'http://localhost:3000',
   'http://127.0.0.1:3000',
   'http://localhost:8000',
-  'http://127.0.0.1:8000'
+  'http://127.0.0.1:8000',
+  'null'
 ]);
 
 app.use(express.json({ limit: '2mb' }));
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin || ORIGENES_PERMITIDOS.has(origin)) return callback(null, true);
+    if (!origin || ORIGENES_PERMITIDOS.has(origin) || origin === 'null') return callback(null, true);
     return callback(new Error('Origen no permitido'));
   }
 }));

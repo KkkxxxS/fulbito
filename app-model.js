@@ -1,6 +1,6 @@
 
   // ============ CONFIGURACION ============
-  const BACKEND_URL = "http://localhost:3000";
+  const BACKEND_URL = "https://fulbito-forh.onrender.com";
   const COMPETICIONES = "PL,PD,BL1,SA,FL1,CL,DED,ELC,BSA,PPL";
   const NOMBRES_LIGA = {
     PL: "Premier League", PD: "La Liga", BL1: "Bundesliga",
