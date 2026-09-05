@@ -1600,6 +1600,12 @@ async function obtenerStatsEquipo(teamId, codigoLiga, tabla) {
     return `<span class="chip-cuenta-regresiva ${t.urgente ? 'urgente' : ''}">${t.urgente ? '🔴' : '⏱'} ${t.texto}</span>`;
   }
 
+  function nivelConfianza(probabilidad) {
+    if (probabilidad >= 80) return { etiqueta: 'Alta', clase: 'conf-alta' };
+    if (probabilidad >= 65) return { etiqueta: 'Media', clase: 'conf-media' };
+    return { etiqueta: 'Baja', clase: 'conf-baja' };
+  }
+
   function filaMercado(datos, partidoId, esPrincipal) {
     if (datos.sinApuesta) {
       return `
@@ -1621,6 +1627,7 @@ async function obtenerStatsEquipo(teamId, codigoLiga, tabla) {
         <div class="fila-header">
           ${iconoMercado(datos.tipo)}
           <span class="fila-porcentaje">${datos.probabilidad}%</span>
+          <span class="badge-confianza ${nivelConfianza(datos.probabilidad).clase}">${nivelConfianza(datos.probabilidad).etiqueta}</span>
           ${botonMiPrediccion(partidoId, datos.categoria)}
         </div>
         <span class="fila-titulo">${datos.titulo}</span>

@@ -1117,3 +1117,198 @@ main { max-width: 760px; margin: 0 auto; padding: 0 20px 40px; }
   .estado-datos { margin-top: 0; }
   .calidad-datos { font-size: 0.57rem; }
 }
+/* ============ MEJORAS DE PULIDO Y MICRO-INTERACCIONES ============ */
+
+.tarjeta-partido:hover {
+  border-color: color-mix(in srgb, var(--green) 30%, var(--card-border));
+  box-shadow: 0 1px 0 rgba(255,255,255,0.04) inset, 0 20px 40px -18px rgba(0,0,0,0.7);
+}
+
+.tarjeta-partido::after {
+  content: "";
+  position: absolute;
+  top: 0; left: -100%; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--green), transparent);
+  opacity: 0;
+  transition: left 0.6s var(--ease), opacity 0.3s var(--ease);
+  pointer-events: none;
+}
+.tarjeta-partido:hover::after {
+  left: 100%;
+  opacity: 0.5;
+}
+
+.tarjeta-partido:nth-child(2) { animation-delay: 0.06s; }
+.tarjeta-partido:nth-child(3) { animation-delay: 0.12s; }
+.tarjeta-partido:nth-child(4) { animation-delay: 0.18s; }
+.tarjeta-partido:nth-child(5) { animation-delay: 0.24s; }
+
+.fila-mercado {
+  transition: transform 0.2s var(--ease), border-color 0.18s var(--ease), box-shadow 0.2s var(--ease);
+}
+.fila-mercado:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px -10px rgba(0,0,0,0.5);
+}
+.fila-mercado.mercado-principal:hover {
+  border-color: color-mix(in srgb, var(--gold) 50%, var(--card-border));
+}
+
+.barra-relleno {
+  background: linear-gradient(90deg, currentColor, color-mix(in srgb, currentColor 70%, white));
+  background-size: 200% 100%;
+  animation: brilloBarra 2s var(--ease) infinite;
+}
+@keyframes brilloBarra {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.nav-tab, .pestaña, .filtro-liga-btn, .chip-filtro {
+  position: relative;
+  overflow: hidden;
+}
+.nav-tab::before, .pestaña::before, .filtro-liga-btn::before, .chip-filtro::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, rgba(255,255,255,0.08), transparent 60%);
+  opacity: 0;
+  transition: opacity 0.2s var(--ease);
+  pointer-events: none;
+}
+.nav-tab:hover::before, .pestaña:hover::before, .filtro-liga-btn:hover::before, .chip-filtro:hover::before {
+  opacity: 1;
+}
+
+.estrella-favorito:active { transform: scale(0.85); }
+.estrella-favorito.activa { animation: popEstrella 0.3s var(--ease); }
+@keyframes popEstrella {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.3); }
+  100% { transform: scale(1); }
+}
+
+.boton-pick:active { transform: scale(0.9); }
+.boton-pick.activa { animation: popPick 0.25s var(--ease); }
+@keyframes popPick {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
+.acceso-rapido:hover {
+  border-color: color-mix(in srgb, var(--green) 25%, var(--card-border));
+  box-shadow: 0 10px 30px -14px rgba(69, 210, 154, 0.15);
+}
+
+.vista.vista-activa {
+  animation: entrarVista 0.35s var(--ease) both;
+}
+@keyframes entrarVista {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.marcador-chip {
+  transition: transform 0.15s var(--ease), border-color 0.15s var(--ease);
+  cursor: default;
+}
+.marcador-chip:hover {
+  transform: scale(1.08);
+  border-color: var(--gold);
+}
+
+.tarjeta-combinada {
+  animation: aparecerTarjeta 0.35s var(--ease) both;
+}
+.tarjeta-combinada:nth-child(2) { animation-delay: 0.08s; }
+.tarjeta-combinada:nth-child(3) { animation-delay: 0.16s; }
+
+.boton-expandir {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.boton-expandir::after {
+  content: "▾";
+  font-size: 0.7rem;
+  transition: transform 0.2s var(--ease);
+}
+
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--card-border); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-dim); }
+
+::selection { background: rgba(69, 210, 154, 0.25); color: var(--text); }
+
+.pie-pagina { position: relative; }
+.pie-pagina::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--green), transparent);
+  opacity: 0.4;
+}
+
+.badge-posicion {
+  transition: background-color 0.15s var(--ease);
+  cursor: default;
+}
+.badge-posicion:hover {
+  background-color: var(--card);
+  color: var(--green);
+}
+
+.contador-favoritos { animation: pulsoContador 0.3s var(--ease); }
+@keyframes pulsoContador {
+  0% { transform: scale(0.8); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+.estado-spinner {
+  animation: girar 0.8s linear infinite, respirar 2s var(--ease) infinite;
+}
+@keyframes respirar {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+/* ============ BADGE DE CONFIANZA ============ */
+.badge-confianza {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+.badge-confianza.conf-alta {
+  background: color-mix(in srgb, var(--green) 18%, transparent);
+  color: var(--green);
+  border-color: color-mix(in srgb, var(--green) 35%, transparent);
+}
+.badge-confianza.conf-media {
+  background: color-mix(in srgb, var(--gold) 18%, transparent);
+  color: var(--gold);
+  border-color: color-mix(in srgb, var(--gold) 35%, transparent);
+}
+.badge-confianza.conf-baja {
+  background: color-mix(in srgb, var(--text-dim) 15%, transparent);
+  color: var(--text-dim);
+  border-color: color-mix(in srgb, var(--text-dim) 25%, transparent);
+}
+.fila-header {
+  gap: 6px;
+}
