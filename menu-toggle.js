@@ -1,3 +1,8 @@
+function toggleMenuMovil() {
+  const nav = document.querySelector('.app-nav');
+  if (nav) nav.classList.toggle('menu-abierto');
+}
+
 function inicializarCierreMenu() {
   const nav = document.querySelector('.app-nav');
   if (!nav) return;
