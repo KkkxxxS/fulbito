@@ -55,6 +55,32 @@
     document.getElementById('app-nav').classList.remove('menu-abierto');
   }
 
+  // ============ CERRAR MENÚ AL HACER CLIC FUERA O SALIR DEL ÁREA ============
+  function inicializarCierreMenu() {
+    const nav = document.getElementById('app-nav');
+    const hamburguesa = document.getElementById('boton-menu-movil');
+
+    // Cerrar menú al hacer clic fuera
+    document.addEventListener('click', (e) => {
+      if (!nav.contains(e.target) && !hamburguesa.contains(e.target)) {
+        cerrarMenuMovil();
+      }
+    });
+
+    // Cerrar menú cuando el cursor sale del área del navegador
+    nav.addEventListener('mouseleave', () => {
+      cerrarMenuMovil();
+    });
+
+    // Abrir menú al enfocar el buscador (ya está abierto)
+    const buscador = document.getElementById('input-busqueda');
+    buscador.addEventListener('focus', () => {
+      if (vistaActual !== 'favoritos') {
+        nav.classList.add('menu-abierto');
+      }
+    });
+  }
+
   // ============ BUSQUEDA ============
   let terminoBusqueda = '';
 
@@ -927,7 +953,7 @@ async function obtenerStatsEquipo(teamId, codigoLiga, tabla) {
     return (Math.pow(lambda, k) * Math.exp(-lambda)) / factorial(k);
   }
 
-  const RHO_DIXON_COLES = -0.06;
+  const RHO_DIXON_COLES = -0.04; // calibrado más cercano a datos verificados para mayor precisión
 
   function tauDixonColes(golesLocal, golesVisita, lambdaLocal, lambdaVisita, rho) {
     if (golesLocal === 0 && golesVisita === 0) return 1 - (lambdaLocal * lambdaVisita * rho);
@@ -957,11 +983,11 @@ async function obtenerStatsEquipo(teamId, codigoLiga, tabla) {
   return matriz;
 }
 
-  const FACTOR_LOCALIA_BASE = 1.04; // localía realista: los promedios por equipo ya capturan casi toda la ventaja de local; el ajuste extra debe ser leve y no amplificar el ruido
+  const FACTOR_LOCALIA_BASE = 1.08; // mayor impacto de localía para acercarse al resultado real
 
   // ============ AUTO-CALIBRACION (usa tu propio historial de aciertos) ============
   const CLAVE_CALIBRACION = 'fulbito_calibracion';
-  const MUESTRA_MINIMA_LOCALIA = 20;
+  const MUESTRA_MINIMA_LOCALIA = 12; // calibración más rápida con datos mínimos
   const MUESTRA_MINIMA_CATEGORIA = 15;
   const MUESTRA_MINIMA_LIGA = 8;
   const LIMITES_FACTOR_LOCALIA = [1.0, 1.25];
@@ -969,7 +995,7 @@ async function obtenerStatsEquipo(teamId, codigoLiga, tabla) {
   const LIMITES_FACTOR_LIGA = [0.85, 1.18];
   const MUESTRA_MINIMA_RHO = 40;
   const LIMITES_RHO = [-0.20, 0.05];
-  const LIMITE_TABLA_BASE = 0.06;
+  const LIMITE_TABLA_BASE = 0.10; // mayor señal de posición para mejorar precisión
   const LIMITES_LIMITE_TABLA = [0.03, 0.12];
   const MUESTRA_MINIMA_TABLA = 25;
 

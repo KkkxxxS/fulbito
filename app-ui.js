@@ -1394,6 +1394,9 @@
     }
   }, 3 * 60 * 1000);
 
+  // ============ INICIALIZAR CIERRE DE MENÚ ============
+  inicializarCierreMenu();
+
   // ============ SERVICE WORKER (PWA / offline básico) ============
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
