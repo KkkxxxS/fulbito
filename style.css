@@ -893,3 +893,227 @@ main { max-width: 760px; margin: 0 auto; padding: 0 20px 40px; }
   .eval-historial-liga { width: auto; flex-direction: row; align-items: center; }
   .eval-historial-resultado { margin-left: 0; width: 100%; justify-content: space-between; }
 }
+
+/* ============ PULIDO VISUAL / ESTADOS DE DATOS ============ */
+.app-nav {
+  background: rgba(10, 12, 15, 0.92);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.16);
+}
+
+.app-nav-marca {
+  letter-spacing: -0.04em;
+}
+
+.hero-compacto {
+  padding-top: 64px;
+  padding-bottom: 18px;
+}
+
+.hero-eyebrow,
+.vista-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 14px;
+  color: var(--green);
+  font-family: var(--font-mono);
+  font-size: 0.67rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.hero-eyebrow-punto {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 0 4px rgba(69,210,154,0.12);
+}
+
+.hero-compacto h1 {
+  letter-spacing: -0.045em;
+}
+
+.hero-compacto p:not(.hero-eyebrow) {
+  max-width: 52ch;
+}
+
+.hero-kpis {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  max-width: 560px;
+  margin-top: 26px;
+}
+
+.hero-kpi {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 12px 14px;
+  background: rgba(24,28,34,0.72);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-sm);
+}
+
+.hero-kpi strong {
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 1.05rem;
+  line-height: 1;
+}
+
+.hero-kpi span {
+  color: var(--text-dim);
+  font-size: 0.68rem;
+  line-height: 1.35;
+}
+
+.vista-cabecera {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 24px;
+}
+
+.vista-cabecera .vista-eyebrow {
+  margin-bottom: 8px;
+}
+
+.vista-cabecera h2 {
+  margin-bottom: 5px;
+}
+
+.vista-cabecera .subtitulo-vista {
+  margin-bottom: 0;
+}
+
+.estado-datos {
+  flex-shrink: 0;
+  margin-top: 5px;
+  padding: 7px 10px;
+  color: var(--green);
+  background: var(--green-dim);
+  border: 1px solid rgba(69,210,154,0.2);
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.estado-carga,
+.estado-vacio,
+.estado-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 150px;
+  padding: 28px 22px;
+  color: var(--text-muted);
+  background: linear-gradient(145deg, rgba(24,28,34,0.88), rgba(20,23,28,0.7));
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-lg);
+  text-align: center;
+}
+
+.estado-carga {
+  flex-direction: row;
+  min-height: 88px;
+  font-size: 0.84rem;
+}
+
+.estado-vacio strong,
+.estado-error strong {
+  color: var(--text);
+  font-size: 0.94rem;
+}
+
+.estado-vacio span,
+.estado-error span {
+  max-width: 48ch;
+  font-size: 0.8rem;
+  line-height: 1.55;
+}
+
+.estado-error {
+  border-color: rgba(234,101,119,0.28);
+  background: linear-gradient(145deg, rgba(52,22,32,0.62), rgba(24,28,34,0.78));
+}
+
+.estado-error strong { color: var(--red); }
+
+.estado-spinner {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  border: 2px solid rgba(69,210,154,0.22);
+  border-top-color: var(--green);
+  border-radius: 50%;
+  animation: girar 0.8s linear infinite;
+}
+
+@keyframes girar { to { transform: rotate(360deg); } }
+
+.boton-reintentar {
+  appearance: none;
+  margin-top: 4px;
+  padding: 9px 15px;
+  color: var(--ink-on-accent);
+  background: var(--green);
+  border: 0;
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.boton-reintentar:hover { background: #5ddcaa; }
+
+.calidad-datos {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.61rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.calidad-datos-punto {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.calidad-datos.alta { color: var(--green); border-color: rgba(69,210,154,0.22); }
+.calidad-datos.media { color: var(--gold); border-color: rgba(207,158,87,0.22); }
+.calidad-datos.limitada { color: var(--red); border-color: rgba(234,101,119,0.25); }
+
+.aviso-servidor-carga {
+  min-height: 150px;
+}
+
+.aviso-servidor-carga .estado-spinner {
+  margin: 0 auto 4px;
+}
+
+@media (max-width: 600px) {
+  .hero-compacto { padding-top: 42px; }
+  .hero-kpis { gap: 6px; }
+  .hero-kpi { padding: 10px 9px; }
+  .hero-kpi span { font-size: 0.61rem; }
+  .vista-cabecera { flex-direction: column; gap: 10px; }
+  .estado-datos { margin-top: 0; }
+  .calidad-datos { font-size: 0.57rem; }
+}
