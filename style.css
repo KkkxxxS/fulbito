@@ -1,42 +1,43 @@
-@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=IBM+Plex+Mono:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap');
 
 :root {
-  /* Paleta "sala VIP" — navy profundo + acento dorado + acento teal para datos */
-  --bg: #0a0f1c;
-  --bg-raised: #101828;
-  --card: #131c2e;
-  --card-border: #23304a;
-  --line: #1c2740;
-  --text: #f5f7fb;
-  --text-muted: #9aa7c2;
-  --text-dim: #5c6a8a;
-  --gold: #ffb238;
-  --gold-dim: #6b4a15;
-  --green: #00d9a3;
-  --green-dim: #073d31;
-  --red: #ff4d6a;
-  --ink-on-accent: #06110d;
-  --radius: 16px;
-  --radius-sm: 10px;
-  --shadow-card: 0 1px 0 rgba(255,255,255,0.04) inset, 0 10px 30px -12px rgba(0,0,0,0.55);
-  --shadow-lift: 0 18px 40px -14px rgba(0,0,0,0.65);
-  --font-display: 'Bebas Neue', 'Arial Narrow', sans-serif;
+  /* Paleta "sala de prensa deportiva" — carbón cálido + cobre + verde de acierto, sin neón */
+  --bg: #0b0d10;
+  --bg-raised: #15181d;
+  --card: #191d23;
+  --card-border: #272c34;
+  --line: #21252c;
+  --text: #eef1f3;
+  --text-muted: #8d95a3;
+  --text-dim: #565e6a;
+  --gold: #c9974c;
+  --gold-dim: #34281a;
+  --green: #3fcf8e;
+  --green-dim: #14291f;
+  --red: #e2596a;
+  --ink-on-accent: #15110a;
+  --radius: 12px;
+  --radius-sm: 9px;
+  --shadow-card: 0 1px 0 rgba(255,255,255,0.02) inset, 0 12px 28px -16px rgba(0,0,0,0.6);
+  --shadow-lift: 0 16px 32px -14px rgba(0,0,0,0.7);
+  --font-display: 'Fraunces', Georgia, 'Times New Roman', serif;
+  --font-mono: 'IBM Plex Mono', 'SFMono-Regular', Consolas, monospace;
   --font-body: 'Inter', system-ui, -apple-system, sans-serif;
 
-  /* identidad de color por categoria de mercado (banco dinamico de ~19 mercados / 7 categorias) */
-  --m-resultado: #ffc933;
+  /* identidad de color por categoria de mercado — tonos afines a la paleta, usados como acento, no como relleno */
+  --m-resultado: #d9ae5c;
   --m-resultado-ink: #241a02;
-  --m-doble: #4f8dff;
+  --m-doble: #6f96e0;
   --m-doble-ink: #04122c;
-  --m-totalgoles: #17e0b8;
+  --m-totalgoles: #4fb6a4;
   --m-totalgoles-ink: #032420;
-  --m-btts: #ff5fa8;
+  --m-btts: #c97fa0;
   --m-btts-ink: #2a0416;
-  --m-equipomarca: #a97bff;
+  --m-equipomarca: #9b87d1;
   --m-equipomarca-ink: #1c0d3d;
-  --m-handicap: #ff9a4d;
+  --m-handicap: #cf8f5c;
   --m-handicap-ink: #331400;
-  --m-marcador: #4dd0ff;
+  --m-marcador: #5aa8c4;
   --m-marcador-ink: #04222c;
 }
 
@@ -47,8 +48,7 @@ html { scroll-behavior: smooth; }
 body {
   margin: 0;
   background:
-    radial-gradient(ellipse 900px 520px at 12% -8%, rgba(0, 217, 163, 0.10), transparent 60%),
-    radial-gradient(ellipse 800px 560px at 92% 6%, rgba(255, 178, 56, 0.09), transparent 60%),
+    radial-gradient(ellipse 700px 420px at 8% -10%, rgba(63, 207, 142, 0.06), transparent 62%),
     var(--bg);
   color: var(--text);
   font-family: var(--font-body);
@@ -72,8 +72,8 @@ body {
   position: sticky;
   top: 0;
   z-index: 40;
-  background: rgba(10, 15, 28, 0.85);
-  backdrop-filter: blur(14px) saturate(140%);
+  background: rgba(11, 13, 16, 0.92);
+  backdrop-filter: blur(10px) saturate(120%);
   border-bottom: 1px solid var(--line);
 }
 
@@ -88,14 +88,12 @@ body {
 
 .app-nav-marca {
   font-family: var(--font-display);
-  font-size: 1.55rem;
-  letter-spacing: 0.03em;
+  font-style: italic;
+  font-weight: 600;
+  font-size: 1.4rem;
+  letter-spacing: 0;
   color: var(--text);
   flex-shrink: 0;
-  background: linear-gradient(135deg, #ffffff, var(--green) 140%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
 }
 
 .app-nav-buscador {
@@ -105,7 +103,7 @@ body {
   gap: 8px;
   background: var(--bg-raised);
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: 8px;
   padding: 9px 13px;
   max-width: 320px;
   margin-left: auto;
@@ -113,7 +111,7 @@ body {
 }
 
 .app-nav-buscador:focus-within {
-  border-color: var(--green);
+  border-color: var(--text-dim);
   background: var(--card);
 }
 
@@ -163,7 +161,7 @@ body {
   margin: 0 auto;
   padding: 0 20px 12px;
   display: flex;
-  gap: 6px;
+  gap: 4px;
   overflow-x: auto;
   scrollbar-width: none;
 }
@@ -176,10 +174,10 @@ body {
   border: 1px solid transparent;
   color: var(--text-muted);
   font-family: var(--font-body);
-  font-weight: 700;
+  font-weight: 600;
   font-size: 0.86rem;
-  padding: 8px 15px;
-  border-radius: 999px;
+  padding: 8px 14px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   white-space: nowrap;
   display: inline-flex;
@@ -198,9 +196,10 @@ body {
 }
 
 .nav-tab.activa {
-  background: var(--green);
-  color: var(--ink-on-accent);
-  box-shadow: 0 4px 16px -4px rgba(0, 217, 163, 0.55);
+  background: var(--card);
+  color: var(--text);
+  border-color: var(--card-border);
+  box-shadow: inset 0 0 0 1px var(--card-border), 0 0 0 1px var(--green);
 }
 
 .contador-favoritos {
@@ -212,14 +211,15 @@ body {
   padding: 0 4px;
   border-radius: 999px;
   background: var(--gold);
-  color: #241a02;
+  color: var(--ink-on-accent);
   font-size: 0.65rem;
-  font-weight: 800;
+  font-weight: 700;
+  font-family: var(--font-mono);
 }
 
 .nav-tab.activa .contador-favoritos {
-  background: var(--ink-on-accent);
-  color: var(--gold);
+  background: var(--gold);
+  color: var(--ink-on-accent);
 }
 
 @media (max-width: 640px) {
@@ -248,40 +248,25 @@ body {
   position: relative;
   max-width: 780px;
   margin: 0 auto;
-  padding: 44px 20px 10px;
+  padding: 52px 20px 10px;
   overflow: hidden;
 }
 
 .hero-compacto::before {
   content: "";
   position: absolute;
-  width: 460px;
-  height: 460px;
-  top: -160px;
-  left: -110px;
-  background: radial-gradient(circle, rgba(0, 217, 163, 0.24), transparent 70%);
-  filter: blur(34px);
+  width: 380px;
+  height: 380px;
+  top: -170px;
+  left: -120px;
+  background: radial-gradient(circle, rgba(63, 207, 142, 0.14), transparent 72%);
+  filter: blur(30px);
   z-index: 0;
   pointer-events: none;
-  animation: flotar-reflector 16s ease-in-out infinite alternate;
-}
-
-@keyframes flotar-reflector {
-  from { transform: translate(0, 0); }
-  to { transform: translate(70px, 50px); }
 }
 
 .hero-compacto::after {
-  content: "⚽";
-  position: absolute;
-  font-size: 11.5rem;
-  opacity: 0.045;
-  top: -2.5rem;
-  right: -2rem;
-  line-height: 1;
-  pointer-events: none;
-  filter: grayscale(1) brightness(1.8);
-  z-index: 0;
+  content: none;
 }
 
 .hero-textos {
@@ -292,21 +277,20 @@ body {
 
 .hero-compacto h1 {
   font-family: var(--font-display);
-  font-size: clamp(2.6rem, 7.5vw, 3.7rem);
-  letter-spacing: 0.02em;
+  font-weight: 500;
+  font-size: clamp(2.5rem, 7vw, 3.6rem);
+  letter-spacing: -0.01em;
   margin: 0;
-  line-height: 0.95;
-  background: linear-gradient(180deg, #ffffff 0%, #b9e8d6 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  line-height: 1.02;
+  color: var(--text);
 }
 
 .hero-compacto p {
   color: var(--text-muted);
   font-size: 0.96rem;
-  margin: 12px 0 28px;
-  letter-spacing: 0.01em;
+  margin: 14px 0 28px;
+  letter-spacing: 0;
+  max-width: 48ch;
 }
 
 .accesos-rapidos {
@@ -331,34 +315,33 @@ body {
   display: flex;
   align-items: center;
   gap: 12px;
-  background: linear-gradient(180deg, var(--card), var(--bg-raised));
+  background: var(--card);
   border: 1px solid var(--card-border);
-  border-radius: 14px;
+  border-radius: var(--radius-sm);
   padding: 15px 16px;
   cursor: pointer;
-  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow .18s ease;
+  transition: border-color 0.18s ease, transform .18s ease;
   color: var(--text);
   font-family: var(--font-body);
   box-shadow: var(--shadow-card);
 }
 
 .acceso-rapido:hover {
-  transform: translateY(-3px);
-  border-color: var(--green);
-  box-shadow: var(--shadow-lift);
+  border-color: var(--text-dim);
+  transform: translateY(-2px);
 }
 
 .acceso-rapido-icono {
-  font-size: 1.25rem;
+  font-size: 1.15rem;
   flex-shrink: 0;
-  width: 38px;
-  height: 38px;
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: var(--bg-raised);
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: 8px;
 }
 
 .acceso-rapido-texto {
@@ -373,29 +356,35 @@ body {
 .acceso-rapido-texto strong {
   font-size: 0.92rem;
   color: var(--text);
-  font-weight: 700;
+  font-weight: 600;
 }
 
 /* ============ COMO FUNCIONA (3 pasos) ============ */
 .como-funciona {
   max-width: 780px;
   margin: 0 auto;
-  padding: 30px 20px 4px;
+  padding: 34px 20px 4px;
 }
 
 .como-funciona-eyebrow {
-  font-size: 0.68rem;
-  font-weight: 800;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--green);
-  margin: 0 0 14px;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 500;
+  font-size: 0.98rem;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--text-muted);
+  margin: 0 0 16px;
 }
 
 .como-funciona-pasos {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
+  gap: 1px;
+  background: var(--line);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
 }
 
 @media (max-width: 640px) {
@@ -406,20 +395,16 @@ body {
   display: flex;
   gap: 12px;
   background: var(--card);
-  border: 1px solid var(--card-border);
-  border-radius: 14px;
-  padding: 16px 17px;
-  transition: border-color .18s ease;
+  padding: 18px 17px;
 }
 
-.como-funciona-paso:hover { border-color: var(--card-border); }
-
 .como-funciona-num {
-  font-family: var(--font-display);
-  font-size: 1.7rem;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 1.15rem;
   color: var(--green);
   flex-shrink: 0;
-  line-height: 1.1;
+  line-height: 1.3;
 }
 
 .como-funciona-paso strong {
@@ -427,6 +412,7 @@ body {
   font-size: 0.93rem;
   color: var(--text);
   margin-bottom: 4px;
+  font-weight: 600;
 }
 
 .como-funciona-paso p {
@@ -448,8 +434,9 @@ main {
 
 .vista h2 {
   font-family: var(--font-display);
-  font-size: clamp(2.1rem, 5.5vw, 2.7rem);
-  letter-spacing: 0.02em;
+  font-weight: 500;
+  font-size: clamp(2rem, 5vw, 2.5rem);
+  letter-spacing: -0.01em;
   margin: 0 0 6px;
   color: var(--text);
 }
@@ -463,11 +450,11 @@ main {
 
 .pestañas-fecha {
   display: flex;
-  gap: 8px;
+  gap: 2px;
   margin-bottom: 28px;
   background: var(--bg-raised);
-  padding: 5px;
-  border-radius: 999px;
+  padding: 3px;
+  border-radius: var(--radius-sm);
   border: 1px solid var(--line);
   width: fit-content;
   max-width: 100%;
@@ -482,8 +469,8 @@ main {
   font-family: var(--font-body);
   font-weight: 600;
   font-size: 0.88rem;
-  padding: 9px 18px;
-  border-radius: 999px;
+  padding: 9px 16px;
+  border-radius: 7px;
   cursor: pointer;
   white-space: nowrap;
   transition: background 0.15s ease, color 0.15s ease;
@@ -492,44 +479,45 @@ main {
 .pestaña:hover { color: var(--text); }
 
 .pestaña.activa {
-  background: var(--green);
-  color: var(--ink-on-accent);
+  background: var(--card);
+  color: var(--text);
+  box-shadow: inset 0 0 0 1px var(--card-border);
 }
 
 .pestaña-finalizados {
   border-left: 1px solid var(--line);
-  margin-left: 2px;
-  padding-left: 20px;
+  margin-left: 3px;
+  padding-left: 19px;
 }
 
 @media (max-width: 600px) {
   .pestaña-finalizados {
     border-left: none;
     margin-left: 0;
-    padding-left: 18px;
+    padding-left: 16px;
   }
 }
 
 #contenedor-partidos, #contenedor-favoritos {
   display: flex;
   flex-direction: column;
-  gap: 22px;
+  gap: 20px;
 }
 
 /* ============ TARJETA DE PARTIDO ============ */
 .tarjeta-partido {
-  background: linear-gradient(180deg, var(--card) 0%, var(--bg-raised) 130%);
+  background: var(--card);
   border: 1px solid var(--card-border);
   border-radius: var(--radius);
-  padding: 24px 24px 8px;
+  padding: 22px 22px 6px;
   position: relative;
   overflow: hidden;
-  animation: aparecerTarjeta 0.45s ease both;
+  animation: aparecerTarjeta 0.35s ease both;
   box-shadow: var(--shadow-card);
 }
 
 @keyframes aparecerTarjeta {
-  from { opacity: 0; transform: translateY(10px); }
+  from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
@@ -537,10 +525,9 @@ main {
   content: "";
   position: absolute;
   top: 0; left: 0; right: 0;
-  height: 3px;
-  background: linear-gradient(90deg,
-    var(--m-resultado), var(--m-doble), var(--m-totalgoles), var(--m-btts),
-    var(--m-equipomarca), var(--m-handicap), var(--m-marcador));
+  height: 2px;
+  background: var(--green);
+  opacity: 0.6;
 }
 
 .encabezado-partido {
@@ -569,8 +556,9 @@ main {
 
 .encabezado-partido .equipo {
   font-family: var(--font-display);
-  font-size: clamp(1.05rem, 3.6vw, 1.42rem);
-  letter-spacing: 0.01em;
+  font-weight: 500;
+  font-size: clamp(1.02rem, 3.4vw, 1.32rem);
+  letter-spacing: 0;
 }
 
 .tendencia {
@@ -588,11 +576,12 @@ main {
 }
 
 .racha-punto {
-  width: 16px;
-  height: 16px;
+  width: 15px;
+  height: 15px;
   border-radius: 4px;
-  font-size: 0.6rem;
-  font-weight: 800;
+  font-size: 0.58rem;
+  font-weight: 700;
+  font-family: var(--font-mono);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -601,17 +590,18 @@ main {
 
 .racha-G { background: var(--green-dim); color: var(--green); }
 .racha-E { background: var(--bg-raised); color: var(--text-dim); border: 1px solid var(--line); }
-.racha-P { background: #3a1414; color: var(--red); }
+.racha-P { background: #331419; color: var(--red); }
 
 .encabezado-partido .vs {
-  font-family: var(--font-body);
-  font-size: 0.68rem;
-  font-weight: 800;
-  color: var(--ink-on-accent);
-  background: var(--gold);
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  font-weight: 600;
+  color: var(--text-dim);
+  background: var(--bg-raised);
+  border: 1px solid var(--line);
   padding: 4px 8px;
   border-radius: 6px;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.03em;
   margin-top: 4px;
   flex-shrink: 0;
 }
@@ -621,7 +611,8 @@ main {
   color: var(--text-dim);
   font-size: 0.82rem;
   margin: 14px 0 0;
-  letter-spacing: 0.01em;
+  letter-spacing: 0;
+  font-family: var(--font-mono);
 }
 
 .info-h2h {
@@ -634,7 +625,7 @@ main {
 .aviso-datos {
   text-align: center;
   color: var(--gold);
-  background: rgba(255, 178, 56, 0.08);
+  background: var(--gold-dim);
   border: 1px solid var(--gold-dim);
   border-radius: 8px;
   font-size: 0.74rem;
@@ -647,7 +638,7 @@ main {
 .lista-mercados {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: 10px;
   padding-bottom: 14px;
   margin-top: 18px;
 }
@@ -657,20 +648,19 @@ main {
 }
 
 .fila-mercado {
-  border-radius: 13px;
-  padding: 15px 16px;
+  border-radius: var(--radius-sm);
+  padding: 14px 15px;
   position: relative;
   overflow: hidden;
   isolation: isolate;
-  transition: transform .15s ease;
+  background: var(--bg-raised);
+  border: 1px solid var(--card-border);
+  border-left: 3px solid currentColor;
+  transition: border-color .15s ease;
 }
 
 .fila-mercado::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(circle at 100% 0%, rgba(255,255,255,0.18), transparent 60%);
-  z-index: -1;
+  content: none;
 }
 
 .fila-header {
@@ -682,43 +672,46 @@ main {
 }
 
 .fila-icono {
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.3);
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.07);
   flex-shrink: 0;
 }
 
 .fila-icono svg {
-  width: 16px;
-  height: 16px;
-  filter: drop-shadow(0 1px 1px rgba(0,0,0,0.15));
+  width: 15px;
+  height: 15px;
+  filter: none;
 }
 
 .fila-porcentaje {
-  font-family: var(--font-display);
-  font-size: 1.55rem;
-  letter-spacing: 0.01em;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 1.32rem;
+  letter-spacing: -0.01em;
   flex: 1;
+  color: var(--text);
 }
 
 .fila-titulo {
   display: block;
-  font-size: 0.72rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   margin-bottom: 10px;
-  opacity: 0.85;
+  color: currentColor;
+  opacity: 0.9;
 }
 
 .barra-probabilidad {
-  height: 5px;
+  height: 4px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.08);
   overflow: hidden;
   margin-bottom: 10px;
 }
@@ -727,7 +720,7 @@ main {
   height: 100%;
   border-radius: 999px;
   background: currentColor;
-  opacity: 0.9;
+  opacity: 0.85;
   transition: width 0.4s ease;
 }
 
@@ -735,51 +728,31 @@ main {
   margin: 0 0 3px;
   font-size: 0.68rem;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
-  opacity: 0.75;
+  letter-spacing: 0.03em;
+  color: var(--text-dim);
 }
 
 .fila-seleccion {
   margin: 0;
   font-size: 0.92rem;
-  font-weight: 800;
+  font-weight: 700;
+  color: var(--text);
 }
 
-/* colores planos por identidad de categoria de mercado */
-.mercado-resultado {
-  background: var(--m-resultado);
-  color: var(--m-resultado-ink);
-}
-.mercado-doble {
-  background: var(--m-doble);
-  color: var(--m-doble-ink);
-}
-.mercado-totalgoles {
-  background: var(--m-totalgoles);
-  color: var(--m-totalgoles-ink);
-}
-.mercado-btts {
-  background: var(--m-btts);
-  color: var(--m-btts-ink);
-}
-.mercado-equipomarca {
-  background: var(--m-equipomarca);
-  color: var(--m-equipomarca-ink);
-}
-.mercado-handicap {
-  background: var(--m-handicap);
-  color: var(--m-handicap-ink);
-}
-.mercado-marcador {
-  background: var(--m-marcador);
-  color: var(--m-marcador-ink);
-}
+/* colores por identidad de categoria de mercado — usados como acento (borde/icono/texto), fondo neutro */
+.mercado-resultado { color: var(--m-resultado); }
+.mercado-doble { color: var(--m-doble); }
+.mercado-totalgoles { color: var(--m-totalgoles); }
+.mercado-btts { color: var(--m-btts); }
+.mercado-equipomarca { color: var(--m-equipomarca); }
+.mercado-handicap { color: var(--m-handicap); }
+.mercado-marcador { color: var(--m-marcador); }
 
 /* puntito identificador de mercado, usado en combinadas */
 .punto-mercado {
   display: inline-block;
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   margin-right: 6px;
   flex-shrink: 0;
@@ -794,14 +767,14 @@ main {
 
 /* ============ COMBINACIONES DEL MISMO PARTIDO ============ */
 .combos-partido {
-  border-top: 1px dashed var(--line);
+  border-top: 1px solid var(--line);
   padding: 16px 0 18px;
 }
 
 .combos-partido-titulo {
   font-size: 0.68rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
+  font-weight: 600;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--text-dim);
   margin: 0 0 10px;
@@ -810,7 +783,7 @@ main {
 .combo-partido {
   background: var(--bg-raised);
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: 8px;
   padding: 11px 13px;
   margin-bottom: 8px;
 }
@@ -822,14 +795,15 @@ main {
   justify-content: space-between;
   align-items: center;
   font-size: 0.78rem;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--text-muted);
   margin-bottom: 4px;
 }
 
 .combo-partido-pct {
-  font-family: var(--font-display);
-  font-size: 1.08rem;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 1.02rem;
   color: var(--green);
 }
 
@@ -847,7 +821,7 @@ main {
   gap: 12px;
   background: var(--bg-raised);
   border: 1px solid var(--card-border);
-  border-radius: 12px;
+  border-radius: var(--radius-sm);
   padding: 13px 15px;
   margin-bottom: 10px;
   flex-wrap: wrap;
@@ -855,13 +829,14 @@ main {
 
 .calibracion-item-titulo {
   font-size: 0.86rem;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--text);
 }
 
 .calibracion-item-valor {
-  font-family: var(--font-display);
-  font-size: 1.2rem;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 1.1rem;
   color: var(--gold);
 }
 
@@ -877,7 +852,7 @@ main {
   gap: 10px;
   background: var(--card);
   border: 1px solid var(--card-border);
-  border-radius: 10px;
+  border-radius: 8px;
   padding: 9px 12px;
   font-size: 0.82rem;
 }
@@ -889,8 +864,9 @@ main {
 }
 
 .calibracion-fila-factor {
-  font-family: var(--font-display);
-  font-size: 1.05rem;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 0.98rem;
 }
 
 .calibracion-fila-factor.sube { color: var(--gold); }
@@ -900,6 +876,7 @@ main {
   color: var(--text-dim);
   font-size: 0.7rem;
   white-space: nowrap;
+  font-family: var(--font-mono);
 }
 
 .calibracion-vacio {
@@ -912,11 +889,11 @@ main {
 .calibracion-rango-fila {
   background: var(--card);
   border: 1px solid var(--card-border);
-  border-radius: 12px;
+  border-radius: var(--radius-sm);
   padding: 14px 16px;
   margin-bottom: 10px;
 }
-.calibracion-rango-fila.pocas-muestras { opacity: 0.7; }
+.calibracion-rango-fila.pocas-muestras { opacity: 0.65; }
 .calibracion-rango-header {
   display: flex;
   justify-content: space-between;
@@ -924,9 +901,10 @@ main {
   margin-bottom: 10px;
 }
 .calibracion-rango-label {
-  font-family: var(--font-display);
-  font-size: 1.05rem;
-  letter-spacing: 0.02em;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 0.95rem;
+  letter-spacing: 0;
   color: var(--text);
 }
 .calibracion-barra-item {
@@ -944,7 +922,7 @@ main {
 }
 .calibracion-barra-fondo {
   flex: 1;
-  height: 8px;
+  height: 7px;
   border-radius: 999px;
   background: var(--bg-raised);
   overflow: hidden;
@@ -964,6 +942,7 @@ main {
   font-size: 0.78rem;
   font-weight: 700;
   color: var(--text);
+  font-family: var(--font-mono);
 }
 
 .historial-header {
@@ -983,14 +962,14 @@ main {
   font-weight: 600;
   font-size: 0.78rem;
   padding: 7px 14px;
-  border-radius: 999px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   transition: background 0.15s ease, color 0.15s ease;
   flex-shrink: 0;
 }
 
 .boton-reiniciar:hover {
-  background: #3a1414;
+  background: #331419;
   color: var(--red);
   border-color: var(--red);
 }
@@ -998,7 +977,7 @@ main {
 .historial-partido {
   background: var(--card);
   border: 1px solid var(--card-border);
-  border-radius: 12px;
+  border-radius: var(--radius-sm);
   padding: 13px 15px;
   margin-bottom: 10px;
 }
@@ -1020,21 +999,23 @@ main {
 }
 
 .historial-partido-marcador {
-  font-family: var(--font-display);
-  font-size: 1.1rem;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 1rem;
   color: var(--text-muted);
 }
 
 .historial-partido-badge {
-  font-family: var(--font-display);
-  font-size: 0.95rem;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 0.82rem;
   padding: 2px 10px;
   border-radius: 999px;
   flex-shrink: 0;
 }
 .historial-partido-badge.todo-bien { background: var(--green-dim); color: var(--green); }
-.historial-partido-badge.parcial { background: rgba(255, 178, 56, 0.14); color: var(--gold); }
-.historial-partido-badge.todo-mal { background: #3a1414; color: var(--red); }
+.historial-partido-badge.parcial { background: var(--gold-dim); color: var(--gold); }
+.historial-partido-badge.todo-mal { background: #331419; color: var(--red); }
 
 .historial-partido-mercados {
   display: flex;
@@ -1054,7 +1035,7 @@ main {
 .historial-mercado-item.fallo { color: var(--red); opacity: 0.85; }
 
 .historial-mercado-check {
-  font-weight: 800;
+  font-weight: 700;
   width: 14px;
   flex-shrink: 0;
   text-align: center;
@@ -1063,8 +1044,8 @@ main {
 .precision-general {
   display: flex;
   align-items: center;
-  gap: 16px;
-  background: linear-gradient(135deg, var(--bg-raised), var(--card));
+  gap: 18px;
+  background: var(--card);
   border: 1px solid var(--card-border);
   border-radius: var(--radius);
   padding: 20px 24px;
@@ -1073,8 +1054,9 @@ main {
 }
 
 .precision-general-num {
-  font-family: var(--font-display);
-  font-size: 3.2rem;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 2.7rem;
   line-height: 1;
   color: var(--green);
   flex-shrink: 0;
@@ -1086,11 +1068,11 @@ main {
   line-height: 1.4;
 }
 
-/* ============ COMBINADAS (widgets oscuros) ============ */
+/* ============ COMBINADAS ============ */
 .bloque-combinadas {
   margin-top: 44px;
   padding-top: 34px;
-  border-top: 1px dashed var(--line);
+  border-top: 1px solid var(--line);
 }
 
 .bloque-combinadas.sin-borde-superior {
@@ -1101,8 +1083,9 @@ main {
 
 .bloque-combinadas h3 {
   font-family: var(--font-display);
-  font-size: 1.9rem;
-  letter-spacing: 0.02em;
+  font-weight: 500;
+  font-size: 1.7rem;
+  letter-spacing: -0.01em;
   margin: 0 0 6px;
 }
 
@@ -1114,10 +1097,10 @@ main {
 }
 
 .tarjeta-combinada {
-  background: linear-gradient(180deg, var(--bg-raised), var(--card));
+  background: var(--card);
   border: 1px solid var(--card-border);
   border-radius: var(--radius);
-  padding: 19px 21px;
+  padding: 18px 20px;
   margin-bottom: 14px;
   box-shadow: var(--shadow-card);
 }
@@ -1131,14 +1114,18 @@ main {
 
 .tarjeta-combinada .etiqueta-combinada {
   font-family: var(--font-display);
-  font-size: 1.18rem;
-  letter-spacing: 0.02em;
+  font-style: italic;
+  font-weight: 500;
+  font-size: 1.1rem;
+  letter-spacing: 0;
   color: var(--gold);
 }
 
 .tarjeta-combinada .prob-combinada {
-  font-family: var(--font-display);
-  font-size: 1.55rem;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 1.4rem;
+  color: var(--text);
 }
 
 .pierna-combinada {
@@ -1153,15 +1140,16 @@ main {
 .pierna-combinada:first-of-type { border-top: none; }
 
 .pierna-combinada .num {
-  width: 20px;
-  height: 20px;
+  width: 19px;
+  height: 19px;
   flex-shrink: 0;
   border-radius: 6px;
-  background: var(--card);
+  background: var(--bg-raised);
   border: 1px solid var(--line);
   color: var(--text-dim);
-  font-size: 0.68rem;
-  font-weight: 700;
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  font-weight: 600;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1169,15 +1157,15 @@ main {
 
 .pierna-combinada .detalle { flex: 1; color: var(--text-muted); }
 .pierna-combinada .detalle strong { color: var(--text); font-weight: 700; }
-.pierna-combinada .pct { color: var(--text-dim); font-size: 0.78rem; white-space: nowrap; }
+.pierna-combinada .pct { color: var(--text-dim); font-family: var(--font-mono); font-size: 0.78rem; white-space: nowrap; }
 
 .aviso-riesgo {
   display: flex;
   gap: 10px;
   align-items: flex-start;
-  background: rgba(255, 178, 56, 0.07);
+  background: var(--gold-dim);
   border: 1px solid var(--gold-dim);
-  border-radius: 12px;
+  border-radius: var(--radius-sm);
   padding: 13px 15px;
   margin-top: 16px;
   font-size: 0.8rem;
@@ -1224,13 +1212,13 @@ main {
   object-fit: contain;
   vertical-align: middle;
   margin: 0 8px;
-  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.4));
+  filter: none;
 }
 
 /* ===== Animacion al cambiar de pestaña ===== */
 #contenedor-partidos, #contenedor-favoritos {
   opacity: 0;
-  transition: opacity 0.35s ease;
+  transition: opacity 0.3s ease;
 }
 #contenedor-partidos.visible, #contenedor-favoritos.visible {
   opacity: 1;
@@ -1248,20 +1236,20 @@ main {
   background-color: var(--bg-raised);
   color: var(--text-muted);
   border: 1px solid var(--line);
-  padding: 7px 15px;
-  border-radius: 999px;
+  padding: 7px 14px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   font-size: 0.8rem;
   font-weight: 600;
   transition: all 0.2s ease;
 }
 .filtro-liga-btn:hover {
-  border-color: var(--green);
+  border-color: var(--text-dim);
   color: var(--text);
 }
 .filtro-liga-btn.activa {
-  background-color: var(--green);
-  color: var(--ink-on-accent);
+  background-color: var(--card);
+  color: var(--text);
   border-color: var(--green);
 }
 
@@ -1278,24 +1266,24 @@ main {
   margin-top: 10px;
   padding: 9px;
   background: none;
-  border: 1px dashed var(--line);
+  border: 1px solid var(--line);
   color: var(--text-muted);
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   font-size: 0.85rem;
   transition: border-color .15s ease, color .15s ease;
 }
 .boton-expandir:hover {
-  border-color: var(--green);
-  color: var(--green);
+  border-color: var(--text-dim);
+  color: var(--text);
 }
 
 /* ===== Skeleton loader ===== */
 .skeleton-tarjeta {
   background-color: var(--card);
   border: 1px solid var(--card-border);
-  border-radius: 14px;
-  padding: 24px;
+  border-radius: var(--radius);
+  padding: 22px;
   max-width: 500px;
   margin: 0 auto 30px;
 }
@@ -1314,10 +1302,11 @@ main {
 /* ===== Indicador de fuerza por tabla de posiciones ===== */
 .badge-posicion {
   font-size: 0.7rem;
+  font-family: var(--font-mono);
   color: var(--text-muted);
   background-color: var(--bg-raised);
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: 6px;
   padding: 2px 6px;
   margin-left: 6px;
 }
@@ -1328,17 +1317,16 @@ main {
   width: 100%;
   margin-top: 12px;
   padding: 9px;
-  background-color: var(--green);
-  color: var(--ink-on-accent);
-  border: none;
-  border-radius: 10px;
-  font-weight: 700;
+  background-color: transparent;
+  color: var(--green);
+  border: 1px solid var(--green);
+  border-radius: var(--radius-sm);
+  font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.2s ease, transform .12s ease;
+  transition: background-color 0.2s ease, color .2s ease;
 }
 .boton-compartir:hover {
-  background-color: #22f0c1;
-  transform: translateY(-1px);
+  background-color: var(--green-dim);
 }
 
 /* ===== Responsive ===== */
@@ -1384,7 +1372,7 @@ main {
 }
 
 .estrella-favorito:hover {
-  transform: scale(1.15);
+  transform: scale(1.1);
 }
 
 .estrella-favorito.activa {
@@ -1394,21 +1382,22 @@ main {
 /* ===== Boton "mi prediccion" (pin) ===== */
 .boton-pick {
   appearance: none;
-  background: rgba(255,255,255,0.28);
-  border: none;
-  border-radius: 8px;
-  width: 26px;
-  height: 26px;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 7px;
+  width: 25px;
+  height: 25px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   cursor: pointer;
-  transition: transform .12s ease, background .15s ease;
+  transition: background .15s ease, border-color .15s ease;
 }
-.boton-pick:hover { transform: scale(1.12); }
+.boton-pick:hover { border-color: rgba(255,255,255,0.3); }
 .boton-pick.activa {
   background: var(--ink-on-accent);
+  border-color: var(--ink-on-accent);
 }
 
 /* ===== Selector de fecha personalizada ===== */
@@ -1426,7 +1415,7 @@ main {
   font-family: var(--font-body);
   font-size: 0.85rem;
   padding: 9px 12px;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   flex: 1;
 }
 
@@ -1439,28 +1428,30 @@ main {
   font-weight: 700;
   font-size: 0.85rem;
   padding: 9px 16px;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   white-space: nowrap;
 }
 
 .selector-fecha-personalizada button:hover {
-  background: #22f0c1;
+  background: #56dda2;
 }
 
 /* ===== Cuota implicita (probabilidad expresada como cuota decimal) ===== */
 .cuota-implicita {
   margin: 6px 0 0;
+  font-family: var(--font-mono);
   font-size: 0.66rem;
   opacity: 0.7;
-  font-weight: 600;
+  font-weight: 500;
 }
 .fila-sin-apuesta {
-  opacity: 0.75;
+  opacity: 0.7;
 }
 .fila-porcentaje-nobet {
-  font-family: var(--font-display);
-  font-size: 1.1rem;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 1.05rem;
   color: var(--text-dim);
 }
 .fila-razones {
@@ -1474,8 +1465,8 @@ main {
 }
 .marcadores-probables-titulo {
   font-size: 0.68rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
+  font-weight: 600;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--text-dim);
   margin: 16px 0 8px;
@@ -1489,10 +1480,11 @@ main {
 .marcador-chip {
   background: var(--bg-raised);
   border: 1px solid var(--line);
-  border-radius: 9px;
+  border-radius: 7px;
   padding: 5px 10px;
+  font-family: var(--font-mono);
   font-size: 0.82rem;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--text);
 }
 .marcador-chip em {
@@ -1503,7 +1495,7 @@ main {
 .catalogo-completo {
   background: var(--bg-raised);
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: var(--radius-sm);
   padding: 10px 14px;
   margin-top: 10px;
 }
@@ -1521,7 +1513,11 @@ main {
 .resumen-historial-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
+  gap: 1px;
+  background: var(--line);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
   margin-bottom: 22px;
 }
 
@@ -1530,27 +1526,25 @@ main {
 }
 
 .resumen-card {
-  background: linear-gradient(180deg, var(--card) 0%, var(--bg-raised) 130%);
-  border: 1px solid var(--card-border);
-  border-radius: var(--radius-sm);
+  background: var(--card);
   padding: 16px 17px;
   display: flex;
   flex-direction: column;
   gap: 6px;
-  box-shadow: var(--shadow-card);
 }
 
 .resumen-card-titulo {
   font-size: 0.66rem;
-  font-weight: 800;
-  letter-spacing: 0.09em;
+  font-weight: 600;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--text-dim);
 }
 
 .resumen-card-valor {
-  font-family: var(--font-display);
-  font-size: 2.1rem;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 1.9rem;
   line-height: 1;
   color: var(--text);
 }
@@ -1566,9 +1560,9 @@ main {
 }
 
 .resumen-card-barra {
-  height: 5px;
+  height: 4px;
   border-radius: 999px;
-  background: rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.06);
   overflow: hidden;
   margin-top: 2px;
 }
@@ -1590,11 +1584,11 @@ main {
 
 .historial-filtros-chips {
   display: flex;
-  gap: 8px;
+  gap: 2px;
   background: var(--bg-raised);
   border: 1px solid var(--line);
-  border-radius: 999px;
-  padding: 4px;
+  border-radius: var(--radius-sm);
+  padding: 3px;
   width: fit-content;
 }
 
@@ -1604,10 +1598,10 @@ main {
   background: transparent;
   color: var(--text-muted);
   font-family: var(--font-body);
-  font-weight: 700;
+  font-weight: 600;
   font-size: 0.8rem;
-  padding: 7px 16px;
-  border-radius: 999px;
+  padding: 7px 14px;
+  border-radius: 7px;
   cursor: pointer;
   transition: background 0.15s ease, color 0.15s ease;
 }
@@ -1615,8 +1609,9 @@ main {
 .chip-filtro:hover { color: var(--text); }
 
 .chip-filtro.activo {
-  background: var(--green);
-  color: var(--ink-on-accent);
+  background: var(--card);
+  color: var(--text);
+  box-shadow: inset 0 0 0 1px var(--card-border);
 }
 
 .historial-conteo-resultados {
@@ -1637,7 +1632,7 @@ main {
   gap: 14px;
   background: var(--card);
   border: 1px solid var(--card-border);
-  border-radius: 13px;
+  border-radius: var(--radius-sm);
   padding: 13px 16px;
   flex-wrap: wrap;
 }
@@ -1655,9 +1650,10 @@ main {
 }
 
 .badge-final {
+  font-family: var(--font-mono);
   font-size: 0.62rem;
-  font-weight: 800;
-  letter-spacing: 0.04em;
+  font-weight: 600;
+  letter-spacing: 0.03em;
   color: var(--green);
   background: var(--green-dim);
   padding: 2px 8px;
@@ -1679,12 +1675,13 @@ main {
 }
 
 .eval-historial-partido .eval-marcador {
-  font-family: var(--font-display);
-  font-size: 1rem;
-  color: var(--m-marcador);
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--text);
   background: var(--bg-raised);
   border: 1px solid var(--line);
-  border-radius: 7px;
+  border-radius: 6px;
   padding: 1px 9px;
 }
 
@@ -1709,22 +1706,23 @@ main {
 }
 
 .eval-icono {
-  width: 30px;
-  height: 30px;
-  border-radius: 9px;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-weight: 800;
-  font-size: 0.95rem;
+  font-weight: 700;
+  font-size: 0.9rem;
 }
 
 .eval-icono.ok { background: var(--green-dim); color: var(--green); }
-.eval-icono.no { background: #3a1414; color: var(--red); }
+.eval-icono.no { background: #331419; color: var(--red); }
 
 .eval-confianza {
-  font-family: var(--font-display);
-  font-size: 1.15rem;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 1.05rem;
   color: var(--text-muted);
   min-width: 46px;
   text-align: right;
