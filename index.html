@@ -1579,7 +1579,28 @@ async function obtenerStatsEquipo(teamId, codigoLiga, tabla) {
     return (100 / probabilidad).toFixed(2);
   }
 
-  function filaMercado(datos, partidoId) {
+  // ============ CUENTA REGRESIVA AL KICKOFF ============
+  function tiempoHastaPartido(utcDateStr) {
+    const ahora = Date.now();
+    const inicio = new Date(utcDateStr).getTime();
+    const minutos = Math.round((inicio - ahora) / 60000);
+    if (minutos <= 0) return { texto: 'Comenzando', urgente: true };
+    if (minutos < 60) return { texto: `Empieza en ${minutos} min`, urgente: minutos <= 30 };
+    const horas = Math.floor(minutos / 60);
+    if (horas < 24) {
+      const min = minutos % 60;
+      return { texto: `Empieza en ${horas} h${min > 0 ? ' ' + min + ' min' : ''}`, urgente: false };
+    }
+    const dias = Math.floor(horas / 24);
+    return { texto: `Empieza en ${dias} día${dias > 1 ? 's' : ''}`, urgente: false };
+  }
+
+  function chipCuentaRegresiva(utcDateStr) {
+    const t = tiempoHastaPartido(utcDateStr);
+    return `<span class="chip-cuenta-regresiva ${t.urgente ? 'urgente' : ''}">${t.urgente ? '🔴' : '⏱'} ${t.texto}</span>`;
+  }
+
+  function filaMercado(datos, partidoId, esPrincipal) {
     if (datos.sinApuesta) {
       return `
         <div class="fila-mercado mercado-${datos.tipo} fila-sin-apuesta">
@@ -1595,7 +1616,8 @@ async function obtenerStatsEquipo(teamId, codigoLiga, tabla) {
       `;
     }
     return `
-      <div class="fila-mercado mercado-${datos.tipo}">
+      <div class="fila-mercado mercado-${datos.tipo} ${esPrincipal ? 'mercado-principal' : ''}">
+        ${esPrincipal ? `<span class="etiqueta-pick-principal">Pick del partido</span>` : ''}
         <div class="fila-header">
           ${iconoMercado(datos.tipo)}
           <span class="fila-porcentaje">${datos.probabilidad}%</span>
@@ -1639,6 +1661,11 @@ async function obtenerStatsEquipo(teamId, codigoLiga, tabla) {
     const fechaTexto = fecha.toLocaleDateString('es-PE', { day: '2-digit', month: 'short' });
     const horaTexto = fecha.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' });
 
+    const candidatosApostables = pronosticos.seleccionados.filter(m => !m.sinApuesta);
+    const mejor = candidatosApostables.length > 0
+      ? candidatosApostables.reduce((a, b) => (b.probabilidad > a.probabilidad ? b : a))
+      : null;
+
     return `
       <div class="tarjeta-partido" data-partido-id="${partido.id}">
         <div class="encabezado-partido">
@@ -1646,13 +1673,16 @@ async function obtenerStatsEquipo(teamId, codigoLiga, tabla) {
           <span class="vs">VS</span>
           ${bloqueEquipoHTML(visita, statsVisita, 'alineacion-der', partido.awayTeam.crest, tabla, partido.awayTeam.id)}
         </div>
-        <p class="info-partido">${liga} · ${fechaTexto}, ${horaTexto} · marcador probable ${pronosticos.marcadorProbable}</p>
+        <div class="info-partido-fila">
+          <p class="info-partido">${liga} · ${fechaTexto}, ${horaTexto} · marcador probable <strong>${pronosticos.marcadorProbable}</strong></p>
+          ${chipCuentaRegresiva(partido.utcDate)}
+        </div>
         ${h2hHTML(h2h)}
         ${pronosticos.pocaData ? `<p class="aviso-datos">⚠ Datos limitados (${pronosticos.partidosMin} partidos analizados) · pronóstico menos confiable</p>` : ''}
         ${pronosticos.sinNadaEnJuego ? `<p class="aviso-datos">⚠ Uno de los equipos ya no se juega nada en la tabla (título o descenso resuelto) · pronóstico menos confiable</p>` : ''}
 
         <div class="lista-mercados" id="mercados-${partido.id}">
-          ${pronosticos.seleccionados.map(m => filaMercado(m, partido.id)).join('')}
+          ${pronosticos.seleccionados.map(m => filaMercado(m, partido.id, mejor && m === mejor)).join('')}
         </div>
         <button class="boton-expandir" onclick="toggleMercados(${partido.id})">Ver más mercados</button>
 
