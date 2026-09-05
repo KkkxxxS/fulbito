@@ -18,28 +18,32 @@
   let filtroHistorial = 'todos';
 
   function cambiarVista(vista, actualizarHash = true) {
-    vistaActual = vista;
+    const vistaReal = vista;
+    vistaActual = vistaReal;
 
     document.querySelectorAll('.vista').forEach(sec => sec.classList.remove('vista-activa'));
-    document.getElementById(`vista-${vista}`).classList.add('vista-activa');
+    const vistaNode = document.getElementById(`vista-${vistaReal}`);
+    if (vistaNode) vistaNode.classList.add('vista-activa');
 
-    document.querySelectorAll('.nav-tab').forEach(btn => btn.classList.toggle('activa', btn.dataset.vista === vista));
+    document.querySelectorAll('.nav-tab').forEach(btn => btn.classList.toggle('activa', btn.dataset.vista === vistaReal));
 
     const buscador = document.getElementById('input-busqueda');
-    buscador.style.display = (vista === 'mispredicciones') ? 'none' : '';
-    buscador.placeholder = vista === 'favoritos' ? 'Buscar en tus favoritos…' : (vista === 'analitica' || vista === 'historial') ? 'Buscar equipo o liga en el historial…' : 'Buscar equipo o liga…';
+    buscador.style.display = (vistaReal === 'mispredicciones') ? 'none' : '';
+    buscador.placeholder = vistaReal === 'favoritos' ? 'Buscar en tus favoritos…' : (vistaReal === 'analitica' || vistaReal === 'historial') ? 'Buscar equipo o liga en el historial…' : 'Buscar equipo o liga…';
 
     cerrarMenuMovil();
-    if (actualizarHash) history.replaceState(null, '', `#${vista}`);
+    if (actualizarHash) history.replaceState(null, '', `#${vistaReal}`);
     window.scrollTo({ top: document.querySelector('main').offsetTop - 10, behavior: 'smooth' });
 
-    if (vista === 'favoritos') {
+    if (vistaReal === 'inicio') {
+      actualizarHistorialYCalibracion().then(() => actualizarDashboardPersonal());
+    } else if (vistaReal === 'favoritos') {
       cargarFavoritos();
-     } else if (vista === 'analitica') {
+    } else if (vistaReal === 'analitica') {
       actualizarHistorialYCalibracion().then(h => renderHistorial(calcularEstadisticasHistorial(h), h));
-    } else if (vista === 'historial') {
+    } else if (vistaReal === 'historial') {
       actualizarHistorialYCalibracion().then(h => renderHistorialCompleto(h));
-    } else if (vista === 'mispredicciones') {
+    } else if (vistaReal === 'mispredicciones') {
       actualizarHistorialYCalibracion().then(() => renderMisPredicciones());
     }
   }
@@ -120,6 +124,75 @@
     return favoritos.includes(partido.homeTeam.id) || favoritos.includes(partido.awayTeam.id);
   }
 
+  // ============ CALCULAR NIVEL DE CONFIANZA ============
+  function calcularNivelConfianza(probabilidad) {
+    if (!probabilidad) return { nivel: 'baja', label: 'Baja', color: '#ff8d8d' };
+    if (probabilidad >= 70) return { nivel: 'alta', label: 'Alta', color: '#64e4a9' };
+    if (probabilidad >= 55) return { nivel: 'media', label: 'Media', color: '#f2c474' };
+    return { nivel: 'baja', label: 'Baja', color: '#ff8d8d' };
+  }
+
+  function badgeNivelConfianza(probabilidad) {
+    const conf = calcularNivelConfianza(probabilidad);
+    return `<span class="nivel-confianza ${conf.nivel}"><span class="indicador-confianza"></span> ${conf.label}</span>`;
+  }
+
+  // ============ ACTUALIZAR DASHBOARD PERSONAL ============
+  function actualizarDashboardPersonal() {
+    const historial = leerHistorial();
+    const miasPredicciones = leerMisPredicciones();
+    
+    // Calcular stats de mis predicciones
+    let miasVerificadas = [];
+    let miasAciertos = 0;
+    let miasSumaProb = 0;
+    let miasPendientes = 0;
+    
+    miasPredicciones.forEach(pick => {
+      const h = historial.find(x => x.partidoId === pick.partidoId);
+      if (h && h.verificado) {
+        const mercado = h.mercados.find(m => m.categoria === pick.categoria);
+        if (mercado) {
+          miasVerificadas.push(mercado);
+          miasSumaProb += mercado.probabilidad;
+          if (mercado.acierto) miasAciertos++;
+        }
+      } else {
+        miasPendientes++;
+      }
+    });
+    
+    // Actualizar elementos del dashboard
+    const dashTusPicks = document.getElementById('dash-tus-picks');
+    if (dashTusPicks) {
+      dashTusPicks.textContent = miasPredicciones.length;
+      document.getElementById('dash-tus-picks-desc').textContent = miasPendientes > 0 
+        ? `${miasPendientes} sin verificar`
+        : 'Todos verificados';
+      
+      if (miasVerificadas.length > 0) {
+        const tuPrecision = Math.round((miasAciertos / miasVerificadas.length) * 100);
+        const tuConfianza = Math.round(miasSumaProb / miasVerificadas.length);
+        document.getElementById('dash-tu-precision').textContent = tuPrecision + '%';
+        document.getElementById('dash-tu-precision-desc').textContent = `${miasAciertos}/${miasVerificadas.length} acertadas`;
+        document.getElementById('dash-tu-confianza').textContent = tuConfianza + '%';
+      }
+    }
+  }
+
+  // ============ FILTRO AVANZADO HISTORIAL ============
+  let filtrosActuales = {
+    resultado: 'todos',
+    mercado: 'todos-mercados',
+    confianza: 'todas',
+    periodo: 'mes'
+  };
+
+  function filtrarHistorial(tipo, valor) {
+    filtrosActuales[tipo] = valor;
+    actualizarHistorialYCalibracion().then(h => renderHistorialCompleto(h));
+  }
+
   // ============ MIS PREDICCIONES (picks que el usuario marca a mano) ============
   const CLAVE_MIS_PREDICCIONES = 'fulbito_mis_predicciones';
 
@@ -172,6 +245,7 @@
       boton.title = activa ? 'Quitar de Mis Predicciones' : 'Marcar como mi predicción';
     }
     if (vistaActual === 'mispredicciones') renderMisPredicciones();
+    if (vistaActual === 'inicio') actualizarDashboardPersonal();
   }
 
   function botonMiPrediccion(partidoId, categoria) {
@@ -549,6 +623,80 @@
     DED: 1.60, ELC: 1.30, BSA: 1.25, PPL: 1.35, DEFAULT: 1.40
   };
 
+  const PERFIL_LIGA = {
+    PL: { goles: 1.04, localia: 1.05, perfil: 'alto' },
+    PD: { goles: 0.96, localia: 1.04, perfil: 'equilibrado' },
+    BL1: { goles: 1.07, localia: 1.06, perfil: 'alto' },
+    SA: { goles: 0.94, localia: 1.03, perfil: 'equilibrado' },
+    FL1: { goles: 0.98, localia: 1.02, perfil: 'equilibrado' },
+    CL: { goles: 1.02, localia: 1.07, perfil: 'alto' },
+    DED: { goles: 1.12, localia: 1.08, perfil: 'alto' },
+    ELC: { goles: 0.92, localia: 1.01, perfil: 'bajo' },
+    BSA: { goles: 0.9, localia: 1.04, perfil: 'bajo' },
+    PPL: { goles: 0.95, localia: 1.03, perfil: 'equilibrado' },
+    DEFAULT: { goles: 1, localia: 1.03, perfil: 'equilibrado' }
+  };
+
+  function clamp(value, min, max) {
+    return Math.min(Math.max(value, min), max);
+  }
+
+  function perfilLiga(codigoLiga) {
+    return PERFIL_LIGA[codigoLiga] ?? PERFIL_LIGA.DEFAULT;
+  }
+
+  function perfilEquipo(tabla, teamId) {
+    const info = tabla?.mapa?.[teamId];
+    if (!info) return { ataque: 1, defensa: 1, fuerza: 1 };
+
+    const promedioAtaque = tabla.promedioLigaGolesFavor || 1.4;
+    const promedioDefensa = tabla.promedioLigaGolesContra || 1.2;
+    const ataque = info.golesFavorPorPartido ? info.golesFavorPorPartido / promedioAtaque : 1;
+    const defensa = info.golesContraPorPartido ? info.golesContraPorPartido / promedioDefensa : 1;
+    const fuerza = info.puntosPorPartido && tabla.promedioLiga ? info.puntosPorPartido / tabla.promedioLiga : 1;
+
+    return {
+      ataque: clamp(ataque, 0.75, 1.5),
+      defensa: clamp(defensa, 0.75, 1.5),
+      fuerza: clamp(fuerza, 0.8, 1.3)
+    };
+  }
+
+  function perfilPartido(statsLocal, statsVisita, h2h, tabla, idLocal, idVisita) {
+    const localPerfil = perfilEquipo(tabla, idLocal);
+    const visitaPerfil = perfilEquipo(tabla, idVisita);
+
+    let tipo = 'equilibrado';
+    let fuerzaLocal = 1;
+    let fuerzaVisita = 1;
+
+    if (localPerfil.fuerza > 1.12 && visitaPerfil.fuerza < 0.96) {
+      tipo = 'clase';
+      fuerzaLocal *= 1.04;
+      fuerzaVisita *= 0.97;
+    } else if (localPerfil.fuerza < 0.9 && visitaPerfil.fuerza > 1.1) {
+      tipo = 'sorpresa';
+      fuerzaLocal *= 0.97;
+      fuerzaVisita *= 1.04;
+    }
+
+    if (h2h?.disponible && h2h.totalPartidos >= 6) {
+      const sesgo = (h2h.victoriasLocal - h2h.victoriasVisita) / h2h.totalPartidos;
+      if (Math.abs(sesgo) > 0.18) {
+        tipo = 'derbi';
+        fuerzaLocal *= 1 + Math.max(-0.04, Math.min(0.04, sesgo * 0.25));
+        fuerzaVisita *= 1 - Math.max(-0.04, Math.min(0.04, sesgo * 0.25));
+      }
+    }
+
+    const tendenciaLocal = statsLocal?.tendencia?.direccion === 'subiendo' ? 1.03 : statsLocal?.tendencia?.direccion === 'bajando' ? 0.97 : 1;
+    const tendenciaVisita = statsVisita?.tendencia?.direccion === 'subiendo' ? 1.03 : statsVisita?.tendencia?.direccion === 'bajando' ? 0.97 : 1;
+    fuerzaLocal *= tendenciaLocal;
+    fuerzaVisita *= tendenciaVisita;
+
+    return { tipo, fuerzaLocal: clamp(fuerzaLocal, 0.9, 1.18), fuerzaVisita: clamp(fuerzaVisita, 0.9, 1.18) };
+  }
+
   function promedioLiga(codigoLiga) {
     return PROMEDIO_GOLES_POR_LIGA[codigoLiga] ?? PROMEDIO_GOLES_POR_LIGA.DEFAULT;
   }
@@ -632,15 +780,15 @@ function golAjustado(golCrudo, factor) {
   }
 
 function factorTendencia(direccion) {
-  if (direccion === 'subiendo') return 1.04;
-  if (direccion === 'bajando') return 0.96;
+  if (direccion === 'subiendo') return 1.03;
+  if (direccion === 'bajando') return 0.97;
   return 1;
 }
 
 function factorDescanso(dias) {
   if (dias === null || dias === undefined) return 1;
-  if (dias <= 3) return 0.97;   // poco descanso -> ligera penalización
-  if (dias >= 8) return 1.02;   // bien descansado -> ligero impulso
+  if (dias <= 3) return 0.99;   // poco descanso -> pequeña penalización
+  if (dias >= 8) return 1.01;   // bien descansado -> leve impulso
   return 1;
 }
 
@@ -779,7 +927,7 @@ async function obtenerStatsEquipo(teamId, codigoLiga, tabla) {
     return (Math.pow(lambda, k) * Math.exp(-lambda)) / factorial(k);
   }
 
-  const RHO_DIXON_COLES = -0.08;
+  const RHO_DIXON_COLES = -0.06;
 
   function tauDixonColes(golesLocal, golesVisita, lambdaLocal, lambdaVisita, rho) {
     if (golesLocal === 0 && golesVisita === 0) return 1 - (lambdaLocal * lambdaVisita * rho);
@@ -809,14 +957,16 @@ async function obtenerStatsEquipo(teamId, codigoLiga, tabla) {
   return matriz;
 }
 
-  const FACTOR_LOCALIA_BASE = 1.05; // los promedios local/visita de cada equipo ya reflejan parte de la ventaja de jugar en casa; este factor solo cubre el resto, para no duplicarla
+  const FACTOR_LOCALIA_BASE = 1.04; // localía realista: los promedios por equipo ya capturan casi toda la ventaja de local; el ajuste extra debe ser leve y no amplificar el ruido
 
   // ============ AUTO-CALIBRACION (usa tu propio historial de aciertos) ============
   const CLAVE_CALIBRACION = 'fulbito_calibracion';
   const MUESTRA_MINIMA_LOCALIA = 20;
   const MUESTRA_MINIMA_CATEGORIA = 15;
+  const MUESTRA_MINIMA_LIGA = 8;
   const LIMITES_FACTOR_LOCALIA = [1.0, 1.25];
   const LIMITES_FACTOR_CATEGORIA = [0.75, 1.25];
+  const LIMITES_FACTOR_LIGA = [0.85, 1.18];
   const MUESTRA_MINIMA_RHO = 40;
   const LIMITES_RHO = [-0.20, 0.05];
   const LIMITE_TABLA_BASE = 0.06;
@@ -824,7 +974,7 @@ async function obtenerStatsEquipo(teamId, codigoLiga, tabla) {
   const MUESTRA_MINIMA_TABLA = 25;
 
   function calibracionPorDefecto() {
-  return { factorLocalia: FACTOR_LOCALIA_BASE, muestrasLocalia: 0, rhoDixonColes: RHO_DIXON_COLES, muestrasRho: 0, limiteTabla: LIMITE_TABLA_BASE, muestrasTabla: 0, porCategoria: {}, actualizadoEn: null };
+  return { factorLocalia: FACTOR_LOCALIA_BASE, muestrasLocalia: 0, rhoDixonColes: RHO_DIXON_COLES, muestrasRho: 0, limiteTabla: LIMITE_TABLA_BASE, muestrasTabla: 0, porCategoria: {}, porLiga: {}, actualizadoEn: null };
 }
 
   function leerCalibracion() {
@@ -930,12 +1080,20 @@ async function obtenerStatsEquipo(teamId, codigoLiga, tabla) {
     }
 
     const acumulado = {};
+    const acumuladoLiga = {};
     verificados.forEach(h => {
+      const liga = h.codigoLiga || 'DEFAULT';
+      if (!acumuladoLiga[liga]) acumuladoLiga[liga] = { sumaPredicha: 0, aciertos: 0, total: 0 };
+
       h.mercados.forEach(m => {
         if (!acumulado[m.categoria]) acumulado[m.categoria] = { sumaPredicha: 0, aciertos: 0, total: 0 };
         acumulado[m.categoria].sumaPredicha += m.probabilidad / 100;
         acumulado[m.categoria].total++;
         if (m.acierto) acumulado[m.categoria].aciertos++;
+
+        acumuladoLiga[liga].sumaPredicha += m.probabilidad / 100;
+        acumuladoLiga[liga].total++;
+        if (m.acierto) acumuladoLiga[liga].aciertos++;
       });
     });
     Object.keys(acumulado).forEach(cat => {
@@ -947,6 +1105,17 @@ async function obtenerStatsEquipo(teamId, codigoLiga, tabla) {
       let factor = realProm / predichoProm;
       factor = Math.max(LIMITES_FACTOR_CATEGORIA[0], Math.min(LIMITES_FACTOR_CATEGORIA[1], factor));
       calibracion.porCategoria[cat] = { factor: Math.round(factor * 1000) / 1000, muestras: d.total };
+    });
+
+    Object.keys(acumuladoLiga).forEach(liga => {
+      const d = acumuladoLiga[liga];
+      if (d.total < MUESTRA_MINIMA_LIGA) return;
+      const predichoProm = d.sumaPredicha / d.total;
+      const realProm = d.aciertos / d.total;
+      if (predichoProm <= 0) return;
+      let factor = realProm / predichoProm;
+      factor = Math.max(LIMITES_FACTOR_LIGA[0], Math.min(LIMITES_FACTOR_LIGA[1], factor));
+      calibracion.porLiga[liga] = { factor: Math.round(factor * 1000) / 1000, muestras: d.total };
     });
 
     const resultadoRho = recalcularCalibracionRho(verificados);
@@ -979,7 +1148,7 @@ async function obtenerStatsEquipo(teamId, codigoLiga, tabla) {
 
     const total = h2h.totalPartidos;
     const dominioLocal = (h2h.victoriasLocal - h2h.victoriasVisita) / total;
-    const ajusteMax = 0.06;
+    const ajusteMax = 0.04;
     const ajuste = Math.max(-ajusteMax, Math.min(ajusteMax, dominioLocal * ajusteMax * 2));
 
     return esLocal ? (1 + ajuste) : (1 - ajuste);
@@ -1217,7 +1386,45 @@ async function obtenerStatsEquipo(teamId, codigoLiga, tabla) {
     lambdaVisita *= factorDescanso(statsVisita.diasDescansoUltimoPartido);
 
     const factorLocaliaUsado = calibracionActual.factorLocalia || FACTOR_LOCALIA_BASE;
-    lambdaLocal *= factorLocaliaUsado;
+    const perfilLigaActual = perfilLiga(codigoLiga);
+    const perfilPartida = perfilPartido(statsLocal, statsVisita, h2h, tabla, idLocal, idVisita);
+    const perfilLocal = perfilEquipo(tabla, idLocal);
+    const perfilVisita = perfilEquipo(tabla, idVisita);
+
+    let ajustePerfilLocal = 1;
+    let ajustePerfilVisita = 1;
+
+    ajustePerfilLocal *= perfilLigaActual.localia;
+    ajustePerfilVisita *= perfilLigaActual.localia;
+    ajustePerfilLocal *= perfilLigaActual.goles;
+    ajustePerfilVisita *= perfilLigaActual.goles * 0.98;
+
+    const ajusteCalidadLocal = 1 + 0.09 * (perfilLocal.ataque - perfilVisita.defensa);
+    const ajusteCalidadVisita = 1 + 0.09 * (perfilVisita.ataque - perfilLocal.defensa);
+    ajustePerfilLocal *= ajusteCalidadLocal;
+    ajustePerfilVisita *= ajusteCalidadVisita;
+
+    ajustePerfilLocal *= perfilPartida.fuerzaLocal;
+    ajustePerfilVisita *= perfilPartida.fuerzaVisita;
+
+    if (perfilPartida.tipo === 'clase') {
+      ajustePerfilLocal *= 1.05;
+      ajustePerfilVisita *= 0.97;
+    } else if (perfilPartida.tipo === 'sorpresa') {
+      ajustePerfilLocal *= 0.96;
+      ajustePerfilVisita *= 1.04;
+    } else if (perfilPartida.tipo === 'derbi') {
+      ajustePerfilLocal *= 1.04;
+      ajustePerfilVisita *= 1.03;
+    }
+
+    lambdaLocal *= factorLocaliaUsado * ajustePerfilLocal;
+    lambdaVisita *= factorLocaliaUsado * ajustePerfilVisita;
+
+    const factorLigaUsado = calibracionActual.porLiga?.[codigoLiga]?.factor || 1;
+    const factorLigaAjustado = Math.max(0.9, Math.min(1.1, factorLigaUsado * perfilLigaActual.goles));
+    lambdaLocal *= factorLigaAjustado;
+    lambdaVisita *= factorLigaAjustado;
 
     lambdaLocal *= factorH2H(h2h, true);
     lambdaVisita *= factorH2H(h2h, false);
@@ -1252,15 +1459,16 @@ async function obtenerStatsEquipo(teamId, codigoLiga, tabla) {
       lambdaVisita = lambdaVisita * pesoConfianza + promLigaGolesShrink * (1 - pesoConfianza);
     }
 
-    // Límite de deriva: ningún combo de factores (tabla, tendencia, descanso,
-    // h2h, localía, sin-nada-en-juego...) debería mover el lambda base -estimado
-    // solo con los goles recientes- más de un 45% hacia arriba o abajo. Sin esto,
-    // varios ajustes pequeños que apuntan en la misma dirección se multiplican
-    // entre sí y pueden llevar la predicción a un extremo poco realista por puro
-    // ruido, especialmente con partidos de pocos datos.
-    const LIMITE_DRIFT_LAMBDA = 0.45;
+    // Límite de deriva: varios ajustes pequeños se suman y pueden inflar el modelo.
+    // En lugar de dejar que cada factor multiplique el volumen del partido, se
+    // mezcla parcialmente con la base para conservar la señal real sin exagerarla.
+    const LIMITE_DRIFT_LAMBDA = 0.28;
     lambdaLocal = Math.max(lambdaLocalBase * (1 - LIMITE_DRIFT_LAMBDA), Math.min(lambdaLocalBase * (1 + LIMITE_DRIFT_LAMBDA), lambdaLocal));
     lambdaVisita = Math.max(lambdaVisitaBase * (1 - LIMITE_DRIFT_LAMBDA), Math.min(lambdaVisitaBase * (1 + LIMITE_DRIFT_LAMBDA), lambdaVisita));
+
+    const fuerzaBlend = partidoSinNadaEnJuego ? 0.52 : (partidosMinTemprano < PARTIDOS_MINIMOS_CONFIABLES ? 0.45 : 0.28);
+    lambdaLocal = lambdaLocalBase * (1 - fuerzaBlend) + lambdaLocal * fuerzaBlend;
+    lambdaVisita = lambdaVisitaBase * (1 - fuerzaBlend) + lambdaVisita * fuerzaBlend;
 
     lambdaLocal = Math.max(lambdaLocal, 0.3);
     lambdaVisita = Math.max(lambdaVisita, 0.3);
@@ -1310,7 +1518,8 @@ async function obtenerStatsEquipo(teamId, codigoLiga, tabla) {
 
     seleccionados.forEach(m => {
       const ajuste = calibracionActual.porCategoria[m.categoria]?.factor || 1;
-      m.probabilidad = Math.min(0.97, Math.max(0.03, m.probabilidad * ajuste));
+      const suavizado = m.probabilidad < 0.5 ? 0.96 : 0.92;
+      m.probabilidad = Math.min(0.92, Math.max(0.08, m.probabilidad * ajuste * suavizado));
     });
     seleccionados.forEach(m => { m.probabilidad = Math.round(m.probabilidad * 100); });
 
@@ -1330,6 +1539,7 @@ async function obtenerStatsEquipo(teamId, codigoLiga, tabla) {
         lambdaVisita: Math.round(lambdaVisita * 1000) / 1000,
         rhoDixonColes: rhoUsado,
         factorLocalia: factorLocaliaUsado,
+        factorLiga: factorLigaUsado,
         tablaInfo: { fLocal: Math.round(fTablaLocal * 1000) / 1000, fVisita: Math.round(fTablaVisita * 1000) / 1000 }
       }
     };

@@ -90,13 +90,17 @@
         </div>
       `;
     }
+    const confianza = badgeNivelConfianza(datos.probabilidad);
     return `
       <div class="fila-mercado mercado-${datos.tipo} ${esPrincipal ? 'mercado-principal' : ''}">
         ${esPrincipal ? `<span class="etiqueta-pick-principal">Pick del partido</span>` : ''}
         <div class="fila-header">
           ${iconoMercado(datos.tipo)}
           <span class="fila-porcentaje">${datos.probabilidad}%</span>
-          ${botonMiPrediccion(partidoId, datos.categoria)}
+          <div style="display: flex; align-items: center; gap: 8px;">
+            ${confianza}
+            ${botonMiPrediccion(partidoId, datos.categoria)}
+          </div>
         </div>
         <span class="fila-titulo">${datos.titulo}</span>
         <div class="barra-probabilidad">
@@ -210,6 +214,53 @@
     };
   }
 
+  function scoreCombinada(piernas) {
+    const probCombinada = piernas.reduce((acc, p) => acc * (p.probabilidad / 100), 1) * 100;
+    const tiposUnicos = new Set(piernas.map(p => p.tipo)).size;
+    const penalidadRepetidos = Math.max(0, piernas.length - tiposUnicos) * 8;
+    const penalidadBajoValor = piernas.filter(p => p.probabilidad < 42).length * 10;
+    const diversidad = tiposUnicos / piernas.length;
+    return (probCombinada * (0.7 + diversidad * 0.9)) - penalidadRepetidos - penalidadBajoValor;
+  }
+
+  function generarCombinadaMasValiosa(candidatos, cantidad) {
+    const pool = [...candidatos]
+      .sort((a, b) => b.probabilidad - a.probabilidad)
+      .slice(0, Math.min(candidatos.length, 10));
+
+    let mejor = null;
+    let mejorScore = -Infinity;
+
+    function combinarDesde(indice, seleccionActual) {
+      if (seleccionActual.length === cantidad) {
+        const score = scoreCombinada(seleccionActual);
+        if (score > mejorScore) {
+          mejorScore = score;
+          mejor = seleccionActual.slice();
+        }
+        return;
+      }
+
+      for (let i = indice; i < pool.length; i++) {
+        const siguiente = pool[i];
+        const actuales = seleccionActual.concat(siguiente);
+        const tipos = actuales.map(p => p.tipo);
+        const repetidos = Math.max(0, tipos.length - new Set(tipos).size);
+
+        if (cantidad > 2 && repetidos > 0) continue;
+        combinarDesde(i + 1, actuales);
+      }
+    }
+
+    combinarDesde(0, []);
+
+    if (!mejor) {
+      return armarCombinada(pool.slice(0, cantidad));
+    }
+
+    return armarCombinada(mejor);
+  }
+
   function armarCombinada(piernas) {
     let probCombinada = 1;
     piernas.forEach(p => { probCombinada *= (p.probabilidad / 100); });
@@ -243,6 +294,14 @@
     }
   }
 
+  function etiquetaPremiumCombo(probabilidad, cantidad) {
+    if (probabilidad >= 45 && cantidad <= 2) return { label: 'Valor premium', tone: 'premium' };
+    if (probabilidad >= 32 && cantidad === 3) return { label: 'Apuesta inteligente', tone: 'smart' };
+    if (probabilidad >= 22 && cantidad === 4) return { label: 'Riesgo controlado', tone: 'guarded' };
+    if (cantidad >= 5) return { label: 'Punta alta', tone: 'risk' };
+    return { label: 'Selección sólida', tone: 'neutral' };
+  }
+
   function tarjetaCombinadaHTML(etiqueta, combinada, indice) {
     const piernasHTML = combinada.piernas.map((p, idx) => `
       <div class="pierna-combinada">
@@ -253,10 +312,16 @@
       </div>
     `).join('');
 
+    const premium = etiquetaPremiumCombo(combinada.probabilidad, combinada.piernas.length);
+    const badgeClass = `badge-${premium.tone}`;
+
     return `
       <div class="tarjeta-combinada">
         <div class="encabezado-combinada">
-          <span class="etiqueta-combinada">${etiqueta}</span>
+          <div class="encabezado-combinada-titulo">
+            <span class="etiqueta-combinada">${etiqueta}</span>
+            <span class="badge-combinada ${badgeClass}">${premium.label}</span>
+          </div>
           <span class="prob-combinada" style="color:${combinada.probabilidad >= 30 ? 'var(--green)' : 'var(--gold)'}">${combinada.probabilidad}%</span>
         </div>
         ${piernasHTML}
@@ -279,17 +344,17 @@
     let html = `
       <div class="bloque-combinadas">
         <h3>Combinadas sugeridas</h3>
-        <p class="subtitulo-combinadas">Armadas con la selección más probable de cada partido cargado. La probabilidad mostrada es la combinada real (multiplica cada pierna), no una cuota.</p>
+        <p class="subtitulo-combinadas">Armadas con la mejor mezcla de valor y diversidad: prioriza probabilidades altas, pero evita repetir mucho el mismo tipo de apuesta y mantener la combinación realista.</p>
     `;
 
-    const doble = armarCombinada(ordenadas.slice(0, 2));
+    const doble = generarCombinadaMasValiosa(ordenadas, 2);
     window.__combinadasActuales.push(doble);
     html += tarjetaCombinadaHTML('Combinada doble', doble, window.__combinadasActuales.length - 1);
 
     const ETIQUETAS_COMBO = { 3: 'Combinada triple', 4: 'Combinada cuádruple', 5: 'Combinada quíntuple' };
     const maxPiernas = Math.min(5, ordenadas.length);
     for (let n = 3; n <= maxPiernas; n++) {
-      const combo = armarCombinada(ordenadas.slice(0, n));
+      const combo = generarCombinadaMasValiosa(ordenadas, n);
       window.__combinadasActuales.push(combo);
       html += tarjetaCombinadaHTML(ETIQUETAS_COMBO[n] || `Combinada de ${n}`, combo, window.__combinadasActuales.length - 1);
     }
@@ -297,7 +362,7 @@
     html += `
         <div class="aviso-riesgo">
           <span class="icono">⚠️</span>
-          <span>Cada pierna que agregas multiplica el riesgo: todas tienen que acertar para ganar la combinada. Apuesta solo lo que estás dispuesto a perder.</span>
+          <span>Estas combinadas priorizan valor real y variedad, no solo "las probabilidades más altas". Cada pierna que agregas multiplica el riesgo.</span>
         </div>
       </div>
     `;
@@ -735,27 +800,23 @@
   }
 
   function resumenHistorialCardsHTML(r) {
+    const barraAciertos = r.totalPicks > 0 ? Math.round((r.aciertos / r.totalPicks) * 100) : 0;
     return `
-      <div class="resumen-historial-grid">
+      <div class="historial-resumen">
         <div class="resumen-card">
-          <span class="resumen-card-titulo">Picks liquidados</span>
-          <span class="resumen-card-valor">${r.totalPicks}</span>
-          <span class="resumen-card-sub">${r.aciertos} ganados · ${r.perdidos} perdidos</span>
+          <span class="resumen-label">Predicciones analizadas</span>
+          <span class="resumen-valor">${r.totalPicks}</span>
+          <div class="resumen-card-barra"><div style="width:100%"></div></div>
         </div>
         <div class="resumen-card">
-          <span class="resumen-card-titulo">Aciertos</span>
-          <span class="resumen-card-valor color-verde">${r.aciertos}</span>
-          <div class="resumen-card-barra"><div style="width:${r.tasa}%"></div></div>
+          <span class="resumen-label">Tasa de acierto</span>
+          <span class="resumen-valor color-verde">${r.tasa}%</span>
+          <div class="resumen-card-barra"><div style="width:${Math.min(r.tasa, 100)}%; background: linear-gradient(90deg, var(--green), var(--brand));"></div></div>
         </div>
         <div class="resumen-card">
-          <span class="resumen-card-titulo">Tasa de acierto</span>
-          <span class="resumen-card-valor color-cyan">${r.tasa}%</span>
-          <div class="resumen-card-barra"><div style="width:${r.tasa}%; background:var(--m-marcador);"></div></div>
-        </div>
-        <div class="resumen-card">
-          <span class="resumen-card-titulo">Confianza media</span>
-          <span class="resumen-card-valor color-gold">${r.confianzaMedia}%</span>
-          <span class="resumen-card-sub">Promedio de todos los picks filtrados</span>
+          <span class="resumen-label">Confianza promedio</span>
+          <span class="resumen-valor color-gold">${r.confianzaMedia}%</span>
+          <div class="resumen-card-barra"><div style="width:${r.confianzaMedia}%; background: var(--luxury);"></div></div>
         </div>
       </div>
     `;
@@ -836,7 +897,37 @@
       return;
     }
 
-    const evaluaciones = obtenerEvaluacionesHistorial(historial);
+    let evaluaciones = obtenerEvaluacionesHistorial(historial);
+    
+    // Aplicar filtros avanzados
+    evaluaciones = evaluaciones.filter(ev => {
+      // Filtro por resultado
+      if (filtrosActuales.resultado === 'acertados' && !ev.acierto) return false;
+      if (filtrosActuales.resultado === 'fallidos' && ev.acierto) return false;
+      
+      // Filtro por mercado
+      if (filtrosActuales.mercado !== 'todos-mercados' && ev.categoria !== filtrosActuales.mercado) return false;
+      
+      // Filtro por confianza
+      if (filtrosActuales.confianza !== 'todas') {
+        const prob = ev.probabilidad;
+        if (filtrosActuales.confianza === 'alta' && prob < 70) return false;
+        if (filtrosActuales.confianza === 'media' && (prob < 55 || prob >= 70)) return false;
+        if (filtrosActuales.confianza === 'baja' && prob >= 55) return false;
+      }
+      
+      // Filtro por período (simplificado - usar la fecha del partido)
+      if (filtrosActuales.periodo !== 'todo') {
+        const fechaPartido = new Date(ev.utcDate || Date.now());
+        const ahora = new Date();
+        const diasAtras = filtrosActuales.periodo === 'mes' ? 30 : 90;
+        const fechaLimite = new Date(ahora.getTime() - diasAtras * 24 * 60 * 60 * 1000);
+        if (fechaPartido < fechaLimite) return false;
+      }
+      
+      return true;
+    });
+    
     const mostrar = evaluaciones.slice(0, LIMITE_HISTORIAL_COMPLETO);
 
     contenedor.innerHTML = `

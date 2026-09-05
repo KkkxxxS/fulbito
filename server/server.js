@@ -1,13 +1,18 @@
 const express = require('express');
 const cors = require('cors');
+const fs = require('fs');
+const path = require('path');
 const app = express();
 const ORIGENES_PERMITIDOS = new Set([
   'https://kkkxxxs.github.io',
   'https://fulbito-flame.vercel.app',
   'http://localhost:3000',
-  'http://127.0.0.1:3000'
+  'http://127.0.0.1:3000',
+  'http://localhost:8000',
+  'http://127.0.0.1:8000'
 ]);
 
+app.use(express.json({ limit: '2mb' }));
 app.use(cors({
   origin: (origin, callback) => {
     if (!origin || ORIGENES_PERMITIDOS.has(origin)) return callback(null, true);
@@ -25,6 +30,41 @@ const BASE_URL = "https://api.football-data.org/v4";
 
 if (!process.env.FOOTBALL_DATA_API_KEY) {
   console.warn("ADVERTENCIA: falta FOOTBALL_DATA_API_KEY. Configúrala en las variables de entorno del servicio.");
+}
+
+// ============ HISTORIAL COMPARTIDO GLOBAL ============
+const HISTORIAL_PATH = path.join(__dirname, 'data', 'historial.json');
+
+function asegurarHistorialGlobal() {
+  const dir = path.dirname(HISTORIAL_PATH);
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  if (!fs.existsSync(HISTORIAL_PATH)) {
+    fs.writeFileSync(HISTORIAL_PATH, JSON.stringify([], null, 2), 'utf8');
+  }
+}
+
+function leerHistorialGlobal() {
+  try {
+    asegurarHistorialGlobal();
+    const contenido = fs.readFileSync(HISTORIAL_PATH, 'utf8');
+    const datos = JSON.parse(contenido);
+    return Array.isArray(datos) ? datos : [];
+  } catch (error) {
+    console.warn('No se pudo leer el historial global:', error.message);
+    return [];
+  }
+}
+
+function guardarHistorialGlobal(historial) {
+  try {
+    asegurarHistorialGlobal();
+    const recortado = Array.isArray(historial) ? historial.slice(-200) : [];
+    fs.writeFileSync(HISTORIAL_PATH, JSON.stringify(recortado, null, 2), 'utf8');
+    return recortado;
+  } catch (error) {
+    console.warn('No se pudo guardar el historial global:', error.message);
+    return [];
+  }
 }
 
 // ============ CACHE EN MEMORIA ============
@@ -127,6 +167,22 @@ app.get('/', (req, res) => {
 
 app.get('/health', (req, res) => {
   res.json({ ok: true });
+});
+
+app.get('/api/historial', (req, res) => {
+  res.json({ ok: true, historial: leerHistorialGlobal() });
+});
+
+app.post('/api/historial', (req, res) => {
+  const historial = Array.isArray(req.body?.historial) ? req.body.historial : [];
+  const guardado = guardarHistorialGlobal(historial);
+  res.json({ ok: true, historial: guardado, total: guardado.length });
+});
+
+app.put('/api/historial', (req, res) => {
+  const historial = Array.isArray(req.body?.historial) ? req.body.historial : [];
+  const guardado = guardarHistorialGlobal(historial);
+  res.json({ ok: true, historial: guardado, total: guardado.length });
 });
 
 // Endpoint: partidos por rango de fechas
