@@ -1,5 +1,4 @@
-
-  // ============ CONFIGURACION ============
+// ============ CONFIGURACION ============
   const BACKEND_URL = "https://fulbito-forh.onrender.com";
   const COMPETICIONES = "PL,PD,BL1,SA,FL1,CL,DED,ELC,BSA,PPL";
   const NOMBRES_LIGA = {
@@ -433,7 +432,8 @@
       return partidos;
     } catch (e) {
       console.error("Error trayendo partidos", e);
-      return { error: true, mensaje: e.message };
+      console.warn("Usando datos de respaldo para partidos");
+      return PARTIDOS_FALLBACK;
     }
   }
 
@@ -736,35 +736,36 @@
     return valor * peso + promedioLigaEquipo * (1 - peso);
   }
 
-// ============ PONDERACION POR RECENCIA (por dias reales, no por orden de lista) ============
-function pesosRecenciaPorFecha(registros, fechaReferencia = new Date()) {
-  const VIDA_MEDIA_DIAS = 45; // a los 45 dias el peso de un partido cae a la mitad
-  return registros.map(r => {
-    const dias = Math.max(0, (fechaReferencia - new Date(r.fecha)) / (1000 * 60 * 60 * 24));
-    return Math.pow(0.5, dias / VIDA_MEDIA_DIAS);
-  });
-}
-// ============ AJUSTE POR FUERZA DEL RIVAL (opponent-adjusted goals) ============
-function factorFuerzaRival(tabla, rivalId, ladoRival) {
-  const info = tabla.mapa[rivalId];
-  if (!info) return 1;
-  if (ladoRival === 'defensa') {
-    if (info.golesContraPorPartido === null || !tabla.promedioLigaGolesContra) return 1;
-    // el rival concede menos que el promedio -> anotarle vale mas
-    const ratio = tabla.promedioLigaGolesContra / Math.max(info.golesContraPorPartido, 0.15);
-    return Math.max(0.65, Math.min(1.5, ratio));
-  } else {
-    if (info.golesFavorPorPartido === null || !tabla.promedioLigaGolesFavor) return 1;
-    // el rival ataca mas que el promedio -> que te haga un gol pesa menos en tu contra
-    const ratio = tabla.promedioLigaGolesFavor / Math.max(info.golesFavorPorPartido, 0.15);
-    return Math.max(0.65, Math.min(1.5, ratio));
+  // ============ PONDERACION POR RECENCIA (por dias reales, no por orden de lista) ============
+  function pesosRecenciaPorFecha(registros, fechaReferencia = new Date()) {
+    const VIDA_MEDIA_DIAS = 45; // a los 45 dias el peso de un partido cae a la mitad
+    return registros.map(r => {
+      const dias = Math.max(0, (fechaReferencia - new Date(r.fecha)) / (1000 * 60 * 60 * 24));
+      return Math.pow(0.5, dias / VIDA_MEDIA_DIAS);
+    });
   }
-}
 
-function golAjustado(golCrudo, factor) {
-  // mezcla 50/50 con el gol crudo para no sobre-corregir con muestras chicas
-  return golCrudo * (0.5 + 0.5 * factor);
-}
+  // ============ AJUSTE POR FUERZA DEL RIVAL (opponent-adjusted goals) ============
+  function factorFuerzaRival(tabla, rivalId, ladoRival) {
+    const info = tabla.mapa[rivalId];
+    if (!info) return 1;
+    if (ladoRival === 'defensa') {
+      if (info.golesContraPorPartido === null || !tabla.promedioLigaGolesContra) return 1;
+      // el rival concede menos que el promedio -> anotarle vale mas
+      const ratio = tabla.promedioLigaGolesContra / Math.max(info.golesContraPorPartido, 0.15);
+      return Math.max(0.65, Math.min(1.5, ratio));
+    } else {
+      if (info.golesFavorPorPartido === null || !tabla.promedioLigaGolesFavor) return 1;
+      // el rival ataca mas que el promedio -> que te haga un gol pesa menos en tu contra
+      const ratio = tabla.promedioLigaGolesFavor / Math.max(info.golesFavorPorPartido, 0.15);
+      return Math.max(0.65, Math.min(1.5, ratio));
+    }
+  }
+
+  function golAjustado(golCrudo, factor) {
+    // mezcla 50/50 con el gol crudo para no sobre-corregir con muestras chicas
+    return golCrudo * (0.5 + 0.5 * factor);
+  }
 
   function promedioPonderado(valores, pesos) {
     if (valores.length === 0) return 0;
@@ -805,109 +806,110 @@ function golAjustado(golCrudo, factor) {
     return { direccion, racha };
   }
 
-function factorTendencia(direccion) {
-  if (direccion === 'subiendo') return 1.03;
-  if (direccion === 'bajando') return 0.97;
-  return 1;
-}
-
-function factorDescanso(dias) {
-  if (dias === null || dias === undefined) return 1;
-  if (dias <= 3) return 0.99;   // poco descanso -> pequeña penalización
-  if (dias >= 8) return 1.01;   // bien descansado -> leve impulso
-  return 1;
-}
-
-async function obtenerStatsEquipo(teamId, codigoLiga, tabla) {
-  const claveCache = `stats-${teamId}`;
-  if (cache[claveCache]) return cache[claveCache];
-
-  const persistente = leerCachePersistente(claveCache);
-  if (persistente) {
-    cache[claveCache] = persistente;
-    return persistente;
+  function factorTendencia(direccion) {
+    if (direccion === 'subiendo') return 1.03;
+    if (direccion === 'bajando') return 0.97;
+    return 1;
   }
 
-  try {
-    const url = `${BACKEND_URL}/api/equipo/${teamId}/stats`;
-    const resp = await fetchConTiempo(url);
-    const datos = await resp.json();
-    const partidos = datos.matches || [];
+  function factorDescanso(dias) {
+    if (dias === null || dias === undefined) return 1;
+    if (dias <= 3) return 0.99;   // poco descanso -> pequeña penalización
+    if (dias >= 8) return 1.01;   // bien descansado -> leve impulso
+    return 1;
+  }
 
-    const partidosOrdenados = [...partidos].sort((a, b) => new Date(b.utcDate) - new Date(a.utcDate));
+  async function obtenerStatsEquipo(teamId, codigoLiga, tabla) {
+    const claveCache = `stats-${teamId}`;
+    if (cache[claveCache]) return cache[claveCache];
 
-    const diasDescansoUltimoPartido = partidosOrdenados.length > 0
-      ? (Date.now() - new Date(partidosOrdenados[0].utcDate)) / (1000 * 60 * 60 * 24)
-      : null;
+    const persistente = leerCachePersistente(claveCache);
+    if (persistente) {
+      cache[claveCache] = persistente;
+      return persistente;
+    }
 
-    let victorias = 0, empates = 0, derrotas = 0;
-    const registrosTodos = [], registrosLocal = [], registrosVisita = [];
+    try {
+      const url = `${BACKEND_URL}/api/equipo/${teamId}/stats`;
+      const resp = await fetchConTiempo(url);
+      const datos = await resp.json();
+      const partidos = datos.matches || [];
 
-    partidosOrdenados.forEach(p => {
-      const esLocal = p.homeTeam.id === teamId;
-      const rivalId = esLocal ? p.awayTeam.id : p.homeTeam.id;
-      const golesEquipoCrudo = (esLocal ? p.score.fullTime.home : p.score.fullTime.away) ?? 0;
-      const golesRivalCrudo = (esLocal ? p.score.fullTime.away : p.score.fullTime.home) ?? 0;
+      const partidosOrdenados = [...partidos].sort((a, b) => new Date(b.utcDate) - new Date(a.utcDate));
 
-      if (golesEquipoCrudo > golesRivalCrudo) victorias++;
-      else if (golesEquipoCrudo === golesRivalCrudo) empates++;
-      else derrotas++;
+      const diasDescansoUltimoPartido = partidosOrdenados.length > 0
+        ? (Date.now() - new Date(partidosOrdenados[0].utcDate)) / (1000 * 60 * 60 * 24)
+        : null;
 
-      // Un gol contra una defensa solida vale mas; un gol recibido de un ataque
-      // flojo pesa mas en contra tuya. Sin tabla disponible, factor neutro (1).
-      const fDefensaRival = tabla ? factorFuerzaRival(tabla, rivalId, 'defensa') : 1;
-      const fAtaqueRival = tabla ? factorFuerzaRival(tabla, rivalId, 'ataque') : 1;
+      let victorias = 0, empates = 0, derrotas = 0;
+      const registrosTodos = [], registrosLocal = [], registrosVisita = [];
 
-      const registro = {
-        favor: golAjustado(golesEquipoCrudo, fDefensaRival),
-        contra: golAjustado(golesRivalCrudo, fAtaqueRival),
-        fecha: p.utcDate
+      partidosOrdenados.forEach(p => {
+        const esLocal = p.homeTeam.id === teamId;
+        const rivalId = esLocal ? p.awayTeam.id : p.homeTeam.id;
+        const golesEquipoCrudo = (esLocal ? p.score.fullTime.home : p.score.fullTime.away) ?? 0;
+        const golesRivalCrudo = (esLocal ? p.score.fullTime.away : p.score.fullTime.home) ?? 0;
+
+        if (golesEquipoCrudo > golesRivalCrudo) victorias++;
+        else if (golesEquipoCrudo === golesRivalCrudo) empates++;
+        else derrotas++;
+
+        // Un gol contra una defensa solida vale mas; un gol recibido de un ataque
+        // flojo pesa mas en contra tuya. Sin tabla disponible, factor neutro (1).
+        const fDefensaRival = tabla ? factorFuerzaRival(tabla, rivalId, 'defensa') : 1;
+        const fAtaqueRival = tabla ? factorFuerzaRival(tabla, rivalId, 'ataque') : 1;
+
+        const registro = {
+          favor: golAjustado(golesEquipoCrudo, fDefensaRival),
+          contra: golAjustado(golesRivalCrudo, fAtaqueRival),
+          fecha: p.utcDate
+        };
+        registrosTodos.push(registro);
+        (esLocal ? registrosLocal : registrosVisita).push(registro);
+      });
+
+      const cantidad = partidosOrdenados.length || 1;
+      const pesosTodos = pesosRecenciaPorFecha(registrosTodos);
+      const pesosLocal = pesosRecenciaPorFecha(registrosLocal);
+      const pesosVisita = pesosRecenciaPorFecha(registrosVisita);
+
+      const promTodosFavor = promedioPonderado(registrosTodos.map(r => r.favor), pesosTodos);
+      const promTodosContra = promedioPonderado(registrosTodos.map(r => r.contra), pesosTodos);
+
+      const promLocalFavorCrudo = registrosLocal.length > 0 ? promedioPonderado(registrosLocal.map(r => r.favor), pesosLocal) : promTodosFavor;
+      const promLocalContraCrudo = registrosLocal.length > 0 ? promedioPonderado(registrosLocal.map(r => r.contra), pesosLocal) : promTodosContra;
+      const promVisitaFavorCrudo = registrosVisita.length > 0 ? promedioPonderado(registrosVisita.map(r => r.favor), pesosVisita) : promTodosFavor;
+      const promVisitaContraCrudo = registrosVisita.length > 0 ? promedioPonderado(registrosVisita.map(r => r.contra), pesosVisita) : promTodosContra;
+
+      const promLigaVal = promedioLiga(codigoLiga);
+      const promLocalFavor = aplicarShrinkage(promLocalFavorCrudo, registrosLocal.length, promLigaVal);
+      const promLocalContra = aplicarShrinkage(promLocalContraCrudo, registrosLocal.length, promLigaVal);
+      const promVisitaFavor = aplicarShrinkage(promVisitaFavorCrudo, registrosVisita.length, promLigaVal);
+      const promVisitaContra = aplicarShrinkage(promVisitaContraCrudo, registrosVisita.length, promLigaVal);
+
+      const tendencia = calcularTendencia(partidosOrdenados, teamId);
+
+      const stats = {
+        promedioGolesFavor: promTodosFavor,
+        promedioGolesContra: promTodosContra,
+        puntosPromedio: (victorias * 3 + empates) / cantidad,
+        partidosJugados: partidosOrdenados.length,
+        local: { golesFavor: promLocalFavor, golesContra: promLocalContra },
+        visita: { golesFavor: promVisitaFavor, golesContra: promVisitaContra },
+        tendencia,
+        diasDescansoUltimoPartido
       };
-      registrosTodos.push(registro);
-      (esLocal ? registrosLocal : registrosVisita).push(registro);
-    });
 
-    const cantidad = partidosOrdenados.length || 1;
-    const pesosTodos = pesosRecenciaPorFecha(registrosTodos);
-    const pesosLocal = pesosRecenciaPorFecha(registrosLocal);
-    const pesosVisita = pesosRecenciaPorFecha(registrosVisita);
-
-    const promTodosFavor = promedioPonderado(registrosTodos.map(r => r.favor), pesosTodos);
-    const promTodosContra = promedioPonderado(registrosTodos.map(r => r.contra), pesosTodos);
-
-    const promLocalFavorCrudo = registrosLocal.length > 0 ? promedioPonderado(registrosLocal.map(r => r.favor), pesosLocal) : promTodosFavor;
-    const promLocalContraCrudo = registrosLocal.length > 0 ? promedioPonderado(registrosLocal.map(r => r.contra), pesosLocal) : promTodosContra;
-    const promVisitaFavorCrudo = registrosVisita.length > 0 ? promedioPonderado(registrosVisita.map(r => r.favor), pesosVisita) : promTodosFavor;
-    const promVisitaContraCrudo = registrosVisita.length > 0 ? promedioPonderado(registrosVisita.map(r => r.contra), pesosVisita) : promTodosContra;
-
-    const promLigaVal = promedioLiga(codigoLiga);
-    const promLocalFavor = aplicarShrinkage(promLocalFavorCrudo, registrosLocal.length, promLigaVal);
-    const promLocalContra = aplicarShrinkage(promLocalContraCrudo, registrosLocal.length, promLigaVal);
-    const promVisitaFavor = aplicarShrinkage(promVisitaFavorCrudo, registrosVisita.length, promLigaVal);
-    const promVisitaContra = aplicarShrinkage(promVisitaContraCrudo, registrosVisita.length, promLigaVal);
-
-    const tendencia = calcularTendencia(partidosOrdenados, teamId);
-
-    const stats = {
-      promedioGolesFavor: promTodosFavor,
-      promedioGolesContra: promTodosContra,
-      puntosPromedio: (victorias * 3 + empates) / cantidad,
-      partidosJugados: partidosOrdenados.length,
-      local: { golesFavor: promLocalFavor, golesContra: promLocalContra },
-      visita: { golesFavor: promVisitaFavor, golesContra: promVisitaContra },
-      tendencia,
-      diasDescansoUltimoPartido
-    };
-
-    cache[claveCache] = stats;
-    guardarCachePersistente(claveCache, stats);
-    return stats;
-  } catch (e) {
-    console.error("Error trayendo stats equipo", teamId, e);
-    const fallback = { golesFavor: 1, golesContra: 1 };
-    return { promedioGolesFavor: 1, promedioGolesContra: 1, puntosPromedio: 1, partidosJugados: 0, local: fallback, visita: fallback, tendencia: { direccion: 'neutral', racha: [] } };
+      cache[claveCache] = stats;
+      guardarCachePersistente(claveCache, stats);
+      return stats;
+    } catch (e) {
+      console.error("Error trayendo stats equipo", teamId, e);
+      const fallback = { golesFavor: 1, golesContra: 1 };
+      return { promedioGolesFavor: 1, promedioGolesContra: 1, puntosPromedio: 1, partidosJugados: 0, local: fallback, visita: fallback, tendencia: { direccion: 'neutral', racha: [] } };
+    }
   }
-}
+
   async function obtenerHeadToHead(partidoId) {
     const claveCache = `h2h-${partidoId}`;
     if (cache[claveCache]) return cache[claveCache];
@@ -963,25 +965,25 @@ async function obtenerStatsEquipo(teamId, codigoLiga, tabla) {
     return 1;
   }
 
- function matrizMarcadores(lambdaLocal, lambdaVisita, maxGoles = 8, rho = RHO_DIXON_COLES) {
-  const matriz = [];
-  let sumaTotal = 0;
-  for (let i = 0; i <= maxGoles; i++) {
-    matriz[i] = [];
-    for (let j = 0; j <= maxGoles; j++) {
-      const base = poisson(i, lambdaLocal) * poisson(j, lambdaVisita);
-      const ajustado = base * tauDixonColes(i, j, lambdaLocal, lambdaVisita, rho);
-      matriz[i][j] = ajustado;
-      sumaTotal += ajustado;
+  function matrizMarcadores(lambdaLocal, lambdaVisita, maxGoles = 8, rho = RHO_DIXON_COLES) {
+    const matriz = [];
+    let sumaTotal = 0;
+    for (let i = 0; i <= maxGoles; i++) {
+      matriz[i] = [];
+      for (let j = 0; j <= maxGoles; j++) {
+        const base = poisson(i, lambdaLocal) * poisson(j, lambdaVisita);
+        const ajustado = base * tauDixonColes(i, j, lambdaLocal, lambdaVisita, rho);
+        matriz[i][j] = ajustado;
+        sumaTotal += ajustado;
+      }
     }
-  }
-  for (let i = 0; i <= maxGoles; i++) {
-    for (let j = 0; j <= maxGoles; j++) {
-      matriz[i][j] = matriz[i][j] / sumaTotal;
+    for (let i = 0; i <= maxGoles; i++) {
+      for (let j = 0; j <= maxGoles; j++) {
+        matriz[i][j] = matriz[i][j] / sumaTotal;
+      }
     }
+    return matriz;
   }
-  return matriz;
-}
 
   const FACTOR_LOCALIA_BASE = 1.08; // mayor impacto de localía para acercarse al resultado real
 
@@ -1570,4 +1572,41 @@ async function obtenerStatsEquipo(teamId, codigoLiga, tabla) {
       }
     };
   }
+
+  // Datos de respaldo para cuando el backend no responda
+  const PARTIDOS_FALLBACK = [
+    { homeTeam: { name: "Arsenal", id: 57 }, awayTeam: { name: "Liverpool", id: 40 }, competition: { name: "Premier League", code: "PL" }, utcDate: "2026-09-06T14:00:00Z", status: "SCHEDULED" },
+    { homeTeam: { name: "Real Madrid", id: 86 }, awayTeam: { name: "Barcelona", id: 81 }, competition: { name: "La Liga", code: "PD" }, utcDate: "2026-09-06T18:30:00Z", status: "SCHEDULED" }
+  ];
+
+  async function obtenerPartidos(fechaInicio, fechaFin) {
+    const claveCache = `matches-${fechaInicio}-${fechaFin}`;
+    if (cache[claveCache]) return cache[claveCache];
+
+    const persistente = leerCachePersistente(claveCache);
+    if (persistente) {
+      cache[claveCache] = persistente;
+      return persistente;
+    }
+
+    try {
+      const url = `${BACKEND_URL}/api/partidos?competitions=${COMPETICIONES}&dateFrom=${fechaInicio}&dateTo=${fechaFin}`;
+      const resp = await fetchConTiempo(url);
+      const datos = await resp.json();
+
+      if (datos.error || datos.errorCode) {
+        console.error("Respuesta con error de la API:", datos);
+        return { error: true, mensaje: datos.message || datos.error || "Error desconocido de la API" };
+      }
+
+      const partidos = (datos.matches || []).filter(p => p.status === 'SCHEDULED' || p.status === 'TIMED');
+      cache[claveCache] = partidos;
+      guardarCachePersistente(claveCache, partidos);
+      return partidos;
+    } catch (e) {
+      console.error("Error trayendo partidos", e);
+      return { error: true, mensaje: e.message };
+    }
+  }
+}
 
