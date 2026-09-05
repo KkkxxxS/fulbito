@@ -881,10 +881,27 @@
     const resumen = calcularResumenHistorial(historial);
 
     if (resumen.totalPicks === 0) {
+      const pendientes = historial.filter(h => !h.verificado);
+      const pendientesHTML = pendientes.length > 0
+        ? `
+          <div class="historial-pendientes">
+            <p class="historial-pendientes-titulo">⏱ ${pendientes.length} partido${pendientes.length > 1 ? 's' : ''} en seguimiento — se liquidan al terminar</p>
+            <div class="historial-pendientes-lista">
+              ${pendientes.slice(0, 8).map(p => `
+                <div class="historial-pendiente">
+                  <span class="historial-pendiente-equipos">${p.local} vs ${p.visita}</span>
+                  <span class="historial-pendiente-fecha">${new Date(p.fecha).toLocaleDateString('es-PE', { day: '2-digit', month: 'short' })}</span>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `
+        : '';
       contenedor.innerHTML = `
         <div class="aviso-servidor">
           <p><strong>Todavía no hay picks liquidados en este navegador.</strong></p>
           <p>A medida que los partidos que Fulbito pronosticó terminen, van a aparecer acá con su resultado real.</p>
+          ${pendientesHTML}
         </div>
         <div class="historial-filtros-barra" style="margin-top:16px;">
           <span></span>

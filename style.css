@@ -294,6 +294,41 @@ body.home-mode {
 }
 .app-nav-tabs::-webkit-scrollbar { display: none; }
 
+@media (max-width: 640px) {
+  .app-nav-hamburguesa { display: none; }
+  .app-nav {
+    position: sticky;
+    top: 0;
+    left: auto;
+    width: 100%;
+    height: auto;
+    padding: 10px 16px 2px;
+    border-right: none;
+    border-bottom: 1px solid rgba(158, 175, 199, 0.14);
+    box-shadow: 0 18px 38px -28px rgba(0,0,0,0.92);
+  }
+  .app-nav-marca { font-size: 1.2rem; }
+  .app-nav-fila {
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    padding-bottom: 8px;
+  }
+  .app-nav-buscador { flex: 1; max-width: none; min-width: 0; }
+  .app-nav-tabs {
+    flex-direction: row;
+    overflow-x: auto;
+    gap: 8px;
+    padding: 0 0 8px;
+  }
+  .nav-tab {
+    width: auto;
+    min-width: fit-content;
+    padding: 8px 12px;
+    justify-content: center;
+  }
+}
+
 .nav-tab {
   appearance: none;
   background: rgba(255,255,255,0.01);
@@ -377,22 +412,6 @@ body.home-mode {
   font-family: var(--font-mono);
 }
 .nav-tab.activa .contador-favoritos { background: var(--gold); color: var(--ink-on-accent); }
-
-@media (max-width: 640px) {
-  .app-nav-hamburguesa { display: flex; }
-  .app-nav-buscador { max-width: none; }
-  .app-nav-tabs {
-    max-height: 0;
-    padding: 0 20px;
-    overflow: hidden;
-    transition: max-height 0.22s var(--ease), padding 0.22s var(--ease);
-    flex-direction: column;
-    align-items: stretch;
-  }
-  .app-nav.menu-abierto .app-nav-tabs { max-height: 320px; padding: 6px 20px 14px; }
-  .nav-tab { justify-content: flex-start; border-radius: var(--radius-xs); border-bottom: none; border-left: 2px solid transparent; padding: 10px 12px; }
-  .nav-tab.activa { border-left-color: var(--green); background: var(--bg-raised); }
-}
 
 /* ============ HERO COMPACTO ============ */
 .hero-compacto {
@@ -830,34 +849,13 @@ body.home-mode {
   .motores-grid { grid-template-columns: 1fr; }
   .motor-panel-header { align-items: flex-start; }
   .app-nav {
-    position: sticky;
-    top: 0;
-    left: auto;
-    width: 100%;
-    height: auto;
-    padding: 14px 16px 0;
-    border-right: none;
-    border-bottom: 1px solid rgba(158, 175, 199, 0.14);
-    box-shadow: 0 18px 38px -28px rgba(0,0,0,0.92);
-  }
-  .app-nav-fila {
-    padding-bottom: 8px;
-  }
-  .app-nav-tabs {
-    flex-direction: row;
-    overflow-x: auto;
-    padding-bottom: 6px;
-  }
-  .nav-tab {
-    width: auto;
-    min-width: fit-content;
-    padding: 9px 12px;
+    background: rgba(9, 14, 18, 0.96);
   }
   main {
     margin-left: 0;
     width: 100%;
     max-width: none;
-    padding: 0 18px 40px;
+    padding: 0 12px 32px;
   }
 }
 
@@ -900,6 +898,14 @@ main {
   max-width: 980px;
   margin-left: 280px;
   padding: 8px 28px 40px;
+}
+@media (max-width: 900px) {
+  main {
+    margin-left: 0;
+    width: 100%;
+    max-width: none;
+    padding: 0 16px 32px;
+  }
 }
 
 .landing-shell {
@@ -1015,43 +1021,6 @@ main {
   flex-wrap: wrap;
   gap: 12px;
   margin-top: 24px;
-}
-
-.landing-primary, .landing-secondary {
-  appearance: none;
-  border: none;
-  cursor: pointer;
-  padding: 14px 24px;
-  border-radius: 14px;
-  font-weight: 700;
-  font-size: 0.9rem;
-  letter-spacing: 0.01em;
-  transition: transform 0.18s var(--ease), box-shadow 0.18s var(--ease), border-color 0.18s var(--ease), background 0.18s var(--ease);
-}
-
-.landing-primary {
-  background: linear-gradient(135deg, #6ce0b6, #8fe7d8 45%, #f2c474 100%);
-  color: #07120d;
-  box-shadow: 0 18px 26px -18px rgba(123, 225, 200, 0.9);
-}
-
-.landing-secondary {
-  background: rgba(255,255,255,0.025);
-  border: 1px solid rgba(148, 163, 184, 0.15);
-  color: var(--text);
-}
-
-.landing-primary:hover, .landing-secondary:hover {
-  transform: translateY(-2px);
-}
-
-.landing-primary:hover {
-  box-shadow: 0 24px 26px -20px rgba(123, 225, 200, 0.85);
-}
-
-.landing-secondary:hover {
-  border-color: rgba(123, 225, 200, 0.2);
-  background: rgba(255,255,255,0.04);
 }
 
 .landing-primary, .landing-secondary {
@@ -2291,6 +2260,7 @@ input {
 
 .resumen-card:hover {
   border-color: rgba(123, 225, 200, 0.2);
+  transform: translateY(-2px);
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 22px 36px -28px rgba(0,0,0,0.85);
 }
 .resumen-card-titulo { font-size: 0.66rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-dim); }
@@ -2374,6 +2344,50 @@ input {
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.02), 0 18px 24px -26px rgba(0,0,0,0.9);
 }
 .aviso-servidor strong { color: var(--luxury); }
+
+.historial-pendientes {
+  margin: 18px auto 0;
+  max-width: 540px;
+  text-align: left;
+}
+.historial-pendientes-titulo {
+  color: var(--gold);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  margin: 0 0 10px;
+}
+.historial-pendientes-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.historial-pendiente {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 12px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.historial-pendiente-equipos {
+  color: var(--text);
+  font-size: 0.84rem;
+  font-weight: 600;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.historial-pendiente-fecha {
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  flex-shrink: 0;
+}
 
 @media (max-width: 560px) {
   .eval-historial-liga { width: auto; flex-direction: row; align-items: center; }
@@ -3087,18 +3101,61 @@ input {
 
 .health-grande {
   position: relative;
-  width: 120px;
-  height: 120px;
+  width: 150px;
+  height: 150px;
 }
 
 .health-gauge {
-  filter: drop-shadow(0 8px 16px rgba(0,0,0,0.4));
+  filter: drop-shadow(0 10px 22px rgba(0,0,0,0.5)) drop-shadow(0 0 14px rgba(123,225,200,0.18));
+  transform: rotate(-0deg);
 }
+
+.health-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  width: 100%;
+  margin-top: 4px;
+}
+
+.health-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 9px 8px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  text-align: center;
+  line-height: 1.3;
+}
+
+.health-stat-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.health-stat-dot.verde { background: var(--green); box-shadow: 0 0 10px rgba(95,227,164,0.5); }
+.health-stat-dot.cyan { background: var(--brand); box-shadow: 0 0 10px rgba(123,225,200,0.5); }
+.health-stat-dot.gold { background: var(--gold); box-shadow: 0 0 10px rgba(242,196,116,0.5); }
 
 .health-mercados {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.health-sub {
+  color: var(--text-dim);
+  font-size: 0.78rem;
+  line-height: 1.5;
+  margin: 8px 0 0;
+  max-width: 40ch;
 }
 
 .health-mercado-item {
@@ -3106,21 +3163,51 @@ input {
   grid-template-columns: 1fr auto auto;
   align-items: center;
   gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  transition: border-color 0.18s var(--ease), background 0.18s var(--ease);
+}
+.health-mercado-item:hover {
+  border-color: var(--card-border);
+  background: rgba(255,255,255,0.02);
 }
 
 .health-mercado-nombre {
-  font-size: 0.82rem;
-  color: var(--text-muted);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  font-size: 0.84rem;
+  color: var(--text);
   font-weight: 600;
   min-width: 100px;
 }
 
+.health-mercado-nivel {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+}
+.health-mercado-nivel.alto { background: rgba(95, 227, 164, 0.14); color: var(--green); border-color: rgba(95, 227, 164, 0.24); }
+.health-mercado-nivel.bueno { background: rgba(95, 227, 164, 0.1); color: #7be1c8; border-color: rgba(95, 227, 164, 0.18); }
+.health-mercado-nivel.media { background: rgba(242, 196, 116, 0.12); color: var(--gold); border-color: rgba(242, 196, 116, 0.22); }
+
 .health-barra {
-  height: 6px;
+  position: relative;
+  height: 8px;
   border-radius: 999px;
   background: rgba(255,255,255,0.06);
   overflow: hidden;
   flex: 1;
+  min-width: 60px;
 }
 
 .health-barra div {
@@ -3128,14 +3215,26 @@ input {
   border-radius: 999px;
   background: linear-gradient(90deg, var(--brand), var(--green));
   transition: width 0.5s var(--ease);
+  position: relative;
+  box-shadow: 0 0 14px rgba(100, 228, 169, 0.45);
+}
+.health-barra div::after {
+  content: "";
+  position: absolute;
+  right: 3px;
+  top: 2px;
+  bottom: 2px;
+  width: 3px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.6);
 }
 
 .health-mercado-valor {
   font-family: var(--font-mono);
   font-weight: 700;
-  font-size: 0.95rem;
+  font-size: 1rem;
   color: var(--text);
-  min-width: 45px;
+  min-width: 48px;
   text-align: right;
 }
 

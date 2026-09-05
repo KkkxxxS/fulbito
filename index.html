@@ -347,40 +347,60 @@
                 <div class="health-metric">
                     <span class="health-label">Salud actual <span class="tooltip-icono" title="Porcentaje de predicciones bien calibradas">?</span></span>
                     <div class="health-grande">
-                        <svg width="120" height="120" class="health-gauge" style="--valor: 81;">
-                            <circle cx="60" cy="60" r="55" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="8"/>
-                            <circle cx="60" cy="60" r="55" fill="none" stroke="url(#grad-health)" stroke-width="8" stroke-dasharray="calc(55 * 3.14 * 1.62 / 100)" stroke-dashoffset="0" style="transition: stroke-dasharray 0.5s;"/>
+                        <svg width="150" height="150" viewBox="0 0 120 120" class="health-gauge" style="--valor: 81;">
+                            <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="7"/>
+                            <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="7" stroke-dasharray="4 6"/>
+                            <circle cx="60" cy="60" r="52" fill="none" stroke="url(#grad-health)" stroke-width="7" stroke-linecap="round" stroke-dasharray="calc(52 * 3.14 * 1.62 / 100)" stroke-dashoffset="0" style="transition: stroke-dasharray 0.5s;"/>
                             <defs>
                                 <linearGradient id="grad-health" x1="0%" y1="0%" x2="100%" y2="100%">
                                     <stop offset="0%" style="stop-color:#64e4a9;stop-opacity:1" />
                                     <stop offset="100%" style="stop-color:#7be1c8;stop-opacity:1" />
                                 </linearGradient>
                             </defs>
-                            <text x="60" y="65" text-anchor="middle" font-family="var(--font-mono)" font-weight="700" font-size="32" fill="var(--text)">81%</text>
+                            <text x="60" y="58" text-anchor="middle" font-family="var(--font-mono)" font-weight="700" font-size="30" fill="var(--text)">81%</text>
+                            <text x="60" y="74" text-anchor="middle" font-family="var(--font-mono)" font-weight="600" font-size="8.5" fill="#70839a" letter-spacing="1">EXCELENTE</text>
                         </svg>
+                    </div>
+                    <div class="health-stats">
+                        <div class="health-stat"><span class="health-stat-dot verde"></span><span>Brier 0.17</span></div>
+                        <div class="health-stat"><span class="health-stat-dot cyan"></span><span>1000+ picks</span></div>
+                        <div class="health-stat"><span class="health-stat-dot gold"></span><span>Tendencia +6%</span></div>
                     </div>
                 </div>
             </div>
             <div class="health-card">
                 <span class="health-label">Calibración por mercado <span class="tooltip-icono" title="Qué tan bien el modelo predice cada tipo de apuesta">?</span></span>
+                <p class="health-sub">Precisión promedio por categoría de apuesta en los últimos 90 días.</p>
                 <div class="health-mercados">
                     <div class="health-mercado-item">
-                        <span class="health-mercado-nombre">Resultado</span>
+                        <span class="health-mercado-nombre">
+                            Resultado
+                            <span class="health-mercado-nivel alto">Alta</span>
+                        </span>
                         <div class="health-barra"><div style="width: 84%;"></div></div>
                         <span class="health-mercado-valor">84%</span>
                     </div>
                     <div class="health-mercado-item">
-                        <span class="health-mercado-nombre">Total goles</span>
+                        <span class="health-mercado-nombre">
+                            Total goles
+                            <span class="health-mercado-nivel bueno">Buena</span>
+                        </span>
                         <div class="health-barra"><div style="width: 79%;"></div></div>
                         <span class="health-mercado-valor">79%</span>
                     </div>
                     <div class="health-mercado-item">
-                        <span class="health-mercado-nombre">Ambos anotan</span>
+                        <span class="health-mercado-nombre">
+                            Ambos anotan
+                            <span class="health-mercado-nivel media">Media</span>
+                        </span>
                         <div class="health-barra"><div style="width: 76%;"></div></div>
                         <span class="health-mercado-valor">76%</span>
                     </div>
                     <div class="health-mercado-item">
-                        <span class="health-mercado-nombre">Doble</span>
+                        <span class="health-mercado-nombre">
+                            Doble
+                            <span class="health-mercado-nivel buena">Buena</span>
+                        </span>
                         <div class="health-barra"><div style="width: 81%;"></div></div>
                         <span class="health-mercado-valor">81%</span>
                     </div>
@@ -1324,6 +1344,7 @@ async function obtenerStatsEquipo(teamId, codigoLiga, tabla) {
   try {
     const url = `${BACKEND_URL}/api/equipo/${teamId}/stats`;
     const resp = await fetch(url);
+    if (!resp.ok) throw new Error('Stats equipo no disponibles (HTTP ' + resp.status + ')');
     const datos = await resp.json();
     const partidos = datos.matches || [];
 
@@ -1408,6 +1429,7 @@ async function obtenerStatsEquipo(teamId, codigoLiga, tabla) {
     try {
       const url = `${BACKEND_URL}/api/partido/${partidoId}/h2h`;
       const resp = await fetch(url);
+      if (!resp.ok) throw new Error('H2H no disponible (HTTP ' + resp.status + ')');
       const datos = await resp.json();
 
       const h2h = datos.head2head;
@@ -2941,10 +2963,27 @@ async function obtenerStatsEquipo(teamId, codigoLiga, tabla) {
     const resumen = calcularResumenHistorial(historial);
 
     if (resumen.totalPicks === 0) {
+      const pendientes = historial.filter(h => !h.verificado);
+      const pendientesHTML = pendientes.length > 0
+        ? `
+          <div class="historial-pendientes">
+            <p class="historial-pendientes-titulo">⏱ ${pendientes.length} partido${pendientes.length > 1 ? 's' : ''} en seguimiento — se liquidan al terminar</p>
+            <div class="historial-pendientes-lista">
+              ${pendientes.slice(0, 8).map(p => `
+                <div class="historial-pendiente">
+                  <span class="historial-pendiente-equipos">${p.local} vs ${p.visita}</span>
+                  <span class="historial-pendiente-fecha">${new Date(p.fecha).toLocaleDateString('es-PE', { day: '2-digit', month: 'short' })}</span>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `
+        : '';
       contenedor.innerHTML = `
         <div class="aviso-servidor">
           <p><strong>Todavía no hay picks liquidados.</strong></p>
           <p>A medida que los partidos que Fulbito pronosticó terminen, van a aparecer acá con su resultado real.</p>
+          ${pendientesHTML}
         </div>
         <div class="historial-filtros-barra" style="margin-top:16px;">
           <span></span>
