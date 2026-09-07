@@ -80,9 +80,6 @@
             <span class="nav-tab-icono">◎</span> Partidos
         </button>
         <button class="nav-tab" data-vista="analitica" onclick="cambiarVista('analitica')">
-            <span class="nav-tab-icono">▣</span> Motor
-        </button>
-        <button class="nav-tab" data-vista="analitica2" onclick="cambiarVista('analitica')">
             <span class="nav-tab-icono">▤</span> Analítica
         </button>
         <button class="nav-tab" data-vista="historial" onclick="cambiarVista('historial')">
@@ -93,182 +90,17 @@
             <span class="contador-favoritos" id="contador-mispredicciones" style="display:none;">0</span>
         </button>
         <button class="nav-tab" data-vista="favoritos" onclick="cambiarVista('favoritos')">
-            <span class="nav-tab-icono">◍</span> Alertas
+            <span class="nav-tab-icono">★</span> Favoritos
             <span class="contador-favoritos" id="contador-favoritos" style="display:none;">0</span>
         </button>
     </nav>
 </header>
 
-<section class="hero-compacto">
-    <div class="hero-textos">
-        <div class="hero-eyebrow"><span class="hero-eyebrow-punto"></span> Fulbito</div>
-        <h1 id="hero-saludo">Bienvenido a Fulbito</h1>
-        <p>Tu centro de inteligencia predictiva para fútbol. Estado del motor, análisis y picks en un solo lugar.</p>
-    </div>
-
-    <div class="hero-kpis">
-        <div class="hero-kpi">
-            <strong id="hero-salud-motor">0</strong>
-            <span>Salud del motor</span>
-        </div>
-        <div class="hero-kpi">
-            <strong id="hero-aciertos-historico">0%</strong>
-            <span>Aciertos histórico</span>
-        </div>
-        <div class="hero-kpi">
-            <strong id="hero-confianza-media">0%</strong>
-            <span>Confianza media</span>
-        </div>
-        <div class="hero-kpi">
-            <strong id="hero-favoritos-guardados">0</strong>
-            <span>Favoritos guardados</span>
-        </div>
-    </div>
-
-    <div class="accesos-rapidos">
-        <button class="acceso-rapido" onclick="cambiarVista('pronosticos')">
-            <span class="acceso-rapido-icono">⚽</span>
-            <span class="acceso-rapido-texto">
-                <strong>Predicciones IA</strong>
-                Partidos analizados por el motor
-            </span>
-        </button>
-        <button class="acceso-rapido" onclick="cambiarVista('analitica')">
-            <span class="acceso-rapido-icono">◧</span>
-            <span class="acceso-rapido-texto">
-                <strong>Analítica</strong>
-                Calibración y salud del motor
-            </span>
-        </button>
-        <button class="acceso-rapido" onclick="cambiarVista('mispredicciones')">
-            <span class="acceso-rapido-icono">📌</span>
-            <span class="acceso-rapido-texto">
-                <strong>Mis predicciones</strong>
-                Tus picks y cuota
-            </span>
-        </button>
-        <button class="acceso-rapido" onclick="cambiarVista('favoritos')">
-            <span class="acceso-rapido-icono">★</span>
-            <span class="acceso-rapido-texto">
-                <strong>Favoritos</strong>
-                Partidos que sigues
-            </span>
-        </button>
-    </div>
-</section>
-
-<section class="motor-panel">
-    <div class="motor-panel-header">
-        <div>
-            <span class="motor-eyebrow">Sistema de predicción</span>
-            <h3>Motor Fulbito</h3>
-        </div>
-        <span class="chip-status">Activo</span>
-    </div>
-
-    <div class="motores-grid">
-        <article class="motor-card motor-base">
-            <div class="motor-card-top">
-                <span class="motor-icon">⚙️</span>
-                <div>
-                    <small>Modelo</small>
-                    <strong>Fulbito Engine</strong>
-                </div>
-            </div>
-
-            <div class="motor-score">
-                <span>81%</span>
-                <em>Salud</em>
-            </div>
-
-            <div class="motor-metrics">
-                <div class="motor-metric">
-                    <span>Confianza</span>
-                    <strong>81%</strong>
-                </div>
-                <div class="motor-metric">
-                    <span>Brier</span>
-                    <strong>0.17</strong>
-                </div>
-            </div>
-
-            <div class="motor-bar"><span style="width:81%"></span></div>
-
-            <ul class="motor-lista">
-                <li><span class="dot verde"></span> Estadísticas reales del fútbol</li>
-                <li><span class="dot verde"></span> Forma + H2H + localía</li>
-                <li><span class="dot verde"></span> Ajuste por mercado</li>
-            </ul>
-        </article>
-
-        <article class="motor-card motor-ia">
-            <div class="motor-card-top">
-                <span class="motor-icon">🧠</span>
-                <div>
-                    <small>Refinamiento</small>
-                    <strong>IA analítica</strong>
-                </div>
-            </div>
-
-            <div class="motor-score ia-score">
-                <span>74%</span>
-                <em>Predicción</em>
-            </div>
-
-            <div class="motor-metrics">
-                <div class="motor-metric">
-                    <span>Calibración</span>
-                    <strong>74%</strong>
-                </div>
-                <div class="motor-metric">
-                    <span>Ritmo</span>
-                    <strong>+6%</strong>
-                </div>
-            </div>
-
-            <div class="motor-bar motor-bar-ia"><span style="width:74%"></span></div>
-
-            <ul class="motor-lista">
-                <li><span class="dot azul"></span> Ajuste inteligente</li>
-                <li><span class="dot azul"></span> Patrones ocultos</li>
-                <li><span class="dot azul"></span> Ponderación dinámica</li>
-            </ul>
-        </article>
-    </div>
-</section>
-
-<section class="como-funciona">
-    <p class="como-funciona-eyebrow">Cómo funciona Fulbito</p>
-    <div class="como-funciona-pasos">
-        <div class="como-funciona-paso">
-            <span class="como-funciona-num">01</span>
-            <div>
-                <strong>Datos</strong>
-                <p>Últimos partidos, tabla de posiciones y cara-a-cara de football-data.org, con más peso a lo reciente.</p>
-            </div>
-        </div>
-        <div class="como-funciona-paso">
-            <span class="como-funciona-num">02</span>
-            <div>
-                <strong>Modelo</strong>
-                <p>Poisson + corrección Dixon-Coles calcula la probabilidad real de ~19 mercados posibles por partido.</p>
-            </div>
-        </div>
-        <div class="como-funciona-paso">
-            <span class="como-funciona-num">03</span>
-            <div>
-                <strong>Auto-calibración</strong>
-                <p>Cada pronóstico verificado ajusta el modelo solo, comparando lo predicho contra lo que pasó de verdad.</p>
-            </div>
-        </div>
-    </div>
-</section>
-
 <main>
 
 <section id="vista-inicio" class="vista vista-activa landing-shell">
     <div class="landing-inner">
-        <div class="landing-badge">Fulbito • motor de pronósticos</div>
+        <div class="landing-badge" id="hero-saludo">Bienvenido a Fulbito • Inteligencia Predictiva</div>
         <h1>Análisis de fútbol sin hype, solo datos verificables.</h1>
         <p>Fulbito aplica modelos estadísticos reales (Poisson + Dixon-Coles) sobre datos públicos. No prometemos ganancias. Sí transparencia total y historial que cualquiera puede auditar.</p>
 
@@ -297,20 +129,20 @@
 
         <div class="landing-metrics">
             <div class="landing-metric">
-                <strong>81%</strong>
-                <span>salud actual del motor</span>
+                <strong id="hero-salud-motor">81%</strong>
+                <span>Salud del motor</span>
             </div>
             <div class="landing-metric">
-                <strong>0.17</strong>
-                <span>Brier Score (precisión)</span>
+                <strong id="hero-aciertos-historico">74%</strong>
+                <span>Aciertos verificados</span>
             </div>
             <div class="landing-metric">
-                <strong>1000+</strong>
-                <span>picks auditados</span>
+                <strong id="hero-confianza-media">67%</strong>
+                <span>Confianza promedio</span>
             </div>
             <div class="landing-metric">
-                <strong>Verificado</strong>
-                <span>historial público</span>
+                <strong id="hero-favoritos-guardados">0</strong>
+                <span>Favoritos guardados</span>
             </div>
         </div>
     </div>
@@ -582,6 +414,30 @@
     </div>
 
     <div class="filtro-ligas" id="filtro-ligas"></div>
+
+    <div class="filtros-rapidos-container">
+        <span class="filtros-rapidos-label">Filtros rápidos de picks</span>
+        <div class="filtros-rapidos" id="filtros-rapidos-picks">
+            <button class="filtro-rapido activo" data-filtro-tipo="todos" onclick="setFiltroRapido('todos', event)">
+                <span class="filtro-icon">⚽</span> Todos
+            </button>
+            <button class="filtro-rapido" data-filtro-tipo="alta_confianza" onclick="setFiltroRapido('alta_confianza', event)">
+                <span class="filtro-icon">🎯</span> Alta confianza (≥70%)
+            </button>
+            <button class="filtro-rapido" data-filtro-tipo="btts" onclick="setFiltroRapido('btts', event)">
+                <span class="filtro-icon">⚡</span> Ambos marcan
+            </button>
+            <button class="filtro-rapido" data-filtro-tipo="mas_goles" onclick="setFiltroRapido('mas_goles', event)">
+                <span class="filtro-icon">🔥</span> +2.5 Goles
+            </button>
+            <button class="filtro-rapido" data-filtro-tipo="victoria" onclick="setFiltroRapido('victoria', event)">
+                <span class="filtro-icon">🏆</span> Victoria directa
+            </button>
+            <button class="filtro-rapido" data-filtro-tipo="favoritos" onclick="setFiltroRapido('favoritos', event)">
+                <span class="filtro-icon">★</span> Solo mis favoritos
+            </button>
+        </div>
+    </div>
 
     <div id="contenedor-partidos">
         <p style="text-align:center; color:#8fa896;">Cargando partidos...</p>
@@ -2192,23 +2048,33 @@
         </div>
       `;
     }
+    const conf = nivelConfianza(datos.probabilidad);
+    const cuota = cuotaImplicita(datos.probabilidad);
     return `
       <div class="fila-mercado mercado-${datos.tipo} ${esPrincipal ? 'mercado-principal' : ''}">
-        ${esPrincipal ? `<span class="etiqueta-pick-principal">Pick del partido</span>` : ''}
+        ${esPrincipal ? `<span class="etiqueta-pick-principal">★ Pick del partido</span>` : ''}
         <div class="fila-header">
-          ${iconoMercado(datos.tipo)}
-          <span class="fila-porcentaje">${datos.probabilidad}%</span>
-          <span class="badge-confianza ${nivelConfianza(datos.probabilidad).clase}">${nivelConfianza(datos.probabilidad).etiqueta}</span>
-          ${botonMiPrediccion(partidoId, datos.categoria)}
+          <div class="fila-header-izq">
+            ${iconoMercado(datos.tipo)}
+            <span class="fila-porcentaje">${datos.probabilidad}%</span>
+          </div>
+          <div class="fila-header-der">
+            <span class="badge-confianza ${conf.clase}">${conf.etiqueta}</span>
+            ${botonMiPrediccion(partidoId, datos.categoria)}
+          </div>
         </div>
         <span class="fila-titulo">${datos.titulo}</span>
         <div class="barra-probabilidad">
-          <div class="barra-relleno" style="width:${datos.probabilidad}%"></div>
+          <div class="barra-relleno conf-${conf.clase}" style="width:${datos.probabilidad}%"></div>
         </div>
-        <p class="fila-mercado-nombre">${datos.mercado}</p>
-        <p class="fila-seleccion">${datos.seleccion}</p>
+        <div class="fila-mercado-cuerpo">
+          <p class="fila-mercado-nombre">${datos.mercado}</p>
+          <p class="fila-seleccion">${datos.seleccion}</p>
+        </div>
         <div class="fila-razones">${(datos.razones || []).map(r => `<p class="fila-razon">+ ${r}</p>`).join('')}</div>
-        <p class="cuota-implicita">Cuota justa: ${cuotaImplicita(datos.probabilidad)}</p>
+        <div class="fila-mercado-footer">
+          <span class="cuota-implicita-tag" title="Cuota justa según probabilidad real estimada">Cuota justa: <strong>@${cuota}</strong></span>
+        </div>
       </div>
     `;
   }
@@ -2228,7 +2094,7 @@
 
   function h2hHTML(h2h) {
     if (!h2h || !h2h.disponible) return '';
-    return `<p class="info-h2h">Historial directo (${h2h.totalPartidos} partidos): ${h2h.victoriasLocal}V local · ${h2h.empates}E · ${h2h.victoriasVisita}V visita</p>`;
+    return `<div class="info-h2h-pill"><span class="h2h-icono">⚖</span> Historial directo (${h2h.totalPartidos} PJ): <strong>${h2h.victoriasLocal}V</strong> local · <strong>${h2h.empates}E</strong> · <strong>${h2h.victoriasVisita}V</strong> visita</div>`;
   }
 
   function crearTarjetaHTML(partido, pronosticos, statsLocal, statsVisita, h2h, tabla) {
@@ -2246,15 +2112,28 @@
 
     return `
       <div class="tarjeta-partido" data-partido-id="${partido.id}">
+        <div class="tarjeta-partido-topbar">
+          <div class="partido-topbar-izq">
+            <span class="partido-liga-tag">${liga}</span>
+            <span class="partido-fecha-tag">${fechaTexto} · ${horaTexto}</span>
+          </div>
+          <div class="partido-topbar-der">
+            ${chipCuentaRegresiva(partido.utcDate)}
+          </div>
+        </div>
+
         <div class="encabezado-partido">
           ${bloqueEquipoHTML(local, statsLocal, 'alineacion-izq', partido.homeTeam.crest, tabla, partido.homeTeam.id)}
-          <span class="vs">VS</span>
+          <div class="centro-partido">
+            <span class="vs-circulo">VS</span>
+            <div class="marcador-estimado-badge" title="Marcador más probable estimado por el modelo">
+              <span class="marcador-estimado-label">Estimado</span>
+              <strong class="marcador-estimado-val">${pronosticos.marcadorProbable}</strong>
+            </div>
+          </div>
           ${bloqueEquipoHTML(visita, statsVisita, 'alineacion-der', partido.awayTeam.crest, tabla, partido.awayTeam.id)}
         </div>
-        <div class="info-partido-fila">
-          <p class="info-partido">${liga} · ${fechaTexto}, ${horaTexto} · marcador probable <strong>${pronosticos.marcadorProbable}</strong></p>
-          ${chipCuentaRegresiva(partido.utcDate)}
-        </div>
+
         ${h2hHTML(h2h)}
         ${pronosticos.pocaData ? `<p class="aviso-datos">⚠ Datos limitados (${pronosticos.partidosMin} partidos analizados) · pronóstico menos confiable</p>` : ''}
         ${pronosticos.sinNadaEnJuego ? `<p class="aviso-datos">⚠ Uno de los equipos ya no se juega nada en la tabla (título o descenso resuelto) · pronóstico menos confiable</p>` : ''}
@@ -3131,6 +3010,17 @@
     cont.innerHTML = html;
   }
 
+  // ============ FILTROS RÁPIDOS DE PICKS ============
+  let filtroRapidoActual = 'todos';
+
+  function setFiltroRapido(tipo, event) {
+    filtroRapidoActual = tipo;
+    document.querySelectorAll('.filtro-rapido').forEach(btn => {
+      btn.classList.toggle('activo', btn.dataset.filtroTipo === tipo);
+    });
+    renderizarPartidosFiltrados();
+  }
+
   function cambiarLiga(codigo) {
     ligaSeleccionada = codigo;
     renderFiltroLigas();
@@ -3147,6 +3037,9 @@
     if (ligaSeleccionada !== 'TODAS') {
       lista = lista.filter(p => p.competition.code === ligaSeleccionada);
     }
+    if (filtroRapidoActual === 'favoritos') {
+      lista = lista.filter(partidoTieneFavorito);
+    }
     lista = lista.filter(coincideBusqueda);
 
     lista = [...lista].sort((a, b) => {
@@ -3158,6 +3051,8 @@
     if (lista.length === 0) {
       const mensaje = terminoBusqueda
         ? `No encontramos partidos que coincidan con "${terminoBusqueda}".`
+        : filtroRapidoActual === 'favoritos'
+        ? 'No tienes partidos de equipos favoritos programados para esta fecha.'
         : 'No hay partidos para mostrar con este filtro.';
       contenedor.innerHTML = `<p style="text-align:center; color:#8fa896;">${mensaje}</p>`;
       requestAnimationFrame(() => contenedor.classList.add('visible'));
@@ -3190,6 +3085,17 @@
         statsLocal, statsVisita, partido.homeTeam.name, partido.awayTeam.name,
         h2h, tabla, partido.homeTeam.id, partido.awayTeam.id, codigoLiga
       );
+
+      // Reordenar mercados según filtro rápido activo para destacar la opción elegida
+      if (filtroRapidoActual === 'alta_confianza') {
+        pronosticos.seleccionados.sort((a, b) => (b.probabilidad || 0) - (a.probabilidad || 0));
+      } else if (filtroRapidoActual === 'btts') {
+        pronosticos.seleccionados.sort((a, b) => (b.categoria === 'ambos_marcan' ? 1 : 0) - (a.categoria === 'ambos_marcan' ? 1 : 0));
+      } else if (filtroRapidoActual === 'mas_goles') {
+        pronosticos.seleccionados.sort((a, b) => (b.categoria === 'total_goles' ? 1 : 0) - (a.categoria === 'total_goles' ? 1 : 0));
+      } else if (filtroRapidoActual === 'victoria') {
+        pronosticos.seleccionados.sort((a, b) => (b.categoria === 'resultado' ? 1 : 0) - (a.categoria === 'resultado' ? 1 : 0));
+      }
 
       htmlFinal += crearTarjetaHTML(partido, pronosticos, statsLocal, statsVisita, h2h, tabla);
       const mejorSel = mejorSeleccionDePartido(partido, pronosticos);

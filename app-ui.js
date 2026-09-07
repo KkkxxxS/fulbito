@@ -90,26 +90,33 @@
         </div>
       `;
     }
-    const confianza = badgeNivelConfianza(datos.probabilidad);
+    const conf = nivelConfianza ? nivelConfianza(datos.probabilidad) : { etiqueta: 'Media', clase: 'conf-media' };
+    const cuota = cuotaImplicita(datos.probabilidad);
     return `
       <div class="fila-mercado mercado-${datos.tipo} ${esPrincipal ? 'mercado-principal' : ''}">
-        ${esPrincipal ? `<span class="etiqueta-pick-principal">Pick del partido</span>` : ''}
+        ${esPrincipal ? `<span class="etiqueta-pick-principal">★ Pick del partido</span>` : ''}
         <div class="fila-header">
-          ${iconoMercado(datos.tipo)}
-          <span class="fila-porcentaje">${datos.probabilidad}%</span>
-          <div style="display: flex; align-items: center; gap: 8px;">
-            ${confianza}
+          <div class="fila-header-izq">
+            ${iconoMercado(datos.tipo)}
+            <span class="fila-porcentaje">${datos.probabilidad}%</span>
+          </div>
+          <div class="fila-header-der">
+            <span class="badge-confianza ${conf.clase}">${conf.etiqueta}</span>
             ${botonMiPrediccion(partidoId, datos.categoria)}
           </div>
         </div>
         <span class="fila-titulo">${datos.titulo}</span>
         <div class="barra-probabilidad">
-          <div class="barra-relleno" style="width:${datos.probabilidad}%"></div>
+          <div class="barra-relleno conf-${conf.clase}" style="width:${datos.probabilidad}%"></div>
         </div>
-        <p class="fila-mercado-nombre">${datos.mercado}</p>
-        <p class="fila-seleccion">${datos.seleccion}</p>
+        <div class="fila-mercado-cuerpo">
+          <p class="fila-mercado-nombre">${datos.mercado}</p>
+          <p class="fila-seleccion">${datos.seleccion}</p>
+        </div>
         <div class="fila-razones">${(datos.razones || []).map(r => `<p class="fila-razon">+ ${r}</p>`).join('')}</div>
-        <p class="cuota-implicita">Cuota justa: ${cuotaImplicita(datos.probabilidad)}</p>
+        <div class="fila-mercado-footer">
+          <span class="cuota-implicita-tag" title="Cuota justa según probabilidad real estimada">Cuota justa: <strong>@${cuota}</strong></span>
+        </div>
       </div>
     `;
   }
@@ -129,7 +136,7 @@
 
   function h2hHTML(h2h) {
     if (!h2h || !h2h.disponible) return '';
-    return `<p class="info-h2h">Historial directo (${h2h.totalPartidos} partidos): ${h2h.victoriasLocal}V local · ${h2h.empates}E · ${h2h.victoriasVisita}V visita</p>`;
+    return `<div class="info-h2h-pill"><span class="h2h-icono">⚖</span> Historial directo (${h2h.totalPartidos} PJ): <strong>${h2h.victoriasLocal}V</strong> local · <strong>${h2h.empates}E</strong> · <strong>${h2h.victoriasVisita}V</strong> visita</div>`;
   }
 
   function crearTarjetaHTML(partido, pronosticos, statsLocal, statsVisita, h2h, tabla) {
@@ -144,24 +151,31 @@
     const mejor = candidatosApostables.length > 0
       ? candidatosApostables.reduce((a, b) => (b.probabilidad > a.probabilidad ? b : a))
       : null;
-    const calidadDatos = pronosticos.pocaData
-      ? { texto: 'Datos limitados', clase: 'limitada' }
-      : h2h?.disponible
-        ? { texto: 'Datos completos', clase: 'alta' }
-        : { texto: 'Datos estándar', clase: 'media' };
 
     return `
       <div class="tarjeta-partido" data-partido-id="${partido.id}">
+        <div class="tarjeta-partido-topbar">
+          <div class="partido-topbar-izq">
+            <span class="partido-liga-tag">${liga}</span>
+            <span class="partido-fecha-tag">${fechaTexto} · ${horaTexto}</span>
+          </div>
+          <div class="partido-topbar-der">
+            ${chipCuentaRegresiva(partido.utcDate)}
+          </div>
+        </div>
+
         <div class="encabezado-partido">
           ${bloqueEquipoHTML(local, statsLocal, 'alineacion-izq', partido.homeTeam.crest, tabla, partido.homeTeam.id)}
-          <span class="vs">VS</span>
+          <div class="centro-partido">
+            <span class="vs-circulo">VS</span>
+            <div class="marcador-estimado-badge" title="Marcador más probable estimado por el modelo">
+              <span class="marcador-estimado-label">Estimado</span>
+              <strong class="marcador-estimado-val">${pronosticos.marcadorProbable}</strong>
+            </div>
+          </div>
           ${bloqueEquipoHTML(visita, statsVisita, 'alineacion-der', partido.awayTeam.crest, tabla, partido.awayTeam.id)}
         </div>
-        <div class="info-partido-fila">
-          <p class="info-partido">${liga} · ${fechaTexto}, ${horaTexto} · marcador probable <strong>${pronosticos.marcadorProbable}</strong></p>
-          ${chipCuentaRegresiva(partido.utcDate)}
-           <span class="calidad-datos ${calidadDatos.clase}"><span class="calidad-datos-punto"></span>${calidadDatos.texto}</span>
-        </div>
+
         ${h2hHTML(h2h)}
         ${pronosticos.pocaData ? `<p class="aviso-datos">⚠ Datos limitados (${pronosticos.partidosMin} partidos analizados) · pronóstico menos confiable</p>` : ''}
         ${pronosticos.sinNadaEnJuego ? `<p class="aviso-datos">⚠ Uno de los equipos ya no se juega nada en la tabla (título o descenso resuelto) · pronóstico menos confiable</p>` : ''}
