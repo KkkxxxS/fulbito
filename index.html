@@ -55,7 +55,6 @@
             <a href="#entrar">Entrar</a>
         </nav>
         <button class="landing-topbar-cta" onclick="cambiarVista('pronosticos')">Abrir app</button>
-        <a href="fulbito-pro.html" class="landing-topbar-cta" style="margin-left:8px;">PRO</a>
     </div>
 </header>
 
@@ -103,7 +102,7 @@
 <section class="hero-compacto">
     <div class="hero-textos">
         <div class="hero-eyebrow"><span class="hero-eyebrow-punto"></span> Fulbito</div>
-        <h1>Hola, Axelito</h1>
+        <h1 id="hero-saludo">Bienvenido a Fulbito</h1>
         <p>Tu centro de inteligencia predictiva para fútbol. Estado del motor, análisis y picks en un solo lugar.</p>
     </div>
 
@@ -679,6 +678,22 @@
 
   let ligaSeleccionada = 'TODAS';
   let partidosDelRango = [];
+
+  // ============ SALUDO DINÁMICO SEGÚN LA HORA LOCAL DEL USUARIO ============
+  // Antes mostraba "Hola, Axelito" (hardcodeado), ahora saluda según la hora
+  // del visitante para que cualquier persona que abra la página sienta que el
+  // mensaje es para ella. Si el navegador no expone la hora, queda el genérico.
+  function aplicarSaludoDinamico() {
+    const el = document.getElementById('hero-saludo');
+    if (!el) return;
+    const hora = new Date().getHours();
+    let saludo;
+    if (hora >= 5 && hora < 12) saludo = 'Buenos días';
+    else if (hora >= 12 && hora < 19) saludo = 'Buenas tardes';
+    else saludo = 'Buenas noches';
+    el.textContent = saludo + ', bienvenido a Fulbito';
+  }
+  aplicarSaludoDinamico();
 
   // ============ VISTAS (app shell) ============
   let vistaActual = 'inicio';
