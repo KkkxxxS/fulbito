@@ -720,11 +720,25 @@
     if (vista === 'favoritos') {
       cargarFavoritos();
      } else if (vista === 'analitica') {
-      actualizarHistorialYCalibracion().then(h => renderHistorial(calcularEstadisticasHistorial(h), h));
+      // Re-asegurar sync con backend antes de mostrar, así si el usuario
+      // borró caché y abre "Analítica" ve su historial completo.
+      cargarHistorialCompartido().finally(() =>
+        actualizarHistorialYCalibracion().then(h => renderHistorial(calcularEstadisticasHistorial(h), h))
+      );
     } else if (vista === 'historial') {
-      actualizarHistorialYCalibracion().then(h => renderHistorialCompleto(h));
+      cargarHistorialCompartido().finally(() =>
+        actualizarHistorialYCalibracion().then(h => renderHistorialCompleto(h))
+      );
     } else if (vista === 'mispredicciones') {
-      actualizarHistorialYCalibracion().then(() => renderMisPredicciones());
+      cargarHistorialCompartido().finally(() =>
+        actualizarHistorialYCalibracion().then(() => renderMisPredicciones())
+      );
+    } else if (vista === 'inicio') {
+      // También en inicio: refrescar desde backend para que los KPIs reflejen
+      // lo último aunque hayas limpiado caché.
+      cargarHistorialCompartido().finally(() =>
+        actualizarHistorialYCalibracion().then(() => actualizarKPIsHome())
+      );
     }
   }
 
@@ -2446,38 +2460,63 @@
   }
 
   // ============ TRACKEADOR DE ACIERTOS ============
+  // El historial se guarda en el backend (servidor) para que sobreviva a la
+  // limpieza de caché del navegador. localStorage es solo un espejo/cache local
+  // que se rehidrata al cargar la página. Estrategia: "remote-first, local-fallback".
   const CLAVE_HISTORIAL = 'fulbito_historial_pronosticos';
+  const CLAVE_HISTORIAL_SINCRO = 'fulbito_historial_sincro';
+  let historialSincronizando = false;
+  let historialSincronizadoEnSesion = false;
 
   async function cargarHistorialCompartido() {
     try {
       const respuesta = await fetch(`${BACKEND_URL}/api/historial`);
       if (!respuesta.ok) return;
       const datos = await respuesta.json();
-      const historial = Array.isArray(datos.historial) ? datos.historial : [];
-      if (historial.length > 0) {
-        localStorage.setItem(CLAVE_HISTORIAL, JSON.stringify(historial.slice(-200)));
+      const remoto = Array.isArray(datos.historial) ? datos.historial : [];
+      const local = leerHistorialLocal();
+      // Merge: priorizar remoto (la fuente de verdad), pero incorporar entradas
+      // locales más nuevas que el remoto no tenga todavía (migración de dispositivos
+      // o recuperación tras limpieza de caché).
+      const idsRemotos = new Set(remoto.map(h => h.partidoId));
+      const soloLocal = local.filter(h => !idsRemotos.has(h.partidoId));
+      const fusionado = [...remoto, ...soloLocal].slice(-200);
+      // Si el local tenía algo que el remoto no, subimos el merge.
+      if (soloLocal.length > 0) {
+        sincronizarHistorialRemoto(fusionado);
       }
+      if (fusionado.length > 0) {
+        localStorage.setItem(CLAVE_HISTORIAL, JSON.stringify(fusionado));
+      }
+      localStorage.setItem(CLAVE_HISTORIAL_SINCRO, String(Date.now()));
+      historialSincronizadoEnSesion = true;
     } catch (e) {
-      console.warn('No se pudo cargar el historial compartido:', e);
+      console.warn('No se pudo cargar el historial compartido (usando local):', e);
     }
   }
 
   async function sincronizarHistorialRemoto(historial) {
+    if (historialSincronizando) return; // Evitar envíos concurrentes
+    historialSincronizando = true;
     try {
       const respuesta = await fetch(`${BACKEND_URL}/api/historial`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ historial: historial.slice(-200) })
       });
-      if (!respuesta.ok) {
+      if (respuesta.ok) {
+        localStorage.setItem(CLAVE_HISTORIAL_SINCRO, String(Date.now()));
+      } else {
         console.warn('Historial local guardado sin sincronizar con el backend');
       }
     } catch (e) {
       console.warn('Sincronización del historial compartido no disponible:', e);
+    } finally {
+      historialSincronizando = false;
     }
   }
 
-  function leerHistorial() {
+  function leerHistorialLocal() {
     try {
       const crudo = localStorage.getItem(CLAVE_HISTORIAL);
       return crudo ? JSON.parse(crudo) : [];
@@ -2486,10 +2525,17 @@
     }
   }
 
+  function leerHistorial() {
+    // Si el remoto ya cargó en esta sesión, usar el local (que es espejo del remoto).
+    // Si todavía no sincronizó pero hay datos locales, usarlos (modo offline).
+    return leerHistorialLocal();
+  }
+
   function guardarHistorial(historial) {
     try {
       const recortado = historial.slice(-200);
       localStorage.setItem(CLAVE_HISTORIAL, JSON.stringify(recortado));
+      // Sincronizar en background, no bloqueante
       sincronizarHistorialRemoto(recortado);
     } catch (e) {}
   }

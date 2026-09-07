@@ -2830,9 +2830,9 @@ input {
 .filtro-periodo,
 .filtro-btn {
   appearance: none;
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(173, 186, 202, 0.14);
-  color: var(--text-muted);
+  background: var(--card-2);
+  border: 1px solid var(--card-border-soft);
+  color: var(--text);
   font-family: var(--font-body);
   font-weight: 600;
   font-size: 0.82rem;
@@ -2846,17 +2846,18 @@ input {
 .filtro-estado:hover,
 .filtro-periodo:hover,
 .filtro-btn:hover {
-  border-color: rgba(173, 186, 202, 0.22);
+  border-color: rgba(123, 225, 200, 0.28);
+  background: var(--card-3);
   color: var(--text);
 }
 
 .filtro-estado.activo,
 .filtro-periodo.activo,
 .filtro-btn.activo {
-  background: linear-gradient(135deg, rgba(123, 225, 200, 0.14), rgba(123, 225, 200, 0.06));
-  border-color: rgba(123, 225, 200, 0.3);
+  background: linear-gradient(135deg, rgba(123, 225, 200, 0.18), rgba(123, 225, 200, 0.08));
+  border-color: rgba(123, 225, 200, 0.4);
   color: var(--brand-2);
-  box-shadow: inset 0 0 0 1px rgba(123, 225, 200, 0.1);
+  box-shadow: inset 0 0 0 1px rgba(123, 225, 200, 0.12);
 }
 
 .analitica-controles {
