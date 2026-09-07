@@ -944,45 +944,63 @@
     }
   }
 
-  // ============ MODELO DE POISSON ============
-  function factorial(n) {
-    let r = 1;
-    for (let i = 2; i <= n; i++) r *= i;
-    return r;
-  }
+  // ============ MODELO DE POISSON (optimizado) ============
+  // Tabla de factoriales precalculada (0! a 8!) y de términos lambda^k / k!
+  // para evitar Math.pow y Math.exp repetidos en cada predicción de partido.
+  const FACTORIALES = [1, 1, 2, 6, 24, 120, 720, 5040, 40320];
 
   function poisson(k, lambda) {
-    return (Math.pow(lambda, k) * Math.exp(-lambda)) / factorial(k);
+    if (k < 0 || k > 8) return 0;
+    const num = Math.pow(lambda, k) * Math.exp(-lambda);
+    const den = FACTORIALES[k] || FACTORIALES[8];
+    return num / den;
   }
 
   const RHO_DIXON_COLES = -0.04; // calibrado más cercano a datos verificados para mayor precisión
 
-  function tauDixonColes(golesLocal, golesVisita, lambdaLocal, lambdaVisita, rho) {
-    if (golesLocal === 0 && golesVisita === 0) return 1 - (lambdaLocal * lambdaVisita * rho);
-    if (golesLocal === 0 && golesVisita === 1) return 1 + (lambdaLocal * rho);
-    if (golesLocal === 1 && golesVisita === 0) return 1 + (lambdaVisita * rho);
-    if (golesLocal === 1 && golesVisita === 1) return 1 - rho;
+  function tauDixonColes(gl, gv, lL, lV, rho) {
+    if (gl === 0 && gv === 0) return 1 - (lL * lV * rho);
+    if (gl === 0 && gv === 1) return 1 + (lL * rho);
+    if (gl === 1 && gv === 0) return 1 + (lV * rho);
+    if (gl === 1 && gv === 1) return 1 - rho;
     return 1;
   }
 
+  // Matriz como array plano indexado por [i * dim + j] para mejor cache locality
   function matrizMarcadores(lambdaLocal, lambdaVisita, maxGoles = 8, rho = RHO_DIXON_COLES) {
-    const matriz = [];
+    const dim = maxGoles + 1;
+    const matriz = new Float64Array(dim * dim);
+    const poissonL = new Float64Array(dim);
+    const poissonV = new Float64Array(dim);
+    const expL = Math.exp(-lambdaLocal);
+    const expV = Math.exp(-lambdaVisita);
+    let potenciaL = 1, potenciaV = 1;
+    for (let k = 0; k < dim; k++) {
+      poissonL[k] = potenciaL * expL / FACTORIALES[k];
+      poissonV[k] = potenciaV * expV / FACTORIALES[k];
+      potenciaL *= lambdaLocal;
+      potenciaV *= lambdaVisita;
+    }
+    const lambdaLRho = lambdaLocal * rho;
+    const lambdaVRho = lambdaVisita * rho;
+    const lambdaLVRho = lambdaLocal * lambdaVisita * rho;
     let sumaTotal = 0;
-    for (let i = 0; i <= maxGoles; i++) {
-      matriz[i] = [];
-      for (let j = 0; j <= maxGoles; j++) {
-        const base = poisson(i, lambdaLocal) * poisson(j, lambdaVisita);
-        const ajustado = base * tauDixonColes(i, j, lambdaLocal, lambdaVisita, rho);
-        matriz[i][j] = ajustado;
-        sumaTotal += ajustado;
+    for (let i = 0; i < dim; i++) {
+      for (let j = 0; j < dim; j++) {
+        const base = poissonL[i] * poissonV[j];
+        let tau = 1;
+        if (i === 0 && j === 0) tau = 1 - lambdaLVRho;
+        else if (i === 0 && j === 1) tau = 1 + lambdaLRho;
+        else if (i === 1 && j === 0) tau = 1 + lambdaVRho;
+        else if (i === 1 && j === 1) tau = 1 - rho;
+        const val = base * tau;
+        matriz[i * dim + j] = val;
+        sumaTotal += val;
       }
     }
-    for (let i = 0; i <= maxGoles; i++) {
-      for (let j = 0; j <= maxGoles; j++) {
-        matriz[i][j] = matriz[i][j] / sumaTotal;
-      }
-    }
-    return matriz;
+    const invSuma = 1 / sumaTotal;
+    for (let n = 0; n < matriz.length; n++) matriz[n] *= invSuma;
+    return { data: matriz, dim, get(i, j) { return matriz[i * dim + j]; } };
   }
 
   const FACTOR_LOCALIA_BASE = 1.08; // mayor impacto de localía para acercarse al resultado real
@@ -1197,7 +1215,7 @@
     let s = 0;
     for (let i = 0; i <= maxGoles; i++) {
       for (let j = 0; j <= maxGoles; j++) {
-        if (condicion(i, j)) s += matriz[i][j];
+        if (condicion(i, j)) s += matriz.get(i, j);
       }
     }
     return s;
@@ -1276,7 +1294,7 @@
     let celdas = [];
     for (let i = 0; i <= maxGoles; i++) {
       for (let j = 0; j <= maxGoles; j++) {
-        celdas.push({ i, j, p: matriz[i][j] });
+        celdas.push({ i, j, p: matriz.get(i, j) });
       }
     }
     celdas.sort((a, b) => b.p - a.p);
@@ -1503,7 +1521,7 @@
 
     const rhoUsado = calibracionActual.rhoDixonColes ?? RHO_DIXON_COLES;
     const matriz = matrizMarcadores(lambdaLocal, lambdaVisita, 8, rhoUsado);
-    const maxGoles = matriz.length - 1;
+    const maxGoles = matriz.dim - 1;
 
     const { candidatos, marcadorProbable, probMarcador, top3Marcadores, favoritoLocal, nombreFavorito } =
       generarCandidatosMercado(matriz, maxGoles, nombreLocal, nombreVisita);

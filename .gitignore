@@ -1,1 +1,45 @@
+# Dependencies
 node_modules/
+
+# Build outputs
+dist/
+build/
+
+# Environment files (NEVER commit API keys)
+.env
+.env.local
+.env.*.local
+
+# Server data (contains user history)
+server/data/
+server/data/*/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Cache directories
+.cache/
+.parcel-cache/
+.eslintcache
+
+# Coverage
+coverage/
+.nyc_output/
+
+# Local testing
+test-output/
+*.local

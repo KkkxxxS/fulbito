@@ -1,0 +1,24 @@
+{
+  "name": "fulbito",
+  "version": "1.0.0",
+  "description": "Pronósticos de fútbol basados en un modelo estadístico (Poisson + Dixon-Coles)",
+  "private": true,
+  "scripts": {
+    "start": "cd server && node server.js",
+    "dev": "cd server && node --watch server.js",
+    "verify": "cd server && node verify-model.js",
+    "lint": "node -c app-model.js && node -c app-ui.js && node -c server/server.js"
+  },
+  "keywords": [
+    "futbol",
+    "pronosticos",
+    "poisson",
+    "dixon-coles",
+    "estadistica"
+  ],
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  }
+}

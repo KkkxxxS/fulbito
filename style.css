@@ -1,5 +1,19 @@
 @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=IBM+Plex+Mono:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap');
 
+/* ============ OPTIMIZACIONES DE RENDIMIENTO ============ */
+/* will-change para elementos animados comunes; reduce repaints en scroll */
+.app-nav, .modal-overlay, .tooltip-icono, .partido-card, .fila-mercado {
+  will-change: transform;
+}
+/* Habilitar aceleración GPU en todo el documento cuando se hacen transiciones */
+.app-nav { transform: translateZ(0); }
+/* Containment para reducir el ámbito de los recálculos de layout */
+.partido-card, .fila-mercado, .motor-card { contain: layout style; }
+/* Imágenes responsivas por defecto */
+img { max-width: 100%; height: auto; }
+/* Suavizar scroll en iOS */
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+
 :root {
   --bg: #070b12;
   --bg-soft: #0d1620;

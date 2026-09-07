@@ -2,7 +2,9 @@ const express = require('express');
 const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
+const compression = require('compression');
 const app = express();
+
 const ORIGENES_PERMITIDOS = new Set([
   'https://kkkxxxs.github.io',
   'https://fulbito-flame.vercel.app',
@@ -13,6 +15,17 @@ const ORIGENES_PERMITIDOS = new Set([
   'null'
 ]);
 
+// Compresión gzip para todas las respuestas (mejora ~70% el tamaño transferido)
+app.use(compression());
+
+// Cabeceras de seguridad y caché
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  next();
+});
+
 app.use(express.json({ limit: '2mb' }));
 app.use(cors({
   origin: (origin, callback) => {
@@ -21,15 +34,12 @@ app.use(cors({
   }
 }));
 
-// La API key se lee de la variable de entorno FOOTBALL_DATA_API_KEY (configúrala en
-// Render -> tu servicio -> Environment). Se deja un valor de respaldo para que el
-// servidor no se rompa si todavía no la configuraste, pero lo ideal es borrar ese
-// respaldo una vez que la variable de entorno esté funcionando, y regenerar la key
-// en football-data.org si este archivo llegó a subirse a un repo público con la key adentro.
+// La API key se lee de la variable de entorno FOOTBALL_DATA_API_KEY.
+// Configúrala en Render -> tu servicio -> Environment. NO la commitees.
 const API_KEY = process.env.FOOTBALL_DATA_API_KEY;
 const BASE_URL = "https://api.football-data.org/v4";
 
-if (!process.env.FOOTBALL_DATA_API_KEY) {
+if (!API_KEY) {
   console.warn("ADVERTENCIA: falta FOOTBALL_DATA_API_KEY. Configúrala en las variables de entorno del servicio.");
 }
 
@@ -44,23 +54,42 @@ function asegurarHistorialGlobal() {
   }
 }
 
+let historialCacheMemoria = null;
+let historialCacheExpira = 0;
+const TTL_HISTORIAL_MEMORIA = 30 * 1000;
+
 function leerHistorialGlobal() {
+  const ahora = Date.now();
+  if (historialCacheMemoria && ahora < historialCacheExpira) {
+    return historialCacheMemoria;
+  }
   try {
     asegurarHistorialGlobal();
     const contenido = fs.readFileSync(HISTORIAL_PATH, 'utf8');
     const datos = JSON.parse(contenido);
-    return Array.isArray(datos) ? datos : [];
+    historialCacheMemoria = Array.isArray(datos) ? datos : [];
+    historialCacheExpira = ahora + TTL_HISTORIAL_MEMORIA;
+    return historialCacheMemoria;
   } catch (error) {
     console.warn('No se pudo leer el historial global:', error.message);
     return [];
   }
 }
 
+let escrituraPendiente = null;
 function guardarHistorialGlobal(historial) {
   try {
     asegurarHistorialGlobal();
     const recortado = Array.isArray(historial) ? historial.slice(-200) : [];
-    fs.writeFileSync(HISTORIAL_PATH, JSON.stringify(recortado, null, 2), 'utf8');
+    historialCacheMemoria = recortado;
+    historialCacheExpira = Date.now() + TTL_HISTORIAL_MEMORIA;
+    // Debounce: si llegan varias escrituras seguidas, esperamos la última.
+    if (escrituraPendiente) clearTimeout(escrituraPendiente);
+    escrituraPendiente = setTimeout(() => {
+      fs.promises.writeFile(HISTORIAL_PATH, JSON.stringify(recortado, null, 2), 'utf8')
+        .catch(err => console.warn('No se pudo guardar el historial global:', err.message));
+      escrituraPendiente = null;
+    }, 500);
     return recortado;
   } catch (error) {
     console.warn('No se pudo guardar el historial global:', error.message);
@@ -73,6 +102,7 @@ function guardarHistorialGlobal(historial) {
 // que un usuario distinto pide lo mismo. Se pierde al reiniciar el servidor, pero
 // eso esta bien para este caso de uso.
 const cache = new Map();
+const MAX_CACHE_SIZE = 200; // Límite duro para evitar crecimiento ilimitado
 
 function obtenerDeCache(clave, ttlMs) {
   const entrada = cache.get(clave);
@@ -85,6 +115,11 @@ function obtenerDeCache(clave, ttlMs) {
 }
 
 function guardarEnCache(clave, datos) {
+  // LRU simple: si supera el máximo, eliminamos el más antiguo
+  if (cache.size >= MAX_CACHE_SIZE) {
+    const primeraClave = cache.keys().next().value;
+    if (primeraClave !== undefined) cache.delete(primeraClave);
+  }
   cache.set(clave, { datos, guardadoEn: Date.now() });
 }
 
@@ -94,7 +129,14 @@ const TTL_H2H = 60 * 60 * 1000;          // 1 hora: el historial directo cambia 
 const TTL_STANDINGS = 30 * 60 * 1000;    // 30 minutos
 const COMPETICIONES_PERMITIDAS = new Set(['PL', 'PD', 'BL1', 'SA', 'FL1', 'CL', 'DED', 'ELC', 'BSA', 'PPL']);
 
-async function fetchFootballData(url) {
+const FETCH_TIMEOUT_MS = 12000;
+const agenteHTTPS = require('https').Agent ? new (require('https').Agent)({
+  keepAlive: true,
+  maxSockets: 10,
+  keepAliveMsecs: 30000
+}) : undefined;
+
+async function fetchFootballData(url, intentos = 2) {
   if (!API_KEY) {
     const error = new Error('La fuente de datos no está configurada.');
     error.status = 503;
@@ -102,12 +144,20 @@ async function fetchFootballData(url) {
   }
 
   const controlador = new AbortController();
-  const temporizador = setTimeout(() => controlador.abort(), 12000);
+  const temporizador = setTimeout(() => controlador.abort(), FETCH_TIMEOUT_MS);
   try {
     return await fetch(url, {
-      headers: { "X-Auth-Token": API_KEY },
-      signal: controlador.signal
+      headers: { "X-Auth-Token": API_KEY, "Accept-Encoding": "gzip" },
+      signal: controlador.signal,
+      agent: agenteHTTPS
     });
+  } catch (e) {
+    // Reintento único ante errores de red transitorios
+    if (intentos > 1 && (e.name === 'AbortError' || e.code === 'ECONNRESET' || e.code === 'ETIMEDOUT')) {
+      clearTimeout(temporizador);
+      return fetchFootballData(url, intentos - 1);
+    }
+    throw e;
   } finally {
     clearTimeout(temporizador);
   }
@@ -142,6 +192,7 @@ function limitarPeticiones(req, res, next) {
   }
 
   if (registro.cuenta >= MAX_REQUESTS_POR_VENTANA) {
+    res.setHeader('Retry-After', Math.ceil((registro.inicioVentana + VENTANA_MS - ahora) / 1000));
     return res.status(429).json({ error: "Demasiadas peticiones, intenta de nuevo en un momento." });
   }
 
@@ -151,11 +202,15 @@ function limitarPeticiones(req, res, next) {
 
 app.use(limitarPeticiones);
 
-// Limpieza periodica del mapa de rate limiting para que no crezca indefinidamente
+// Limpieza del mapa de rate limiting y de caché cada 5 minutos
 setInterval(() => {
   const ahora = Date.now();
   for (const [ip, registro] of contadorPorIP.entries()) {
     if (ahora - registro.inicioVentana > VENTANA_MS * 2) contadorPorIP.delete(ip);
+  }
+  // Limpieza del caché: borrar entradas vencidas para liberar memoria
+  for (const [clave, entrada] of cache.entries()) {
+    if (ahora - entrada.guardadoEn > 60 * 60 * 1000) cache.delete(clave);
   }
 }, 5 * 60 * 1000);
 
@@ -163,14 +218,17 @@ setInterval(() => {
 // Livianas a propósito: no llaman a football-data.org, así un cronjob de keep-alive
 // (cron-job.org, UptimeRobot, etc) no gasta nada de la cuota diaria de la API externa.
 app.get('/', (req, res) => {
+  res.setHeader('Cache-Control', 'public, max-age=10');
   res.json({ ok: true, servicio: "fulbito-backend", hora: new Date().toISOString() });
 });
 
 app.get('/health', (req, res) => {
+  res.setHeader('Cache-Control', 'public, max-age=30');
   res.json({ ok: true });
 });
 
 app.get('/api/historial', (req, res) => {
+  res.setHeader('Cache-Control', 'public, max-age=15');
   res.json({ ok: true, historial: leerHistorialGlobal() });
 });
 
@@ -185,6 +243,22 @@ app.put('/api/historial', (req, res) => {
   const guardado = guardarHistorialGlobal(historial);
   res.json({ ok: true, historial: guardado, total: guardado.length });
 });
+
+// Helper: responde con ETag para ahorrar ancho de banda cuando el cliente ya tiene la misma versión
+const crypto = require('crypto');
+function generarETag(datos) {
+  return crypto.createHash('md5').update(JSON.stringify(datos)).digest('hex').slice(0, 16);
+}
+
+function responderConCache(req, res, datos, maxAgeSegundos = 60) {
+  res.setHeader('Cache-Control', `public, max-age=${maxAgeSegundos}`);
+  const etag = `"${generarETag(datos)}"`;
+  if (req.headers['if-none-match'] === etag) {
+    return res.status(304).end();
+  }
+  res.setHeader('ETag', etag);
+  res.json(datos);
+}
 
 // Endpoint: partidos por rango de fechas
 app.get('/api/partidos', async (req, res) => {
@@ -203,7 +277,7 @@ app.get('/api/partidos', async (req, res) => {
 
   const claveCache = `partidos-${competitions}-${dateFrom}-${dateTo}`;
   const cacheado = obtenerDeCache(claveCache, TTL_PARTIDOS);
-  if (cacheado) return res.json(cacheado);
+  if (cacheado) return responderConCache(req, res, cacheado, 300);
 
   try {
     const url = `${BASE_URL}/matches?competitions=${competitions}&dateFrom=${dateFrom}&dateTo=${dateTo}`;
@@ -215,7 +289,7 @@ app.get('/api/partidos', async (req, res) => {
     }
 
     guardarEnCache(claveCache, datos);
-    res.json(datos);
+    responderConCache(req, res, datos, 300);
   } catch (e) {
     enviarErrorFuente(res, e, '/api/partidos');
   }
@@ -228,7 +302,7 @@ app.get('/api/equipo/:id/stats', async (req, res) => {
   }
   const claveCache = `stats-${req.params.id}`;
   const cacheado = obtenerDeCache(claveCache, TTL_STATS_EQUIPO);
-  if (cacheado) return res.json(cacheado);
+  if (cacheado) return responderConCache(req, res, cacheado, 900);
 
   try {
     const url = `${BASE_URL}/teams/${req.params.id}/matches?status=FINISHED&limit=18`;
@@ -240,7 +314,7 @@ app.get('/api/equipo/:id/stats', async (req, res) => {
     }
 
     guardarEnCache(claveCache, datos);
-    res.json(datos);
+    responderConCache(req, res, datos, 900);
   } catch (e) {
     enviarErrorFuente(res, e, '/api/equipo/:id/stats');
   }
@@ -253,7 +327,7 @@ app.get('/api/partido/:id/h2h', async (req, res) => {
   }
   const claveCache = `h2h-${req.params.id}`;
   const cacheado = obtenerDeCache(claveCache, TTL_H2H);
-  if (cacheado) return res.json(cacheado);
+  if (cacheado) return responderConCache(req, res, cacheado, 3600);
 
   try {
     const url = `${BASE_URL}/matches/${req.params.id}/head2head?limit=10`;
@@ -265,7 +339,7 @@ app.get('/api/partido/:id/h2h', async (req, res) => {
     }
 
     guardarEnCache(claveCache, datos);
-    res.json(datos);
+    responderConCache(req, res, datos, 3600);
   } catch (e) {
     enviarErrorFuente(res, e, '/api/partido/:id/h2h');
   }
@@ -278,7 +352,7 @@ app.get('/api/liga/:code/standings', async (req, res) => {
   }
   const claveCache = `standings-${req.params.code}`;
   const cacheado = obtenerDeCache(claveCache, TTL_STANDINGS);
-  if (cacheado) return res.json(cacheado);
+  if (cacheado) return responderConCache(req, res, cacheado, 1800);
 
   try {
     const url = `${BASE_URL}/competitions/${req.params.code}/standings`;
@@ -290,13 +364,39 @@ app.get('/api/liga/:code/standings', async (req, res) => {
     }
 
     guardarEnCache(claveCache, datos);
-    res.json(datos);
+    responderConCache(req, res, datos, 1800);
   } catch (e) {
     enviarErrorFuente(res, e, '/api/liga/:code/standings');
   }
 });
 
+// Manejador de errores global
+app.use((err, req, res, next) => {
+  console.error('Error no manejado:', err);
+  res.status(500).json({ error: true, mensaje: 'Error interno del servidor.' });
+});
+
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
+const servidor = app.listen(PORT, () => {
   console.log(`Servidor de fulbito corriendo en el puerto ${PORT}`);
 });
+
+// Graceful shutdown: cerrar limpiamente ante SIGTERM/SIGINT (importante en Render/Railway)
+function cerrarServidor(senial) {
+  console.log(`\nRecibida señal ${senial}, cerrando servidor limpiamente...`);
+  servidor.close(() => {
+    console.log('Servidor cerrado.');
+    if (escrituraPendiente) {
+      clearTimeout(escrituraPendiente);
+    }
+    process.exit(0);
+  });
+  // Forzar cierre tras 10s si las conexiones no se cierran
+  setTimeout(() => {
+    console.warn('Forzando cierre tras timeout.');
+    process.exit(1);
+  }, 10000).unref();
+}
+
+process.on('SIGTERM', () => cerrarServidor('SIGTERM'));
+process.on('SIGINT', () => cerrarServidor('SIGINT'));
