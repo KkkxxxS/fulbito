@@ -2959,6 +2959,10 @@ input {
 .pie-pagina { position: relative; }
 .pie-pagina::before {
   content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
 
 /* ============ FILTROS DEL HISTORIAL ============ */
 .historial-filtros {
@@ -3631,4 +3635,694 @@ input {
 }
 .fila-header {
   gap: 6px;
+}
+
+/* ================================================================
+   ANALÍTICA DEL MOTOR — ESTILOS COMPLETOS
+   ================================================================ */
+
+/* ---- Contenedor base de la vista ---- */
+#vista-analitica {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px 60px;
+}
+
+#bloque-historial {
+  margin-top: 8px;
+}
+
+/* ---- Cabecera principal ---- */
+.vista-analitica-header {
+  text-align: center;
+  padding: 32px 20px 24px;
+  max-width: 780px;
+  margin: 0 auto 8px;
+}
+
+.vista-analitica-header h2 {
+  margin: 0 0 8px;
+  font-family: var(--font-display);
+  font-size: clamp(1.7rem, 4vw, 2.2rem);
+  letter-spacing: -0.06em;
+  color: var(--text);
+  background: linear-gradient(135deg, var(--text) 0%, var(--brand-2) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.vista-analitica-header p {
+  color: var(--text-muted);
+  font-size: 0.92rem;
+  line-height: 1.55;
+  margin: 0;
+}
+
+/* ---- Grid de Telemetría (4 KPI cards) ---- */
+.telemetria-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 28px;
+}
+
+@media (max-width: 1000px) {
+  .telemetria-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 560px) {
+  .telemetria-grid { grid-template-columns: 1fr; }
+}
+
+.telemetria-card {
+  background: linear-gradient(160deg, rgba(20, 32, 44, 0.98) 0%, rgba(11, 16, 22, 0.96) 100%);
+  border: 1px solid rgba(173, 186, 202, 0.13);
+  border-radius: 18px;
+  padding: 18px 18px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.035), 0 16px 28px -22px rgba(0,0,0,0.85);
+  transition: all 0.2s var(--ease);
+  position: relative;
+  overflow: hidden;
+}
+
+.telemetria-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 18px;
+  background: radial-gradient(ellipse at top left, rgba(123,225,200,0.05) 0%, transparent 65%);
+  pointer-events: none;
+}
+
+.telemetria-card:hover {
+  border-color: rgba(123, 225, 200, 0.22);
+  transform: translateY(-2px);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 20px 36px -24px rgba(0,0,0,0.8);
+}
+
+.telemetria-card-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.telemetria-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+  background: rgba(123,225,200,0.1);
+  border: 1px solid rgba(123,225,200,0.18);
+}
+
+.telemetria-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border: 1px solid transparent;
+  margin-left: auto;
+}
+
+.telemetria-badge.ok   { background: rgba(95,227,164,0.14); color: var(--green); border-color: rgba(95,227,164,0.28); }
+.telemetria-badge.info { background: rgba(123,225,200,0.12); color: var(--brand-2); border-color: rgba(123,225,200,0.22); }
+.telemetria-badge.warn { background: rgba(242,196,116,0.13); color: var(--gold); border-color: rgba(242,196,116,0.26); }
+
+.telemetria-valor {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 2rem;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  color: var(--text);
+}
+
+.telemetria-label {
+  color: var(--text-muted);
+  font-size: 0.76rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+}
+
+.telemetria-progreso {
+  height: 5px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.06);
+  overflow: hidden;
+  margin-top: 2px;
+}
+
+.telemetria-progreso-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--brand), var(--green));
+  box-shadow: 0 0 12px rgba(100,228,169,0.4);
+  transition: width 0.6s var(--ease);
+}
+
+.telemetria-sub {
+  color: var(--text-dim);
+  font-size: 0.72rem;
+  line-height: 1.45;
+  margin-top: 2px;
+}
+
+/* ---- Wrapper de controles / filtros pill ---- */
+.analitica-controles-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.analitica-controles-label {
+  color: var(--text-muted);
+  font-size: 0.76rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+/* Sobreescribir el pill dentro de analitica para estilo glaseado */
+.analitica-controles .filtro-btn {
+  border-radius: 999px !important;
+  padding: 7px 14px !important;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(173,186,202,0.14);
+  color: var(--text-muted);
+  font-size: 0.81rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s var(--ease);
+  white-space: nowrap;
+}
+
+.analitica-controles .filtro-btn:hover {
+  background: rgba(123,225,200,0.08);
+  border-color: rgba(123,225,200,0.22);
+  color: var(--text);
+}
+
+.analitica-controles .filtro-btn.activo {
+  background: linear-gradient(135deg, rgba(123,225,200,0.18), rgba(123,225,200,0.07));
+  border-color: rgba(123,225,200,0.38);
+  color: var(--brand-2);
+  box-shadow: 0 0 16px rgba(123,225,200,0.12), inset 0 0 0 1px rgba(123,225,200,0.1);
+}
+
+/* ================================================================
+   ESTADO VACÍO — Auditoría en proceso
+   ================================================================ */
+.auditoria-vacia-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-bottom: 32px;
+}
+
+.auditoria-vacia-card {
+  background: linear-gradient(160deg, rgba(18, 29, 44, 0.97) 0%, rgba(11, 16, 22, 0.94) 100%);
+  border: 1px solid rgba(123,225,200,0.16);
+  border-radius: 20px;
+  padding: 28px 26px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), 0 16px 28px -22px rgba(0,0,0,0.85);
+}
+
+.auditoria-vacia-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.auditoria-vacia-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(123,225,200,0.14), rgba(123,225,200,0.06));
+  border: 1px solid rgba(123,225,200,0.24);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  flex-shrink: 0;
+}
+
+.auditoria-vacia-head h3 {
+  margin: 0 0 6px;
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  letter-spacing: -0.04em;
+  color: var(--text);
+}
+
+.auditoria-vacia-head p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.86rem;
+  line-height: 1.55;
+}
+
+.auditoria-tips-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+@media (max-width: 700px) {
+  .auditoria-tips-grid { grid-template-columns: 1fr; }
+}
+
+.auditoria-tip {
+  background: rgba(255,255,255,0.025);
+  border: 1px solid rgba(173,186,202,0.1);
+  border-radius: 14px;
+  padding: 14px 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.auditoria-tip-num {
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--brand), var(--green));
+  color: #0a131b;
+  font-weight: 800;
+  font-size: 0.72rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.auditoria-tip strong {
+  color: var(--text);
+  font-size: 0.82rem;
+  display: block;
+}
+
+.auditoria-tip span {
+  color: var(--text-dim);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+/* ================================================================
+   BENCHMARK DE REFERENCIA
+   ================================================================ */
+.benchmark-referencia-card {
+  background: linear-gradient(160deg, rgba(18, 29, 44, 0.97) 0%, rgba(11, 16, 22, 0.94) 100%);
+  border: 1px solid rgba(173,186,202,0.12);
+  border-radius: 20px;
+  padding: 24px 22px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
+}
+
+.benchmark-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+
+.benchmark-head h4 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1rem;
+  letter-spacing: -0.03em;
+  color: var(--text);
+}
+
+.benchmark-head span {
+  color: var(--text-dim);
+  font-size: 0.78rem;
+}
+
+.benchmark-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+@media (max-width: 700px) {
+  .benchmark-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+.benchmark-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  background: rgba(255,255,255,0.025);
+  border: 1px solid rgba(173,186,202,0.09);
+  border-radius: 12px;
+}
+
+.benchmark-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.benchmark-info span:first-child {
+  color: var(--text-muted);
+  font-size: 0.74rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.benchmark-info strong {
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.benchmark-bar {
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.06);
+  overflow: hidden;
+}
+
+.benchmark-bar div {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--brand), var(--green));
+  box-shadow: 0 0 8px rgba(100,228,169,0.35);
+}
+
+/* ================================================================
+   PANEL DE CALIBRACIÓN — Módulo completo
+   ================================================================ */
+.panel-calibracion-modulo {
+  background: linear-gradient(160deg, rgba(18, 29, 44, 0.97) 0%, rgba(11, 16, 22, 0.94) 100%);
+  border: 1px solid rgba(173,186,202,0.12);
+  border-radius: 22px;
+  overflow: hidden;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), 0 20px 32px -24px rgba(0,0,0,0.85);
+}
+
+.panel-calibracion-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 22px 16px;
+  border-bottom: 1px solid rgba(173,186,202,0.08);
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.panel-calibracion-header h3 {
+  margin: 0 0 3px;
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  letter-spacing: -0.04em;
+  color: var(--text);
+}
+
+.panel-calibracion-header p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.panel-acciones-calibracion {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.boton-accion-secundario {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(173,186,202,0.14);
+  border-radius: 10px;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s var(--ease);
+  font-family: var(--font-body);
+  white-space: nowrap;
+}
+
+.boton-accion-secundario:hover {
+  background: rgba(123,225,200,0.08);
+  border-color: rgba(123,225,200,0.22);
+  color: var(--text);
+}
+
+/* ---- Grid de tarjetas de calibración ---- */
+.calibracion-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  padding: 20px 22px 22px;
+}
+
+@media (max-width: 900px) {
+  .calibracion-cards-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 560px) {
+  .calibracion-cards-grid { grid-template-columns: 1fr; }
+}
+
+.calibracion-telemetria-card {
+  background: rgba(255,255,255,0.025);
+  border: 1px solid rgba(173,186,202,0.1);
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: all 0.18s var(--ease);
+}
+
+.calibracion-telemetria-card:hover {
+  border-color: rgba(123,225,200,0.2);
+  background: rgba(123,225,200,0.03);
+}
+
+.telemetria-param-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.telemetria-param-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  flex-shrink: 0;
+  background: rgba(123,225,200,0.08);
+  border: 1px solid rgba(123,225,200,0.15);
+}
+
+.telemetria-param-nombre {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.3;
+  flex: 1;
+}
+
+.badge-telemetria {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border: 1px solid transparent;
+  white-space: nowrap;
+  margin-left: auto;
+}
+
+.badge-telemetria.estandar    { background: rgba(173,186,202,0.1); color: var(--text-muted); border-color: rgba(173,186,202,0.2); }
+.badge-telemetria.matematico  { background: rgba(123,225,200,0.12); color: var(--brand-2); border-color: rgba(123,225,200,0.22); }
+.badge-telemetria.autoajustado { background: rgba(95,227,164,0.13); color: var(--green); border-color: rgba(95,227,164,0.26); }
+
+.telemetria-param-cuerpo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.telemetria-param-val {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 1.5rem;
+  letter-spacing: -0.03em;
+  color: var(--text);
+  line-height: 1;
+}
+
+.telemetria-param-desc {
+  color: var(--text-dim);
+  font-size: 0.72rem;
+  line-height: 1.45;
+}
+
+.telemetria-param-progreso {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.progreso-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.progreso-label span:first-child {
+  color: var(--text-muted);
+  font-size: 0.69rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.progreso-label span:last-child {
+  color: var(--text-dim);
+  font-size: 0.7rem;
+  font-family: var(--font-mono);
+}
+
+.progreso-barra-bg {
+  height: 5px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.06);
+  overflow: hidden;
+}
+
+.progreso-barra-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--brand), var(--green));
+  box-shadow: 0 0 10px rgba(100,228,169,0.38);
+  transition: width 0.6s var(--ease);
+}
+
+/* ---- Categorías por liga/equipo ---- */
+.calibracion-categorias-bloque {
+  padding: 0 22px 22px;
+}
+
+.calibracion-categorias-bloque h4 {
+  margin: 0 0 12px;
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.calibracion-categorias-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.calibracion-fila-card {
+  background: rgba(255,255,255,0.022);
+  border: 1px solid rgba(173,186,202,0.09);
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.calibracion-fila-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.calibracion-fila-head span:first-child {
+  color: var(--text);
+  font-size: 0.84rem;
+  font-weight: 600;
+}
+
+.calibracion-fila-factor {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.calibracion-fila-factor code {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--gold);
+  background: rgba(242,196,116,0.1);
+  padding: 2px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(242,196,116,0.18);
+}
+
+.calibracion-vacio-card {
+  padding: 28px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.84rem;
+  line-height: 1.55;
+}
+
+/* ================================================================
+   MEDIA QUERIES ADICIONALES ANALÍTICA
+   ================================================================ */
+@media (max-width: 760px) {
+  .vista-analitica-header {
+    padding: 24px 16px 18px;
+  }
+  .panel-calibracion-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .panel-acciones-calibracion {
+    width: 100%;
+  }
+  .boton-accion-secundario {
+    flex: 1;
+    justify-content: center;
+  }
+  .benchmark-head {
+    flex-direction: column;
+    gap: 4px;
+  }
 }
