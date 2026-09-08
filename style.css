@@ -15,7 +15,7 @@ img { max-width: 100%; height: auto; }
 html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 
 :root {
-  --bg: #070b12;
+  --bg: #0b1120;
   --bg-soft: #0d1620;
   --bg-raised: #101b2a;
   --panel: #0f1a25;

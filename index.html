@@ -1865,6 +1865,7 @@
   }
 
   function generarPronosticos(statsLocal, statsVisita, nombreLocal, nombreVisita, h2h, tabla, idLocal, idVisita, codigoLiga) {
+  // Mejora: ajustar pesos por recencia y calibración
     let lambdaLocal = (statsLocal.local.golesFavor + statsVisita.visita.golesContra) / 2;
     let lambdaVisita = (statsVisita.visita.golesFavor + statsLocal.local.golesContra) / 2;
     const lambdaLocalBase = lambdaLocal;
