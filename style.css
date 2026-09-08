@@ -2770,7 +2770,7 @@ input {
 
 @keyframes girar { to { transform: rotate(360deg); } }
 
-.boton-reintentar {
+.boton-reiniciar {
   appearance: none;
   margin-top: 4px;
   padding: 9px 15px;
@@ -2784,7 +2784,7 @@ input {
   font-weight: 700;
 }
 
-.boton-reintentar:hover { background: #5ddcaa; }
+.boton-reiniciar:hover { background: #5ddcaa; }
 
 .calidad-datos {
   display: inline-flex;
