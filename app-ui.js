@@ -1,4 +1,4 @@
-  // ============ ICONOS POR MERCADO ============
+// ============ ICONOS POR MERCADO ============
   const ICONOS_MERCADO = {
     resultado: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="0.6" fill="currentColor"/></svg>',
     doble: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 5v6c0 5 3.4 8.5 8 11 4.6-2.5 8-6 8-11V5l-8-3Z"/><path d="m9 12 2 2 4-4"/></svg>',
@@ -1068,12 +1068,11 @@
         obtenerStatsEquipo(partido.awayTeam.id, codigoLiga, tabla)
       ]);
 
-      const pronosticos = generarPronosticos(
-        statsLocal, statsVisita, partido.homeTeam.name, partido.awayTeam.name,
-        h2h, tabla, partido.homeTeam.id, partido.awayTeam.id, codigoLiga
-      );
+      const respPron = await fetch('pronosticos.json');
+      const datosPron = respPron.ok ? await respPron.json() : null;
+      const pronosticos = datosPron && datosPron.pronosticos ? datosPron.pronosticos[partido.id]?.pronosticos || datosPron.pronosticos[Object.keys(datosPron.pronosticos)[0]]?.pronosticos : null;
 
-      htmlFinal += crearTarjetaHTML(partido, pronosticos, statsLocal, statsVisita, h2h, tabla);
+      htmlFinal += crearTarjetaHTML(partido, pronosticos || { seleccionados: [], marcadorProbable: '-', probMarcador: 0, top3Marcadores: [], catalogoCompleto: [], combosPartido: [], favoritoLocal: false, nombreFavorito: '', sinNadaEnJuego: false, parametrosModelo: {} }, statsLocal, statsVisita, h2h, tabla);
       const mejorSel = mejorSeleccionDePartido(partido, pronosticos);
       if (mejorSel) seleccionesParaCombinar.push(mejorSel);
       registrarPronostico(partido, pronosticos);
@@ -1279,7 +1278,6 @@
     let partidos = await obtenerPartidos(formatearFecha(inicioConsulta), formatearFecha(finConsulta));
     if (partidos.error) {
       contenedor.innerHTML = `<div class="estado-error"><strong>No pudimos cargar tus favoritos</strong><span>${partidos.mensaje || 'Intenta nuevamente en unos segundos.'}</span><button class="boton-reintentar" onclick="cargarFavoritos()">Reintentar</button></div>`;
-      requestAnimationFrame(() => contenedor.classList.add('visible'));
       return;
     }
 
@@ -1373,12 +1371,11 @@
         obtenerStatsEquipo(partido.awayTeam.id, codigoLiga, tabla)
       ]);
 
-      const pronosticos = generarPronosticos(
-        statsLocal, statsVisita, partido.homeTeam.name, partido.awayTeam.name,
-        h2h, tabla, partido.homeTeam.id, partido.awayTeam.id, codigoLiga
-      );
+      const respPron = await fetch('pronosticos.json');
+      const datosPron = respPron.ok ? await respPron.json() : null;
+      const pronosticos = datosPron && datosPron.pronosticos ? datosPron.pronosticos[partido.id]?.pronosticos || datosPron.pronosticos[Object.keys(datosPron.pronosticos)[0]]?.pronosticos : null;
 
-      htmlFinal += crearTarjetaHTML(partido, pronosticos, statsLocal, statsVisita, h2h, tabla);
+      htmlFinal += crearTarjetaHTML(partido, pronosticos || { seleccionados: [], marcadorProbable: '-', probMarcador: 0, top3Marcadores: [], catalogoCompleto: [], combosPartido: [], favoritoLocal: false, nombreFavorito: '', sinNadaEnJuego: false, parametrosModelo: {} }, statsLocal, statsVisita, h2h, tabla);
       registrarPronostico(partido, pronosticos);
     }
 
