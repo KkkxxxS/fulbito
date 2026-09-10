@@ -1079,14 +1079,17 @@
         obtenerStatsEquipo(partido.awayTeam.id, codigoLiga, tabla)
       ]);
 
-      const respPron = await fetch('pronosticos.json');
-      const datosPron = respPron.ok ? await respPron.json() : null;
-      const pronosticos = datosPron && datosPron.pronosticos ? datosPron.pronosticos[partido.id]?.pronosticos || datosPron.pronosticos[Object.keys(datosPron.pronosticos)[0]]?.pronosticos : null;
-
-      htmlFinal += crearTarjetaHTML(partido, pronosticos || { seleccionados: [], marcadorProbable: '-', probMarcador: 0, top3Marcadores: [], catalogoCompleto: [], combosPartido: [], favoritoLocal: false, nombreFavorito: '', sinNadaEnJuego: false, parametrosModelo: {} }, statsLocal, statsVisita, h2h, tabla);
-      const mejorSel = mejorSeleccionDePartido(partido, pronosticos);
-      if (mejorSel) seleccionesParaCombinar.push(mejorSel);
-      registrarPronostico(partido, pronosticos);
+      try {
+        const respPron = await fetch('pronosticos.json');
+        const datosPron = respPron.ok ? await respPron.json() : null;
+        const pronosticos = datosPron && datosPron.pronosticos ? datosPron.pronosticos[partido.id]?.pronosticos || datosPron.pronosticos[Object.keys(datosPron.pronosticos)[0]]?.pronosticos : null;
+        htmlFinal += crearTarjetaHTML(partido, pronosticos || { seleccionados: [], marcadorProbable: '-', probMarcador: 0, top3Marcadores: [], catalogoCompleto: [], combosPartido: [], favoritoLocal: false, nombreFavorito: '', sinNadaEnJuego: false, parametrosModelo: {} }, statsLocal, statsVisita, h2h, tabla);
+        const mejorSel = mejorSeleccionDePartido(partido, pronosticos);
+        if (mejorSel) seleccionesParaCombinar.push(mejorSel);
+        registrarPronostico(partido, pronosticos);
+      } catch (e) {
+        htmlFinal += `<div class="aviso-servidor"><p><strong>Cargando pronósticos o actualizando datos del servidor...</strong></p></div>`;
+      }
     }
 
     contenedor.innerHTML = htmlFinal;
@@ -1382,12 +1385,17 @@
         obtenerStatsEquipo(partido.awayTeam.id, codigoLiga, tabla)
       ]);
 
-      const respPron = await fetch('pronosticos.json');
-      const datosPron = respPron.ok ? await respPron.json() : null;
-      const pronosticos = datosPron && datosPron.pronosticos ? datosPron.pronosticos[partido.id]?.pronosticos || datosPron.pronosticos[Object.keys(datosPron.pronosticos)[0]]?.pronosticos : null;
-
-      htmlFinal += crearTarjetaHTML(partido, pronosticos || { seleccionados: [], marcadorProbable: '-', probMarcador: 0, top3Marcadores: [], catalogoCompleto: [], combosPartido: [], favoritoLocal: false, nombreFavorito: '', sinNadaEnJuego: false, parametrosModelo: {} }, statsLocal, statsVisita, h2h, tabla);
-      registrarPronostico(partido, pronosticos);
+      try {
+        const respPron = await fetch('pronosticos.json');
+        const datosPron = respPron.ok ? await respPron.json() : null;
+        const pronosticos = datosPron && datosPron.pronosticos ? datosPron.pronosticos[partido.id]?.pronosticos || datosPron.pronosticos[Object.keys(datosPron.pronosticos)[0]]?.pronosticos : null;
+        htmlFinal += crearTarjetaHTML(partido, pronosticos || { seleccionados: [], marcadorProbable: '-', probMarcador: 0, top3Marcadores: [], catalogoCompleto: [], combosPartido: [], favoritoLocal: false, nombreFavorito: '', sinNadaEnJuego: false, parametrosModelo: {} }, statsLocal, statsVisita, h2h, tabla);
+        const mejorSel = mejorSeleccionDePartido(partido, pronosticos);
+        if (mejorSel) seleccionesParaCombinar.push(mejorSel);
+        registrarPronostico(partido, pronosticos);
+      } catch (e) {
+        htmlFinal += `<div class="aviso-servidor"><p><strong>Cargando pronósticos o actualizando datos del servidor...</strong></p></div>`;
+      }
     }
 
     contenedor.innerHTML = htmlFinal;

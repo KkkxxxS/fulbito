@@ -2198,7 +2198,7 @@
 
         <button class="boton-expandir" onclick="toggleCatalogo(${partido.id})">Ver los ${pronosticos.catalogoCompleto.length} mercados evaluados</button>
         <div class="catalogo-completo" id="catalogo-${partido.id}" style="display:none;">
-          ${pronosticos.catalogoCompleto.map(c => `<div class="catalogo-fila"><span>${c.seleccion}</span><span>${c.probabilidad}%</span></div>`).join('')}
+          ${pronosticos.catalogoCompleto.map(c => `<div class="
         </div>
       </div>
     `;
