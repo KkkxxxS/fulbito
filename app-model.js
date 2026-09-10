@@ -1612,19 +1612,17 @@
       const resp = await fetchConTiempo(url);
       const datos = await resp.json();
 
-      if (datos.error || datos.errorCode) {
-        console.error("Respuesta con error de la API:", datos);
-        return { error: true, mensaje: datos.message || datos.error || "Error desconocido de la API" };
-      }
-
-      const partidos = (datos.matches || []).filter(p => p.status === 'SCHEDULED' || p.status === 'TIMED');
-      cache[claveCache] = partidos;
+     if (datos.error || datos.errorCode) {
+  console.error("Respuesta con error de la API:", datos);
+  return PARTIDOS_FALLBACK;
+}
+const partidos = (datos.matches || []).filter(p => p.status === 'SCHEDULED' || p.status === 'TIMED');
       guardarCachePersistente(claveCache, partidos);
       return partidos;
     } catch (e) {
-      console.error("Error trayendo partidos", e);
-      return { error: true, mensaje: e.message };
-    }
+  console.warn("Error trayendo partidos de la API, usando respaldo local:", e);
+  return PARTIDOS_FALLBACK;
+}
   }
   
 
