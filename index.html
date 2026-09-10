@@ -2198,11 +2198,10 @@
 
         <button class="boton-expandir" onclick="toggleCatalogo(${partido.id})">Ver los ${pronosticos.catalogoCompleto.length} mercados evaluados</button>
         <div class="catalogo-completo" id="catalogo-${partido.id}" style="display:none;">
-          ${pronosticos.catalogoCompleto.map(c => `<div class="catalogo-fila"><span>${c.seleccion}</span><span>${c.probabilidad}%</span></div>`).join('')}
-        </div>
+        ${(pronosticos.catalogoCompleto || []).map(c => `<div class="catalogo-fila"><span>${c.seleccion}</span></div>`).join('')}
       </div>
-    `;
-  }
+    </div>`;
+}
 
   function toggleMercados(partidoId) {
     const el = document.getElementById(`mercados-${partidoId}`);
