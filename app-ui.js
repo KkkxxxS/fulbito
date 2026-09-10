@@ -1003,6 +1003,24 @@
   }
 
   // ============ FILTRO POR LIGA ============
+  function renderPillsLigas() {
+    const contenedor = document.getElementById('filtro-ligas-pills');
+    if (!contenedor) return;
+    const ligas = [
+      { codigo: 'TODAS', nombre: 'Todas' },
+      { codigo: 'PL', nombre: 'Premier League' },
+      { codigo: 'PD', nombre: 'La Liga' },
+      { codigo: 'BL1', nombre: 'Bundesliga' },
+      { codigo: 'SA', nombre: 'Serie A' },
+      { codigo: 'FL1', nombre: 'Ligue 1' },
+      { codigo: 'PPL', nombre: 'Primeira Liga' }
+    ];
+    contenedor.innerHTML = ligas.map(l => {
+      const activa = ligaSeleccionada === l.codigo ? 'activa' : '';
+      return `<button class="filtro-liga-btn ${activa}" onclick="cambiarLiga('${l.codigo}')">${l.nombre}</button>`;
+    }).join('');
+  }
+
   function renderFiltroLigas() { renderPillsLigas(); }
 
   function cambiarLiga(codigo) {
@@ -1030,10 +1048,11 @@
     });
 
     if (lista.length === 0) {
+      renderFiltroLigas();
       const mensaje = terminoBusqueda
         ? `No encontramos partidos que coincidan con "${terminoBusqueda}".`
-        : 'No hay partidos para mostrar con este filtro.';
-      contenedor.innerHTML = `<div class="estado-vacio"><strong>${mensaje}</strong><span>Prueba otra fecha, liga o término de búsqueda.</span></div>`;
+        : 'No hay partidos disponibles para esta fecha';
+      contenedor.innerHTML = `<div class="estado-vacio"><strong>${mensaje}</strong><span>No hay partidos disponibles para esta fecha</span></div>`;
       requestAnimationFrame(() => contenedor.classList.add('visible'));
       document.getElementById('bloque-combinadas').innerHTML = '';
       return;
