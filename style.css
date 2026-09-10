@@ -1057,7 +1057,6 @@ main {
   display: block;
   width: 96px;
   height: 3px;
-  border-radius: 999px;
   margin-top: 18px;
   background: linear-gradient(90deg, var(--green), rgba(123, 225, 200, 0.1));
 }

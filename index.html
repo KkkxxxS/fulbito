@@ -2199,7 +2199,7 @@
 
         ${h2hHTML(h2h)}
         ${pronosticos.pocaData ? `<p class="aviso-datos">⚠ Datos limitados (${pronosticos.partidosMin} partidos analizados) · pronóstico menos confiable</p>` : ''}
-        ${pronosticos.sinNadaEnJuego ? `<p class="aviso-datos">⚠ Uno de los equipos ya no se juega nada en la tabla (título o descenso resuelto) · pronóstico menos confiable</p>` : ''}
+        ${pronosticos.sinNadaEnJuego ? `<p class="aviso-datos">⚠ Uno de los equipos ya no se juega nada en la tabla (título o descenso resuelto)</p>` : ''}
 
         <div class="lista-mercados" id="mercados-${partido.id}">
           ${pronosticos.seleccionados.map(m => filaMercado(m, partido.id, mejor && m === mejor)).join('')}
@@ -3072,7 +3072,7 @@
 
         <div class="tarjeta-combinada" style="margin-top:16px;">
           <div class="encabezado-combinada"><span class="etiqueta-combinada">Últimos verificados</span></div>
-          ${filasUltimos || '<p style="color:var(--text-dim); text-align:center; padding:12px;">No hay partidos verificados para esta categoría.</p>'}
+          ${filasUltimos || '<p style="text-align:center; color:#8fa896;">No hay partidos verificados para esta categoría.</p>'}
         </div>
       </div>
       ${panelCalibracionRangosHTML(historial)}
@@ -3706,5 +3706,6 @@
 
 </script>
 
+<button class="btn-volver-arriba" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="Volver arriba">↑</button>
 </body>
 </html>
