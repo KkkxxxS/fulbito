@@ -1003,15 +1003,7 @@
   }
 
   // ============ FILTRO POR LIGA ============
-  function renderFiltroLigas() {
-    const cont = document.getElementById('filtro-ligas');
-    const codigos = COMPETICIONES.split(',');
-    let html = `<button class="filtro-liga-btn ${ligaSeleccionada === 'TODAS' ? 'activa' : ''}" onclick="cambiarLiga('TODAS')">Todas</button>`;
-    codigos.forEach(cod => {
-      html += `<button class="filtro-liga-btn ${ligaSeleccionada === cod ? 'activa' : ''}" onclick="cambiarLiga('${cod}')">${NOMBRES_LIGA[cod] || cod}</button>`;
-    });
-    cont.innerHTML = html;
-  }
+  function renderFiltroLigas() { renderPillsLigas(); }
 
   function cambiarLiga(codigo) {
     ligaSeleccionada = codigo;

@@ -413,30 +413,10 @@
         <button onclick="aplicarFechaPersonalizada()">Ver partidos</button>
     </div>
 
-    <div class="filtro-ligas" id="filtro-ligas"></div>
-
-    <div class="filtros-rapidos-container">
-        <span class="filtros-rapidos-label">Filtros rápidos de picks</span>
-        <div class="filtros-rapidos" id="filtros-rapidos-picks">
-            <button class="filtro-rapido activo" data-filtro-tipo="todos" onclick="setFiltroRapido('todos', event)">
-                <span class="filtro-icon">⚽</span> Todos
-            </button>
-            <button class="filtro-rapido" data-filtro-tipo="alta_confianza" onclick="setFiltroRapido('alta_confianza', event)">
-                <span class="filtro-icon">🎯</span> Alta confianza (≥70%)
-            </button>
-            <button class="filtro-rapido" data-filtro-tipo="btts" onclick="setFiltroRapido('btts', event)">
-                <span class="filtro-icon">⚡</span> Ambos marcan
-            </button>
-            <button class="filtro-rapido" data-filtro-tipo="mas_goles" onclick="setFiltroRapido('mas_goles', event)">
-                <span class="filtro-icon">🔥</span> +2.5 Goles
-            </button>
-            <button class="filtro-rapido" data-filtro-tipo="victoria" onclick="setFiltroRapido('victoria', event)">
-                <span class="filtro-icon">🏆</span> Victoria directa
-            </button>
-            <button class="filtro-rapido" data-filtro-tipo="favoritos" onclick="setFiltroRapido('favoritos', event)">
-                <span class="filtro-icon">★</span> Solo mis favoritos
-            </button>
-        </div>
+    <div class="barra-filtros-unificada" id="barra-filtros-unificada">
+        <input type="search" id="input-buscar-integrado" class="input-buscar-integrado" placeholder="Buscar equipo…" oninput="onBuscarIntegrado(this.value)">
+        <div id="filtro-ligas-pills" style="display:flex;gap:6px;"></div>
+        <div id="filtros-rapidos-pills" style="display:flex;gap:6px;"></div>
     </div>
 
     <div id="contenedor-partidos">
