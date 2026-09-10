@@ -1088,7 +1088,10 @@
         if (mejorSel) seleccionesParaCombinar.push(mejorSel);
         registrarPronostico(partido, pronosticos);
       } catch (e) {
-        htmlFinal += `<div class="aviso-servidor"><p><strong>Cargando pronósticos o actualizando datos del servidor...</strong></p></div>`;
+        htmlFinal += crearTarjetaHTML(partido, { seleccionados: [], marcadorProbable: '-', probMarcador: 0, top3Marcadores: [], catalogoCompleto: [], combosPartido: [], favoritoLocal: false, nombreFavorito: '', sinNadaEnJuego: false, parametrosModelo: {} }, statsLocal, statsVisita, h2h, tabla);
+        // Aviso de carga pendiente
+        htmlFinal += `<div class="aviso-servidor"><span>⚠️ Pronósticos en proceso...</span></div>`;
+
       }
     }
 
@@ -1394,7 +1397,9 @@
         if (mejorSel) seleccionesParaCombinar.push(mejorSel);
         registrarPronostico(partido, pronosticos);
       } catch (e) {
-        htmlFinal += `<div class="aviso-servidor"><p><strong>Cargando pronósticos o actualizando datos del servidor...</strong></p></div>`;
+        htmlFinal += crearTarjetaHTML(partido, { seleccionados: [], marcadorProbable: '-', probMarcador: 0, top3Marcadores: [], catalogoCompleto: [], combosPartido: [], favoritoLocal: false, nombreFavorito: '', sinNadaEnJuego: false, parametrosModelo: {} }, statsLocal, statsVisita, h2h, tabla);
+        // Aviso de carga pendiente
+        htmlFinal += `<div class="aviso-servidor"><span>⚠️ Pronósticos en proceso...</span></div>`;
       }
     }
 
