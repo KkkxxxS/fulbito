@@ -187,61 +187,76 @@ body.home-mode {
   *, *::before, *::after { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
 }
 
-/* ============ NAV PRINCIPAL (app shell) ============ */
+/* ============ NAV PRINCIPAL (app shell / Sidebar Off-Canvas) ============ */
 .app-nav {
   position: fixed;
   left: 0;
   top: 0;
   z-index: 40;
-  width: 260px;
+  width: 280px;
   height: 100vh;
-  padding: 18px 14px 18px;
+  padding: 20px 16px;
   background:
     linear-gradient(180deg, rgba(11, 16, 22, 0.98), rgba(7, 12, 17, 0.96)),
     radial-gradient(circle at top left, rgba(123, 225, 200, 0.15), transparent 26%);
-  backdrop-filter: blur(18px) saturate(180%);
-  -webkit-backdrop-filter: blur(18px) saturate(180%);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
   border-right: 1px solid rgba(123, 225, 200, 0.12);
-  box-shadow: 18px 0 42px -30px rgba(0, 0, 0, 0.95), inset -1px 0 0 rgba(255,255,255,0.03);
-  transform: translateX(-260px);
-  transition: transform 0.3s ease;
+  box-shadow: 20px 0 45px -25px rgba(0, 0, 0, 0.95), inset -1px 0 0 rgba(255,255,255,0.03);
+  transform: translateX(-100%);
+  transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.35s ease;
 }
 
-.app-nav.menu-abierto {
-  display: flex !important;
+/* Área de activación invisible o borde interactivo para hover off-canvas en desktop */
+body:not(.home-mode)::before {
+  content: "";
   position: fixed;
   left: 0;
   top: 0;
+  width: 18px;
   height: 100vh;
-  width: 260px;
-  z-index: 100;
-  background: rgba(7,13,18,0.98);
-  flex-direction: column;
-  padding: 1rem;
+  z-index: 39;
+}
+
+/* Comportamiento Hover Off-Canvas en Desktop (cuando no estamos en home-mode) */
+@media (min-width: 769px) {
+  body:not(.home-mode) .app-nav:hover,
+  body:not(.home-mode)::before:hover ~ .app-nav {
+    transform: translateX(0);
+  }
+}
+
+/* Mantener accesible mediante clase menu-abierto (para click / móvil / toggle) con transición suave */
+.app-nav.menu-abierto {
+  display: flex !important;
+  transform: translateX(0) !important;
+  box-shadow: 25px 0 60px -20px rgba(0, 0, 0, 0.98), inset -1px 0 0 rgba(255,255,255,0.04);
 }
 
 .app-nav-toggle {
   position: fixed;
   left: 14px;
   top: 14px;
-  z-index: 41;
-  width: 38px;
-  height: 38px;
-  border-radius: 10px;
-  background: rgba(11, 16, 22, 0.9);
-  border: 1px solid rgba(123, 225, 200, 0.2);
+  z-index: 45;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: rgba(11, 16, 22, 0.92);
+  border: 1px solid rgba(123, 225, 200, 0.25);
   color: var(--text);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  backdrop-filter: blur(8px);
-  transition: background 0.2s, transform 0.2s;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 10px 25px -10px rgba(0,0,0,0.8);
+  transition: background 0.25s ease, transform 0.25s ease, border-color 0.25s ease;
 }
 
 .app-nav-toggle:hover {
-  background: rgba(123, 225, 200, 0.15);
-  transform: scale(1.05);
+  background: rgba(123, 225, 200, 0.18);
+  border-color: rgba(123, 225, 200, 0.4);
+  transform: scale(1.04);
 }
 
 .app-nav-toggle svg {
@@ -3933,18 +3948,6 @@ input {
   height: 100%;
   border-radius: 999px;
   background: linear-gradient(90deg, var(--brand), var(--green));
-/* Sidebar visibility fix for desktop mode */
-body:not(.home-mode) .app-nav {
-  display: flex !important;
-  transform: translateX(0) !important;
-}
-
-@media (min-width: 641px) {
-  .app-nav-toggle {
-    display: none !important;
-  }
-}
-
   box-shadow: 0 0 12px rgba(100,228,169,0.4);
   transition: width 0.6s var(--ease);
 }
