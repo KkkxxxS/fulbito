@@ -1006,19 +1006,17 @@
   function renderPillsLigas() {
     const contenedor = document.getElementById('filtro-ligas-pills');
     if (!contenedor) return;
-    const ligas = [
-      { codigo: 'TODAS', nombre: 'Todas' },
-      { codigo: 'PL', nombre: 'Premier League' },
-      { codigo: 'PD', nombre: 'La Liga' },
-      { codigo: 'BL1', nombre: 'Bundesliga' },
-      { codigo: 'SA', nombre: 'Serie A' },
-      { codigo: 'FL1', nombre: 'Ligue 1' },
-      { codigo: 'PPL', nombre: 'Primeira Liga' }
-    ];
-    contenedor.innerHTML = ligas.map(l => {
-      const activa = ligaSeleccionada === l.codigo ? 'activa' : '';
-      return `<button class="filtro-liga-btn ${activa}" onclick="cambiarLiga('${l.codigo}')">${l.nombre}</button>`;
-    }).join('');
+    
+    let html = `<button class="filtro-liga-btn ${ligaSeleccionada === 'TODAS' ? 'activa' : ''}" data-liga="TODAS" onclick="cambiarLiga('TODAS')">Todas las ligas</button>`;
+    
+    if (typeof NOMBRES_LIGA !== 'undefined' && NOMBRES_LIGA) {
+      Object.entries(NOMBRES_LIGA).forEach(([codigo, nombre]) => {
+        const activa = ligaSeleccionada === codigo ? 'activa' : '';
+        html += `<button class="filtro-liga-btn ${activa}" data-liga="${codigo}" onclick="cambiarLiga('${codigo}')">${nombre}</button>`;
+      });
+    }
+
+    contenedor.innerHTML = html;
   }
 
   function renderFiltroLigas() { renderPillsLigas(); }
@@ -1026,8 +1024,16 @@
   function cambiarLiga(codigo) {
     ligaSeleccionada = codigo;
     renderFiltroLigas();
-    if (ultimaFechaCargada === 'finalizados') renderizarFinalizados();
-    else renderizarPartidosFiltrados();
+    if (typeof ultimaFechaCargada !== 'undefined' && ultimaFechaCargada === 'finalizados') {
+      if (typeof renderizarFinalizados === 'function') renderizarFinalizados();
+    } else {
+      if (typeof renderizarPartidosFiltrados === 'function') renderizarPartidosFiltrados();
+    }
+  }
+
+  // Renderizado inmediato de ligas al cargar el script o DOM
+  if (typeof renderFiltroLigas === 'function') {
+    renderFiltroLigas();
   }
 
   // ============ RENDER PRINCIPAL DE PARTIDOS ============
