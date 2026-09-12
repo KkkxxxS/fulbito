@@ -1410,6 +1410,11 @@
   const inputFechaPersonalizada = document.getElementById('input-fecha-personalizada');
   if (inputFechaPersonalizada) inputFechaPersonalizada.min = formatearFecha(new Date());
 
+  // Renderizado inmediato de ligas al cargar el DOM (antes de cualquier fetch)
+  if (typeof renderFiltroLigas === 'function') {
+    renderFiltroLigas();
+  }
+
   actualizarContadorFavoritos();
   actualizarContadorMisPredicciones();
   cargarPartidos('hoy');
