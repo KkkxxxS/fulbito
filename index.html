@@ -101,12 +101,40 @@
 <section id="vista-inicio" class="vista vista-activa landing-shell">
     <div class="landing-inner">
         <div class="landing-badge" id="hero-saludo">Bienvenido a Fulbito • Inteligencia Predictiva</div>
-        <h1>Análisis de fútbol sin hype, solo datos verificables.</h1>
-        <p>Fulbito aplica modelos estadísticos reales (Poisson + Dixon-Coles) sobre datos públicos. No prometemos ganancias. Sí transparencia total y historial que cualquiera puede auditar.</p>
+        <h1><span>Pronósticos de Fútbol</span><br>impulsados por Inteligencia Estadística</h1>
+        <p>Modelo estadístico avanzado (Poisson + Dixon-Coles) aplicado a las ligas top de Europa. Probabilidades reales con transparencia total y rendimiento auditable.</p>
 
         <div class="landing-cta-row">
-            <button class="landing-primary" onclick="document.getElementById('pronosticos').scrollIntoView({ behavior: 'smooth' })">Explorar pronósticos</button>
-            <button class="landing-secondary" onclick="document.getElementById('modelo').scrollIntoView({ behavior: 'smooth', block: 'start' })">Cómo funciona Fulbito</button>
+            <button class="landing-primary" onclick="cambiarVista('pronosticos'); document.getElementById('pronosticos')?.scrollIntoView({ behavior: 'smooth' })">
+                <span>Explorar Pronósticos</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px; margin-left: 6px;"><path d="m5 12 7-7 7 7"/><path d="M12 19V5"/></svg>
+            </button>
+            <button class="landing-secondary" onclick="document.getElementById('modelo').scrollIntoView({ behavior: 'smooth', block: 'start' })">Ver Metodología</button>
+        </div>
+
+        <!-- KPI STATS BAR (Social Proof / Glassmorphism) -->
+        <div class="hero-kpis-bar">
+            <div class="hero-kpi-glass">
+                <span class="hero-kpi-icon">🏆</span>
+                <div>
+                    <strong>9+ Ligas Top</strong>
+                    <span>Analizadas en vivo</span>
+                </div>
+            </div>
+            <div class="hero-kpi-glass">
+                <span class="hero-kpi-icon">⚡</span>
+                <div>
+                    <strong>Poisson + Dixon-Coles</strong>
+                    <span>Modelo matemático real</span>
+                </div>
+            </div>
+            <div class="hero-kpi-glass">
+                <span class="hero-kpi-icon">🔄</span>
+                <div>
+                    <strong>Tiempo Real</strong>
+                    <span>Actualización continua</span>
+                </div>
+            </div>
         </div>
 
         <div class="landing-grid">
@@ -298,44 +326,47 @@
         <h2>Transparencia sobre cómo Fulbito genera pronósticos.</h2>
     </div>
 
-    <div class="metodologia-bloque">
-        <div class="metodologia-paso">
-            <div class="paso-numero">1</div>
-            <div class="paso-contenido">
-                <h3>Datos verificados en tiempo real</h3>
-                <p>Fulbito consume estadísticas reales de <strong>football-data.org</strong>: últimos partidos, tablas de posiciones, cara-a-cara directo, goles esperados y estado de plantilla.</p>
-                <ul class="paso-lista">
-                    <li>Datos históricos desde hace 5+ años</li>
-                    <li>Actualizados cada 6 horas</li>
-                    <li>Cálculos verificables, no "caja negra"</li>
-                </ul>
+    <div class="metodologia-grid-saas">
+        <div class="metodologia-saas-card">
+            <div class="metodologia-saas-header">
+                <span class="paso-badge-saas">01</span>
+                <span class="paso-icon-saas">📡</span>
             </div>
+            <h3>Datos verificados en tiempo real</h3>
+            <p>Fulbito consume estadísticas de ligas top: últimos partidos, tablas de posiciones, cara-a-cara directo y goles esperados con actualización automática.</p>
+            <ul class="paso-lista">
+                <li>Datos históricos consolidados</li>
+                <li>Actualización continua cada pocas horas</li>
+                <li>Cálculos auditables y transparentes</li>
+            </ul>
         </div>
 
-        <div class="metodologia-paso">
-            <div class="paso-numero">2</div>
-            <div class="paso-contenido">
-                <h3>Modelo Poisson + Dixon-Coles</h3>
-                <p>Aplicamos un modelo estadístico usado en ligas profesionales y equipos de datos. Estima goles esperados por cada equipo, ajustando para marcadores bajos (corrección Dixon-Coles).</p>
-                <ul class="paso-lista">
-                    <li>Probabilidades sobre 19 mercados posibles</li>
-                    <li>Ponderación: últimos 3 años (70%), 6 meses (25%), 30 días (5%)</li>
-                    <li>Ajuste automático por localía, tabla y H2H</li>
-                </ul>
+        <div class="metodologia-saas-card">
+            <div class="metodologia-saas-header">
+                <span class="paso-badge-saas">02</span>
+                <span class="paso-icon-saas">🧮</span>
             </div>
+            <h3>Modelo Poisson + Dixon-Coles</h3>
+            <p>Aplicamos un modelo estadístico riguroso empleado en análisis deportivo profesional. Estima goles esperados por equipo con corrección de dependencia de marcadores bajos.</p>
+            <ul class="paso-lista">
+                <li>Probabilidades en 19 mercados</li>
+                <li>Ponderación avanzada de recencia</li>
+                <li>Ajuste automático por localía y H2H</li>
+            </ul>
         </div>
 
-        <div class="metodologia-paso">
-            <div class="paso-numero">3</div>
-            <div class="paso-contenido">
-                <h3>Auto-calibración verificable</h3>
-                <p>Cada predicción se verifica contra el resultado real. Si falló, el modelo ajusta automáticamente para no repetir el mismo error. Es aprendizaje real, no simulación.</p>
-                <ul class="paso-lista">
-                    <li>Métrica Brier Score (0.17 = muy bueno)</li>
-                    <li>Historial completo de aciertos público</li>
-                    <li>Salud del motor visible en cada panel</li>
-                </ul>
+        <div class="metodologia-saas-card">
+            <div class="metodologia-saas-header">
+                <span class="paso-badge-saas">03</span>
+                <span class="paso-icon-saas">⚡</span>
             </div>
+            <h3>Auto-calibración y Brier Score</h3>
+            <p>Cada predicción se contrasta contra el resultado real para verificar la calidad predictiva, medir el error Brier y calibrar el sistema continuamente.</p>
+            <ul class="paso-lista">
+                <li>Brier Score de alta precisión</li>
+                <li>Historial público verificable</li>
+                <li>Mejora continua basada en datos reales</li>
+            </ul>
         </div>
     </div>
 
