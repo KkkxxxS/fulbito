@@ -1003,23 +1003,57 @@
   }
 
   // ============ FILTRO POR LIGA ============
-  function renderPillsLigas() {
+  function renderFiltroLigas() {
     const contenedor = document.getElementById('filtro-ligas-pills');
     if (!contenedor) return;
+
+    const ligasPrincipales = ['TODAS', 'SA', 'FL1', 'CL', 'DED', 'ELC', 'BSA', 'PPL', 'PD', 'PL'];
+    const nombresLigas = (typeof NOMBRES_LIGA !== 'undefined' && NOMBRES_LIGA) ? NOMBRES_LIGA : {
+      TODAS: 'Todas las ligas',
+      SA: 'Serie A',
+      FL1: 'Ligue 1',
+      CL: 'Champions League',
+      DED: 'Eredivisie',
+      ELC: 'Championship',
+      BSA: 'Brasileirão',
+      PPL: 'Primeira Liga',
+      PD: 'La Liga',
+      PL: 'Premier League'
+    };
+
+    let html = `<button class="filtro-liga-btn ${ligaSeleccionada === 'TODAS' ? 'activa' : ''}" data-liga="TODAS">Todas las ligas</button>`;
     
-    let html = `<button class="filtro-liga-btn ${ligaSeleccionada === 'TODAS' ? 'activa' : ''}" data-liga="TODAS" onclick="cambiarLiga('TODAS')">Todas las ligas</button>`;
-    
-    if (typeof NOMBRES_LIGA !== 'undefined' && NOMBRES_LIGA) {
-      Object.entries(NOMBRES_LIGA).forEach(([codigo, nombre]) => {
-        const activa = ligaSeleccionada === codigo ? 'activa' : '';
-        html += `<button class="filtro-liga-btn ${activa}" data-liga="${codigo}" onclick="cambiarLiga('${codigo}')">${nombre}</button>`;
-      });
-    }
+    ligasPrincipales.forEach(codigo => {
+      if (codigo === 'TODAS') return;
+      const nombre = nombresLigas[codigo] || codigo;
+      const activa = ligaSeleccionada === codigo ? 'activa' : '';
+      html += `<button class="filtro-liga-btn ${activa}" data-liga="${codigo}">${nombre}</button>`;
+    });
 
     contenedor.innerHTML = html;
-  }
+    contenedor.style.cssText = 'display: flex !important; gap: 8px; margin-bottom: 12px; overflow-x: auto; padding-bottom: 4px;';
 
-  function renderFiltroLigas() { renderPillsLigas(); }
+    contenedor.querySelectorAll('.filtro-liga-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const codigo = e.currentTarget.getAttribute('data-liga') || 'TODAS';
+        ligaSeleccionada = codigo;
+        
+        contenedor.querySelectorAll('.filtro-liga-btn').forEach(b => b.classList.remove('activa'));
+        e.currentTarget.classList.add('activa');
+
+        if (typeof partidosDelRango !== 'undefined' && partidosDelRango) {
+          if (typeof renderizarPartidosFiltrados === 'function') {
+            renderizarPartidosFiltrados();
+          }
+        }
+        if (typeof ultimaFechaCargada !== 'undefined' && ultimaFechaCargada === 'finalizados') {
+          if (typeof renderizarFinalizados === 'function') renderizarFinalizados();
+        } else {
+          if (typeof renderizarPartidosFiltrados === 'function') renderizarPartidosFiltrados();
+        }
+      });
+    });
+  }
 
   function cambiarLiga(codigo) {
     ligaSeleccionada = codigo;
@@ -1031,10 +1065,13 @@
     }
   }
 
-  // Renderizado inmediato de ligas al cargar el script o DOM
+  // Renderizado inmediato de ligas en el segundo 0 al cargar la página
   if (typeof renderFiltroLigas === 'function') {
     renderFiltroLigas();
   }
+  document.addEventListener('DOMContentLoaded', () => {
+    if (typeof renderFiltroLigas === 'function') renderFiltroLigas();
+  });
 
   // ============ RENDER PRINCIPAL DE PARTIDOS ============
   async function renderizarPartidosFiltrados() {
