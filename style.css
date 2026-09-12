@@ -2270,17 +2270,51 @@ main {
   visibility: visible !important;
   opacity: 1 !important;
   gap: 8px;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
   overflow-x: auto;
-  padding-bottom: 4px;
+  padding: 4px 2px 8px 2px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(100, 228, 169, 0.3) rgba(16, 27, 42, 0.4);
+}
+.filtro-ligas-pills::-webkit-scrollbar {
+  height: 5px;
+}
+.filtro-ligas-pills::-webkit-scrollbar-track {
+  background: rgba(16, 27, 42, 0.4);
+  border-radius: 999px;
+}
+.filtro-ligas-pills::-webkit-scrollbar-thumb {
+  background: rgba(100, 228, 169, 0.35);
+  border-radius: 999px;
 }
 .filtro-liga-btn {
-  background-color: var(--bg-raised); color: var(--text-muted); border: 1px solid var(--line);
-  padding: 7px 14px; border-radius: var(--radius-sm); cursor: pointer; font-size: 0.8rem; font-weight: 600;
-  transition: border-color 0.18s var(--ease), color 0.18s var(--ease), background-color 0.18s var(--ease);
+  appearance: none;
+  background: rgba(22, 34, 50, 0.85);
+  color: #c5d3e8;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  padding: 8px 15px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 2px 8px -4px rgba(0, 0, 0, 0.3);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.filtro-liga-btn:hover { border-color: var(--text-dim); color: var(--text); }
-.filtro-liga-btn.activa { background-color: var(--card); color: var(--text); border-color: var(--green); }
+.filtro-liga-btn:hover {
+  background: rgba(30, 46, 68, 0.95);
+  border-color: rgba(100, 228, 169, 0.35);
+  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 4px 12px -6px rgba(100, 228, 169, 0.2);
+}
+.filtro-liga-btn.activa {
+  background: linear-gradient(135deg, var(--green), var(--brand));
+  color: #07120d;
+  border-color: transparent;
+  font-weight: 700;
+  box-shadow: 0 4px 16px -6px rgba(100, 228, 169, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
 
 /* ===== Modo compacto / expandido ===== */
 .lista-mercados .fila-mercado:nth-child(n + 3) { display: none; }
