@@ -2609,6 +2609,51 @@ input {
 .catalogo-fila { display: flex; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid var(--line); font-size: 0.8rem; color: var(--text-muted); }
 .catalogo-fila:last-child { border-bottom: none; }
 
+/* ===== Estilos refinados para tarjetas NO BET ===== */
+.fila-sin-apuesta {
+  background: linear-gradient(180deg, rgba(255,255,255,0.015), rgba(12, 18, 26, 0.9));
+  border: 1px dashed rgba(148, 163, 184, 0.22);
+  border-left: 3px solid rgba(148, 163, 184, 0.35);
+  opacity: 0.85;
+}
+.fila-sin-apuesta:hover {
+  opacity: 1;
+  border-color: rgba(148, 163, 184, 0.4);
+}
+.badge-nobet-tag {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #94a3b8;
+  background: rgba(148, 163, 184, 0.12);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  padding: 3px 10px;
+  border-radius: 6px;
+}
+.fila-nobet-detalle {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+}
+.icono-info-nobet {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.fila-nobet-detalle .cuota-implicita {
+  margin: 0;
+  font-size: 0.72rem;
+  line-height: 1.4;
+  color: var(--text-muted);
+  opacity: 0.85;
+}
+
+
 /* ============ VISTA "HISTORIAL" (tablero de picks liquidados) ============ */
 .resumen-historial-grid {
   display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px;

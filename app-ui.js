@@ -80,13 +80,20 @@
       return `
         <div class="fila-mercado mercado-${datos.tipo} fila-sin-apuesta">
           <div class="fila-header">
-            ${iconoMercado(datos.tipo)}
-            <span class="fila-porcentaje-nobet">NO BET</span>
+            <div class="fila-header-izq">
+              ${iconoMercado(datos.tipo)}
+              <span class="badge-nobet-tag">NO BET</span>
+            </div>
           </div>
           <span class="fila-titulo">${datos.titulo}</span>
-          <p class="fila-mercado-nombre">${datos.mercado}</p>
-          <p class="fila-seleccion">Sin apuesta</p>
-          <p class="cuota-implicita">Ningún mercado de esta categoría supera el umbral mínimo (${datos.probabilidad}% real).</p>
+          <div class="fila-mercado-cuerpo">
+            <p class="fila-mercado-nombre">${datos.mercado}</p>
+            <p class="fila-seleccion">Sin apuesta disponible</p>
+          </div>
+          <div class="fila-nobet-detalle">
+            <span class="icono-info-nobet">ℹ</span>
+            <p class="cuota-implicita">Ningún mercado de esta categoría supera el umbral mínimo de seguridad (${datos.probabilidad}% real).</p>
+          </div>
         </div>
       `;
     }
