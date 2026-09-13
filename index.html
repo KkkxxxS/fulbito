@@ -3282,20 +3282,22 @@
     return bloques;
   }
 
-  // ============ FILTRO POR LIGA ============
- function renderFiltroLigas() {
-  const cont = document.getElementById('filtro-ligas');
-  if (!cont) return;
+  function renderFiltroLigas() {
+   const cont = document.getElementById('filtro-ligas-pills');
+   if (!cont) return;
+   console.log('renderFiltroLigas ejecutado', ligaSeleccionada);
 
-  const lista = (typeof COMPETICIONES !== 'undefined' && COMPETICIONES) ? COMPETICIONES.split(',') : [];
-  let html = `<button class="filtro-liga-btn ${ligaSeleccionada === 'TODAS' ? 'activa' : ''}" onclick="filtrarPorLiga('TODAS')">Todas</button>`;
+   const lista = (typeof COMPETICIONES !== 'undefined' && COMPETICIONES) ? COMPETICIONES.split(',') : [];
+   let html = `<button class="filtro-liga-btn ${ligaSeleccionada === 'TODAS' ? 'activa' : ''}" onclick="cambiarLiga('TODAS')">Todas las ligas</button>`;
 
-  lista.forEach(cod => {
-    html += `<button class="filtro-liga-btn ${ligaSeleccionada === cod ? 'activa' : ''}" onclick="filtrarPorLiga('${cod}')">${cod}</button>`;
-  });
+   lista.forEach(cod => {
+     const nombre = (typeof NOMBRES_LIGA !== 'undefined' && NOMBRES_LIGA[cod]) ? NOMBRES_LIGA[cod] : cod;
+     html += `<button class="filtro-liga-btn ${ligaSeleccionada === cod ? 'activa' : ''}" onclick="cambiarLiga('${cod}')">${nombre}</button>`;
+   });
 
-  cont.innerHTML = html;
-}
+   cont.innerHTML = html;
+   cont.style.cssText = 'display: flex !important; gap: 8px; margin-bottom: 12px; overflow-x: auto; padding-bottom: 4px;';
+ }
 
   // ============ FILTROS RÁPIDOS DE PICKS ============
   let filtroRapidoActual = 'todos';
