@@ -460,6 +460,12 @@
             <span>⚽ Armar Combinada Manual</span>
         </button>
     </div>
+    <!-- FAB FLOTANTE ARMAR COMBINADA MANUAL -->
+    <button id="btn-fab-combinada" class="btn-fab-combinada" onclick="abrirModalArmarCombinada()" style="display:none;" aria-label="Armar Combinada Manual">
+        <span style="font-size:1.1rem;">⚽</span>
+        <span>Armar Combinada</span>
+    </button>
+
 
     <!-- MODAL ARMAR COMBINADA -->
     <div id="modal-armar-combinada" class="modal-overlay" style="display:none; position:fixed; inset:0; background:rgba(3,7,11,0.85); z-index:9999; backdrop-filter:blur(6px); align-items:center; justify-content:center; padding:16px; overflow-y:auto;">
@@ -712,6 +718,16 @@
     } else if (vista === 'inicio') {
       // También en inicio: refrescar desde backend para que los KPIs reflejen
       // lo último aunque hayas limpiado caché.
+    // Control visibilidad FAB Armar Combinada (solo visible en vista pronosticos)
+    const fabCombinada = document.getElementById('btn-fab-combinada');
+    if (fabCombinada) {
+      if (vista === 'pronosticos') {
+        fabCombinada.style.display = 'inline-flex';
+      } else {
+        fabCombinada.style.display = 'none';
+      }
+    }
+
       cargarHistorialCompartido().finally(() =>
         actualizarHistorialYCalibracion().then(() => actualizarKPIsHome())
       );

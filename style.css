@@ -462,6 +462,57 @@ body:not(.home-mode)::before {
 .nav-tab .contador-favoritos {
   margin-left: auto;
 }
+/* ============ BOTÓN FAB FLOTANTE ARMAR COMBINADA MANUAL ============ */
+@keyframes fabEntrada {
+  0% {
+    opacity: 0;
+    transform: translateY(20px) scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.btn-fab-combinada {
+  position: fixed;
+  bottom: 28px;
+  right: 24px;
+  z-index: 999;
+  background: linear-gradient(135deg, var(--green), var(--brand));
+  color: var(--ink-on-accent);
+  font-weight: 700;
+  padding: 13px 22px;
+  border-radius: 999px;
+  font-size: 0.95rem;
+  box-shadow: 0 10px 30px -4px rgba(100, 228, 169, 0.75), 0 4px 12px rgba(0, 0, 0, 0.4);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  animation: fabEntrada 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.btn-fab-combinada:hover {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 14px 36px -4px rgba(100, 228, 169, 0.95), 0 6px 16px rgba(0, 0, 0, 0.5);
+}
+
+.btn-fab-combinada:active {
+  transform: translateY(1px) scale(0.98);
+}
+
+@media (max-width: 640px) {
+  .btn-fab-combinada {
+    bottom: 24px;
+    right: 18px;
+    padding: 11px 18px;
+    font-size: 0.9rem;
+  }
+}
+
 
 .nav-tab.activa .nav-tab-icono {
   color: var(--brand);
