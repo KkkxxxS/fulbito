@@ -493,13 +493,11 @@
                         <strong style="color:var(--text);">Probabilidad:</strong> <span id="comb-prob-total" style="color:var(--green); font-weight:700;">100%</span> | 
                         <strong style="color:var(--text);">Cuota Est.:</strong> <span id="comb-cuota-total" style="color:var(--brand); font-weight:700;">1.00</span>
                     </div>
-                    <div style="display:flex; gap:8px;">
-                        <button onclick="limpiarCombinadaManual()" style="background:rgba(239,68,68,0.15); color:#ef4444; border:1px solid rgba(239,68,68,0.3); padding:8px 14px; border-radius:var(--radius-sm); font-weight:600; font-size:0.85rem; cursor:pointer;">Limpiar todo</button>
-                        <button onclick="limpiarCombinadaManual()" style="background:rgba(239,68,68,0.15); color:#ef4444; border:1px solid rgba(239,68,68,0.3); padding:8px 14px; border-radius:var(--radius-sm); font-weight:600; font-size:0.85px; cursor:pointer;">Limpiar todo</button>
-                        <button onclick="confirmarCombinadaManual()" style="background:linear-gradient(135deg, var(--green), var(--brand)); color:#07120d; border:none; padding:8px 18px; border-radius:var(--radius-sm); font-weight:700; font-size:0.85rem; cursor:pointer; box-shadow:0 4px 12px -4px rgba(100,228,169,0.5);">Confirmar combinada</button>
-                        <button onclick="compartirCombinadaManual()" style="background:rgba(123,225,200,0.15); color:var(--brand); border:1px solid rgba(123,225,200,0.3); padding:8px 14px; border-radius:var(--radius-sm); font-weight:600; font-size:0.85rem; cursor:pointer;">Compartir</button>
-                        <button onclick="confirmarCombinadaManual()" style="background:linear-gradient(135deg, var(--green), var(--brand)); color:#07120d; border:none; padding:8px 18px; border-radius:var(--radius-sm); font-weight:700; font-size:0.85rem; cursor:pointer; box-shadow:0 4px 12px -4px rgba(100,228,169,0.5);">Confirmar combinada</button>
-                        <button onclick="guardarCombinadaGuardada()" style="background:rgba(242,196,116,0.15); color:var(--gold); border:1px solid rgba(242,196,116,0.3); padding:8px 14px; border-radius:var(--radius-sm); font-weight:600; font-size:0.85rem; cursor:pointer;">Guardar</button>
+                    <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                        <button onclick="limpiarCombinadaManual()" style="background:rgba(239,68,68,0.15); color:#ef4444; border:1px solid rgba(239,68,68,0.3); padding:8px 14px; border-radius:var(--radius-sm); font-weight:600; font-size:0.85rem; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background='rgba(239,68,68,0.25)'" onmouseout="this.style.background='rgba(239,68,68,0.15)'">Limpiar todo</button>
+                        <button onclick="compartirCombinadaManual()" style="background:rgba(123,225,200,0.15); color:var(--brand); border:1px solid rgba(123,225,200,0.3); padding:8px 14px; border-radius:var(--radius-sm); font-weight:600; font-size:0.85rem; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background='rgba(123,225,200,0.25)'" onmouseout="this.style.background='rgba(123,225,200,0.15)'">Compartir</button>
+                        <button onclick="guardarCombinadaGuardada()" style="background:rgba(242,196,116,0.15); color:var(--gold); border:1px solid rgba(242,196,116,0.3); padding:8px 14px; border-radius:var(--radius-sm); font-weight:600; font-size:0.85rem; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background='rgba(242,196,116,0.25)'" onmouseout="this.style.background='rgba(242,196,116,0.15)'">Guardar</button>
+                        <button onclick="confirmarCombinadaManual()" style="background:linear-gradient(135deg, var(--green), var(--brand)); color:#07120d; border:none; padding:10px 20px; border-radius:var(--radius-sm); font-weight:800; font-size:0.9rem; cursor:pointer; box-shadow:0 4px 16px -4px rgba(100,228,169,0.6); transition:all 0.2s;" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='translateY(0)'">Confirmar combinada</button>
                     </div>
                 </div>
             </div>
@@ -3911,12 +3909,16 @@
       const listaPartidos = partidosPorLiga[ligaCode];
 
       html += `
-        <div class="acordeon-liga" style="border:1px solid var(--line); border-radius:var(--radius-md); overflow:hidden; background:var(--bg-raised);">
-          <div class="acordeon-liga-header" onclick="toggleAcordeonLiga('${ligaCode}')" style="padding:12px 16px; background:rgba(255,255,255,0.03); cursor:pointer; display:flex; justify-content:space-between; align-items:center; user-select:none; font-weight:600; color:var(--text);">
-            <span>🏆 ${nombreLiga} (${listaPartidos.length})</span>
-            <span id="acordeon-arrow-${ligaCode}" style="font-size:0.8rem; transition:transform 0.2s;">▼</span>
+        <div class="acordeon-liga" style="border:1px solid var(--card-border); border-radius:var(--radius-md); overflow:hidden; background:var(--card); box-shadow:var(--shadow-card); transition:all 0.2s ease;">
+          <div class="acordeon-liga-header" onclick="toggleAcordeonLiga('${ligaCode}')" style="padding:14px 18px; background:linear-gradient(135deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01)); cursor:pointer; display:flex; justify-content:space-between; align-items:center; user-select:none; font-weight:700; color:var(--text); border-bottom:1px solid var(--line);" onmouseover="this.style.background='rgba(123,225,200,0.06)'" onmouseout="this.style.background='linear-gradient(135deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01))'">
+            <div style="display:flex; align-items:center; gap:10px;">
+              <span style="font-size:1.1rem;">🏆</span>
+              <span style="font-size:0.95rem; letter-spacing:0.02em;">${nombreLiga}</span>
+              <span style="font-size:0.75rem; padding:2px 8px; border-radius:999px; background:rgba(100,228,169,0.12); color:var(--green); font-family:var(--font-mono);">${listaPartidos.length} partidos</span>
+            </div>
+            <span id="acordeon-arrow-${ligaCode}" style="font-size:0.75rem; color:var(--text-muted); transition:transform 0.2s ease;">▼</span>
           </div>
-          <div id="acordeon-content-${ligaCode}" class="acordeon-liga-content" style="padding:12px; display:flex; flex-direction:column; gap:12px; border-top:1px solid var(--line);">
+          <div id="acordeon-content-${ligaCode}" class="acordeon-liga-content" style="padding:16px; display:flex; flex-direction:column; gap:14px; background:var(--bg-raised);">
       `;
 
       for (const partido of listaPartidos) {
@@ -3926,17 +3928,21 @@
         const pronosticos = await obtenerPronosticosDePartidoSeguro(partido);
 
         html += `
-          <div class="partido-combinada-card" style="background:var(--card); border:1px solid var(--card-border); border-radius:var(--radius-sm); padding:12px;">
-            <div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:0.85rem;">
-              <strong style="color:var(--text);">${local} vs ${visita}</strong>
-              <span style="color:var(--text-muted);">${horaStr}</span>
+          <div class="partido-combinada-card" style="background:var(--card); border:1px solid var(--card-border); border-radius:var(--radius-md); padding:14px 16px; box-shadow:0 4px 16px -6px rgba(0,0,0,0.4); transition:all 0.18s ease;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; padding-bottom:8px; border-bottom:1px solid var(--line);">
+              <div style="display:flex; align-items:center; gap:8px;">
+                <span style="font-size:0.95rem;">⚽</span>
+                <strong style="color:var(--text); font-size:0.92rem; font-family:var(--font-display);">${local} <span style="color:var(--text-muted); font-weight:400; font-size:0.85rem;">vs</span> ${visita}</strong>
+              </div>
+              <span style="font-size:0.78rem; color:var(--text-muted); font-family:var(--font-mono); background:rgba(255,255,255,0.03); padding:3px 8px; border-radius:999px; border:1px solid var(--line);">${horaStr}</span>
             </div>
             
-            <div id="aviso-conflicto-${partido.id}" style="display:none; background:rgba(234,179,8,0.15); border:1px solid rgba(234,179,8,0.3); color:#eab308; font-size:0.78rem; padding:6px 10px; border-radius:var(--radius-sm); margin-bottom:8px;">
-              ⚠️ Has seleccionado más de una opción del mismo tipo para este partido (son mutuamente excluyentes).
+            <div id="aviso-conflicto-${partido.id}" style="display:none; background:rgba(234,179,8,0.12); border:1px solid rgba(234,179,8,0.28); color:#facc15; font-size:0.78rem; padding:8px 12px; border-radius:var(--radius-sm); margin-bottom:10px; display:flex; align-items:center; gap:8px;">
+              <span>⚠️</span>
+              <span>Has seleccionado más de una opción del mismo tipo para este partido.</span>
             </div>
 
-            <div class="mercados-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:6px;">
+            <div class="mercados-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:8px;">
         `;
 
         if (pronosticos && pronosticos.seleccionados && pronosticos.seleccionados.length > 0) {
