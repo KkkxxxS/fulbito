@@ -455,6 +455,53 @@
     </div>
 
     <div id="bloque-combinadas"></div>
+    <div style="margin: 20px 0; text-align: center;">
+        <button class="landing-primary" onclick="abrirModalArmarCombinada()" style="background: linear-gradient(135deg, var(--green), var(--brand)); color: #07120d; font-weight: 700; padding: 12px 24px; border-radius: var(--radius-lg); font-size: 1rem; box-shadow: 0 4px 16px -6px rgba(100, 228, 169, 0.65); cursor: pointer; display: inline-flex; align-items: center; gap: 8px;">
+            <span>⚽ Armar Combinada Manual</span>
+        </button>
+    </div>
+
+    <!-- MODAL ARMAR COMBINADA -->
+    <div id="modal-armar-combinada" class="modal-overlay" style="display:none; position:fixed; inset:0; background:rgba(3,7,11,0.85); z-index:9999; backdrop-filter:blur(6px); align-items:center; justify-content:center; padding:16px; overflow-y:auto;">
+        <div class="modal-container" style="background:var(--card); border:1px solid var(--card-border); border-radius:var(--radius-lg); width:100%; max-width:760px; max-height:90vh; display:flex; flex-direction:column; box-shadow:var(--shadow-card); overflow:hidden; animation: modalFadeIn 0.25s ease;">
+            
+            <!-- HEADER -->
+            <div class="modal-header" style="padding:20px 24px; border-bottom:1px solid var(--line); display:flex; align-items:center; justify-content:between; background:var(--bg-raised);">
+                <div>
+                    <h3 style="font-family:var(--font-display); font-size:1.4rem; font-weight:600; margin:0; color:var(--text);">Armar Combinada Manual</h3>
+                    <p style="font-size:0.85rem; color:var(--text-muted); margin:4px 0 0;">Selecciona tus picks de cualquier partido y liga. Ajusta tu riesgo.</p>
+                </div>
+                <button onclick="cerrarModalArmarCombinada()" style="background:none; border:none; color:var(--text-muted); font-size:1.5rem; cursor:pointer; padding:4px 8px; border-radius:var(--radius-sm); transition:all 0.2s;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--text-muted)'">&times;</button>
+            </div>
+
+            <!-- BODY (ACORDEONES POR LIGA) -->
+            <div id="modal-combinada-body" style="padding:20px 24px; overflow-y:auto; flex:1; display:flex; flex-direction:column; gap:16px;">
+                <p style="text-align:center; color:var(--text-muted);">Cargando partidos disponibles...</p>
+            </div>
+
+            <!-- FOOTER / RESUMEN EN TIEMPO REAL -->
+            <div class="modal-footer" style="padding:16px 24px; border-top:1px solid var(--line); background:var(--bg-raised); display:flex; flex-direction:column; gap:12px;">
+                <div id="modal-combinada-resumen" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; font-size:0.9rem;">
+                    <div>
+                        <strong style="color:var(--text);">Picks:</strong> <span id="comb-count-picks" style="color:var(--green); font-weight:700;">0</span> | 
+                        <strong style="color:var(--text);">Probabilidad:</strong> <span id="comb-prob-total" style="color:var(--green); font-weight:700;">100%</span> | 
+                        <strong style="color:var(--text);">Cuota Est.:</strong> <span id="comb-cuota-total" style="color:var(--brand); font-weight:700;">1.00</span>
+                    </div>
+                    <div style="display:flex; gap:8px;">
+                        <button onclick="limpiarCombinadaManual()" style="background:rgba(239,68,68,0.15); color:#ef4444; border:1px solid rgba(239,68,68,0.3); padding:8px 14px; border-radius:var(--radius-sm); font-weight:600; font-size:0.85rem; cursor:pointer;">Limpiar todo</button>
+                        <button onclick="limpiarCombinadaManual()" style="background:rgba(239,68,68,0.15); color:#ef4444; border:1px solid rgba(239,68,68,0.3); padding:8px 14px; border-radius:var(--radius-sm); font-weight:600; font-size:0.85px; cursor:pointer;">Limpiar todo</button>
+                        <button onclick="confirmarCombinadaManual()" style="background:linear-gradient(135deg, var(--green), var(--brand)); color:#07120d; border:none; padding:8px 18px; border-radius:var(--radius-sm); font-weight:700; font-size:0.85rem; cursor:pointer; box-shadow:0 4px 12px -4px rgba(100,228,169,0.5);">Confirmar combinada</button>
+                        <button onclick="compartirCombinadaManual()" style="background:rgba(123,225,200,0.15); color:var(--brand); border:1px solid rgba(123,225,200,0.3); padding:8px 14px; border-radius:var(--radius-sm); font-weight:600; font-size:0.85rem; cursor:pointer;">Compartir</button>
+                        <button onclick="confirmarCombinadaManual()" style="background:linear-gradient(135deg, var(--green), var(--brand)); color:#07120d; border:none; padding:8px 18px; border-radius:var(--radius-sm); font-weight:700; font-size:0.85rem; cursor:pointer; box-shadow:0 4px 12px -4px rgba(100,228,169,0.5);">Confirmar combinada</button>
+                        <button onclick="guardarCombinadaGuardada()" style="background:rgba(242,196,116,0.15); color:var(--gold); border:1px solid rgba(242,196,116,0.3); padding:8px 14px; border-radius:var(--radius-sm); font-weight:600; font-size:0.85rem; cursor:pointer;">Guardar</button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+
 
 </section>
 
@@ -3748,6 +3795,379 @@
     }
     actualizarKPIsHome();
   }, 3 * 60 * 1000);
+  // ==========================================
+  // LOGICA: MODAL ARMAR COMBINADA MANUAL (PARTE 1)
+  // ==========================================
+  let combinadaManualPicks = [];
+
+  window.abrirModalArmarCombinada = async function() {
+    const modal = document.getElementById('modal-armar-combinada');
+    if (!modal) return;
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    await renderizarContenidoModalCombinada();
+    actualizarResumenCombinadaManual();
+  };
+
+  window.cerrarModalArmarCombinada = function() {
+    const modal = document.getElementById('modal-armar-combinada');
+    if (modal) modal.style.display = 'none';
+    document.body.style.overflow = '';
+  };
+
+  async function obtenerPronosticosDePartidoSeguro(partido) {
+    const codigoLiga = partido.competition ? partido.competition.code : 'PL';
+    try {
+      const respPron = await fetch('pronosticos.json');
+      if (respPron.ok) {
+        const datos = await respPron.json();
+        if (datos && datos.pronosticos && datos.pronosticos[partido.id]) {
+          return datos.pronosticos[partido.id].pronosticos;
+        }
+      }
+    } catch(e) {}
+
+    try {
+      const [h2h, tabla] = await Promise.all([
+        obtenerHeadToHead(partido.id),
+        obtenerTabla(codigoLiga)
+      ]);
+      const [statsLocal, statsVisita] = await Promise.all([
+        obtenerStatsEquipo(partido.homeTeam.id, codigoLiga, tabla),
+        obtenerStatsEquipo(partido.awayTeam.id, codigoLiga, tabla)
+      ]);
+      return generarPronosticos(
+        statsLocal, statsVisita, partido.homeTeam.name, partido.awayTeam.name,
+        h2h, tabla, partido.homeTeam.id, partido.awayTeam.id, codigoLiga
+      );
+    } catch (e) {
+      return null;
+    }
+  }
+
+
+  async function renderizarContenidoModalCombinada() {
+    const body = document.getElementById('modal-combinada-body');
+    if (!body) return;
+    body.innerHTML = '<p style="text-align:center; color:var(--text-muted); padding:20px;">Cargando partidos y mercados disponibles...</p>';
+
+    let partidos = (typeof partidosDelRango !== 'undefined' && partidosDelRango && partidosDelRango.length > 0)
+      ? partidosDelRango
+      : [];
+
+    if (partidos.length === 0) {
+      body.innerHTML = '<p style="text-align:center; color:var(--text-muted); padding:20px;">No hay partidos cargados en este momento. Por favor espera a que carguen los partidos de la fecha.</p>';
+      return;
+    }
+
+    const partidosPorLiga = {};
+    for (const p of partidos) {
+      const ligaCode = p.competition ? p.competition.code : 'OTRAS';
+      if (!partidosPorLiga[ligaCode]) partidosPorLiga[ligaCode] = [];
+      partidosPorLiga[ligaCode].push(p);
+    }
+
+    const ligasOrdenadas = Object.keys(partidosPorLiga).sort((a, b) => {
+      const nombreA = (typeof NOMBRES_LIGA !== 'undefined' && NOMBRES_LIGA[a]) || a;
+      const nombreB = (typeof NOMBRES_LIGA !== 'undefined' && NOMBRES_LIGA[b]) || b;
+      return nombreA.localeCompare(nombreB);
+    });
+
+    let html = '';
+    for (const ligaCode of ligasOrdenadas) {
+      const nombreLiga = (typeof NOMBRES_LIGA !== 'undefined' && NOMBRES_LIGA[ligaCode]) || ligaCode;
+      const listaPartidos = partidosPorLiga[ligaCode];
+
+      html += `
+        <div class="acordeon-liga" style="border:1px solid var(--line); border-radius:var(--radius-md); overflow:hidden; background:var(--bg-raised);">
+          <div class="acordeon-liga-header" onclick="toggleAcordeonLiga('${ligaCode}')" style="padding:12px 16px; background:rgba(255,255,255,0.03); cursor:pointer; display:flex; justify-content:space-between; align-items:center; user-select:none; font-weight:600; color:var(--text);">
+            <span>🏆 ${nombreLiga} (${listaPartidos.length})</span>
+            <span id="acordeon-arrow-${ligaCode}" style="font-size:0.8rem; transition:transform 0.2s;">▼</span>
+          </div>
+          <div id="acordeon-content-${ligaCode}" class="acordeon-liga-content" style="padding:12px; display:flex; flex-direction:column; gap:12px; border-top:1px solid var(--line);">
+      `;
+
+      for (const partido of listaPartidos) {
+        const local = partido.homeTeam.name;
+        const visita = partido.awayTeam.name;
+        const horaStr = partido.utcDate ? formatearHora(partido.utcDate) : '';
+        const pronosticos = await obtenerPronosticosDePartidoSeguro(partido);
+
+        html += `
+          <div class="partido-combinada-card" style="background:var(--card); border:1px solid var(--card-border); border-radius:var(--radius-sm); padding:12px;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:0.85rem;">
+              <strong style="color:var(--text);">${local} vs ${visita}</strong>
+              <span style="color:var(--text-muted);">${horaStr}</span>
+            </div>
+            
+            <div id="aviso-conflicto-${partido.id}" style="display:none; background:rgba(234,179,8,0.15); border:1px solid rgba(234,179,8,0.3); color:#eab308; font-size:0.78rem; padding:6px 10px; border-radius:var(--radius-sm); margin-bottom:8px;">
+              ⚠️ Has seleccionado más de una opción del mismo tipo para este partido (son mutuamente excluyentes).
+            </div>
+
+            <div class="mercados-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:6px;">
+        `;
+
+        if (pronosticos && pronosticos.seleccionados && pronosticos.seleccionados.length > 0) {
+          pronosticos.seleccionados.forEach(mercado => {
+            const pickId = `pick-${partido.id}-${encodeURIComponent(mercado.seleccion)}`;
+            const isChecked = combinadaManualPicks.some(p => p.id === pickId);
+            const prob = mercado.probabilidad || 50;
+            const cuota = prob > 0 ? (1 / (prob / 100)).toFixed(2) : '1.00';
+            const cat = mercado.categoria || 'otro';
+
+            html += `
+              <label style="display:flex; align-items:center; justify-content:space-between; gap:6px; background:var(--bg-raised); border:1px solid var(--line); border-radius:var(--radius-sm); padding:6px 10px; font-size:0.8rem; cursor:pointer; user-select:none;">
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <input type="checkbox" id="${pickId}" ${isChecked ? 'checked' : ''} onchange="togglePickCombinadaManual('${pickId}', ${partido.id}, '${local.replace(/'/g, "\\'")} vs ${visita.replace(/'/g, "\\'")}', '${ligaCode}', '${mercado.seleccion.replace(/'/g, "\\'")}', '${cat}', ${prob}, ${cuota})" style="cursor:pointer; accent-color:var(--green);">
+                  <span style="color:var(--text);">${mercado.seleccion}</span>
+                </div>
+                <div style="display:flex; gap:6px; font-size:0.75rem;">
+                  <span style="color:var(--green); font-weight:600;">${prob}%</span>
+                  <span style="color:var(--brand); font-weight:600;">x${cuota}</span>
+                </div>
+              </label>
+            `;
+          });
+        } else {
+          html += `<p style="font-size:0.8rem; color:var(--text-muted); grid-column: 1/-1;">Mercados no disponibles</p>`;
+        }
+
+        html += `
+            </div>
+          </div>
+        `;
+      }
+
+      html += `
+          </div>
+        </div>
+      `;
+    }
+
+    body.innerHTML = html;
+    verificarAvisosConflicto();
+  }
+
+
+  window.toggleAcordeonLiga = function(ligaCode) {
+    const cont = document.getElementById(`acordeon-content-${ligaCode}`);
+    const arrow = document.getElementById(`acordeon-arrow-${ligaCode}`);
+    if (!cont) return;
+    if (cont.style.display === 'none') {
+      cont.style.display = 'flex';
+      if (arrow) arrow.textContent = '▼';
+    } else {
+      cont.style.display = 'none';
+      if (arrow) arrow.textContent = '▶';
+    }
+  };
+
+  window.togglePickCombinadaManual = function(pickId, partidoId, partidoTxt, liga, seleccion, categoria, prob, cuota) {
+    const idx = combinadaManualPicks.findIndex(p => p.id === pickId);
+    if (idx >= 0) {
+      combinadaManualPicks.splice(idx, 1);
+    } else {
+      combinadaManualPicks.push({
+        id: pickId,
+        partidoId,
+        partidoTxt,
+        liga,
+        seleccion,
+        categoria,
+        probabilidad: Number(prob),
+        cuota: Number(cuota)
+      });
+    }
+    actualizarResumenCombinadaManual();
+    verificarAvisosConflicto();
+  };
+
+  function verificarAvisosConflicto() {
+    const picksPorPartido = {};
+    combinadaManualPicks.forEach(p => {
+      if (!picksPorPartido[p.partidoId]) picksPorPartido[p.partidoId] = [];
+      picksPorPartido[p.partidoId].push(p);
+    });
+
+    document.querySelectorAll('[id^="aviso-conflicto-"]').forEach(el => el.style.display = 'none');
+
+    Object.keys(picksPorPartido).forEach(partidoId => {
+      const picks = picksPorPartido[partidoId];
+      const categorias = picks.map(p => p.categoria);
+      const repetida = categorias.some((c, i) => categorias.indexOf(c) !== i);
+      const aviso = document.getElementById(`aviso-conflicto-${partidoId}`);
+      if (aviso) {
+        aviso.style.display = repetida ? 'block' : 'none';
+      }
+    });
+  }
+
+  function actualizarResumenCombinadaManual() {
+    const countEl = document.getElementById('comb-count-picks');
+    const probEl = document.getElementById('comb-prob-total');
+    const cuotaEl = document.getElementById('comb-cuota-total');
+
+    const totalPicks = combinadaManualPicks.length;
+    if (countEl) countEl.textContent = totalPicks;
+
+    if (totalPicks === 0) {
+      if (probEl) { probEl.textContent = '0%'; probEl.style.color = 'var(--text-muted)'; }
+      if (cuotaEl) { cuotaEl.textContent = '1.00'; }
+      return;
+    }
+
+    let probAcumulada = combinadaManualPicks.reduce((acc, p) => acc * (p.probabilidad / 100), 1) * 100;
+    probAcumulada = Math.round(probAcumulada * 10) / 10;
+
+    let cuotaTotal = combinadaManualPicks.reduce((acc, p) => acc * p.cuota, 1);
+    cuotaTotal = Math.round(cuotaTotal * 100) / 100;
+
+    if (probEl) {
+      probEl.textContent = `${probAcumulada}%`;
+      if (probAcumulada >= 50) probEl.style.color = 'var(--green)';
+      else if (probAcumulada >= 25) probEl.style.color = '#eab308';
+      else probEl.style.color = '#ef4444';
+    }
+
+    if (cuotaEl) {
+      cuotaEl.textContent = cuotaTotal.toFixed(2);
+    }
+  }
+
+  window.limpiarCombinadaManual = function() {
+    combinadaManualPicks = [];
+    document.querySelectorAll('#modal-combinada-body input[type="checkbox"]').forEach(cb => cb.checked = false);
+    actualizarResumenCombinadaManual();
+    verificarAvisosConflicto();
+  };
+
+  window.quitarPickDeCombinada = function(pickId) {
+    const idx = combinadaManualPicks.findIndex(p => p.id === pickId);
+    if (idx >= 0) {
+      combinadaManualPicks.splice(idx, 1);
+      const cb = document.getElementById(pickId);
+      if (cb) cb.checked = false;
+      actualizarResumenCombinadaManual();
+      verificarAvisosConflicto();
+      confirmarCombinadaManual();
+    }
+  };
+
+
+  window.confirmarCombinadaManual = function() {
+    if (combinadaManualPicks.length === 0) {
+      alert('Por favor, selecciona al menos 1 pick para armar tu combinada.');
+      return;
+    }
+
+    let probTotal = combinadaManualPicks.reduce((acc, p) => acc * (p.probabilidad / 100), 1) * 100;
+    probTotal = Math.round(probTotal * 10) / 10;
+    let cuotaTotal = combinadaManualPicks.reduce((acc, p) => acc * p.cuota, 1);
+    cuotaTotal = Math.round(cuotaTotal * 100) / 100;
+
+    let colorProb = '#22c55e';
+    if (probTotal < 25) colorProb = '#ef4444';
+    else if (probTotal < 50) colorProb = '#eab308';
+
+    const body = document.getElementById('modal-combinada-body');
+    if (!body) return;
+
+    let itemsHTML = combinadaManualPicks.map(p => `
+      <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 14px; background:var(--bg-raised); border:1px solid var(--line); border-radius:var(--radius-sm);">
+        <div>
+          <div style="font-weight:600; color:var(--text); font-size:0.88rem;">${p.partidoTxt}</div>
+          <div style="font-size:0.8rem; color:var(--text-muted);">${p.seleccion}</div>
+        </div>
+        <div style="display:flex; align-items:center; gap:12px;">
+          <span style="color:var(--green); font-weight:700; font-size:0.85rem;">${p.probabilidad}%</span>
+          <span style="color:var(--brand); font-weight:700; font-size:0.85rem;">x${p.cuota.toFixed(2)}</span>
+          <button onclick="quitarPickDeCombinada('${p.id}')" style="background:none; border:none; color:#ef4444; cursor:pointer; font-size:1.1rem; padding:0 4px;" title="Quitar">&times;</button>
+        </div>
+      </div>
+    `).join('');
+
+    body.innerHTML = `
+      <div style="display:flex; flex-direction:column; gap:16px;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <h4 style="margin:0; font-size:1.1rem; color:var(--text);">Resumen de tu Combinada</h4>
+          <button onclick="renderizarContenidoModalCombinada()" style="background:rgba(255,255,255,0.06); border:1px solid var(--line); color:var(--text); padding:6px 12px; border-radius:var(--radius-sm); font-size:0.8rem; cursor:pointer;">← Volver a editar</button>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          ${itemsHTML}
+        </div>
+
+        <div style="background:var(--bg-raised); border:1px solid var(--card-border); border-radius:var(--radius-md); padding:16px; display:flex; justify-content:space-around; align-items:center; text-align:center;">
+          <div>
+            <div style="font-size:0.8rem; color:var(--text-muted);">Picks Seleccionados</div>
+            <div style="font-size:1.4rem; font-weight:700; color:var(--text);">${combinadaManualPicks.length}</div>
+          </div>
+          <div style="border-left:1px solid var(--line); height:32px;"></div>
+          <div>
+            <div style="font-size:0.8rem; color:var(--text-muted);">Probabilidad Total</div>
+            <div style="font-size:1.4rem; font-weight:700; color:${colorProb};">${probTotal}%</div>
+          </div>
+          <div style="border-left:1px solid var(--line); height:32px;"></div>
+          <div>
+            <div style="font-size:0.8rem; color:var(--text-muted);">Cuota Estimada</div>
+            <div style="font-size:1.4rem; font-weight:700; color:var(--brand);">x${cuotaTotal.toFixed(2)}</div>
+          </div>
+        </div>
+
+        <div style="background:rgba(100,228,169,0.08); border:1px solid rgba(100,228,169,0.2); padding:12px 16px; border-radius:var(--radius-sm); font-size:0.82rem; color:var(--text); line-height:1.4;">
+          💡 <strong>Nota sobre el riesgo:</strong> Agregar más selecciones multiplica la cuota final y el potencial retorno, pero cada pick extra reduce la probabilidad acumulada de acertar todas las condiciones juntas.
+        </div>
+      </div>
+    `;
+  };
+  window.compartirCombinadaManual = function() {
+    if (combinadaManualPicks.length === 0) {
+      alert('Selecciona al menos 1 pick para compartir tu combinada.');
+      return;
+    }
+    let probTotal = Math.round(combinadaManualPicks.reduce((acc, p) => acc * (p.probabilidad / 100), 1) * 1000) / 10;
+    let cuotaTotal = Math.round(combinadaManualPicks.reduce((acc, p) => acc * p.cuota, 1) * 100) / 100;
+    let texto = `⚽ Mi Combinada de Fulbito (${combinadaManualPicks.length} picks):\n` +
+      combinadaManualPicks.map(p => `• ${p.partidoTxt}: ${p.seleccion} (Cuota x${p.cuota.toFixed(2)}, ${p.probabilidad}%)`).join('\n') +
+      `\n\nCuota Total: x${cuotaTotal} | Probabilidad: ${probTotal}%\nArmado en Fulbito App`;
+    
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(texto).then(() => {
+        alert('¡Combinada copiada al portapapeles! Ya puedes compartirla.');
+      }).catch(() => {
+        prompt('Copia tu combinada:', texto);
+      });
+    } else {
+      prompt('Copia tu combinada:', texto);
+    }
+  };
+
+  window.guardarCombinadaGuardada = function() {
+    if (combinadaManualPicks.length === 0) {
+      alert('Selecciona al menos 1 pick para guardar tu combinada.');
+      return;
+    }
+    try {
+      const guardadas = JSON.parse(localStorage.getItem('fulbito_combinadas_guardadas') || '[]');
+      const nuevaComb = {
+        id: 'comb_' + Date.now(),
+        fecha: new Date().toISOString(),
+        picks: combinadaManualPicks,
+        totalPicks: combinadaManualPicks.length,
+        probabilidad: Math.round(combinadaManualPicks.reduce((acc, p) => acc * (p.probabilidad / 100), 1) * 1000) / 10,
+        cuota: Math.round(combinadaManualPicks.reduce((acc, p) => acc * p.cuota, 1) * 100) / 100
+      };
+      guardadas.unshift(nuevaComb);
+      localStorage.setItem('fulbito_combinadas_guardadas', JSON.stringify(guardadas));
+      alert('¡Combinada guardada con éxito!');
+      cerrarModalArmarCombinada();
+    } catch(e) {
+      alert('Error al guardar la combinada.');
+    }
+  };
+
+
+
 
 </script>
 
