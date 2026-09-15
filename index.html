@@ -3863,16 +3863,23 @@
 
 
   async function renderizarContenidoModalCombinada() {
+    console.log('DEBUG: función iniciada');
     const body = document.getElementById('modal-combinada-body');
-    if (!body) return;
-    body.innerHTML = '<p style="text-align:center; color:var(--text-muted); padding:20px;">Cargando partidos y mercados disponibles...</p>';
+    if (!body) {
+      console.log('DEBUG: #modal-combinada-body NO existe en el DOM');
+      return;
+    }
+    console.log('DEBUG: #modal-combinada-body existe correctamente');
+    body.innerHTML = '<p style="text-align:center; color:var(--text); padding:20px;">Cargando partidos y mercados disponibles...</p>';
 
     let partidos = (typeof partidosDelRango !== 'undefined' && partidosDelRango && partidosDelRango.length > 0)
       ? partidosDelRango
       : [];
 
+    console.log('DEBUG: partidos disponibles', partidos);
+
     if (partidos.length === 0) {
-      body.innerHTML = '<p style="text-align:center; color:var(--text-muted); padding:20px;">No hay partidos cargados en este momento. Por favor espera a que carguen los partidos de la fecha.</p>';
+      body.innerHTML = '<p style="text-align:center; color:var(--text); padding:20px;">No hay partidos cargados en este momento. Por favor espera a que carguen los partidos de la fecha.</p>';
       return;
     }
 
@@ -3961,6 +3968,7 @@
     }
 
     body.innerHTML = html;
+    console.log('DEBUG: HTML insertado', body.innerHTML.length);
     verificarAvisosConflicto();
   }
 
