@@ -3906,7 +3906,7 @@
       for (const partido of listaPartidos) {
         const local = partido.homeTeam.name;
         const visita = partido.awayTeam.name;
-        const horaStr = partido.utcDate ? formatearHora(partido.utcDate) : '';
+        const horaStr = partido.utcDate ? new Date(partido.utcDate).toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit', hour12: true }) : '';
         const pronosticos = await obtenerPronosticosDePartidoSeguro(partido);
 
         html += `

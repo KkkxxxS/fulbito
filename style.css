@@ -478,7 +478,7 @@ body:not(.home-mode)::before {
   position: fixed;
   bottom: 28px;
   right: 24px;
-  z-index: 999;
+  z-index: 99999;
   background: linear-gradient(135deg, var(--green), var(--brand));
   color: var(--ink-on-accent);
   font-weight: 700;
