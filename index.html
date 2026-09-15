@@ -2534,10 +2534,11 @@
 
   async function actualizarHistorialConResultados() {
     const historial = leerHistorial();
-    const pendientes = historial.filter(h => !h.verificado);
+    const hoy = new Date();
+    // Solo considerar pronósticos cuya fecha no sea futura respecto a hoy para evitar dateFrom > dateTo
+    const pendientes = historial.filter(h => !h.verificado && new Date(h.fecha).getTime() <= hoy.getTime());
     if (pendientes.length === 0) return leerHistorial();
 
-    const hoy = new Date();
     const fechasPendientes = pendientes.map(h => new Date(h.fecha).getTime());
     let fechaDesde = new Date(Math.min(...fechasPendientes));
     const limiteMs = 90 * 24 * 60 * 60 * 1000;
@@ -2545,8 +2546,17 @@
       fechaDesde = new Date(hoy.getTime() - limiteMs);
     }
 
+    let fFromStr = formatearFecha(fechaDesde);
+    let fToStr = formatearFecha(hoy);
+    if (fFromStr > fToStr) {
+      console.warn(`[Historial] Se detectó fechaDesde (${fFromStr}) posterior a fechaTo (${fToStr}). Intercambiando automáticamente.`);
+      const temp = fFromStr;
+      fFromStr = fToStr;
+      fToStr = temp;
+    }
+
     try {
-      const url = `${BACKEND_URL}/api/partidos?competitions=${COMPETICIONES}&dateFrom=${formatearFecha(fechaDesde)}&dateTo=${formatearFecha(hoy)}`;
+      const url = `${BACKEND_URL}/api/partidos?competitions=${COMPETICIONES}&dateFrom=${fFromStr}&dateTo=${fToStr}`;
       const resp = await fetch(url);
       const datos = await resp.json();
       if (datos.error) { console.warn("Error de la API al verificar historial:", datos.mensaje); return leerHistorial(); }
