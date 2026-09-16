@@ -56,6 +56,50 @@
   border-color: rgba(123, 225, 200, 0.3);
 }
 
+@keyframes floatGlow {
+  0%, 100% { transform: translate(-50%, -50%) translate(0, 0); }
+  50% { transform: translate(-50%, -50%) translate(20px, -20px); }
+}
+
+.landing-inner {
+  position: relative;
+  z-index: 1;
+}
+
+.landing-shell {
+  position: relative;
+  overflow: hidden;
+  padding: 80px 20px;
+}
+
+.landing-shell::before {
+  content: "";
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 600px; height: 600px;
+  background: radial-gradient(circle, var(--green-dim), transparent 70%);
+  filter: blur(100px);
+  z-index: 0;
+  pointer-events: none;
+  animation: floatGlow 15s ease-in-out infinite;
+}
+
+.landing-inner h1 {
+  font-size: clamp(3rem, 8vw, 6.5rem);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--ls-tight);
+  margin-bottom: 24px;
+}
+
+.landing-inner h1 span {
+  display: block;
+  background: linear-gradient(135deg, var(--brand), var(--green));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 0 20px rgba(100, 228, 169, 0.1));
+}
+
 
 @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=IBM+Plex+Mono:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap');
 
