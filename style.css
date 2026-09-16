@@ -1973,9 +1973,11 @@ main {
   font-family: var(--font-mono);
   font-size: 0.74rem;
 }
+.partido-topbar-izq {
   font-family: var(--font-mono);
   font-size: var(--fs-xs);
   line-height: var(--lh-tight);
+}
 
 .partido-topbar-izq {
   display: flex;
