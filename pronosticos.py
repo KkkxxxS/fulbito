@@ -494,57 +494,94 @@ class ModeloEstadistico:
         }
     
     def seleccionarMercados(self, candidatos, cantidad):
-        """Selecciona los mejores mercados de candidatos"""
+        """Selecciona los 4 mercados destacados de forma dinámica e inteligente según las características del partido."""
+        p_local = next((c['probabilidad'] for c in candidatos if c['categoria'] == 'resultado' and c['parametros']['lado'] == 'local'), 0.33)
+        p_visita = next((c['probabilidad'] for c in candidatos if c['categoria'] == 'resultado' and c['parametros']['lado'] == 'visita'), 0.33)
+        p_empate = next((c['probabilidad'] for c in candidatos if c['categoria'] == 'resultado' and c['parametros']['lado'] == 'empate'), 0.33)
+        
+        diferencia_favorito = abs(p_local - p_visita)
+        es_favorito_claro = max(p_local, p_visita) >= 0.58 or diferencia_favorito >= 0.28
+        es_muy_parejo = diferencia_favorito < 0.14 and p_empate >= 0.27
+        
+        mas_25 = next((c['probabilidad'] for c in candidatos if c['categoria'] == 'totalgoles' and c['parametros']['linea'] == 2.5 and c['parametros']['direccion'] == 'mas'), 0.5)
+        menos_25 = next((c['probabilidad'] for c in candidatos if c['categoria'] == 'totalgoles' and c['parametros']['linea'] == 2.5 and c['parametros']['direccion'] == 'menos'), 0.5)
+        mas_35 = next((c['probabilidad'] for c in candidatos if c['categoria'] == 'totalgoles' and c['parametros']['linea'] == 3.5 and c['parametros']['direccion'] == 'mas'), 0.3)
+        menos_15 = next((c['probabilidad'] for c in candidatos if c['categoria'] == 'totalgoles' and c['parametros']['linea'] == 1.5 and c['parametros']['direccion'] == 'menos'), 0.3)
+        p_btts_si = next((c['probabilidad'] for c in candidatos if c['categoria'] == 'btts' and c['parametros'].get('si') == True), 0.5)
+        
         seleccionados = []
-        
-        # Familia "ganador": Resultado vs Doble Oportunidad
-        mejor_resultado = next((c for c in candidatos if c['categoria'] == 'resultado'), None)
-        mejor_doble = next((c for c in candidatos if c['categoria'] == 'doble'), None)
-        
-        if mejor_resultado and mejor_doble:
-            relacionada = '1X' if mejor_resultado['parametros']['lado'] == 'local' else 'X2' if mejor_resultado['parametros']['lado'] == 'visita' else None
-            doble_relacionada = next((c for c in candidatos if c['categoria'] == 'doble' and c['parametros']['lado'] == relacionada), None)
-            
-            if doble_relacionada:
-                ratio = mejor_resultado['probabilidad'] / doble_relacionada['probabilidad']
-                seleccionados.append(mejor_resultado if ratio >= 0.62 else doble_relacionada)
+        categorias_usadas = set()
+
+        def agregar_candidato(candidato):
+            if candidato and candidato['categoria'] not in categorias_usadas:
+                seleccionados.append(candidato)
+                categorias_usadas.add(candidato['categoria'])
+                return True
+            return False
+
+        if es_favorito_claro:
+            mejor_handicap = next((c for c in candidatos if c['categoria'] == 'handicap' and c['parametros']['valor'] == 2 and c['probabilidad'] >= 0.24), None)
+            mejor_resultado = next((c for c in candidatos if c['categoria'] == 'resultado'), None)
+            if mejor_handicap:
+                agregar_candidato(mejor_handicap)
             else:
-                seleccionados.append(mejor_resultado)
+                agregar_candidato(mejor_resultado)
+        elif es_muy_parejo:
+            mejor_doble = next((c for c in candidatos if c['categoria'] == 'doble' and c['parametros']['lado'] == '12'), None) or \
+                          next((c for c in candidatos if c['categoria'] == 'doble'), None)
+            if not agregar_candidato(mejor_doble):
+                agregar_candidato(next((c for c in candidatos if c['categoria'] == 'resultado'), None))
         else:
-            seleccionados.append(mejor_resultado or mejor_doble)
+            mejor_resultado = next((c for c in candidatos if c['categoria'] == 'resultado'), None)
+            mejor_doble = next((c for c in candidatos if c['categoria'] == 'doble'), None)
+            if mejor_resultado and mejor_doble:
+                relacionada = '1X' if mejor_resultado['parametros']['lado'] == 'local' else 'X2' if mejor_resultado['parametros']['lado'] == 'visita' else None
+                doble_relacionada = next((c for c in candidatos if c['categoria'] == 'doble' and c['parametros']['lado'] == relacionada), None)
+                if doble_relacionada and (mejor_resultado['probabilidad'] / doble_relacionada['probabilidad'] < 0.62):
+                    agregar_candidato(doble_relacionada)
+                else:
+                    agregar_candidato(mejor_resultado)
+            else:
+                agregar_candidato(mejor_resultado or mejor_doble)
+
+        candidatos_goles = [c for c in candidatos if c['categoria'] == 'totalgoles']
+        candidato_goles_optimo = None
+        if mas_35 >= 0.42:
+            candidato_goles_optimo = next((c for c in candidatos_goles if c['parametros']['linea'] == 3.5 and c['parametros']['direccion'] == 'mas'), None)
+        elif menos_15 >= 0.42:
+            candidato_goles_optimo = next((c for c in candidatos_goles if c['parametros']['linea'] == 1.5 and c['parametros']['direccion'] == 'menos'), None)
+        elif mas_25 >= 0.52:
+            candidato_goles_optimo = next((c for c in candidatos_goles if c['parametros']['linea'] == 2.5 and c['parametros']['direccion'] == 'mas'), None)
+        elif menos_25 >= 0.52:
+            candidato_goles_optimo = next((c for c in candidatos_goles if c['parametros']['linea'] == 2.5 and c['parametros']['direccion'] == 'menos'), None)
         
-        # Familia "goles": Total de Goles vs Ambos Anotan
-        candidatos_goles = [c for c in candidatos if c['categoria'] in ['totalgoles', 'btts']]
-        mejor_goles = max(candidatos_goles, key=lambda c: c['probabilidad'] - (0.03 if c['categoria'] == 'btts' else 0), default=None)
-        if mejor_goles:
-            seleccionados.append(mejor_goles)
+        if not candidato_goles_optimo and candidatos_goles:
+            candidato_goles_optimo = max(candidatos_goles, key=lambda c: c['probabilidad'])
         
-        # Familia "goleador": Equipo Marca vs Hándicap
-        mejor_handicap = next((c for c in candidatos if c['categoria'] == 'handicap'), None)
-        mejor_equipo_marca = next((c for c in candidatos if c['categoria'] == 'equipomarca'), None)
+        agregar_candidato(candidato_goles_optimo)
+
+        if p_btts_si >= 0.55:
+            btts_si = next((c for c in candidatos if c['categoria'] == 'btts' and c['parametros'].get('si') == True), None)
+            agregar_candidato(btts_si)
         
-        if mejor_handicap and mejor_equipo_marca:
-            seleccionados.append(mejor_handicap if mejor_handicap['probabilidad'] >= 0.32 else mejor_equipo_marca)
-        else:
-            seleccionados.append(mejor_handicap or mejor_equipo_marca)
-        
-        # Marcador exacto
+        if len(seleccionados) < 3:
+            mejor_handicap = next((c for c in candidatos if c['categoria'] == 'handicap'), None)
+            if mejor_handicap and mejor_handicap['probabilidad'] >= 0.28:
+                agregar_candidato(mejor_handicap)
+            else:
+                agregar_candidato(next((c for c in candidatos if c['categoria'] == 'equipomarca'), None))
+
         mejor_marcador = next((c for c in candidatos if c['categoria'] == 'marcador'), None)
-        if mejor_marcador:
-            seleccionados.append(mejor_marcador)
-        
-        # Rellenar si faltan
+        agregar_candidato(mejor_marcador)
+
         if len(seleccionados) < cantidad:
-            usadas = set(c['categoria'] for c in seleccionados)
             candidatos_ordenados = sorted(candidatos, key=lambda c: c['probabilidad'], reverse=True)
             for c in candidatos_ordenados:
-                if c['categoria'] not in usadas:
-                    seleccionados.append(c)
-                    usadas.add(c['categoria'])
+                agregar_candidato(c)
                 if len(seleccionados) >= cantidad:
                     break
-        
-        return seleccionados[:cantidad]
+
+
     
     def razonesParaMercado(self, m, ctx):
         """Genera razones para un mercado"""
