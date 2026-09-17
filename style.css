@@ -2523,8 +2523,55 @@ main {
 .aviso-servidor strong { color: var(--gold); }
 
 /* ============ PIE DE PAGINA ============ */
-.pie-pagina { max-width: 900px; margin: 0 auto; padding: 28px 20px 60px; border-top: 1px solid var(--line); }
-.pie-pagina p { color: var(--text-dim); font-size: 0.74rem; line-height: 1.6; text-align: center; margin: 22px 0 0; }
+.pie-pagina {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 32px 20px 60px;
+  border-top: 1px solid var(--line);
+  background: linear-gradient(180deg, rgba(15,22,29,0.8), rgba(7,12,17,0.95));
+  border-radius: 0 0 24px 24px;
+  position: relative;
+}
+
+.pie-pagina::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40px;
+  height: 2px;
+  background: linear-gradient(90deg, var(--brand), var(--green));
+  border-radius: 1px;
+}
+
+.pie-pagina p {
+  color: var(--text-dim);
+  font-size: 0.78rem;
+  line-height: 1.7;
+  text-align: center;
+  margin: 16px 0 0;
+}
+
+.pie-pagina p strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+/* Branding mejorado en el footer */
+.pie-pagina .marca-footer {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--brand);
+  font-weight: 700;
+  font-size: 1rem;
+  margin-bottom: 12px;
+}
+
+.pie-pagina .marca-footer span {
+  color: var(--green);
+}
 
 /* ===== Escudos de equipos ===== */
 .escudo { width: 32px; height: 32px; object-fit: contain; vertical-align: middle; margin: 0 8px; }
