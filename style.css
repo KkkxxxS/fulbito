@@ -4817,3 +4817,276 @@ input {
   display: flex;
 }
 
+.modal-container {
+  background: #0f172a;
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-lg);
+  width: 100%;
+  max-width: 760px;
+  max-height: 85vh;
+  height: 85vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 25px 50px -12px rgba(0,0,0,0.9);
+  overflow: hidden;
+  animation: modalFadeIn 0.25s ease;
+  margin: auto;
+  position: relative;
+  z-index: 10000;
+}
+
+.modal-header {
+  flex-shrink: 0;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--bg-raised);
+}
+
+.modal-header h3 {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  font-weight: 600;
+  margin: 0;
+  color: var(--text);
+}
+
+.modal-header p {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin: 4px 0 0;
+}
+
+.modal-close-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  transition: all 0.2s;
+}
+
+.modal-close-btn:hover {
+  color: var(--text);
+  background: rgba(255,255,255,0.05);
+}
+
+.modal-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.modal-footer {
+  flex-shrink: 0;
+  padding: 16px 24px;
+  border-top: 1px solid var(--line);
+  background: var(--bg-raised);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.modal-resumen {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 0.9rem;
+}
+
+.modal-boton {
+  padding: 8px 14px;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.modal-boton-danger {
+  background: rgba(239,68,68,0.15);
+  color: #ef4444;
+  border: 1px solid rgba(239,68,68,0.3);
+}
+
+.modal-boton-danger:hover {
+  background: rgba(239,68,68,0.25);
+}
+
+.modal-boton-brand {
+  background: rgba(123,228,200,0.15);
+  color: var(--brand);
+  border: 1px solid rgba(123,228,200,0.3);
+}
+
+.modal-boton-brand:hover {
+  background: rgba(123,228,200,0.25);
+}
+
+.modal-boton-gold {
+  background: rgba(242,196,116,0.15);
+  color: var(--gold);
+  border: 1px solid rgba(242,196,116,0.3);
+}
+
+.modal-boton-gold:hover {
+  background: rgba(242,196,116,0.25);
+}
+
+.modal-boton-primary {
+  background: linear-gradient(135deg, var(--green), var(--brand));
+  color: #07120d;
+  border: none;
+  padding: 10px 20px;
+  font-weight: 800;
+  font-size: 0.9rem;
+  box-shadow: 0 4px 16px -4px rgba(100,228,169,0.6);
+}
+
+.modal-boton-primary:hover {
+  transform: translateY(-1px);
+}
+
+/* ===== Acordeones de liga en modal combinada ===== */
+.modal-liga-acordeon {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.modal-liga-cabecera {
+  padding: 14px 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(255,255,255,0.02);
+  border-bottom: 1px solid transparent;
+  transition: all 0.2s;
+  user-select: none;
+}
+
+.modal-liga-cabecera:hover {
+  background: rgba(255,255,255,0.04);
+}
+
+.modal-liga-cabecera.abierta {
+  border-bottom-color: var(--line);
+  background: rgba(123,228,200,0.04);
+}
+
+.modal-liga-nombre {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--text);
+}
+
+.modal-liga-count {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+.modal-liga-icono {
+  color: var(--green);
+  font-size: 0.8rem;
+  margin-right: 8px;
+}
+
+.modal-liga-cuerpo {
+  padding: 0;
+  display: none;
+}
+
+.modal-liga-cuerpo.abierto {
+  display: block;
+}
+
+/* ===== Checkboxes como chips seleccionables ===== */
+.combinada-pick-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(148,163,184,0.12);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.2, 0.7, 0.2, 1);
+  font-size: 0.84rem;
+  color: var(--text-muted);
+  margin: 4px;
+}
+
+.combinada-pick-chip:hover {
+  border-color: rgba(123,228,200,0.25);
+  background: rgba(255,255,255,0.04);
+  color: var(--text);
+}
+
+.combinada-pick-chip input[type="checkbox"] {
+  display: none;
+}
+
+.combinada-pick-chip .chip-marca {
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  border: 2px solid rgba(148,163,184,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  flex-shrink: 0;
+  transition: all 0.2s;
+  color: transparent;
+}
+
+.combinada-pick-chip input:checked + .chip-marca {
+  background: var(--green);
+  border-color: var(--green);
+  color: #07120d;
+  font-weight: 800;
+}
+
+.combinada-pick-chip input:checked {
+  /* The chip visual is handled by .chip-marca */
+}
+
+.combinada-pick-chip input:checked ~ .chip-info {
+  color: var(--text);
+}
+
+.chip-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.chip-info .chip-label {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.chip-info .chip-prob {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+}
+
+.chip-info .chip-prob .prob-valor {
+  color: var(--green);
+  font-weight: 700;
+}
+
