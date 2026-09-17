@@ -2561,7 +2561,7 @@ main {
   background: rgba(22, 34, 50, 0.85);
   color: #c5d3e8;
   border: 1px solid rgba(148, 163, 184, 0.16);
-  padding: 8px 15px;
+  padding: 8px 16px;
   border-radius: 999px;
   cursor: pointer;
   font-size: 0.82rem;
@@ -2569,7 +2569,11 @@ main {
   white-space: nowrap;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 2px 8px -4px rgba(0, 0, 0, 0.3);
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
+
 .filtro-liga-btn:hover {
   background: rgba(30, 46, 68, 0.95);
   border-color: rgba(100, 228, 169, 0.35);
@@ -2577,12 +2581,26 @@ main {
   transform: translateY(-1px);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 4px 12px -6px rgba(100, 228, 169, 0.2);
 }
+
 .filtro-liga-btn.activa {
   background: linear-gradient(135deg, var(--green), var(--brand));
   color: #07120d;
   border-color: transparent;
   font-weight: 700;
   box-shadow: 0 4px 16px -6px rgba(100, 228, 169, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.filtro-liga-btn .liga-escudo {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.15);
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.filtro-liga-btn.activa .liga-escudo {
+  background: rgba(7, 18, 13, 0.3);
 }
 
 /* ===== Modo compacto / expandido ===== */
