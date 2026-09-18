@@ -241,11 +241,12 @@ class ModeloEstadistico:
         return {'ataque': ataque, 'defensa': defensa}
     
     def calcularTendencia(self, partidos_ordenados, team_id):
-        """Calcula tendencia reciente de un equipo"""
+        """Calcula tendencia reciente de un equipo incluyendo promedio de goles recientes (EWMA)"""
         if len(partidos_ordenados) < 4:
-            return {'direccion': 'neutral', 'racha': []}
+            return {'direccion': 'neutral', 'racha': [], 'golesRecientesPromedio': None}
         
         puntos_por_partido = []
+        goles_anotados_lista = []
         for p in partidos_ordenados:
             es_local = p['homeTeam']['id'] == team_id
             goles_equipo = (p['score']['fullTime']['home'] if es_local else p['score']['fullTime']['away']) or 0
@@ -259,6 +260,7 @@ class ModeloEstadistico:
                 puntos = {'pts': 0, 'r': 'P'}
             
             puntos_por_partido.append(puntos)
+            goles_anotados_lista.append(goles_equipo)
         
         mitad = len(puntos_por_partido) // 2
         recientes = puntos_por_partido[:mitad]
@@ -275,15 +277,37 @@ class ModeloEstadistico:
         
         racha = [p['r'] for p in puntos_por_partido[:5]][::-1]
         
-        return {'direccion': direccion, 'racha': racha}
+        # EWMA ponderado para los últimos 5 partidos (más peso a los más recientes)
+        ultimos_goles = goles_anotados_lista[:5]
+        if len(ultimos_goles) > 0:
+            pesos = [math.exp(-0.25 * i) for i in range(len(ultimos_goles))]
+            suma_pesos = sum(pesos)
+            goles_recientes_promedio = sum(g * w for g, w in zip(ultimos_goles, pesos)) / suma_pesos
+        else:
+            goles_recientes_promedio = None
+        
+        return {
+            'direccion': direccion, 
+            'racha': racha, 
+            'golesRecientesPromedio': goles_recientes_promedio
+        }
     
-    def factorTendencia(self, direccion):
-        """Factor multiplicador por tendencia"""
+    def factorTendencia(self, direccion, racha_goles_recientes=None, goles_promedio_general=None):
+        """Factor multiplicador por tendencia enriquecido con EWMA de goles recientes"""
+        factor_base = 1.0
         if direccion == 'subiendo':
-            return 1.03
+            factor_base = 1.03
         elif direccion == 'bajando':
-            return 0.97
-        return 1.0
+            factor_base = 0.97
+            
+        if racha_goles_recientes is not None and goles_promedio_general is not None and goles_promedio_general > 0:
+            ratio = racha_goles_recientes / goles_promedio_general
+            # EWMA amortiguado (cap estricto entre 0.90 y 1.12 para evitar lambdas absurdas)
+            factor_ewma = 1.0 + (ratio - 1.0) * 0.30
+            factor_ewma = max(0.90, min(1.12, factor_ewma))
+            return factor_base * factor_ewma
+            
+        return factor_base
     
     def factorDescanso(self, dias):
         """Factor por días de descanso"""
@@ -698,9 +722,13 @@ class ModeloEstadistico:
         lambda_local *= math.sqrt(fuerza_local['ataque'] * fuerza_visita['defensa'])
         lambda_visita *= math.sqrt(fuerza_visita['ataque'] * fuerza_local['defensa'])
         
-        # Tendencia y descanso
-        lambda_local *= self.factorTendencia(stats_local['tendencia']['direccion'])
-        lambda_visita *= self.factorTendencia(stats_visita['tendencia']['direccion'])
+        # Tendencia y descanso (con EWMA de goles recientes)
+        goles_recientes_local = stats_local['tendencia'].get('golesRecientesPromedio')
+        goles_recientes_visita = stats_visita['tendencia'].get('golesRecientesPromedio')
+        prom_goles_liga = tabla.get('promedioLigaGolesFavor', 1.4)
+        
+        lambda_local *= self.factorTendencia(stats_local['tendencia']['direccion'], goles_recientes_local, prom_goles_liga)
+        lambda_visita *= self.factorTendencia(stats_visita['tendencia']['direccion'], goles_recientes_visita, prom_goles_liga)
         
         lambda_local *= self.factorDescanso(stats_local['diasDescansoUltimoPartido'])
         lambda_visita *= self.factorDescanso(stats_visita['diasDescansoUltimoPartido'])
