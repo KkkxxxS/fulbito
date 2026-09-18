@@ -206,17 +206,32 @@ class ModeloEstadistico:
         desviacion = ratio - 1
         return 1 + max(-limite, min(limite, desviacion))
     
-    def fuerzaAtaqueDefensa(self, tabla, team_id):
-        """Fuerza de ataque y defensa relativa a la liga"""
-        info = tabla['mapa'].get(team_id)
+    def fuerzaAtaqueDefensa(self, tabla, team_id, es_local=True):
+        """Fuerza de ataque y defensa relativa a la liga, separada por localía"""
+        contexto = tabla.get('contextoLocal') if es_local else tabla.get('contextoVisita')
+        info = None
+        if contexto and 'mapa' in contexto:
+            info = contexto['mapa'].get(team_id)
+        
+        if not info:
+            info = tabla['mapa'].get(team_id)
+            
         if not info or not tabla['promedioLigaGolesFavor'] or not tabla['promedioLigaGolesContra']:
             return {'ataque': 1.0, 'defensa': 1.0}
         
-        ataque = info['golesFavorPorPartido'] / tabla['promedioLigaGolesFavor']
-        defensa = info['golesContraPorPartido'] / tabla['promedioLigaGolesContra']
+        goles_favor_partido = info.get('golesFavorPorPartido')
+        goles_contra_partido = info.get('golesContraPorPartido')
         
-        # Aplicar shrinkage hacia 1
-        peso = min(info['partidosJugados'] / self.config.PARTIDOS_CONFIANZA_PLENA, 1.0)
+        if goles_favor_partido is None or goles_contra_partido is None:
+            info_fallback = tabla['mapa'].get(team_id, {})
+            goles_favor_partido = info_fallback.get('golesFavorPorPartido', tabla['promedioLigaGolesFavor'])
+            goles_contra_partido = info_fallback.get('golesContraPorPartido', tabla['promedioLigaGolesContra'])
+
+        ataque = goles_favor_partido / tabla['promedioLigaGolesFavor']
+        defensa = goles_contra_partido / tabla['promedioLigaGolesContra']
+        
+        partidos_jugados = info.get('partidosJugados', info.get('playedGames', 5))
+        peso = min(partidos_jugados / self.config.PARTIDOS_CONFIANZA_PLENA, 1.0)
         ataque = ataque * peso + 1.0 * (1 - peso)
         defensa = defensa * peso + 1.0 * (1 - peso)
         
@@ -677,9 +692,9 @@ class ModeloEstadistico:
         lambda_local_base = lambda_local
         lambda_visita_base = lambda_visita
         
-        # Fuerza de ataque/defensa
-        fuerza_local = self.fuerzaAtaqueDefensa(tabla, id_local)
-        fuerza_visita = self.fuerzaAtaqueDefensa(tabla, id_visita)
+        # Fuerza de ataque/defensa (Separando condición de local y visitante)
+        fuerza_local = self.fuerzaAtaqueDefensa(tabla, id_local, es_local=True)
+        fuerza_visita = self.fuerzaAtaqueDefensa(tabla, id_visita, es_local=False)
         lambda_local *= math.sqrt(fuerza_local['ataque'] * fuerza_visita['defensa'])
         lambda_visita *= math.sqrt(fuerza_visita['ataque'] * fuerza_local['defensa'])
         
