@@ -5101,15 +5101,12 @@ input {
   color: transparent;
 }
 
+  /* The chip visual is handled by .chip-marca */
 .combinada-pick-chip input:checked + .chip-marca {
   background: var(--green);
   border-color: var(--green);
   color: #07120d;
   font-weight: 800;
-}
-
-.combinada-pick-chip input:checked {
-  /* The chip visual is handled by .chip-marca */
 }
 
 .combinada-pick-chip input:checked ~ .chip-info {
