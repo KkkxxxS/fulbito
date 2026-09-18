@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "generadoEn": "2026-09-16T04:17:07.327504+00:00",
+  "generadoEn": "2026-09-18T01:45:51.478364+00:00",
   "modelo": {
     "tipo": "Poisson + Dixon-Coles + ML",
     "rhoDixonColes": -0.04,
@@ -29,25 +29,6 @@
       "pronosticos": {
         "seleccionados": [
           {
-            "categoria": "resultado",
-            "parametros": {
-              "lado": "local"
-            },
-            "seleccion": "Gana Arsenal",
-            "probabilidad": 92,
-            "sinApuesta": false
-          },
-          {
-            "categoria": "totalgoles",
-            "parametros": {
-              "linea": 1.5,
-              "direccion": "mas"
-            },
-            "seleccion": "Más de 1.5 goles",
-            "probabilidad": 92,
-            "sinApuesta": false
-          },
-          {
             "categoria": "handicap",
             "parametros": {
               "lado": "visita",
@@ -55,7 +36,35 @@
             },
             "seleccion": "Liverpool -1 (gana por 2+)",
             "probabilidad": 92,
-            "sinApuesta": false
+            "sinApuesta": false,
+            "confianza": "Media",
+            "contexto": "Liverpool promedia 1.6 goles de visita · Mejor tabla",
+            "explicacion": "La superioridad en la tabla y los duelos previos indican que Liverpool podría imponerse con margen."
+          },
+          {
+            "categoria": "totalgoles",
+            "parametros": {
+              "linea": 3.5,
+              "direccion": "mas"
+            },
+            "seleccion": "Más de 3.5 goles",
+            "probabilidad": 92,
+            "sinApuesta": false,
+            "confianza": "Media",
+            "contexto": "Encuentro disputado · Liverpool mejor ubicado",
+            "explicacion": "Los promedios ofensivos de ambos clubes sugieren un desarrollo abierto con opciones claras de gol."
+          },
+          {
+            "categoria": "btts",
+            "parametros": {
+              "si": true
+            },
+            "seleccion": "Ambos anotan: Sí",
+            "probabilidad": 92,
+            "sinApuesta": false,
+            "confianza": "Media",
+            "contexto": "Encuentro disputado · Liverpool mejor ubicado",
+            "explicacion": "Predicción calculada mediante Poisson y Dixon-Coles en base al historial reciente."
           },
           {
             "categoria": "marcador",
@@ -65,7 +74,10 @@
             },
             "seleccion": "0-8",
             "probabilidad": 92,
-            "sinApuesta": false
+            "sinApuesta": false,
+            "confianza": "Media",
+            "contexto": "Encuentro disputado · Liverpool mejor ubicado",
+            "explicacion": "Predicción calculada mediante Poisson y Dixon-Coles en base al historial reciente."
           }
         ],
         "marcadorProbable": "0-8",
@@ -90,19 +102,15 @@
             "probabilidad": 32400
           },
           {
+            "seleccion": "Más de 1.5 goles",
+            "probabilidad": 32300
+          },
+          {
             "seleccion": "Más de 2.5 goles",
             "probabilidad": 32000
           },
           {
-            "seleccion": "Más de 3.5 goles",
-            "probabilidad": 31400
-          },
-          {
             "seleccion": "Arsenal o Liverpool (12)",
-            "probabilidad": 28800
-          },
-          {
-            "seleccion": "Ambos anotan: Sí",
             "probabilidad": 28800
           },
           {
@@ -126,11 +134,11 @@
             "probabilidad": 12000
           },
           {
-            "seleccion": "Gana Arsenal",
+            "seleccion": "Más de 3.5 goles",
             "probabilidad": 9200
           },
           {
-            "seleccion": "Más de 1.5 goles",
+            "seleccion": "Ambos anotan: Sí",
             "probabilidad": 9200
           },
           {
@@ -140,6 +148,10 @@
           {
             "seleccion": "0-8",
             "probabilidad": 9200
+          },
+          {
+            "seleccion": "Gana Arsenal",
+            "probabilidad": 8400
           },
           {
             "seleccion": "Empate",
@@ -167,25 +179,25 @@
             "titulo": "Combinada segura",
             "tipos": [
               "totalgoles",
-              "handicap"
+              "btts"
             ],
             "partes": [
-              "Más de 1.5 goles",
-              "Liverpool -1 (gana por 2+)"
+              "Más de 3.5 goles",
+              "Ambos anotan: Sí"
             ],
-            "probabilidad": 16800
+            "probabilidad": 28400
           },
           {
             "titulo": "Combinada extra",
             "tipos": [
-              "resultado",
+              "handicap",
               "totalgoles"
             ],
             "partes": [
-              "Gana Arsenal",
-              "Más de 1.5 goles"
+              "Liverpool -1 (gana por 2+)",
+              "Más de 3.5 goles"
             ],
-            "probabilidad": 8400
+            "probabilidad": 16300
           }
         ],
         "partidosMin": 8,
@@ -205,7 +217,7 @@
           }
         }
       },
-      "generadoEn": "2026-09-16T04:17:07.327488+00:00"
+      "generadoEn": "2026-09-18T01:45:51.478346+00:00"
     }
   }
 }

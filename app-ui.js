@@ -75,6 +75,12 @@
     return `<span class="chip-cuenta-regresiva ${t.urgente ? 'urgente' : ''}">${t.urgente ? '🔴' : '⏱'} ${t.texto}</span>`;
   }
 
+  function obtenerConfianza(datos) {
+    const confVal = datos.confianza || 'Media';
+    const clase = confVal === 'Alta' ? 'conf-alta' : confVal === 'Baja' ? 'conf-baja' : 'conf-media';
+    return { etiqueta: confVal, clase: clase };
+  }
+
   function filaMercado(datos, partidoId, esPrincipal) {
     if (datos.sinApuesta) {
       return `
@@ -97,18 +103,22 @@
         </div>
       `;
     }
-    const conf = nivelConfianza ? nivelConfianza(datos.probabilidad) : { etiqueta: 'Media', clase: 'conf-media' };
+    const conf = obtenerConfianza(datos);
     const cuota = cuotaImplicita(datos.probabilidad);
+    const contextoTxt = datos.contexto ? `<div class="fila-contexto-block"><span class="contexto-label">Contexto:</span> ${datos.contexto}</div>` : '';
+    const explicacionTxt = datos.explicacion ? `<div class="fila-explicacion-block"><span class="explicacion-label">Explicación:</span> ${datos.explicacion}</div>` : '';
+
     return `
       <div class="fila-mercado mercado-${datos.tipo} ${esPrincipal ? 'mercado-principal' : ''}">
         ${esPrincipal ? `<span class="etiqueta-pick-principal">★ Pick del partido</span>` : ''}
+        ${contextoTxt}
         <div class="fila-header">
           <div class="fila-header-izq">
             ${iconoMercado(datos.tipo)}
             <span class="fila-porcentaje">${datos.probabilidad}%</span>
           </div>
           <div class="fila-header-der">
-            <span class="badge-confianza ${conf.clase}">${conf.etiqueta}</span>
+            <span class="badge-confianza-lectura ${conf.clase}">Confianza: ${conf.etiqueta}</span>
             ${botonMiPrediccion(partidoId, datos.categoria)}
           </div>
         </div>
@@ -120,6 +130,7 @@
           <p class="fila-mercado-nombre">${datos.mercado}</p>
           <p class="fila-seleccion">${datos.seleccion}</p>
         </div>
+        ${explicacionTxt}
         <div class="fila-razones">${(datos.razones || []).map(r => `<p class="fila-razon">+ ${r}</p>`).join('')}</div>
         <div class="fila-mercado-footer">
           <span class="cuota-implicita-tag" title="Cuota justa según probabilidad real estimada">Cuota justa: <strong>@${cuota}</strong></span>

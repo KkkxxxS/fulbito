@@ -4157,6 +4157,74 @@ input {
   color: var(--text-dim);
   border-color: color-mix(in srgb, var(--text-dim) 25%, transparent);
 }
+
+.badge-confianza-lectura {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+.badge-confianza-lectura.conf-alta {
+  background: color-mix(in srgb, var(--green) 22%, transparent);
+  color: var(--green);
+  border-color: color-mix(in srgb, var(--green) 40%, transparent);
+}
+.badge-confianza-lectura.conf-media {
+  background: color-mix(in srgb, var(--gold) 22%, transparent);
+  color: var(--gold);
+  border-color: color-mix(in srgb, var(--gold) 40%, transparent);
+}
+.badge-confianza-lectura.conf-baja {
+  background: color-mix(in srgb, #ff5c5c 18%, transparent);
+  color: #ff8d8d;
+  border-color: color-mix(in srgb, #ff5c5c 35%, transparent);
+}
+
+.fila-contexto-block {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  background: rgba(255, 255, 255, 0.03);
+  padding: 4px 8px;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  border-left: 2px solid var(--accent);
+  line-height: 1.35;
+}
+.contexto-label {
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 0.6rem;
+  letter-spacing: 0.04em;
+  color: var(--accent);
+  margin-right: 4px;
+}
+
+.fila-explicacion-block {
+  font-size: 0.75rem;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.02);
+  padding: 6px 10px;
+  border-radius: 6px;
+  margin: 8px 0;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  line-height: 1.4;
+}
+.explicacion-label {
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 0.6rem;
+  letter-spacing: 0.04em;
+  color: var(--gold);
+  display: block;
+  margin-bottom: 2px;
+}
+
 .fila-header {
   gap: 6px;
 }

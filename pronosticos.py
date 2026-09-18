@@ -581,8 +581,62 @@ class ModeloEstadistico:
                 if len(seleccionados) >= cantidad:
                     break
 
+        return seleccionados
+
 
     
+    def calcularConfianzaMercado(self, m, stats_local, stats_visita, h2h):
+        """Calcula nivel de confianza basado en volumen de partidos y consistencia"""
+        partidos_local = stats_local.get('partidosJugados', 0)
+        partidos_visita = stats_visita.get('partidosJugados', 0)
+        min_partidos = min(partidos_local, partidos_visita)
+        h2h_disp = h2h.get('disponible', False) and h2h.get('totalPartidos', 0) >= 3
+        prob = m.get('probabilidad', 0.5)
+
+        if min_partidos >= 10 and h2h_disp and prob >= 0.65:
+            return 'Alta'
+        elif min_partidos >= 5 or prob >= 0.58:
+            return 'Media'
+        else:
+            return 'Baja'
+
+    def generarContextoYExplicacion(self, m, ctx):
+        """Genera contexto conciso (1 línea) y explicación simple (1-2 líneas)"""
+        favorece_local = m['seleccion'].startswith(ctx['nombreLocal']) and not m['seleccion'].startswith(ctx['nombreVisita'])
+        favorece_visita = m['seleccion'].startswith(ctx['nombreVisita']) and not m['seleccion'].startswith(ctx['nombreLocal'])
+        
+        f_local = self.factorTabla(ctx['tabla'], ctx['idLocal'])
+        f_visita = self.factorTabla(ctx['tabla'], ctx['idVisita'])
+        mejor_ubicado = ctx['nombreLocal'] if f_local > f_visita else ctx['nombreVisita']
+        
+        # Contexto (máximo 1 línea corta)
+        contexto = ""
+        if favorece_local:
+            contexto = f"{ctx['nombreLocal']} promedia {ctx['statsLocal']['local']['golesFavor']:.1f} goles de local · Mejor tabla"
+        elif favorece_visita:
+            contexto = f"{ctx['nombreVisita']} promedia {ctx['statsVisita']['visita']['golesFavor']:.1f} goles de visita · Mejor tabla"
+        else:
+            contexto = f"Encuentro disputado · {mejor_ubicado} mejor ubicado"
+
+        # Explicación (1-2 líneas en lenguaje simple)
+        explicacion = ""
+        cat = m['categoria']
+        if cat == 'resultado' or cat == 'doble':
+            if favorece_local:
+                explicacion = f"El modelo estadístico apunta a una ventaja clara para {ctx['nombreLocal']} respaldada por su rendimiento reciente."
+            elif favorece_visita:
+                explicacion = f"{ctx['nombreVisita']} llega con mejores registros recientes y solidez en sus desplazamientos."
+            else:
+                explicacion = "Ambos equipos muestran paridad estadística, por lo que el resultado se perfila ajustado."
+        elif cat == 'totalgoles' or cat == 'equipomarca':
+            explicacion = f"Los promedios ofensivos de ambos clubes sugieren un desarrollo abierto con opciones claras de gol."
+        elif cat == 'handicap':
+            explicacion = f"La superioridad en la tabla y los duelos previos indican que {mejor_ubicado} podría imponerse con margen."
+        else:
+            explicacion = f"Predicción calculada mediante Poisson y Dixon-Coles en base al historial reciente."
+
+        return contexto, explicacion
+
     def razonesParaMercado(self, m, ctx):
         """Genera razones para un mercado"""
         razones = []
@@ -766,6 +820,23 @@ class ModeloEstadistico:
         for m in seleccionados:
             m['probabilidad'] = round(m['probabilidad'] * 100)
         
+        # Enriquecer seleccionados con confianza, contexto y explicación
+        ctx_dict = {
+            'nombreLocal': nombre_local,
+            'nombreVisita': nombre_visita,
+            'statsLocal': stats_local,
+            'statsVisita': stats_visita,
+            'tabla': tabla,
+            'idLocal': id_local,
+            'idVisita': id_visita,
+            'h2h': h2h
+        }
+        for m in seleccionados:
+            m['confianza'] = self.calcularConfianzaMercado(m, stats_local, stats_visita, h2h)
+            c_txt, e_txt = self.generarContextoYExplicacion(m, ctx_dict)
+            m['contexto'] = c_txt
+            m['explicacion'] = e_txt
+
         # Catálogo completo
         catalogo_completo = sorted(
             [{'seleccion': c['seleccion'], 'probabilidad': round(c['probabilidad'] * 100)} for c in candidatos],
