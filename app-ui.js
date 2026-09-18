@@ -457,6 +457,14 @@
 
     const fechasPendientes = pendientes.map(h => new Date(h.fecha).getTime());
     let fechaDesde = new Date(Math.min(...fechasPendientes));
+    
+    // Limitar fechaDesde a un máximo de 7 días atrás desde hoy para evitar rangos excesivos o bloqueos de la API
+    const hace7dias = new Date(hoy);
+    hace7dias.setDate(hace7dias.getDate() - 7);
+    if (fechaDesde.getTime() < hace7dias.getTime()) {
+      fechaDesde = hace7dias;
+    }
+
     const limiteMs = 90 * 24 * 60 * 60 * 1000;
     if (hoy.getTime() - fechaDesde.getTime() > limiteMs) {
       fechaDesde = new Date(hoy.getTime() - limiteMs);
