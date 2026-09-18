@@ -43,3 +43,7 @@ coverage/
 # Local testing
 test-output/
 *.local
+
+# Python cache
+__pycache__/
+*.pyc
