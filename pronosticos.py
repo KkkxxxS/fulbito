@@ -404,16 +404,26 @@ class ModeloEstadistico:
         }
     
     def factorH2H(self, h2h, es_local):
-        """Factor por historial directo"""
-        if not h2h or not h2h['disponible'] or h2h['totalPartidos'] < 5:
+        """Factor por historial directo con regresión a la media (shrinkage) por tamaño de muestra"""
+        if not h2h or not h2h['disponible'] or h2h.get('totalPartidos', 0) < 2:
             return 1.0
         
         total = h2h['totalPartidos']
-        dominio_local = (h2h['victoriasLocal'] - h2h['victoriasVisita']) / total
-        ajuste_max = 0.04
-        ajuste = max(-ajuste_max, min(ajuste_max, dominio_local * ajuste_max * 2))
         
-        return 1 + ajuste if es_local else 1 - ajuste
+        # Criterio de peso por muestra (Shrinkage hacia 1.0):
+        # Si hay menos de 4 partidos, la muestra es muy ruidosa y pesa casi nada (peso reducido drásticamente).
+        # A partir de 4-10 partidos, el peso escala progresivamente hasta confianza plena (ej. 10 partidos).
+        peso_muestra = min(total / 10.0, 1.0)
+        if total < 4:
+            peso_muestra *= (total / 4.0) * 0.5 # Fuerte atenuación para 2 o 3 partidos
+            
+        dominio_local = (h2h['victoriasLocal'] - h2h['victoriasVisita']) / total
+        ajuste_max = 0.05
+        ajuste_crudo = dominio_local * ajuste_max * peso_muestra
+        
+        ajuste = max(-0.05, min(0.05, ajuste_crudo))
+        
+        return 1.0 + ajuste if es_local else 1.0 - ajuste
 
     def equiposSinNadaEnJuego(self, tabla, team_id):
         """Detecta si un equipo ya no puede alcanzar título/descenso"""
