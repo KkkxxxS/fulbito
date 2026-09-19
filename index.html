@@ -21,7 +21,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="dns-prefetch" href="https://fulbito-forh.onrender.com">
-    <link rel="stylesheet" href="style.css?v=2">
+    <link rel="stylesheet" href="style.css?v=3">
     <link rel="canonical" href="https://kkkxxxs.github.io/fulbito/">
 
     <style>
@@ -43,157 +43,270 @@
     </script>
     <script src="menu-toggle.js" defer></script>
 </head>
-<body class="home-mode">
+<body data-tema="oscuro" data-idioma="es">
 
-<header class="landing-topbar">
-    <div class="landing-topbar-inner">
-        <div class="landing-brand">Fulbito</div>
-        <nav class="landing-nav">
-            <a href="#inicio">Inicio</a>
-            <a href="#modelo">Modelo</a>
-            <a href="#por-que">Por qué</a>
-            <a href="#entrar">Entrar</a>
-        </nav>
-        <button class="landing-topbar-cta" onclick="cambiarVista('pronosticos')">Abrir app</button>
-    </div>
-</header>
-
-<header class="app-nav" id="app-nav">
-    <div class="app-nav-fila">
-        <span class="app-nav-marca">Fulbito</span>
-
-        <button class="app-nav-hamburguesa" id="boton-menu-movil" onclick="toggleMenuMovil()" aria-label="Abrir menú">
-            <span></span><span></span><span></span>
+<!-- ============ SIDEBAR PRINCIPAL (estilo dashboard ChocoBets) ============ -->
+<aside class="app-nav dash-sidebar" id="app-nav">
+    <div class="dash-sidebar-cabecera">
+        <button class="dash-logo" onclick="cambiarVista('inicio')" aria-label="Ir al inicio">
+            <span class="dash-logo-mark">F</span>
+            <span class="dash-logo-texto">Fulbito<em>IA</em></span>
         </button>
-
-        <div class="app-nav-buscador">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-            <input type="search" id="input-busqueda" placeholder="Buscar equipo o liga…" oninput="onBuscar(this.value)">
-        </div>
+        <button class="dash-sidebar-cerrar" onclick="cerrarMenuMovil()" aria-label="Cerrar menú"></button>
     </div>
 
-    <nav class="app-nav-tabs" id="app-nav-tabs">
-        <button class="nav-tab activa" data-vista="inicio" onclick="cambiarVista('inicio')">
-            <span class="nav-tab-icono">◉</span> Inicio
+    <div class="app-nav-buscador dash-buscador">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input type="search" id="input-busqueda" placeholder="Buscar equipo o liga…" oninput="onBuscar(this.value)">
+    </div>
+
+    <button class="app-nav-hamburguesa" id="boton-menu-movil" onclick="toggleMenuMovil()" aria-label="Abrir menú">
+        <span></span><span></span><span></span>
+    </button>
+
+    <nav class="app-nav-tabs dash-nav" id="app-nav-tabs">
+        <p class="dash-nav-grupo" data-i18n="grupoPrincipal">PRINCIPAL</p>
+
+        <button class="nav-tab" data-vista="inicio" onclick="cambiarVista('inicio')" title="Resumen general del motor">
+            <span class="nav-tab-icono"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9.5 9-7 9 7V20a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9.5 22v-8h5v8"/></svg></span>
+            <span data-i18n="navInicio">Inicio</span>
         </button>
-        <button class="nav-tab" data-vista="pronosticos" onclick="cambiarVista('pronosticos')">
-            <span class="nav-tab-icono">◎</span> Partidos
+
+        <button class="nav-tab" data-vista="pronosticos" onclick="cambiarVista('pronosticos')" title="Partidos analizados por el motor">
+            <span class="nav-tab-icono"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5a3 3 0 0 0-2.9 2.2A3 3 0 0 0 7 12.5a3 3 0 0 0 2.2 5.2H11a2 2 0 0 0 2-2V7a2 2 0 0 0-1-2z"/><path d="M12 5a3 3 0 0 1 2.9 2.2A3 3 0 0 1 17 12.5a3 3 0 0 1-2.2 5.2H13a2 2 0 0 1-2-2V7a2 2 0 0 1 1-2z"/></svg></span>
+            <span data-i18n="navPredicciones">Predicciones</span>
         </button>
-        <button class="nav-tab" data-vista="analitica" onclick="cambiarVista('analitica')">
-            <span class="nav-tab-icono">▤</span> Analítica
+
+        <button class="nav-tab" data-vista="live" onclick="cambiarVista('live')" title="Partidos en juego y próximos de hoy">
+            <span class="nav-tab-icono"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></span>
+            <span data-i18n="navLive">Live Center</span>
+            <span class="dash-punto-vivo" id="sidebar-live-punto" style="display:none;" title="Hay partidos en juego"></span>
         </button>
-        <button class="nav-tab" data-vista="historial" onclick="cambiarVista('historial')">
-            <span class="nav-tab-icono">◫</span> Historial
-        </button>
-        <button class="nav-tab" data-vista="mispredicciones" onclick="cambiarVista('mispredicciones')">
-            <span class="nav-tab-icono">◌</span> Mi rendimiento
+
+        <button class="nav-tab" data-vista="mispredicciones" onclick="cambiarVista('mispredicciones')" title="Tus picks marcados y su historial">
+            <span class="nav-tab-icono"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></span>
+            <span data-i18n="navMisPredicciones">Mis Predicciones</span>
             <span class="contador-favoritos" id="contador-mispredicciones" style="display:none;">0</span>
         </button>
-        <button class="nav-tab" data-vista="favoritos" onclick="cambiarVista('favoritos')">
-            <span class="nav-tab-icono">★</span> Favoritos
+
+        <p class="dash-nav-grupo" data-i18n="grupoExplorar">EXPLORAR</p>
+
+        <button class="nav-tab" data-vista="competiciones" onclick="cambiarVista('competiciones')" title="Ligas cubiertas por el motor">
+            <span class="nav-tab-icono"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8"/><path d="M12 17v4"/><path d="M7 4h10v4a5 5 0 0 1-10 0z"/><path d="M7 6H4v2a3 3 0 0 0 3 3"/><path d="M17 6h3v2a3 3 0 0 1-3 3"/></svg></span>
+            <span data-i18n="navCompeticiones">Competiciones</span>
+        </button>
+
+        <button class="nav-tab" data-vista="ranking" onclick="cambiarVista('ranking')" title="Ranking de mercados y equipos">
+            <span class="nav-tab-icono"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 16v-5"/><path d="M12 16V7"/><path d="M17 16v-3"/></svg></span>
+            <span data-i18n="navRanking">Ranking</span>
+        </button>
+
+        <button class="nav-tab" data-vista="dobles" onclick="cambiarVista('dobles')" title="Combinadas dobles y múltiples">
+            <span class="nav-tab-icono"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 2 9 5-9 5-9-5z"/><path d="m3 12 9 5 9-5"/><path d="m3 17 9 5 9-5"/></svg></span>
+            <span data-i18n="navDobles">Dobles</span>
+        </button>
+
+        <button class="nav-tab" onclick="enfocarBuscador(event)" title="Buscar partidos, equipos o ligas">
+            <span class="nav-tab-icono"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></span>
+            <span data-i18n="navBuscar">Buscar</span>
+        </button>
+        <button class="nav-tab" data-vista="favoritos" onclick="cambiarVista('favoritos')" title="Tus ligas y equipos seguidos">
+            <span class="nav-tab-icono"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 2.6 2.9 5.9 6.5.95-4.7 4.6 1.1 6.45L12 17.4 6.2 20.5l1.1-6.45-4.7-4.6 6.5-.95z"/></svg></span>
+            <span data-i18n="navFavoritos">Favoritos</span>
             <span class="contador-favoritos" id="contador-favoritos" style="display:none;">0</span>
         </button>
+
+        <button class="nav-tab" data-vista="historial" onclick="cambiarVista('historial')" title="Historial público auditable">
+            <span class="nav-tab-icono"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
+            <span data-i18n="navHistorial">Historial</span>
+        </button>
     </nav>
-</header>
+
+    <div class="dash-sidebar-pie">
+        <div class="dash-pie-bloque">
+            <span class="dash-pie-label" data-i18n="pieSalud">Salud del motor</span>
+            <strong class="dash-pie-valor" id="sidebar-salud">81%</strong>
+            <div class="dash-pie-barra"><span id="sidebar-salud-barra" style="width:81%;"></span></div>
+        </div>
+        <div class="dash-pie-fila">
+            <span data-i18n="pieBrier">Brier</span>
+            <strong id="sidebar-brier">0.17</strong>
+        </div>
+        <div class="dash-pie-fila">
+            <span data-i18n="piePicks">Picks auditados</span>
+            <strong id="sidebar-picks">0</strong>
+        </div>
+        <p class="dash-pie-nota" data-i18n="pieNota">Poisson + Dixon-Coles. Números auditables, sin promesas.</p>
+    </div>
+</aside>
+
+<!-- ============ TOGGLE DEL SIDEBAR (solo pantallas pequeñas) ============ -->
+<button class="app-nav-toggle dash-menu-flotante" id="boton-menu-flotante" onclick="toggleMenuMovil()" aria-label="Abrir menú de navegación">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18"/><path d="M3 12h18"/><path d="M3 18h18"/></svg>
+</button>
 
 <main>
 
 <section id="vista-inicio" class="vista vista-activa landing-shell">
     <div class="landing-inner">
-        <div class="landing-badge" id="hero-saludo">Bienvenido a Fulbito • Inteligencia Predictiva</div>
-        <h1><span>Pronósticos de Fútbol</span><br>impulsados por Inteligencia Estadística</h1>
-        <p>Modelo estadístico avanzado (Poisson + Dixon-Coles) aplicado a las ligas top de Europa. Probabilidades reales con transparencia total y rendimiento auditable.</p>
-
-        <div class="landing-cta-row">
-            <button class="landing-primary" onclick="cambiarVista('pronosticos'); document.getElementById('pronosticos')?.scrollIntoView({ behavior: 'smooth' })">
-                <span>Explorar Pronósticos</span>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px; margin-left: 6px;"><path d="m5 12 7-7 7 7"/><path d="M12 19V5"/></svg>
+        <div class="dash-header">
+        <div class="dash-header-saludo">
+            <p class="dash-eyebrow" data-i18n="eyebrow">Panel de control</p>
+            <h1 id="hero-saludo">Hola, Axelito — Tu centro de inteligencia predictiva</h1>
+            <p class="dash-header-sub" data-i18n="sub">Modelo Poisson + Dixon-Coles con calibración y Brier Score auditables.</p>
+        </div>
+        <div class="dash-header-acciones">
+            <div class="dash-buscador">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+                <input type="search" id="input-busqueda-dash" placeholder="Buscar equipo o liga…" oninput="sincronizarBusquedaDashboard(this.value)">
+            </div>
+            <button class="dash-icono-btn" id="btn-notificaciones" onclick="mostrarNotificaciones(event)" title="Alertas del motor" aria-label="Notificaciones">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+                <span class="dash-badge-notif" id="notif-contador" style="display:none;">0</span>
             </button>
-            <button class="landing-secondary" onclick="document.getElementById('modelo').scrollIntoView({ behavior: 'smooth', block: 'start' })">Ver Metodología</button>
+            <button class="dash-icono-btn" id="btn-tema" onclick="alternarTema()" title="Cambiar tema (claro / oscuro)" aria-label="Cambiar tema">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+            </button>
+            <button class="dash-icono-btn dash-idioma" id="btn-idioma" onclick="alternarIdioma()" title="Cambiar idioma (ES / EN)" aria-label="Cambiar idioma">
+                <span id="idioma-actual">ES</span>
+            </button>
+            <div class="dash-perfil-wrap">
+                <button class="dash-perfil" id="btn-perfil" type="button" title="Perfil y ajustes de Axelito" aria-haspopup="true" aria-label="Perfil de Axelito">
+                    <span class="dash-perfil-avatar" aria-hidden="true">A</span>
+                    <span class="dash-perfil-datos">
+                        <strong>Axelito</strong>
+                        <small>Plan Free</small>
+                    </span>
+                    <svg class="dash-perfil-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                </button>
+                <div class="dash-perfil-panel" role="menu" aria-label="Menú de perfil">
+                    <button class="dash-perfil-item" type="button" role="menuitem" onclick="cambiarVista('mispredicciones')">Mis predicciones guardadas</button>
+                    <button class="dash-perfil-item" type="button" role="menuitem" onclick="cambiarVista('favoritos')">Equipos favoritos</button>
+                    <button class="dash-perfil-item" type="button" role="menuitem" onclick="cambiarVista('historial')">Historial público</button>
+                    <button class="dash-perfil-item" type="button" role="menuitem" onclick="exportarDatos()">Exportar mis datos</button>
+                </div>
+            </div>
         </div>
+    </div>
 
-        <!-- KPI STATS BAR (Social Proof / Glassmorphism) -->
-        <!-- KPI STATS BAR (Social Proof / Glassmorphism) -->
-        <div class="hero-kpis-bar">
-            <div class="hero-kpi-glass animate-on-scroll delay-1">
-                <span class="hero-kpi-icon">🏆</span>
-                <div>
-                    <strong>9+ Ligas Top</strong>
-                    <span>Premier, La Liga, Serie A...</span>
-                </div>
+    <!-- ============ KPIs CLAVE ============ -->
+    <div class="dash-kpis">
+        <article class="dash-kpi">
+            <div class="dash-kpi-top">
+                <span class="dash-kpi-icono verde">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg>
+                </span>
+                <span class="dash-kpi-chip" id="kpi-salud-chip">Óptimo</span>
             </div>
-            <div class="hero-kpi-glass animate-on-scroll delay-2">
-                <span class="hero-kpi-icon">⚡</span>
-                <div>
-                    <strong>Poisson + Dixon-Coles</strong>
-                    <span>Modelo de expectativa de goles</span>
-                </div>
-            </div>
-            <div class="hero-kpi-glass animate-on-scroll delay-3">
-                <span class="hero-kpi-icon">🔄</span>
-                <div>
-                    <strong>Tiempo Real</strong>
-                    <span>Actualización continua</span>
-                </div>
-            </div>
-        </div>
+            <span class="dash-kpi-label" data-i18n="kpiSalud">Salud del motor <span class="dash-tip" data-tip="Derivada del Brier Score: 100 − (Brier × 90). Mide qué tan bien calibradas están las probabilidades.">?</span></span>
+            <strong class="dash-kpi-valor" id="kpi-salud">81%</strong>
+            <span class="dash-kpi-pie" id="kpi-brier">Brier Score 0.17</span>
+            <div class="dash-kpi-barra"><span id="kpi-salud-barra" style="width:81%;"></span></div>
+        </article>
 
-        <div class="landing-grid">
-            <article class="landing-card animate-on-scroll delay-1">
-                <span class="landing-card-icon">🎯</span>
-                <strong>Predicciones verificables</strong>
-                <p>19 mercados por partido. Cada pronóstico se compara contra el resultado real cuando termina el partido.</p>
-            </article>
-            <article class="landing-card animate-on-scroll delay-2">
-                <span class="landing-card-icon">📈</span>
-                <strong>Tu tasa real de aciertos</strong>
-                <p>Historial completo de tus picks y del modelo. Sin manipulación, sin cherry-picking.</p>
-            </article>
-            <article class="landing-card animate-on-scroll delay-3">
-                <span class="landing-card-icon">🔬</span>
-                <strong>Motor transparente</strong>
-                <p>Entiende cómo Fulbito llega a cada número. Caja blanca, no negra. Cualquiera puede revisar la lógica.</p>
-            </article>
-        </div>
+        <article class="dash-kpi">
+            <div class="dash-kpi-top">
+                <span class="dash-kpi-icono cyan">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="0.6" fill="currentColor"/></svg>
+                </span>
+                <span class="dash-kpi-chip" id="kpi-aciertos-chip">Histórico</span>
+            </div>
+            <span class="dash-kpi-label" data-i18n="kpiAciertos">Aciertos <span class="dash-tip" data-tip="% de mercados acertados sobre picks ya liquidados contra el resultado real.">?</span></span>
+            <strong class="dash-kpi-valor" id="kpi-aciertos">74%</strong>
+            <span class="dash-kpi-pie" id="kpi-verificados">Histórico auditado</span>
+            <div class="dash-kpi-barra"><span id="kpi-aciertos-barra" style="width:74%;"></span></div>
+        </article>
 
-                <!-- PANEL DE MÉTRICAS DE CONFIANZA — track record del motor (pool global + localStorage) -->
-        <div class="hero-kpis-bar">
-            <div class="hero-kpi-glass animate-on-scroll delay-1">
-                <span class="hero-kpi-icon" title="Track record del motor — % de aciertos sobre picks verificados (pool global del servidor + historial local)">🎯</span>
-                <div>
-                    <strong id="hero-aciertos-verificados">—</strong>
-                    <span>Track record del motor</span>
-                </div>
+        <article class="dash-kpi">
+            <div class="dash-kpi-top">
+                <span class="dash-kpi-icono oro">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 2.6 2.9 5.9 6.5.95-4.7 4.6 1.1 6.45L12 17.4 6.2 20.5l1.1-6.45-4.7-4.6 6.5-.95z"/></svg>
+                </span>
+                <span class="dash-kpi-chip">☆</span>
             </div>
-            <div class="hero-kpi-glass animate-on-scroll delay-2">
-                <span class="hero-kpi-icon" title="Partidos finalizados verificados contra resultados reales">📊</span>
-                <div>
-                    <strong id="hero-partidos-verificados">0</strong>
-                    <span>Partidos verificados</span>
-                </div>
+            <span class="dash-kpi-label" data-i18n="kpiFavoritos">Tus favoritos <span class="dash-tip" data-tip="Equipos que marcaste con la estrella. Sus partidos se priorizan en Predicciones.">?</span></span>
+            <strong class="dash-kpi-valor" id="kpi-favoritos">0</strong>
+            <span class="dash-kpi-pie" data-i18n="kpiFavoritosPie">partidos</span>
+        </article>
+
+        <article class="dash-kpi dash-kpi-accion" role="button" tabindex="0" onclick="cambiarVista('pronosticos')" onkeypress="if(event.key==='Enter')cambiarVista('pronosticos')" title="Ir a las recomendaciones activas de hoy">
+            <div class="dash-kpi-top">
+                <span class="dash-kpi-icono rosa">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v4"/><path d="M12 17v4"/><path d="M3 12h4"/><path d="M17 12h4"/><path d="m6.3 6.3 2.8 2.8"/><path d="m14.9 14.9 2.8 2.8"/><path d="m17.7 6.3-2.8 2.8"/><path d="m9.1 14.9-2.8 2.8"/></svg>
+                </span>
+                <span class="dash-kpi-chip rosa" data-i18n="kpiHoyChip">Ver</span>
             </div>
-            <div class="hero-kpi-glass animate-on-scroll delay-3">
-                <span class="hero-kpi-icon" title="Brier Score — 0 = perfecto, 0.25 = azar en mercados binarios">🧪</span>
-                <div>
-                    <strong id="hero-brier">—</strong>
-                    <span>Brier Score</span>
-                </div>
-            </div>
-            <div class="hero-kpi-glass animate-on-scroll delay-4">
-                <span class="hero-kpi-icon" title="Probabilidad promedio de los picks verificados">🌡️</span>
-                <div>
-                    <strong id="hero-confianza-media">—</strong>
-                    <span>Confianza promedio</span>
-                </div>
-            </div>
-            <div class="hero-kpi-glass animate-on-scroll delay-5">
-                <span class="hero-kpi-icon" title="Salud del motor — derivada del Brier Score">⚡</span>
-                <div>
-                    <strong id="hero-salud-motor">—</strong>
-                    <span>Salud del motor</span>
-                </div>
-            </div>
+            <span class="dash-kpi-label" data-i18n="kpiHoy">Predicciones hoy <span class="dash-tip" data-tip="Recomendaciones activas del motor para la jornada de hoy (9 mercados por partido).">?</span></span>
+            <strong class="dash-kpi-valor" id="kpi-hoy">∞</strong>
+            <span class="dash-kpi-pie" id="kpi-hoy-pie">9 mercados por partido</span>
+        </article>
+    </div>
+
+        <!-- ============ ACCESOS RÁPIDOS ============ -->
+    <div class="dash-seccion">
+        <div class="dash-seccion-head">
+            <h2 data-i18n="accesosTitulo">Accesos rápidos</h2>
+            <span class="dash-seccion-nota" data-i18n="accesosNota">Un clic para entrar</span>
         </div>
+        <div class="dash-quick">
+            <button class="dash-quick-card" onclick="cambiarVista('pronosticos')" title="Partidos analizados por el motor, con 9 mercados y probabilidad calibrada">
+                <span class="dash-quick-icono verde">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5a3 3 0 0 0-2.9 2.2A3 3 0 0 0 7 12.5a3 3 0 0 0 2.2 5.2H11a2 2 0 0 0 2-2V7a2 2 0 0 0-1-2z"/><path d="M12 5a3 3 0 0 1 2.9 2.2A3 3 0 0 1 17 12.5a3 3 0 0 1-2.2 5.2H13a2 2 0 0 1-2-2V7a2 2 0 0 1 1-2z"/></svg>
+                </span>
+                <span class="dash-quick-texto">
+                    <strong data-i18n="qc1Titulo">Predicciones IA</strong>
+                    <small data-i18n="qc1Desc">Partidos analizados por el motor.</small>
+                </span>
+                <span class="dash-quick-flecha">→</span>
+            </button>
+
+            <button class="dash-quick-card" onclick="cambiarVista('analitica')" title="Calibración en vivo y factores autoajustados por resultados reales">
+                <span class="dash-quick-icono cyan">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m7 14 3.5-4 3 3L20 6"/></svg>
+                </span>
+                <span class="dash-quick-texto">
+                    <strong data-i18n="qc2Titulo">Analítica</strong>
+                    <small data-i18n="qc2Desc">Calibración y modelos estadísticos (Poisson + Dixon-Coles).</small>
+                </span>
+                <span class="dash-quick-flecha">→</span>
+            </button>
+
+            <button class="dash-quick-card" onclick="cambiarVista('mispredicciones')" title="Tus picks marcados con 📌, pendientes y ya verificados">
+                <span class="dash-quick-icono oro">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+                </span>
+                <span class="dash-quick-texto">
+                    <strong data-i18n="qc3Titulo">Mis predicciones</strong>
+                    <small data-i18n="qc3Desc">Tus picks y cuotas guardadas.</small>
+                </span>
+                <span class="dash-quick-flecha">→</span>
+            </button>
+
+            <button class="dash-quick-card" onclick="cambiarVista('favoritos')" title="Partidos de tus equipos seguidos en los próximos 7 días">
+                <span class="dash-quick-icono rosa">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m12 2.6 2.9 5.9 6.5.95-4.7 4.6 1.1 6.45L12 17.4 6.2 20.5l1.1-6.45-4.7-4.6 6.5-.95z"/></svg>
+                </span>
+                <span class="dash-quick-texto">
+                    <strong data-i18n="qc4Titulo">Favoritos</strong>
+                    <small data-i18n="qc4Desc">Seguimiento directo de ligas.</small>
+                </span>
+                <span class="dash-quick-flecha">→</span>
+            </button>
+
+            <button class="dash-quick-card" onclick="cambiarVista('historial')" title="Historial público: cada pick liquidado contra el resultado real y Brier Score auditado">
+                <span class="dash-quick-icono violeta">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"/><path d="M21 12a9 9 0 1 1-9-9"/><path d="M21 5v6h-6"/></svg>
+                </span>
+                <span class="dash-quick-texto">
+                    <strong data-i18n="qc5Titulo">Transparencia</strong>
+                    <small data-i18n="qc5Desc">Historial público y auditoría Brier Score.</small>
+                </span>
+                <span class="dash-quick-flecha">→</span>
+            </button>
+        </div>
+    </div>
+
+                <!-- (KPIs migrados a las tarjetas superiores del dashboard) -->
 
     <!-- DASHBOARD PERSONAL -->
     <div class="dashboard-personal">
@@ -246,211 +359,93 @@
                                     <stop offset="100%" style="stop-color:#7be1c8;stop-opacity:1" />
                                 </linearGradient>
                             </defs>
-                            <text x="60" y="58" text-anchor="middle" font-family="var(--font-mono)" font-weight="700" font-size="30" fill="var(--text)">81%</text>
-                            <text x="60" y="74" text-anchor="middle" font-family="var(--font-mono)" font-weight="600" font-size="8.5" fill="#70839a" letter-spacing="1">EXCELENTE</text>
+                            <circle id="salud-gauge-arco" cx="60" cy="60" r="52" fill="none" stroke="url(#grad-health)" stroke-width="7" stroke-linecap="round" stroke-dasharray="0 999" stroke-dashoffset="0" style="transition: stroke-dasharray 0.6s;"/>
+                            <defs>
+                                <linearGradient id="grad-health" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" style="stop-color:#64e4a9;stop-opacity:1" />
+                                    <stop offset="100%" style="stop-color:#7be1c8;stop-opacity:1" />
+                                </linearGradient>
+                            </defs>
+                            <text id="salud-gauge-texto" x="60" y="58" text-anchor="middle" font-family="var(--font-mono)" font-weight="700" font-size="30" fill="var(--text)">—</text>
+                            <text id="salud-gauge-estado" x="60" y="74" text-anchor="middle" font-family="var(--font-mono)" font-weight="600" font-size="8.5" fill="#70839a" letter-spacing="1">SIN DATOS</text>
                         </svg>
                     </div>
                     <div class="health-stats">
-                        <div class="health-stat"><span class="health-stat-dot verde"></span><span>Brier 0.17</span></div>
-                        <div class="health-stat"><span class="health-stat-dot cyan"></span><span>1000+ picks</span></div>
-                        <div class="health-stat"><span class="health-stat-dot gold"></span><span>Tendencia +6%</span></div>
+                        <div class="health-stat"><span class="health-stat-dot verde"></span><span id="salud-stat-brier">Brier —</span></div>
+                        <div class="health-stat"><span class="health-stat-dot cyan"></span><span id="salud-stat-picks">0 picks</span></div>
+                        <div class="health-stat"><span class="health-stat-dot gold"></span><span id="salud-stat-tendencia">Tendencia —</span></div>
                     </div>
                 </div>
             </div>
             <div class="health-card">
                 <span class="health-label">Calibración por mercado <span class="tooltip-icono" title="Qué tan bien el modelo predice cada tipo de apuesta">?</span></span>
-                <p class="health-sub">Precisión promedio por categoría de apuesta en los últimos 90 días.</p>
-                <div class="health-mercados">
-                    <div class="health-mercado-item">
-                        <span class="health-mercado-nombre">
-                            Resultado
-                            <span class="health-mercado-nivel alto">Alta</span>
-                        </span>
-                        <div class="health-barra"><div style="width: 84%;"></div></div>
-                        <span class="health-mercado-valor">84%</span>
-                    </div>
-                    <div class="health-mercado-item">
-                        <span class="health-mercado-nombre">
-                            Total goles
-                            <span class="health-mercado-nivel bueno">Buena</span>
-                        </span>
-                        <div class="health-barra"><div style="width: 79%;"></div></div>
-                        <span class="health-mercado-valor">79%</span>
-                    </div>
-                    <div class="health-mercado-item">
-                        <span class="health-mercado-nombre">
-                            Ambos anotan
-                            <span class="health-mercado-nivel media">Media</span>
-                        </span>
-                        <div class="health-barra"><div style="width: 76%;"></div></div>
-                        <span class="health-mercado-valor">76%</span>
-                    </div>
-                    <div class="health-mercado-item">
-                        <span class="health-mercado-nombre">
-                            Doble
-                            <span class="health-mercado-nivel buena">Buena</span>
-                        </span>
-                        <div class="health-barra"><div style="width: 81%;"></div></div>
-                        <span class="health-mercado-valor">81%</span>
-                    </div>
+                <p class="health-sub">Precisión real por categoría de apuesta, solo mercados ya liquidados.</p>
+                <div class="health-mercados" id="salud-mercados-lista">
+                    <p class="health-sub" style="margin:0;">Sin mercados verificados todavía.</p>
                 </div>
             </div>
         </div>
-        <div class="health-nota">Actualizado hace 2 horas · Próxima actualización en 1h</div>
+        <div class="health-nota" id="salud-nota">Se recalcula con cada partido finalizado y verificado.</div>
     </div>
 
-    <!-- GARANTÍA DE TRANSPARENCIA -->
-    <div class="transparencia-section">
-        <div class="transparencia-header">
-            <h2>Garantía de transparencia</h2>
-            <p>Fulbito se compromete a:</p>
+    <!-- ============ ACCESOS RÁPIDOS ============ -->
+    <section class="dash-accesos-bloque">
+        <div class="dash-seccion-cabecera">
+            <h2>Accesos rápidos</h2>
+            <p>Entrá directo a cada módulo del motor</p>
         </div>
-        <div class="transparencia-grid">
-            <div class="transparencia-card">
-                <span class="transparencia-icono">✓</span>
-                <strong>Historial público</strong>
-                <p>Cada predicción que hace Fulbito está auditable. Puedes revisar qué dijimos y qué pasó de verdad.</p>
-            </div>
-            <div class="transparencia-card">
-                <span class="transparencia-icono">✓</span>
-                <strong>Metodología verificable</strong>
-                <p>Usamos Poisson + Dixon-Coles, no "IA mágica". La lógica es clara, reproducible y bien documentada.</p>
-            </div>
-            <div class="transparencia-card">
-                <span class="transparencia-icono">✓</span>
-                <strong>Métricas reales</strong>
-                <p>Brier Score, calibración y aciertos. Números que cualquier analista puede validar.</p>
-            </div>
-            <div class="transparencia-card">
-                <span class="transparencia-icono">✓</span>
+        <!-- (Accesos rápidos ya renderizados arriba, junto a los KPIs) -->
+    </section>
+            <!-- ============ DETALLES COMPACTOS (texto reducido + tooltips) ============ -->
+    <section class="dash-info">
+        <details class="dash-info-item">
+            <summary title="Estadísticas de ligas top con actualización automática">
+                <span class="dash-info-icono">📡</span>
+                <strong>Datos verificados</strong>
+                <span class="dash-info-hint">Cara a cara · tablas · xG</span>
+            </summary>
+            <p>Últimas jornadas, tabla de posiciones, H2H directo y goles esperados, actualizados cada pocas horas.</p>
+        </details>
+
+        <details class="dash-info-item">
+            <summary title="Modelo Poisson + Dixon-Coles con corrección de marcadores bajos">
+                <span class="dash-info-icono">🧮</span>
+                <strong>Poisson + Dixon-Coles</strong>
+                <span class="dash-info-hint">19 mercados · recencia 70/25/5</span>
+            </summary>
+            <p>Estima goles esperados por equipo y ajusta por localía, recencia y H2H. Probabilidades auditables, no “IA mágica”.</p>
+        </details>
+
+        <details class="dash-info-item">
+            <summary title="Cada predicción se contrasta contra el resultado real">
+                <span class="dash-info-icono">⚡</span>
+                <strong>Auto-calibración</strong>
+                <span class="dash-info-hint">Brier Score · mejora continua</span>
+            </summary>
+            <p>El sistema mide su error con Brier Score y se recalibra con cada partido finalizado. Historial público y exportable.</p>
+        </details>
+
+        <details class="dash-info-item">
+            <summary title="Herramienta de análisis, no oráculo">
+                <span class="dash-info-icono">🛡️</span>
                 <strong>Sin promesas falsas</strong>
-                <p>No vendemos sueños. Decimos qué tan confiable es cada predicción y los riesgos reales.</p>
-            </div>
-            <div class="transparencia-card">
-                <span class="transparencia-icono">✓</span>
-                <strong>Auto-mejora visible</strong>
-                <p>Ves cómo el modelo se calibra después de cada partido. Aprendizaje real, no teórico.</p>
-            </div>
-            <div class="transparencia-card">
-                <span class="transparencia-icono">✓</span>
-                <strong>Datos siempre disponibles</strong>
-                <p>Puedes exportar, analizar y auditar todo. Cero dependencia de Fulbito.</p>
-            </div>
-        </div>
-    </div>
-</section>
+                <span class="dash-info-hint">Solo +18 · riesgo explícito</span>
+            </summary>
+            <p>Ningún pronóstico es 100%. Mostramos la confianza real de cada pick y sus riesgos. Apostá solo lo que puedas perder.</p>
+        </details>
+    </section>
 
-<section class="landing-sections" id="modelo">
-    <div class="section-intro">
-        <span class="section-kicker">Modelado</span>
-        <h2>Transparencia sobre cómo Fulbito genera pronósticos.</h2>
-    </div>
-
-    <div class="modelado-grid">
-        <div class="modelado-card">
-            <div class="modelado-header">
-                <span class="modelado-badge">01</span>
-                <span class="modelado-icon">📡</span>
-            </div>
-            <h3>Datos verificados en tiempo real</h3>
-            <p>Fulbito consume estadísticas de ligas top: últimos partidos, tablas de posiciones, cara-a-cara directo y goles esperados con actualización automática.</p>
-            <ul class="modelado-lista">
-                <li><span class="modelado-check">✓</span> Datos históricos consolidados</li>
-                <li><span class="modelado-check">✓</span> Actualización continua cada pocas horas</li>
-                <li><span class="modelado-check">✓</span> Cálculos auditables y transparentes</li>
-            </ul>
-        </div>
-
-        <div class="modelado-card">
-            <div class="modelado-header">
-                <span class="modelado-badge">02</span>
-                <span class="modelado-icon">🧮</span>
-            </div>
-            <h3>Modelo Poisson + Dixon-Coles</h3>
-            <p>Aplicamos un modelo estadístico riguroso empleado en análisis deportivo profesional. Estima goles esperados por equipo con corrección de dependencia de marcadores bajos.</p>
-            <ul class="modelado-lista">
-                <li><span class="modelado-check">✓</span> Probabilidades en 19 mercados</li>
-                <li><span class="modelado-check">✓</span> Ponderación avanzada de recencia</li>
-                <li><span class="modelado-check">✓</span> Ajuste automático por localía y H2H</li>
-            </ul>
-        </div>
-
-        <div class="modelado-card">
-            <div class="modelado-header">
-                <span class="modelado-badge">03</span>
-                <span class="modelado-icon">⚡</span>
-            </div>
-            <h3>Auto-calibración y Brier Score</h3>
-            <p>Cada predicción se contrasta contra el resultado real para verificar la calidad predictiva, medir el error Brier y calibrar el sistema continuamente.</p>
-            <ul class="modelado-lista">
-                <li><span class="modelado-check">✓</span> Brier Score de alta precisión</li>
-                <li><span class="modelado-check">✓</span> Historial público verificable</li>
-                <li><span class="modelado-check">✓</span> Mejora continua basada en datos reales</li>
-            </ul>
-        </div>
-    </div>
-
-    <div class="feature-grid" style="margin-top: 40px;">
-        <article class="feature-card feature-card-strong">
-            <span class="feature-icon">📊</span>
-            <h3>Niveles de confianza</h3>
-            <p><strong>Alta:</strong> 70%+ prob + historial verificado | <strong>Media:</strong> 55-70% prob | <strong>Baja:</strong> <50% prob pero notable</p>
-        </article>
-        <article class="feature-card">
-            <span class="feature-icon">✓</span>
-            <h3>Sin promesas falsas</h3>
-            <p>Fulbito NO asegura ganancias. Ningún pronóstico es 100%. Somos herramienta de análisis, no oráculo.</p>
-        </article>
-        <article class="feature-card">
-            <span class="feature-icon">🔍</span>
-            <h3>Verificación pública</h3>
-            <p>Tu historial y el nuestro están siempre visible. Cualquiera puede revisar si acertamos o fallamos.</p>
-        </article>
-    </div>
-</section>
-
-<section class="landing-sections landing-proof" id="por-que">
-    <div class="proof-grid">
-        <div class="proof-copy">
-            <span class="section-kicker">Credibilidad</span>
-            <h2>Sin promesas. Sólo números verificables.</h2>
-            <p>No decimos "gana siempre". Decimos "aquí está nuestro historial, auditalo vos mismo". La mejor manera de confiar en un modelo de pronósticos es ver cómo le fue.</p>
-            <ul class="proof-list">
-                <li>81% de salud actual (Brier Score 0.17 = muy preciso)</li>
-                <li>1000+ picks auditados y verificados contra resultados reales</li>
-                <li>Historial público: cualquiera puede revisar si acertamos o fallamos</li>
-                <li>Mejoras continuas: el modelo se calibra solo con cada partido que termina</li>
-            </ul>
-        </div>
-        <div class="proof-panel">
-            <div class="proof-strip">
-                <span>Aciertos verificados</span>
-                <strong>~74%</strong>
-            </div>
-            <div class="proof-strip muted">
-                <span>Confianza promedio</span>
-                <strong>67%</strong>
-            </div>
-            <div class="proof-strip small">
-                <span>Mejora por calibración</span>
-                <strong>+6%</strong>
-            </div>
-        </div>
-    </div>
-</section>
-
-<section class="landing-cta-final" id="entrar">
-    <div class="landing-cta-final-inner">
+    <section class="dash-cta">
         <div>
-            <span class="section-kicker">Entrar</span>
-            <h2>Accede a la app y revisa el motor en acción.</h2>
+            <span class="dash-cta-kicker">Empezar</span>
+            <h2>Mirá el motor en acción con la jornada de hoy.</h2>
         </div>
-        <button class="landing-primary" onclick="cambiarVista('pronosticos')">Abrir Fulbito</button>
+        <button class="landing-primary" onclick="cambiarVista('pronosticos')">Ver predicciones</button>
+    </section>
     </div>
 </section>
 
 <section id="vista-pronosticos" class="vista">
-
     <div class="pestañas-fecha">
         <button class="pestaña activa" onclick="cambiarFecha('hoy', event)">Hoy</button>
         <button class="pestaña" onclick="cambiarFecha('manana', event)">Mañana</button>
@@ -657,6 +652,68 @@
     <div id="bloque-historial-completo"></div>
 </section>
 
+<!-- ============ LIVE CENTER ============ -->
+<section id="vista-live" class="vista">
+    <div class="vista-cabecera">
+        <span class="vista-eyebrow" data-i18n="liveEyebrow">Live Center</span>
+        <h2 data-i18n="liveTitulo">Qué se juega hoy, en orden cronológico</h2>
+        <p class="subtitulo-vista" data-i18n="liveSub">Partidos en juego y próximos del día, con la confianza del motor. Se refresca automáticamente cada 3 minutos.</p>
+    </div>
+    <div class="dash-mini-kpis" id="live-resumen"></div>
+    <div id="contenedor-live" class="dash-live-lista"></div>
+</section>
+
+<!-- ============ COMPETICIONES ============ -->
+<section id="vista-competiciones" class="vista">
+    <div class="vista-cabecera">
+        <span class="vista-eyebrow" data-i18n="compEyebrow">Competiciones</span>
+        <h2 data-i18n="compTitulo">Ligas cubiertas por el motor</h2>
+        <p class="subtitulo-vista" data-i18n="compSub">Toca una liga para ver sus partidos y pronósticos. Las que tienen partidos hoy quedan primero.</p>
+    </div>
+    <div class="dash-ligas-grid" id="competiciones-grid"></div>
+</section>
+
+<!-- ============ RANKING ============ -->
+<section id="vista-ranking" class="vista">
+    <div class="vista-cabecera">
+        <span class="vista-eyebrow" data-i18n="rankEyebrow">Ranking</span>
+        <h2 data-i18n="rankTitulo">Rendimiento real por mercado y equipo</h2>
+        <p class="subtitulo-vista" data-i18n="rankSub">Solo con picks ya liquidados contra el resultado real. Sin promedios inflados.</p>
+    </div>
+    <div class="dash-ranking-grid">
+        <div class="dash-panel">
+            <div class="dash-panel-head">
+                <h3 data-i18n="rankMercados">Mercados por precisión</h3>
+                <span class="dash-panel-nota" data-i18n="rankMercadosNota">Ordenados de mejor a peor</span>
+            </div>
+            <div id="ranking-mercados"></div>
+        </div>
+        <div class="dash-panel">
+            <div class="dash-panel-head">
+                <h3 data-i18n="rankEquipos">Equipos con más picks</h3>
+                <span class="dash-panel-nota" data-i18n="rankEquiposNota">Volumen analizado</span>
+            </div>
+            <div id="ranking-equipos"></div>
+        </div>
+    </div>
+</section>
+
+<!-- ============ DOBLES / COMBINADAS ============ -->
+<section id="vista-dobles" class="vista">
+    <div class="vista-cabecera">
+        <span class="vista-eyebrow" data-i18n="doblesEyebrow">Dobles</span>
+        <h2 data-i18n="doblesTitulo">Combinadas armadas con valor real</h2>
+        <p class="subtitulo-vista" data-i18n="doblesSub">Dobles y múltiples sugeridas con los mejores picks de hoy. Cada pierna extra multiplica el riesgo.</p>
+    </div>
+    <div class="dash-dobles-acciones">
+        <button class="landing-primary" onclick="abrirModalArmarCombinada()">
+            <span data-i18n="doblesManual">Armar combinada manual</span>
+        </button>
+        <button class="dash-boton-suave" onclick="generarDoblesDelDia()" id="btn-generar-dobles" data-i18n="doblesGenerar">Recalcular con la jornada de hoy</button>
+    </div>
+    <div id="contenedor-dobles" class="dash-live-lista"></div>
+</section>
+
 </main>
 
 <footer class="pie-pagina">
@@ -691,7 +748,9 @@
     if (hora >= 5 && hora < 12) saludo = 'Buenos días';
     else if (hora >= 12 && hora < 19) saludo = 'Buenas tardes';
     else saludo = 'Buenas noches';
-    el.textContent = saludo + ', bienvenido a Fulbito';
+    // Saludo compacto del dashboard: mantiene el nombre del usuario y el
+    // descriptor del panel, solo cambia la parte temporal del día.
+    el.textContent = saludo + ', Axelito — Tu centro de inteligencia predictiva';
   }
   aplicarSaludoDinamico();
 
