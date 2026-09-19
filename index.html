@@ -152,7 +152,7 @@
         <div class="dash-header">
         <div class="dash-header-saludo">
             <p class="dash-eyebrow" data-i18n="eyebrow">Panel de control</p>
-            <h1 id="hero-saludo">Hola, Axelito — Tu centro de inteligencia predictiva</h1>
+            <h1 id="hero-saludo">Hola, Usuario — Tu centro de inteligencia predictiva</h1>
             <p class="dash-header-sub" data-i18n="sub">Modelo Poisson + Dixon-Coles con calibración y Brier Score auditables.</p>
         </div>
         <div class="dash-header-acciones">
@@ -171,11 +171,10 @@
                 <span id="idioma-actual">ES</span>
             </button>
             <div class="dash-perfil-wrap">
-                <button class="dash-perfil" id="btn-perfil" type="button" title="Perfil y ajustes de Axelito" aria-haspopup="true" aria-label="Perfil de Axelito">
-                    <span class="dash-perfil-avatar" aria-hidden="true">A</span>
+                <button class="dash-perfil" id="btn-perfil" type="button" title="Perfil y ajustes" aria-haspopup="true" aria-label="Perfil de usuario">
+                    <span class="dash-perfil-avatar" id="perfil-avatar" aria-hidden="true">U</span>
                     <span class="dash-perfil-datos">
-                        <strong>Axelito</strong>
-                        <small>Plan Free</small>
+                        <strong id="perfil-nombre">Usuario</strong>
                     </span>
                     <svg class="dash-perfil-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
                 </button>
@@ -308,8 +307,16 @@
 
                 <!-- (KPIs migrados a las tarjetas superiores del dashboard) -->
 
-    <!-- DASHBOARD PERSONAL -->
-    <div class="dashboard-personal">
+    <!-- DASHBOARD PERSONAL (plegable: la vista principal queda limpia) -->
+    <div class="dash-plegables">
+    <details class="dash-plegable" id="plegable-desempeno">
+        <summary>
+            <span class="dash-plegable-titulo">Tu desempeño</span>
+            <span class="dash-plegable-hint">Tus picks vs el modelo</span>
+            <span class="dash-plegable-chevron" aria-hidden="true">⌄</span>
+        </summary>
+        <div class="dash-plegable-cuerpo">
+        <div class="dashboard-personal">
         <div class="dashboard-titulo">
             <h2>Tu desempeño</h2>
             <p>Cómo te fue con tus predicciones vs cómo le fue a Fulbito</p>
@@ -337,9 +344,18 @@
             </div>
         </div>
     </div>
+        </div>
+    </details>
 
-    <!-- SALUD DEL MOTOR AVANZADA -->
-    <div class="motor-health-section">
+    <!-- SALUD DEL MOTOR AVANZADA (plegable) -->
+    <details class="dash-plegable" id="plegable-salud">
+        <summary>
+            <span class="dash-plegable-titulo">Salud del motor Fulbito</span>
+            <span class="dash-plegable-hint">Calibración verificable · Brier Score</span>
+            <span class="dash-plegable-chevron" aria-hidden="true">⌄</span>
+        </summary>
+        <div class="dash-plegable-cuerpo">
+        <div class="motor-health-section">
         <div class="motor-health-header">
             <h2>Salud del motor Fulbito</h2>
             <p>Calibración verificable de nuestro modelo</p>
@@ -387,15 +403,9 @@
         </div>
         <div class="health-nota" id="salud-nota">Se recalcula con cada partido finalizado y verificado.</div>
     </div>
-
-    <!-- ============ ACCESOS RÁPIDOS ============ -->
-    <section class="dash-accesos-bloque">
-        <div class="dash-seccion-cabecera">
-            <h2>Accesos rápidos</h2>
-            <p>Entrá directo a cada módulo del motor</p>
         </div>
-        <!-- (Accesos rápidos ya renderizados arriba, junto a los KPIs) -->
-    </section>
+    </details>
+    </div>
             <!-- ============ DETALLES COMPACTOS (texto reducido + tooltips) ============ -->
     <section class="dash-info">
         <details class="dash-info-item">
@@ -737,20 +747,31 @@
   let partidosDelRango = [];
 
   // ============ SALUDO DINÁMICO SEGÚN LA HORA LOCAL DEL USUARIO ============
-  // Antes mostraba "Hola, Axelito" (hardcodeado), ahora saluda según la hora
-  // del visitante para que cualquier persona que abra la página sienta que el
-  // mensaje es para ella. Si el navegador no expone la hora, queda el genérico.
+  // Saludo genérico por hora (mañana / tarde / noche) + nombre opcional desde
+  // localStorage ('userName'). Sin nombre guardado queda "Usuario".
   function aplicarSaludoDinamico() {
-    const el = document.getElementById('hero-saludo');
-    if (!el) return;
     const hora = new Date().getHours();
     let saludo;
     if (hora >= 5 && hora < 12) saludo = 'Buenos días';
     else if (hora >= 12 && hora < 19) saludo = 'Buenas tardes';
     else saludo = 'Buenas noches';
-    // Saludo compacto del dashboard: mantiene el nombre del usuario y el
-    // descriptor del panel, solo cambia la parte temporal del día.
-    el.textContent = saludo + ', Axelito — Tu centro de inteligencia predictiva';
+
+    // Nombre del usuario: es opcional y sale de localStorage (no hay cuentas
+    // ni planes). Si no hay nada guardado, queda el genérico "Usuario".
+    let nombre = 'Usuario';
+    try {
+      const guardado = (localStorage.getItem('userName') || '').trim();
+      if (guardado) nombre = guardado;
+    } catch (e) { /* localStorage bloqueado: usamos el genérico */ }
+
+    const el = document.getElementById('hero-saludo');
+    if (el) el.textContent = `${saludo}, ${nombre} — Tu centro de inteligencia predictiva`;
+
+    // El chip de perfil muestra solo avatar + nombre (sin badge de plan).
+    const nombrePerfil = document.getElementById('perfil-nombre');
+    if (nombrePerfil) nombrePerfil.textContent = nombre;
+    const avatarPerfil = document.getElementById('perfil-avatar');
+    if (avatarPerfil) avatarPerfil.textContent = nombre.charAt(0).toUpperCase();
   }
   aplicarSaludoDinamico();
 

@@ -5231,7 +5231,7 @@ body.home-mode main {
   max-width: 1360px;
   margin-left: var(--dash-sidebar-w);
   margin-right: 0;
-  padding: 20px 26px 48px;
+  padding: 12px 16px 20px;
 }
 
 body.home-mode .pie-pagina { margin-left: var(--dash-sidebar-w); }
@@ -5511,15 +5511,16 @@ body.home-mode #vista-inicio .dash-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 18px;
+  gap: 12px;
   flex-wrap: wrap;
-  padding: 14px 16px;
+  padding: 12px 14px;
+  margin: 0;
   background: var(--dash-surface);
   border: 1px solid var(--dash-border);
   border-radius: var(--dash-radius);
 }
 
-.dash-header-saludo { min-width: 260px; flex: 1; }
+.dash-header-saludo { min-width: 240px; flex: 1; }
 
 body.home-mode #vista-inicio .dash-eyebrow {
   margin: 0 0 5px;
@@ -5535,7 +5536,7 @@ body.home-mode #vista-inicio .dash-eyebrow {
 body.home-mode #vista-inicio .dash-header-saludo h1 {
   margin: 0;
   font-family: var(--font-body);
-  font-size: clamp(1.05rem, 2.1vw, 1.4rem);
+  font-size: 1.5rem;
   font-weight: 700;
   letter-spacing: -0.015em;
   line-height: 1.25;
@@ -5723,16 +5724,18 @@ body.home-mode #vista-inicio .dash-header-sub {
 /* --- KPIs SUPERIORES --- */
 body.home-mode #vista-inicio .dash-kpis {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 14px;
-  margin: 16px 0 22px;
+  /* Las 4 tarjetas KPI siempre en UNA sola fila horizontal */
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin: 0;
+  padding: 12px 0;
 }
 
 body.home-mode #vista-inicio .dash-kpi {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 13px 14px 12px;
+  gap: 5px;
+  padding: 12px 13px 11px;
   background: var(--dash-surface);
   border: 1px solid var(--dash-border);
   border-radius: var(--dash-radius);
@@ -5845,8 +5848,8 @@ body.home-mode #vista-inicio .dash-seccion-head {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 12px;
+  gap: 10px;
+  margin-bottom: 8px;
 }
 
 body.home-mode #vista-inicio .dash-seccion-head h2 {
@@ -5863,17 +5866,22 @@ body.home-mode #vista-inicio .dash-seccion-head h2 {
   color: var(--text-dim);
 }
 
+/* Grilla de tarjetas rectangulares que se reacomoda sola (2-3+ columnas) */
 body.home-mode #vista-inicio .dash-quick {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(205px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 12px;
 }
 
+body.home-mode #vista-inicio .dash-seccion { padding: 12px 0; margin: 0; }
+
 .dash-quick-card {
+  position: relative;
   display: flex;
-  align-items: center;
-  gap: 11px;
-  padding: 12px 13px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 13px 14px;
   text-align: left;
   background: var(--dash-surface);
   border: 1px solid var(--dash-border);
@@ -5926,7 +5934,10 @@ body.home-mode #vista-inicio .dash-quick {
 }
 
 .dash-quick-flecha {
-  margin-left: auto;
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  margin: 0;
   color: var(--text-dim);
   font-size: 0.85rem;
   transition: transform 0.2s var(--ease), color 0.2s var(--ease);
@@ -5939,9 +5950,10 @@ body.home-mode #vista-inicio .dash-quick {
 
 /* --- RESPONSIVE DEL DASHBOARD --- */
 @media (max-width: 1180px) {
-  body.home-mode #vista-inicio .dash-kpis {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+  /* Los 4 KPIs siguen en una sola fila: solo se compactan espacios y tipografía */
+  body.home-mode #vista-inicio .dash-kpis { gap: 12px; }
+  body.home-mode #vista-inicio .dash-kpi { padding: 11px 12px 10px; }
+  .dash-kpi-valor { font-size: 1.4rem; }
 }
 
 @media (max-width: 1024px) {
@@ -5966,7 +5978,7 @@ body.home-mode #vista-inicio .dash-quick {
   body.home-mode main {
     margin-left: 0;
     max-width: none;
-    padding: 64px 16px 40px;
+    padding: 56px 14px 24px;
   }
 
   body.home-mode .pie-pagina { margin-left: 0; }
@@ -5979,9 +5991,11 @@ body.home-mode #vista-inicio .dash-quick {
 }
 
 @media (max-width: 760px) {
-  body.home-mode #vista-inicio .dash-header { padding: 12px; }
+  body.home-mode #vista-inicio .dash-header { padding: 11px 12px; gap: 10px; }
 
   .dash-header-saludo { min-width: 0; }
+
+  body.home-mode #vista-inicio .dash-header-saludo h1 { font-size: 1.25rem; }
 
   .dash-header-acciones { width: 100%; }
 
@@ -5990,18 +6004,251 @@ body.home-mode #vista-inicio .dash-quick {
   .dash-perfil-datos { display: none; }
 
   body.home-mode #vista-inicio .dash-kpis {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
   }
 
-  body.home-mode #vista-inicio .dash-quick { grid-template-columns: 1fr; }
+  body.home-mode #vista-inicio .dash-kpi { padding: 9px 8px 8px; gap: 4px; }
+  .dash-kpi-valor { font-size: 1.05rem; }
+  .dash-kpi-label { font-size: 0.64rem; }
+  .dash-kpi-pie { font-size: 0.62rem; }
+  .dash-kpi-chip { display: none; }
+  .dash-kpi-icono { width: 24px; height: 24px; }
+
+  body.home-mode #vista-inicio .dash-quick {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  }
 
   .dash-quick-texto small { white-space: normal; }
+
+  .dash-plegable-hint { display: none; }
 }
 
 @media (max-width: 440px) {
-  body.home-mode #vista-inicio .dash-kpis { grid-template-columns: 1fr; }
+  /* Las 4 tarjetas KPI se mantienen en UNA sola fila también en móvil */
+  body.home-mode #vista-inicio .dash-kpis {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+  }
 
-  .dash-kpi-valor { font-size: 1.5rem; }
+  body.home-mode #vista-inicio .dash-kpi { padding: 8px 6px 7px; gap: 3px; }
+
+  .dash-kpi-valor { font-size: 0.95rem; }
+  .dash-kpi-label { font-size: 0.6rem; }
+  .dash-kpi-pie, .dash-kpi-barra { display: none; }
+  .dash-kpi-top { justify-content: center; }
+
+  body.home-mode #vista-inicio .dash-quick { grid-template-columns: 1fr; }
+}
+
+/* ============================================================
+   BLOQUES LARGOS -> PLEGABLES COMPACTOS
+   La vista principal queda limpia (sin scroll largo): "Tu desempeño"
+   y "Salud del motor" se muestran solo si el usuario los abre.
+   ============================================================ */
+body.home-mode #vista-inicio .dash-plegable {
+  margin: 0;
+  background: var(--dash-surface);
+  border: 1px solid var(--dash-border);
+  border-radius: var(--dash-radius);
+  overflow: hidden;
+}
+
+body.home-mode #vista-inicio .dash-plegable[open] {
+  border-color: var(--dash-border-strong);
+}
+
+body.home-mode #vista-inicio .dash-plegables {
+  display: grid;
+  gap: 10px;
+  padding: 12px 0 0;
+  margin: 0;
+}
+
+body.home-mode #vista-inicio .dash-plegable > summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 14px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.dash-plegable > summary::-webkit-details-marker { display: none; }
+.dash-plegable > summary::marker { content: ""; }
+
+.dash-plegable-titulo {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.dash-plegable-hint {
+  margin-left: auto;
+  font-size: 0.7rem;
+  color: var(--text-dim);
+}
+
+.dash-plegable-chevron {
+  color: var(--text-dim);
+  font-size: 0.85rem;
+  transition: transform 0.2s var(--ease);
+}
+
+.dash-plegable[open] .dash-plegable-chevron { transform: rotate(180deg); }
+
+body.home-mode #vista-inicio .dash-plegable-cuerpo { padding: 0 14px 12px; }
+
+/* Los títulos internos se ocultan: el summary ya los nombra */
+body.home-mode #vista-inicio .dash-plegable .dashboard-titulo,
+body.home-mode #vista-inicio .dash-plegable .motor-health-header { display: none; }
+
+/* Compactación interna de los bloques largos */
+body.home-mode #vista-inicio .dash-plegable .dashboard-personal,
+body.home-mode #vista-inicio .dash-plegable .motor-health-section {
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+
+body.home-mode #vista-inicio .dash-plegable .dashboard-grid {
+  gap: 10px;
+  margin-bottom: 0;
+}
+
+body.home-mode #vista-inicio .dash-plegable .dashboard-card {
+  padding: 14px;
+  border-radius: var(--dash-radius);
+}
+
+body.home-mode #vista-inicio .dash-plegable .dashboard-valor { font-size: 1.4rem; }
+
+body.home-mode #vista-inicio .dash-plegable .motor-health-grid {
+  gap: 10px;
+  margin-bottom: 0;
+}
+
+body.home-mode #vista-inicio .dash-plegable .health-card {
+  padding: 16px;
+  border-radius: var(--dash-radius);
+}
+
+body.home-mode #vista-inicio .dash-plegable .health-metric { gap: 10px; }
+
+body.home-mode #vista-inicio .dash-plegable .health-grande svg {
+  width: 116px;
+  height: 116px;
+}
+
+body.home-mode #vista-inicio .dash-plegable .health-nota {
+  margin-top: 10px;
+  padding-top: 0;
+}
+
+@media (max-width: 900px) {
+  body.home-mode #vista-inicio .dash-plegable .dashboard-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ============================================================
+   DETALLES COMPACTOS Y CTA (vista limpia, poco scroll)
+   ============================================================ */
+body.home-mode #vista-inicio .dash-info {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 10px;
+  margin: 0;
+  padding: 12px 0 0;
+}
+
+body.home-mode #vista-inicio .dash-info-item {
+  background: var(--dash-surface);
+  border: 1px solid var(--dash-border);
+  border-radius: var(--dash-radius);
+  overflow: hidden;
+}
+
+body.home-mode #vista-inicio .dash-info-item[open] {
+  border-color: var(--dash-border-strong);
+}
+
+body.home-mode #vista-inicio .dash-info-item > summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 12px;
+  cursor: pointer;
+  list-style: none;
+  font-size: 0.8rem;
+  color: var(--text);
+}
+
+.dash-info-item > summary::-webkit-details-marker { display: none; }
+.dash-info-item > summary::marker { content: ""; }
+
+.dash-info-icono { font-size: 0.95rem; line-height: 1; }
+
+.dash-info-item > summary strong { font-weight: 700; }
+
+.dash-info-hint {
+  margin-left: auto;
+  font-size: 0.68rem;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+body.home-mode #vista-inicio .dash-info-item p {
+  margin: 0;
+  padding: 0 12px 12px;
+  max-width: none;
+  font-size: 0.76rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+body.home-mode #vista-inicio .dash-cta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin: 0;
+  padding: 12px 0 0;
+  background: none;
+  border: none;
+  border-radius: 0;
+}
+
+.dash-cta-kicker {
+  display: block;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--dash-accent);
+}
+
+body.home-mode #vista-inicio .dash-cta h2 {
+  margin: 4px 0 0;
+  max-width: none;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+
+body.home-mode #vista-inicio .dash-cta .landing-primary {
+  padding: 10px 16px;
+  font-size: 0.82rem;
+}
+
+@media (max-width: 760px) {
+  .dash-info-hint { display: none; }
+
+  body.home-mode #vista-inicio .dash-info { grid-template-columns: 1fr; }
+
+  body.home-mode #vista-inicio .dash-cta { flex-direction: column; align-items: flex-start; }
+
+  body.home-mode #vista-inicio .dash-cta .landing-primary { width: 100%; }
 }
 
