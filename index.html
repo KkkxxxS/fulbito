@@ -138,30 +138,6 @@
             </div>
         </div>
 
-        <div class="hero-kpis-bar">
-            <div class="hero-kpi-glass">
-                <span class="hero-kpi-icon">🏆</span>
-                <div>
-                    <strong>9+ Ligas Top</strong>
-                    <span>Analizadas en vivo</span>
-                </div>
-            </div>
-            <div class="hero-kpi-glass">
-                <span class="hero-kpi-icon">⚡</span>
-                <div>
-                    <strong>Poisson + Dixon-Coles</strong>
-                    <span>Modelo matemático real</span>
-                </div>
-            </div>
-            <div class="hero-kpi-glass">
-                <span class="hero-kpi-icon">🔄</span>
-                <div>
-                    <strong>Tiempo Real</strong>
-                    <span>Actualización continua</span>
-                </div>
-            </div>
-        </div>
-
         <div class="landing-grid">
             <article class="landing-card animate-on-scroll delay-1">
                 <span class="landing-card-icon">🎯</span>
@@ -180,62 +156,44 @@
             </article>
         </div>
 
-        <div class="landing-metrics">
-            <div class="landing-metric animate-on-scroll delay-1">
-                <strong id="hero-salud-motor">81%</strong>
-                <span>Salud del motor</span>
+                <!-- PANEL DE MÉTRICAS DE CONFIANZA — track record del motor (pool global + localStorage) -->
+        <div class="hero-kpis-bar">
+            <div class="hero-kpi-glass animate-on-scroll delay-1">
+                <span class="hero-kpi-icon" title="Track record del motor — % de aciertos sobre picks verificados (pool global del servidor + historial local)">🎯</span>
+                <div>
+                    <strong id="hero-aciertos-verificados">—</strong>
+                    <span>Track record del motor</span>
+                </div>
             </div>
-            <div class="landing-metric animate-on-scroll delay-2">
-                <strong id="hero-aciertos-historico">74%</strong>
-                <span>Aciertos verificados</span>
+            <div class="hero-kpi-glass animate-on-scroll delay-2">
+                <span class="hero-kpi-icon" title="Partidos finalizados verificados contra resultados reales">📊</span>
+                <div>
+                    <strong id="hero-partidos-verificados">0</strong>
+                    <span>Partidos verificados</span>
+                </div>
             </div>
-            <div class="landing-metric animate-on-scroll delay-3">
-                <strong id="hero-confianza-media">67%</strong>
-                <span>Confianza promedio</span>
+            <div class="hero-kpi-glass animate-on-scroll delay-3">
+                <span class="hero-kpi-icon" title="Brier Score — 0 = perfecto, 0.25 = azar en mercados binarios">🧪</span>
+                <div>
+                    <strong id="hero-brier">—</strong>
+                    <span>Brier Score</span>
+                </div>
             </div>
-            <div class="landing-metric animate-on-scroll delay-4">
-                <strong id="hero-favoritos-guardados">0</strong>
-                <span>Favoritos guardados</span>
+            <div class="hero-kpi-glass animate-on-scroll delay-4">
+                <span class="hero-kpi-icon" title="Probabilidad promedio de los picks verificados">🌡️</span>
+                <div>
+                    <strong id="hero-confianza-media">—</strong>
+                    <span>Confianza promedio</span>
+                </div>
             </div>
-        </div>
-
-        <div class="landing-grid">
-            <article class="landing-card">
-                <span class="landing-card-icon">🎯</span>
-                <strong>Predicciones verificables</strong>
-                <p>19 mercados por partido. Cada pronóstico se compara contra el resultado real cuando termina el partido.</p>
-            </article>
-            <article class="landing-card">
-                <span class="landing-card-icon">📈</span>
-                <strong>Tu tasa real de aciertos</strong>
-                <p>Historial completo de tus picks y del modelo. Sin manipulación, sin cherry-picking.</p>
-            </article>
-            <article class="landing-card">
-                <span class="landing-card-icon">🔬</span>
-                <strong>Motor transparente</strong>
-                <p>Entiende cómo Fulbito llega a cada número. Caja blanca, no negra. Cualquiera puede revisar la lógica.</p>
-            </article>
-        </div>
-
-        <div class="landing-metrics">
-            <div class="landing-metric">
-                <strong id="hero-salud-motor">81%</strong>
-                <span>Salud del motor</span>
-            </div>
-            <div class="landing-metric">
-                <strong id="hero-aciertos-historico">74%</strong>
-                <span>Aciertos verificados</span>
-            </div>
-            <div class="landing-metric">
-                <strong id="hero-confianza-media">67%</strong>
-                <span>Confianza promedio</span>
-            </div>
-            <div class="landing-metric">
-                <strong id="hero-favoritos-guardados">0</strong>
-                <span>Favoritos guardados</span>
+            <div class="hero-kpi-glass animate-on-scroll delay-5">
+                <span class="hero-kpi-icon" title="Salud del motor — derivada del Brier Score">⚡</span>
+                <div>
+                    <strong id="hero-salud-motor">—</strong>
+                    <span>Salud del motor</span>
+                </div>
             </div>
         </div>
-    </div>
 
     <!-- DASHBOARD PERSONAL -->
     <div class="dashboard-personal">
@@ -778,6 +736,11 @@
     } else if (vista === 'inicio') {
       // También en inicio: refrescar desde backend para que los KPIs reflejen
       // lo último aunque hayas limpiado caché.
+      cargarHistorialCompartido().finally(() =>
+        actualizarHistorialYCalibracion().then(() => actualizarKPIsHome())
+      );
+    }
+
     // Control visibilidad FAB Armar Combinada (solo visible en vista pronosticos)
     const fabCombinada = document.getElementById('btn-fab-combinada');
     if (fabCombinada) {
@@ -786,11 +749,6 @@
       } else {
         fabCombinada.style.display = 'none';
       }
-    }
-
-      cargarHistorialCompartido().finally(() =>
-        actualizarHistorialYCalibracion().then(() => actualizarKPIsHome())
-      );
     }
   }
 
@@ -853,23 +811,24 @@
   }
 
   function actualizarKPIsHome() {
+    // Nota: leerHistorial() ya incluye el merge con el pool global del servidor
+    // (cargarHistorialCompartido fusiona el remoto en localStorage). Por tanto,
+    // el "Track record del motor" mostrado aquí combina historial global + local.
     const historial = leerHistorial();
     const stats = calcularEstadisticasHistorial(historial);
     const brier = calcularBrierScore(historial);
-    const saludEl = document.getElementById('hero-salud-motor');
-    const aciertosEl = document.getElementById('hero-aciertos-historico');
+
+    const aciertosEl = document.getElementById('hero-aciertos-verificados');
+    const partidosEl = document.getElementById('hero-partidos-verificados');
+    const brierEl = document.getElementById('hero-brier');
     const confianzaEl = document.getElementById('hero-confianza-media');
+    const saludEl = document.getElementById('hero-salud-motor');
 
-    let confianzaMedia = 0;
-    if (historial && historial.length > 0) {
-      const verificados = historial.filter(h => h.verificado);
-      const totalProb = verificados.reduce((sum, h) => sum + (h.mercados || []).reduce((inner, m) => inner + (Number(m.probabilidad) || 0), 0), 0);
-      const totalMercados = verificados.reduce((sum, h) => sum + (h.mercados || []).length, 0);
-      if (totalMercados > 0) confianzaMedia = Math.round(totalProb / totalMercados);
-    }
-
-    if (stats && typeof stats.general === 'number') {
+    if (stats && stats.totalVerificados > 0) {
       aciertosEl.textContent = `${stats.general}%`;
+      partidosEl.textContent = stats.totalVerificados.toString();
+      brierEl.textContent = brier ? brier.brier.toFixed(2) : '—';
+      confianzaEl.textContent = `${stats.confianzaMedia || 0}%`;
       if (brier && typeof brier.brier === 'number') {
         const salud = Math.max(0, Math.min(100, Math.round(100 - (brier.brier * 90))));
         saludEl.textContent = `${salud}%`;
@@ -877,12 +836,15 @@
         saludEl.textContent = `${stats.general}%`;
       }
     } else {
-      aciertosEl.textContent = '0%';
-      saludEl.textContent = '0%';
+      // Estado vacío: placeholder honesto, sin 0% engañoso
+      aciertosEl.textContent = '—';
+      partidosEl.textContent = '0';
+      brierEl.textContent = '—';
+      confianzaEl.textContent = '—';
+      saludEl.textContent = '—';
     }
 
-    confianzaEl.textContent = `${confianzaMedia}%`;
-
+    // Favoritos
     const favoritosHome = document.getElementById('hero-favoritos-guardados');
     if (favoritosHome) favoritosHome.textContent = leerFavoritos().length;
   }
