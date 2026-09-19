@@ -5219,22 +5219,35 @@ input {
   --dash-line: rgba(148, 170, 199, 0.09);
   --dash-accent: #64e4a9;
   --dash-radius: 12px;
-  --dash-sidebar-w: 250px;
+  --dash-sidebar-w: 260px;
 }
 
-/* --- Lienzo del dashboard --- */
+/* --- Lienzo del dashboard (full-width: sidebar fijo + contenido flexible) --- */
 body.home-mode {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
   background: var(--dash-bg);
 }
 
 body.home-mode main {
-  max-width: 1360px;
+  width: calc(100% - var(--dash-sidebar-w));
+  max-width: 100%;
+  flex: 1;
+  min-width: 0;
+  box-sizing: border-box;
   margin-left: var(--dash-sidebar-w);
   margin-right: 0;
-  padding: 12px 16px 20px;
+  padding: 12px 24px 20px;
 }
 
-body.home-mode .pie-pagina { margin-left: var(--dash-sidebar-w); }
+body.home-mode .pie-pagina {
+  width: calc(100% - var(--dash-sidebar-w));
+  max-width: 100%;
+  box-sizing: border-box;
+  margin-left: var(--dash-sidebar-w);
+  margin-right: 0;
+}
 
 body.home-mode #vista-inicio.landing-shell { padding: 0; }
 
@@ -5255,10 +5268,15 @@ body.home-mode #vista-inicio .landing-inner {
 body.home-mode #vista-inicio .landing-inner::before,
 body.home-mode #vista-inicio .landing-inner::after { display: none; }
 
-/* --- SIDEBAR FIJO --- */
+/* --- SIDEBAR FIJO (izquierda, 260px; el contenido toma el resto con flex:1) --- */
 body.home-mode .app-nav.dash-sidebar {
   display: flex !important;
+  position: fixed;
+  left: 0;
+  top: 0;
+  height: 100vh;
   flex-direction: column;
+  flex-shrink: 0;
   gap: 12px;
   width: var(--dash-sidebar-w);
   padding: 16px 14px 14px;
@@ -5534,7 +5552,7 @@ body.home-mode #vista-inicio .dash-eyebrow {
 }
 
 body.home-mode #vista-inicio .dash-header-saludo h1 {
-  margin: 0;
+  margin: 0 0 8px;
   font-family: var(--font-body);
   font-size: 1.5rem;
   font-weight: 700;
@@ -5976,12 +5994,19 @@ body.home-mode #vista-inicio .dash-seccion { padding: 12px 0; margin: 0; }
   .dash-sidebar-cerrar { display: block; }
 
   body.home-mode main {
+    width: 100%;
+    max-width: 100%;
     margin-left: 0;
-    max-width: none;
-    padding: 56px 14px 24px;
+    margin-right: 0;
+    padding: 56px 16px 24px;
   }
 
-  body.home-mode .pie-pagina { margin-left: 0; }
+  body.home-mode .pie-pagina {
+    width: 100%;
+    max-width: 100%;
+    margin-left: 0;
+    margin-right: 0;
+  }
 
   body.home-mode .dash-menu-flotante { display: flex; }
 }
