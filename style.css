@@ -5219,34 +5219,59 @@ input {
   --dash-line: rgba(148, 170, 199, 0.09);
   --dash-accent: #64e4a9;
   --dash-radius: 12px;
-  --dash-sidebar-w: 260px;
+  --dash-sidebar-w: 240px;
 }
 
 /* --- Lienzo del dashboard (full-width: sidebar fijo + contenido flexible) --- */
 body.home-mode {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
+  display: grid !important;
+  grid-template-columns: 240px 1fr !important;
+  width: 100vw !important;
+  max-width: 100% !important;
+  min-height: 100vh !important;
+  margin: 0 !important;
   background: var(--dash-bg);
+  overflow-x: hidden;
 }
 
+/* El sidebar ocupa la columna 1 y el contenido la columna 2 (sin franjas) */
+body.home-mode .app-nav.dash-sidebar { grid-column: 1 !important; }
+body.home-mode main { grid-column: 2 !important; }
+body.home-mode .pie-pagina { grid-column: 2 !important; }
+body.home-mode .landing-topbar { grid-column: 1 / -1 !important; }
+body.home-mode .dash-menu-flotante { grid-column: 1 / -1 !important; }
+
 body.home-mode main {
-  width: calc(100% - var(--dash-sidebar-w));
-  max-width: 100%;
+  width: 100% !important;
+  max-width: 100% !important;
   flex: 1;
   min-width: 0;
   box-sizing: border-box;
-  margin-left: var(--dash-sidebar-w);
-  margin-right: 0;
+  margin: 0 !important;
   padding: 12px 24px 20px;
 }
 
 body.home-mode .pie-pagina {
-  width: calc(100% - var(--dash-sidebar-w));
-  max-width: 100%;
+  width: 100% !important;
+  max-width: 100% !important;
   box-sizing: border-box;
-  margin-left: var(--dash-sidebar-w);
-  margin-right: 0;
+  margin: 0 !important;
+}
+
+/* Contenedores internos sin restricciones de ancho (pantalla de extremo a extremo) */
+body.home-mode #vista-inicio,
+body.home-mode #vista-inicio .landing-inner,
+body.home-mode #vista-inicio .dash-header,
+body.home-mode #vista-inicio .dash-kpis,
+body.home-mode #vista-inicio .dash-seccion,
+body.home-mode #vista-inicio .dash-quick,
+body.home-mode #vista-inicio .dash-plegables,
+body.home-mode #vista-inicio .dash-info,
+body.home-mode #vista-inicio .dash-cta {
+  width: 100% !important;
+  max-width: 100% !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
 }
 
 body.home-mode #vista-inicio.landing-shell { padding: 0; }
@@ -5268,13 +5293,14 @@ body.home-mode #vista-inicio .landing-inner {
 body.home-mode #vista-inicio .landing-inner::before,
 body.home-mode #vista-inicio .landing-inner::after { display: none; }
 
-/* --- SIDEBAR FIJO (izquierda, 260px; el contenido toma el resto con flex:1) --- */
+/* --- SIDEBAR FIJO (columna 1 del grid: 240px; el contenido toma el resto con 1fr) --- */
 body.home-mode .app-nav.dash-sidebar {
   display: flex !important;
-  position: fixed;
+  position: sticky;
   left: 0;
   top: 0;
   height: 100vh;
+  min-height: 100vh;
   flex-direction: column;
   flex-shrink: 0;
   gap: 12px;
@@ -5551,17 +5577,19 @@ body.home-mode #vista-inicio .dash-eyebrow {
   color: var(--dash-accent);
 }
 
-body.home-mode #vista-inicio .dash-header-saludo h1 {
-  margin: 0 0 8px;
+body.home-mode #vista-inicio .dash-header-saludo h1,
+body.home-mode #vista-inicio #hero-saludo {
+  margin: 0 0 8px !important;
   font-family: var(--font-body);
-  font-size: 1.5rem;
+  font-size: 1.6rem !important;
   font-weight: 700;
   letter-spacing: -0.015em;
-  line-height: 1.25;
+  line-height: 1.2 !important;
   color: var(--text);
   background: none;
   -webkit-background-clip: initial;
   background-clip: initial;
+  max-width: 100%;
 }
 
 body.home-mode #vista-inicio .dash-header-saludo h1::after { display: none; }
@@ -5975,6 +6003,12 @@ body.home-mode #vista-inicio .dash-seccion { padding: 12px 0; margin: 0; }
 }
 
 @media (max-width: 1024px) {
+  body.home-mode {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
   body.home-mode .app-nav.dash-sidebar {
     display: none !important;
     position: fixed;
@@ -5994,18 +6028,16 @@ body.home-mode #vista-inicio .dash-seccion { padding: 12px 0; margin: 0; }
   .dash-sidebar-cerrar { display: block; }
 
   body.home-mode main {
-    width: 100%;
-    max-width: 100%;
-    margin-left: 0;
-    margin-right: 0;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
     padding: 56px 16px 24px;
   }
 
   body.home-mode .pie-pagina {
-    width: 100%;
-    max-width: 100%;
-    margin-left: 0;
-    margin-right: 0;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
   }
 
   body.home-mode .dash-menu-flotante { display: flex; }
