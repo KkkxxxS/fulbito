@@ -6330,6 +6330,22 @@ html, body {
     padding: 16px 24px !important;
 }
 
+/* Dashboard home a pantalla completa: tarjeta oscura header + KPIs */
+body.home-mode #vista-inicio .landing-inner,
+body.home-mode #vista-inicio .dash-header,
+body.home-mode #vista-inicio .dash-kpis,
+body.home-mode #vista-inicio .dash-seccion,
+body.home-mode #vista-inicio .dash-quick,
+body.home-mode #vista-inicio .dash-plegables,
+body.home-mode #vista-inicio .dash-info,
+body.home-mode #vista-inicio .dash-cta {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    box-sizing: border-box !important;
+}
+
 /* Achicar el título gigante del Header */
 h1, .hero h1, .dashboard-title {
     font-size: 1.5rem !important;

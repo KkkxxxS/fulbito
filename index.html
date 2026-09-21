@@ -894,39 +894,40 @@
     // Nota: leerHistorial() ya incluye el merge con el pool global del servidor
     // (cargarHistorialCompartido fusiona el remoto en localStorage). Por tanto,
     // el "Track record del motor" mostrado aquí combina historial global + local.
-    const historial = leerHistorial();
-    const stats = calcularEstadisticasHistorial(historial);
-    const brier = calcularBrierScore(historial);
+    let historial = [];
+    try { historial = leerHistorial() || []; } catch (e) { historial = []; }
+    let stats = null, brier = null;
+    try { stats = calcularEstadisticasHistorial(historial); } catch (e) { stats = null; }
+    try { brier = calcularBrierScore(historial); } catch (e) { brier = null; }
 
-    const aciertosEl = document.getElementById('hero-aciertos-verificados');
-    const partidosEl = document.getElementById('hero-partidos-verificados');
-    const brierEl = document.getElementById('hero-brier');
-    const confianzaEl = document.getElementById('hero-confianza-media');
-    const saludEl = document.getElementById('hero-salud-motor');
+    const setTxt = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
+    const setWidth = (id, pct) => { const el = document.getElementById(id); if (el) el.style.width = pct; };
 
-    if (stats && stats.totalVerificados > 0) {
-      aciertosEl.textContent = `${stats.general}%`;
-      partidosEl.textContent = stats.totalVerificados.toString();
-      brierEl.textContent = brier ? brier.brier.toFixed(2) : '—';
-      confianzaEl.textContent = `${stats.confianzaMedia || 0}%`;
-      if (brier && typeof brier.brier === 'number') {
-        const salud = Math.max(0, Math.min(100, Math.round(100 - (brier.brier * 90))));
-        saludEl.textContent = `${salud}%`;
-      } else {
-        saludEl.textContent = `${stats.general}%`;
-      }
-    } else {
-      // Estado vacío: placeholder honesto, sin 0% engañoso
-      aciertosEl.textContent = '—';
-      partidosEl.textContent = '0';
-      brierEl.textContent = '—';
-      confianzaEl.textContent = '—';
-      saludEl.textContent = '—';
-    }
+    const tieneDatos = !!(stats && stats.totalVerificados > 0);
+    const pctAciertos = tieneDatos ? stats.general : null;
+    const totalVerif = tieneDatos ? stats.totalVerificados : 0;
+    const brierTxt = (brier && typeof brier.brier === 'number') ? brier.brier.toFixed(2) : '—';
+    const salud = (brier && typeof brier.brier === 'number')
+      ? Math.max(0, Math.min(100, Math.round(100 - (brier.brier * 90))))
+      : (tieneDatos ? stats.general : null);
 
-    // Favoritos
-    const favoritosHome = document.getElementById('hero-favoritos-guardados');
-    if (favoritosHome) favoritosHome.textContent = leerFavoritos().length;
+    // Salud del motor
+    setTxt('kpi-salud', salud !== null ? `${salud}%` : '—');
+    setTxt('kpi-brier', tieneDatos || brierTxt !== '—' ? `Brier Score ${brierTxt}` : 'Brier Score —');
+    if (salud !== null) setWidth('kpi-salud-barra', `${salud}%`);
+    // Aciertos
+    setTxt('kpi-aciertos', pctAciertos !== null ? `${pctAciertos}%` : '—');
+    setTxt('kpi-verificados', totalVerif > 0 ? `${totalVerif} verificados` : 'Sin datos verificados');
+    if (pctAciertos !== null) setWidth('kpi-aciertos-barra', `${pctAciertos}%`);
+    // Predicciones hoy (placeholder honesto)
+    setTxt('kpi-hoy', '—');
+    setTxt('kpi-hoy-pie', '9 mercados por partido');
+
+    // Favoritos (IDs nuevos hero-* y antiguo kpi-favoritos)
+    let nFav = 0;
+    try { nFav = leerFavoritos().length; } catch (e) { nFav = 0; }
+    setTxt('hero-favoritos-guardados', String(nFav));
+    setTxt('kpi-favoritos', String(nFav));
   }
 
   function toggleFavorito(teamId, event) {
