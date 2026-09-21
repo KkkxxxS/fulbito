@@ -226,7 +226,7 @@
     if (!el) return;
     el.classList.toggle('expandido');
     const btn = el.nextElementSibling;
-    btn.textContent = el.classList.contains('expandido') ? 'Ver menos' : 'Ver más mercados';
+    if (btn) btn.textContent = el.classList.contains('expandido') ? 'Ver menos' : 'Ver más mercados';
   }
 
   function toggleCatalogo(partidoId) {

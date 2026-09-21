@@ -21,7 +21,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="dns-prefetch" href="https://fulbito-forh.onrender.com">
-    <link rel="stylesheet" href="style.css?v=3">
+    <link rel="stylesheet" href="style.css?v=4">
     <link rel="canonical" href="https://kkkxxxs.github.io/fulbito/">
 
     <style>
@@ -785,13 +785,16 @@
     document.body.classList.toggle('home-mode', vista === 'inicio');
 
     document.querySelectorAll('.vista').forEach(sec => sec.classList.remove('vista-activa'));
-    document.getElementById(`vista-${vista}`).classList.add('vista-activa');
+    const vistaNode = document.getElementById(`vista-${vista}`);
+    if (vistaNode) vistaNode.classList.add('vista-activa');
 
     document.querySelectorAll('.nav-tab').forEach(btn => btn.classList.toggle('activa', btn.dataset.vista === vista));
 
     const buscador = document.getElementById('input-busqueda');
-    buscador.style.display = (vista === 'mispredicciones') ? 'none' : '';
-    buscador.placeholder = vista === 'favoritos' ? 'Buscar en tus favoritos…' : (vista === 'analitica' || vista === 'historial') ? 'Buscar equipo o liga en el historial…' : 'Buscar equipo o liga…';
+    if (buscador) {
+      buscador.style.display = (vista === 'mispredicciones') ? 'none' : '';
+      buscador.placeholder = vista === 'favoritos' ? 'Buscar en tus favoritos…' : (vista === 'analitica' || vista === 'historial') ? 'Buscar equipo o liga en el historial…' : 'Buscar equipo o liga…';
+    }
 
     cerrarMenuMovil();
     if (actualizarHash) history.replaceState(null, '', `#${vista}`);
@@ -833,10 +836,12 @@
   }
 
   function toggleMenuMovil() {
-    document.getElementById('app-nav').classList.toggle('menu-abierto');
+    const nav = document.getElementById('app-nav');
+    if (nav) nav.classList.toggle('menu-abierto');
   }
   function cerrarMenuMovil() {
-    document.getElementById('app-nav').classList.remove('menu-abierto');
+    const nav = document.getElementById('app-nav');
+    if (nav) nav.classList.remove('menu-abierto');
   }
 
   // ============ BUSQUEDA ============
@@ -883,8 +888,10 @@
   function actualizarContadorFavoritos() {
     const n = leerFavoritos().length;
     const badge = document.getElementById('contador-favoritos');
-    badge.style.display = n > 0 ? 'inline-flex' : 'none';
-    badge.textContent = n;
+    if (badge) {
+      badge.style.display = n > 0 ? 'inline-flex' : 'none';
+      badge.textContent = n;
+    }
 
     const favoritosHome = document.getElementById('hero-favoritos-guardados');
     if (favoritosHome) favoritosHome.textContent = n;
@@ -981,8 +988,10 @@
       return !h || !h.verificado;
     });
     const badge = document.getElementById('contador-mispredicciones');
-    badge.style.display = pendientes.length > 0 ? 'inline-flex' : 'none';
-    badge.textContent = pendientes.length;
+    if (badge) {
+      badge.style.display = pendientes.length > 0 ? 'inline-flex' : 'none';
+      badge.textContent = pendientes.length;
+    }
   }
 
   function toggleMiPrediccion(partidoId, categoria, event) {
@@ -2429,7 +2438,7 @@
     if (!el) return;
     el.classList.toggle('expandido');
     const btn = el.nextElementSibling;
-    btn.textContent = el.classList.contains('expandido') ? 'Ver menos' : 'Ver más mercados';
+    if (btn) btn.textContent = el.classList.contains('expandido') ? 'Ver menos' : 'Ver más mercados';
   }
 
   function toggleCatalogo(partidoId) {

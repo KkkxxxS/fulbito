@@ -27,8 +27,10 @@
     document.querySelectorAll('.nav-tab').forEach(btn => btn.classList.toggle('activa', btn.dataset.vista === vistaReal));
 
     const buscador = document.getElementById('input-busqueda');
-    buscador.style.display = (vistaReal === 'mispredicciones') ? 'none' : '';
-    buscador.placeholder = vistaReal === 'favoritos' ? 'Buscar en tus favoritos…' : (vistaReal === 'analitica' || vistaReal === 'historial') ? 'Buscar equipo o liga en el historial…' : 'Buscar equipo o liga…';
+    if (buscador) {
+      buscador.style.display = (vistaReal === 'mispredicciones') ? 'none' : '';
+      buscador.placeholder = vistaReal === 'favoritos' ? 'Buscar en tus favoritos…' : (vistaReal === 'analitica' || vistaReal === 'historial') ? 'Buscar equipo o liga en el historial…' : 'Buscar equipo o liga…';
+    }
 
     cerrarMenuMovil();
     if (actualizarHash) history.replaceState(null, '', `#${vistaReal}`);
@@ -48,20 +50,23 @@
   }
 
   function toggleMenuMovil() {
-    document.getElementById('app-nav').classList.toggle('menu-abierto');
+    const nav = document.getElementById('app-nav');
+    if (nav) nav.classList.toggle('menu-abierto');
   }
   function cerrarMenuMovil() {
-    document.getElementById('app-nav').classList.remove('menu-abierto');
+    const nav = document.getElementById('app-nav');
+    if (nav) nav.classList.remove('menu-abierto');
   }
 
   // ============ CERRAR MENÚ AL HACER CLIC FUERA O SALIR DEL ÁREA ============
   function inicializarCierreMenu() {
     const nav = document.getElementById('app-nav');
     const hamburguesa = document.getElementById('boton-menu-movil');
+    if (!nav) return;
 
     // Cerrar menú al hacer clic fuera
     document.addEventListener('click', (e) => {
-      if (!nav.contains(e.target) && !hamburguesa.contains(e.target)) {
+      if (!nav.contains(e.target) && !(hamburguesa && hamburguesa.contains(e.target))) {
         cerrarMenuMovil();
       }
     });
@@ -73,7 +78,7 @@
 
     // Abrir menú al enfocar el buscador (ya está abierto)
     const buscador = document.getElementById('input-busqueda');
-    buscador.addEventListener('focus', () => {
+    if (buscador) buscador.addEventListener('focus', () => {
       if (vistaActual !== 'favoritos') {
         nav.classList.add('menu-abierto');
       }
@@ -124,8 +129,10 @@
   function actualizarContadorFavoritos() {
     const n = leerFavoritos().length;
     const badge = document.getElementById('contador-favoritos');
-    badge.style.display = n > 0 ? 'inline-flex' : 'none';
-    badge.textContent = n;
+    if (badge) {
+      badge.style.display = n > 0 ? 'inline-flex' : 'none';
+      badge.textContent = n;
+    }
   }
 
   function toggleFavorito(teamId, event) {
@@ -191,16 +198,20 @@
     const dashTusPicks = document.getElementById('dash-tus-picks');
     if (dashTusPicks) {
       dashTusPicks.textContent = miasPredicciones.length;
-      document.getElementById('dash-tus-picks-desc').textContent = miasPendientes > 0 
+      const dashTusPicksDesc = document.getElementById('dash-tus-picks-desc');
+      if (dashTusPicksDesc) dashTusPicksDesc.textContent = miasPendientes > 0 
         ? `${miasPendientes} sin verificar`
         : 'Todos verificados';
       
       if (miasVerificadas.length > 0) {
         const tuPrecision = Math.round((miasAciertos / miasVerificadas.length) * 100);
         const tuConfianza = Math.round(miasSumaProb / miasVerificadas.length);
-        document.getElementById('dash-tu-precision').textContent = tuPrecision + '%';
-        document.getElementById('dash-tu-precision-desc').textContent = `${miasAciertos}/${miasVerificadas.length} acertadas`;
-        document.getElementById('dash-tu-confianza').textContent = tuConfianza + '%';
+        const elPrecision = document.getElementById('dash-tu-precision');
+        if (elPrecision) elPrecision.textContent = tuPrecision + '%';
+        const elPrecisionDesc = document.getElementById('dash-tu-precision-desc');
+        if (elPrecisionDesc) elPrecisionDesc.textContent = `${miasAciertos}/${miasVerificadas.length} acertadas`;
+        const elConfianza = document.getElementById('dash-tu-confianza');
+        if (elConfianza) elConfianza.textContent = tuConfianza + '%';
       }
     }
   }
@@ -248,8 +259,10 @@
       return !h || !h.verificado;
     });
     const badge = document.getElementById('contador-mispredicciones');
-    badge.style.display = pendientes.length > 0 ? 'inline-flex' : 'none';
-    badge.textContent = pendientes.length;
+    if (badge) {
+      badge.style.display = pendientes.length > 0 ? 'inline-flex' : 'none';
+      badge.textContent = pendientes.length;
+    }
   }
 
   function toggleMiPrediccion(partidoId, categoria, event) {
