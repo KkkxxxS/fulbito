@@ -5578,6 +5578,7 @@ body.home-mode #vista-inicio .dash-eyebrow {
 }
 
 body.home-mode #vista-inicio .dash-header-saludo h1,
+body.home-mode #vista-inicio .dash-header-saludo h2,
 body.home-mode #vista-inicio #hero-saludo {
   margin: 0 0 8px !important;
   font-family: var(--font-body);
@@ -5592,7 +5593,8 @@ body.home-mode #vista-inicio #hero-saludo {
   max-width: 100%;
 }
 
-body.home-mode #vista-inicio .dash-header-saludo h1::after { display: none; }
+body.home-mode #vista-inicio .dash-header-saludo h1::after,
+body.home-mode #vista-inicio .dash-header-saludo h2::after { display: none; }
 
 body.home-mode #vista-inicio .dash-header-sub {
   margin: 5px 0 0;
@@ -6052,7 +6054,8 @@ body.home-mode #vista-inicio .dash-seccion { padding: 12px 0; margin: 0; }
 
   .dash-header-saludo { min-width: 0; }
 
-  body.home-mode #vista-inicio .dash-header-saludo h1 { font-size: 1.25rem; }
+  body.home-mode #vista-inicio .dash-header-saludo h1,
+  body.home-mode #vista-inicio .dash-header-saludo h2 { font-size: 1.25rem; }
 
   .dash-header-acciones { width: 100%; }
 
