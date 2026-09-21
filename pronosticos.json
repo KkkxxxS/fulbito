@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "generadoEn": "2026-09-18T02:34:06.672867+00:00",
+  "generadoEn": "2026-09-21T08:16:32.460402+00:00",
   "modelo": {
     "tipo": "Poisson + Dixon-Coles + ML",
     "rhoDixonColes": -0.04,
@@ -214,10 +214,30 @@
           "tablaInfo": {
             "fLocal": 0.947,
             "fVisita": 1.1
-          }
+          },
+          "perfilLigaGoles": 1.04,
+          "factores": {
+            "localia": 1.08,
+            "ligaBase": 1.0,
+            "ligaAjustado": 1.04,
+            "tablaLocal": 0.947,
+            "tablaVisita": 1.1,
+            "h2hLocal": 1.0,
+            "h2hVisita": 1.0,
+            "tendenciaLocal": 1.03,
+            "tendenciaVisita": 1.0,
+            "descansoLocal": 1.0,
+            "descansoVisita": 0.99,
+            "tablaDesviacionLocal": -0.0526,
+            "tablaDesviacionVisita": 0.2105
+          },
+          "tendenciaDireccionLocal": "subiendo",
+          "tendenciaDireccionVisita": "neutral",
+          "sinNadaEnJuego": false,
+          "pocaData": false
         }
       },
-      "generadoEn": "2026-09-18T02:34:06.672826+00:00"
+      "generadoEn": "2026-09-21T08:16:32.460385+00:00"
     }
   }
 }
