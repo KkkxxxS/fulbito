@@ -626,17 +626,19 @@ body:not(.home-mode)::before {
   z-index: 99999;
   background: linear-gradient(135deg, var(--green), var(--brand));
   color: var(--ink-on-accent);
-  font-weight: 700;
-  padding: 13px 22px;
+  font-family: var(--font-body);
+  font-weight: var(--fw-bold);
+  line-height: var(--lh-snug);
+  padding: 14px 24px;
   border-radius: 999px;
-  font-size: 0.95rem;
-  box-shadow: 0 10px 30px -4px rgba(100, 228, 169, 0.75), 0 4px 12px rgba(0, 0, 0, 0.4);
+  font-size: 1rem;
+  box-shadow: 0 12px 32px -6px rgba(100, 228, 169, 0.8), 0 6px 16px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.3);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   border: 1px solid rgba(255, 255, 255, 0.25);
-  animation: fabEntrada 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  animation: fabEntrada 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) forwards, fulbitoPulseGlow 3s ease-in-out 0.5s infinite;
   transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
 
@@ -1905,36 +1907,49 @@ main {
 
 .pestañas-fecha {
   display: flex;
-  gap: 2px;
-  margin-bottom: 28px;
-  background: var(--bg-raised);
-  padding: 3px;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--line);
+  gap: 8px;
+  margin-bottom: 20px;
+  background: rgba(16, 27, 42, 0.6);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  padding: 4px;
+  border-radius: 999px;
+  border: 1px solid var(--card-border);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 14px 30px -22px rgba(0, 0, 0, 0.8);
   width: fit-content;
   max-width: 100%;
   overflow-x: auto;
+  scrollbar-width: none;
 }
+.pestañas-fecha::-webkit-scrollbar { display: none; }
 
 .pestaña {
   appearance: none;
-  border: none;
+  border: 1px solid transparent;
   background: transparent;
   color: var(--text-muted);
   font-family: var(--font-body);
-  font-weight: 600;
-  font-size: 0.88rem;
+  font-weight: var(--fw-semibold);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-snug);
   padding: 9px 16px;
-  border-radius: var(--radius-xs);
+  border-radius: 999px;
   cursor: pointer;
   white-space: nowrap;
-  transition: background 0.18s var(--ease), color 0.18s var(--ease);
+  flex-shrink: 0;
+  transition: background 0.2s var(--ease), color 0.2s var(--ease), box-shadow 0.2s var(--ease), transform 0.2s var(--ease), border-color 0.2s var(--ease);
 }
-.pestaña:hover { color: var(--text); }
-.pestaña.activa { background: var(--card); color: var(--text); box-shadow: inset 0 0 0 1px var(--card-border); }
+.pestaña:hover { color: var(--text); background: rgba(255, 255, 255, 0.05); }
+.pestaña:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
+.pestaña.activa {
+  background: linear-gradient(135deg, var(--green), var(--brand));
+  color: var(--ink-on-accent);
+  font-weight: var(--fw-bold);
+  border-color: rgba(255, 255, 255, 0.25);
+  box-shadow: 0 4px 16px -6px rgba(100, 228, 169, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
 
-.pestaña-finalizados { border-left: 1px solid var(--line); margin-left: 3px; padding-left: 19px; }
-@media (max-width: 600px) { .pestaña-finalizados { border-left: none; margin-left: 0; padding-left: 16px; } }
+.pestaña-finalizados { margin-left: 0; padding-left: 16px; }
 
 #contenedor-partidos, #contenedor-favoritos { display: flex; flex-direction: column; gap: var(--sp-5); }
 
@@ -2598,11 +2613,12 @@ main {
   visibility: visible !important;
   opacity: 1 !important;
   gap: 8px;
-  margin-bottom: 14px;
+  margin-bottom: 12px;
   overflow-x: auto;
   padding: 4px 2px 8px 2px;
   scrollbar-width: thin;
   scrollbar-color: rgba(100, 228, 169, 0.3) rgba(16, 27, 42, 0.4);
+  -webkit-overflow-scrolling: touch;
 }
 .filtro-ligas-pills::-webkit-scrollbar {
   height: 5px;
@@ -2617,15 +2633,19 @@ main {
 }
 .filtro-liga-btn {
   appearance: none;
-  background: rgba(22, 34, 50, 0.85);
+  background: rgba(22, 34, 50, 0.65);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
   color: #c5d3e8;
   border: 1px solid rgba(148, 163, 184, 0.16);
-  padding: 8px 16px;
+  padding: 8px 14px;
   border-radius: 999px;
   cursor: pointer;
   font-size: 0.82rem;
-  font-weight: 600;
+  line-height: var(--lh-snug);
+  font-weight: var(--fw-semibold);
   white-space: nowrap;
+  flex-shrink: 0;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 2px 8px -4px rgba(0, 0, 0, 0.3);
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   display: inline-flex;
@@ -2634,25 +2654,35 @@ main {
 }
 
 .filtro-liga-btn:hover {
-  background: rgba(30, 46, 68, 0.95);
+  background: rgba(30, 46, 68, 0.9);
   border-color: rgba(100, 228, 169, 0.35);
   color: #ffffff;
-  transform: translateY(-1px);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 4px 12px -6px rgba(100, 228, 169, 0.2);
+  transform: translateY(-2px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 8px 20px -10px rgba(100, 228, 169, 0.35);
 }
+.filtro-liga-btn:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
 
 .filtro-liga-btn.activa {
   background: linear-gradient(135deg, var(--green), var(--brand));
-  color: #07120d;
-  border-color: transparent;
-  font-weight: 700;
+  color: var(--ink-on-accent);
+  border-color: rgba(255, 255, 255, 0.25);
+  font-weight: var(--fw-bold);
   box-shadow: 0 4px 16px -6px rgba(100, 228, 169, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
+/* "Todas las ligas" diferenciada visualmente del resto */
+.filtro-liga-btn[data-liga="TODAS"] {
+  font-weight: var(--fw-bold);
+  border-color: rgba(100, 228, 169, 0.4);
+}
+.filtro-liga-btn[data-liga="TODAS"]:not(.activa) {
+  color: var(--brand-2);
+}
+
 .filtro-liga-btn .liga-escudo {
-  width: 14px;
-  height: 14px;
-  border-radius: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
   background: rgba(255, 255, 255, 0.15);
   display: inline-block;
   flex-shrink: 0;
@@ -2877,7 +2907,25 @@ input {
 
   .pestañas-fecha {
     width: 100%;
+    max-width: 100%;
     overflow-x: auto;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    gap: 8px;
+    scrollbar-width: none;
+  }
+  .pestañas-fecha::-webkit-scrollbar { display: none; }
+
+  /* Barra unificada: buscador integrado debajo de los chips, sin romper estructura */
+  .barra-filtros-unificada {
+    background: linear-gradient(180deg, rgba(18, 29, 39, 0.85), rgba(11, 16, 22, 0.9));
+    -webkit-backdrop-filter: blur(14px);
+    backdrop-filter: blur(14px);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-lg);
+    padding: 12px;
+    margin-bottom: 16px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 16px 30px -24px rgba(0, 0, 0, 0.8);
   }
 
   .lista-mercados {
@@ -2907,6 +2955,45 @@ input {
 }
 .boton-pick:hover { border-color: rgba(255,255,255,0.3); }
 .boton-pick.activa { background: var(--gold); border-color: var(--gold); }
+
+/* ============ BARRA DE FILTROS UNIFICADA (Pronósticos: chips + buscador) ============ */
+/* Sin IDs nuevos: solo clases existentes, no rompe cambiarVista/cambiarLiga/onBuscarIntegrado */
+.barra-filtros-unificada {
+  background: linear-gradient(180deg, rgba(18, 29, 39, 0.85), rgba(11, 16, 22, 0.9));
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-lg);
+  padding: 12px;
+  margin-bottom: 16px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 16px 30px -24px rgba(0, 0, 0, 0.8);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.barra-filtros-unificada .filtro-ligas-pills { margin-bottom: 0 !important; }
+
+.input-buscar-integrado {
+  width: 100%;
+  background: rgba(7, 13, 20, 0.6) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364e4a9' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m21 21-4.3-4.3'/%3E%3C/svg%3E") no-repeat 12px center / 16px 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-base);
+  padding: 10px 14px 10px 38px;
+  transition: border-color 0.2s var(--ease), box-shadow 0.2s var(--ease), background 0.2s var(--ease);
+}
+.input-buscar-integrado::placeholder { color: var(--text-muted); opacity: 0.85; }
+.input-buscar-integrado:hover { border-color: rgba(100, 228, 169, 0.35); }
+.input-buscar-integrado:focus {
+  outline: none;
+  border-color: var(--green);
+  background-color: rgba(7, 13, 20, 0.85);
+  box-shadow: 0 0 0 3px rgba(100, 228, 169, 0.18), 0 0 20px -6px rgba(100, 228, 169, 0.35);
+}
+.input-buscar-integrado::-webkit-search-cancel-button { cursor: pointer; }
 
 /* ===== Selector de fecha personalizada ===== */
 .selector-fecha-personalizada { display: flex; gap: 8px; margin-bottom: 22px; align-items: center; }
@@ -3347,11 +3434,28 @@ input {
 .calidad-datos.limitada { color: var(--red); border-color: rgba(234,101,119,0.25); }
 
 .aviso-servidor-carga {
-  min-height: 150px;
+  min-height: 170px;
+  border-radius: 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 28px 24px;
+  background:
+    linear-gradient(180deg, rgba(18, 29, 39, 0.85), rgba(11, 16, 22, 0.9)) padding-box,
+    linear-gradient(135deg, rgba(100, 228, 169, 0.35), rgba(148, 163, 184, 0.1)) border-box;
+  border: 1px solid transparent;
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
 }
 
 .aviso-servidor-carga .estado-spinner {
-  margin: 0 auto 4px;
+  width: 28px;
+  height: 28px;
+  margin: 0 auto 8px;
+  border-top-color: var(--green);
+  box-shadow: 0 0 16px rgba(100, 228, 169, 0.5);
 }
 
 @media (max-width: 600px) {
