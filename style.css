@@ -3392,7 +3392,8 @@ input {
 
 @keyframes girar { to { transform: rotate(360deg); } }
 
-.boton-reiniciar {
+.boton-reiniciar,
+.boton-reintentar {
   appearance: none;
   margin-top: 4px;
   padding: 9px 15px;
@@ -3406,7 +3407,8 @@ input {
   font-weight: 700;
 }
 
-.boton-reiniciar:hover { background: #5ddcaa; }
+.boton-reiniciar:hover,
+.boton-reintentar:hover { background: #5ddcaa; }
 
 .calidad-datos {
   display: inline-flex;
@@ -3804,19 +3806,22 @@ input {
 .dashboard-titulo h2 {
   margin: 0 0 8px;
   font-family: var(--font-display);
-  font-size: clamp(2rem, 4vw, 2.4rem);
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-bold);
+  line-height: var(--lh-tight);
   letter-spacing: -0.06em;
   color: var(--text);
 }
 
 .dashboard-titulo p {
   color: var(--text-muted);
-  font-size: 0.95rem;
+  font-size: var(--fs-sm);
+  line-height: var(--lh-base);
 }
 
 .dashboard-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
   gap: 14px;
   margin-bottom: 32px;
 }
@@ -3841,6 +3846,7 @@ input {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  min-width: 0;
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), 0 18px 24px -26px rgba(0,0,0,0.9);
   transition: all 0.18s var(--ease);
 }
@@ -3853,9 +3859,10 @@ input {
 
 .dashboard-label {
   color: var(--text-muted);
-  font-size: 0.77rem;
-  font-weight: 600;
-  letter-spacing: 0.02em;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-wider);
+  line-height: var(--lh-snug);
   text-transform: uppercase;
   display: flex;
   align-items: center;
@@ -3886,10 +3893,16 @@ input {
 .dashboard-valor {
   color: var(--text);
   font-family: var(--font-mono);
-  font-weight: 700;
-  font-size: 1.8rem;
-  line-height: 1;
+  font-weight: var(--fw-bold);
+  font-size: var(--fs-2xl);
+  line-height: var(--lh-tight);
   letter-spacing: -0.04em;
+}
+
+.dashboard-card small {
+  color: var(--text-muted);
+  font-size: var(--fs-xs);
+  line-height: var(--lh-snug);
 }
 
 /* ============ MOTOR HEALTH VISUALIZATION ============ */
@@ -3909,19 +3922,22 @@ input {
 .motor-health-header h2 {
   margin: 0 0 8px;
   font-family: var(--font-display);
-  font-size: clamp(2rem, 4vw, 2.4rem);
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-bold);
+  line-height: var(--lh-tight);
   letter-spacing: -0.06em;
   color: var(--text);
 }
 
 .motor-health-header p {
   color: var(--text-muted);
-  font-size: 0.95rem;
+  font-size: var(--fs-sm);
+  line-height: var(--lh-base);
 }
 
 .motor-health-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
   gap: 18px;
   margin-bottom: 18px;
 }
@@ -3937,6 +3953,8 @@ input {
   border: 1px solid rgba(173, 186, 202, 0.14);
   border-radius: 22px;
   padding: 28px;
+  min-width: 0;
+  overflow-wrap: anywhere;
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), 0 18px 30px -26px rgba(0,0,0,0.9);
 }
 
@@ -3945,28 +3963,41 @@ input {
   flex-direction: column;
   align-items: center;
   gap: 16px;
+  min-width: 0;
+  width: 100%;
 }
 
 .health-label {
   color: var(--text-muted);
-  font-size: 0.82rem;
-  font-weight: 600;
-  letter-spacing: 0.02em;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-wider);
+  line-height: var(--lh-snug);
   text-transform: uppercase;
   display: flex;
   align-items: center;
+  justify-content: center;
+  text-align: center;
   gap: 6px;
+  flex-wrap: wrap;
 }
 
 .health-grande {
   position: relative;
   width: 150px;
+  max-width: 100%;
   height: 150px;
+  margin-inline: auto;
+  flex-shrink: 0;
 }
 
 .health-gauge {
+  width: 100%;
+  height: auto;
+  max-width: 150px;
+  display: block;
+  margin-inline: auto;
   filter: drop-shadow(0 10px 22px rgba(0,0,0,0.5)) drop-shadow(0 0 14px rgba(123,225,200,0.18));
-  transform: rotate(-0deg);
 }
 
 .health-stats {
@@ -3975,6 +4006,11 @@ input {
   gap: 8px;
   width: 100%;
   margin-top: 4px;
+}
+
+@media (max-width: 560px) {
+  .health-stats { grid-template-columns: 1fr; }
+  .health-card { padding: 20px; }
 }
 
 .health-stat {
@@ -4011,20 +4047,21 @@ input {
 
 .health-sub {
   color: var(--text-dim);
-  font-size: 0.78rem;
-  line-height: 1.5;
+  font-size: var(--fs-xs);
+  line-height: var(--lh-base);
   margin: 8px 0 0;
   max-width: 40ch;
 }
 
 .health-mercado-item {
   display: grid;
-  grid-template-columns: 1fr auto auto;
+  grid-template-columns: minmax(0, 1fr) auto auto;
   align-items: center;
   gap: 12px;
   padding: 10px 12px;
   border: 1px solid transparent;
   border-radius: 12px;
+  min-width: 0;
   transition: border-color 0.18s var(--ease), background 0.18s var(--ease);
 }
 .health-mercado-item:hover {
@@ -4037,10 +4074,12 @@ input {
   flex-direction: column;
   align-items: flex-start;
   gap: 3px;
-  font-size: 0.84rem;
+  font-size: var(--fs-sm);
+  line-height: var(--lh-snug);
   color: var(--text);
-  font-weight: 600;
-  min-width: 100px;
+  font-weight: var(--fw-semibold);
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .health-mercado-nivel {
@@ -4090,8 +4129,9 @@ input {
 
 .health-mercado-valor {
   font-family: var(--font-mono);
-  font-weight: 700;
-  font-size: 1rem;
+  font-weight: var(--fw-bold);
+  font-size: var(--fs-base);
+  line-height: var(--lh-snug);
   color: var(--text);
   min-width: 48px;
   text-align: right;
@@ -4100,7 +4140,8 @@ input {
 .health-nota {
   text-align: center;
   color: var(--text-dim);
-  font-size: 0.76rem;
+  font-size: var(--fs-xs);
+  line-height: var(--lh-base);
   margin-top: 12px;
 }
 

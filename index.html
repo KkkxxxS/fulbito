@@ -21,7 +21,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="dns-prefetch" href="https://fulbito-forh.onrender.com">
-    <link rel="stylesheet" href="style.css?v=5">
+    <link rel="stylesheet" href="style.css?v=6">
     <link rel="canonical" href="https://kkkxxxs.github.io/fulbito/">
 
     <style>
@@ -347,8 +347,8 @@
         </div>
     </details>
 
-    <!-- SALUD DEL MOTOR AVANZADA (plegable) -->
-    <details class="dash-plegable" id="plegable-salud">
+    <!-- SALUD DEL MOTOR AVANZADA (plegable, abierta por defecto: su contenido existe aunque no haya verificados) -->
+    <details class="dash-plegable" id="plegable-salud" open>
         <summary>
             <span class="dash-plegable-titulo">Salud del motor Fulbito</span>
             <span class="dash-plegable-hint">Calibración verificable · Brier Score</span>
@@ -365,23 +365,16 @@
                 <div class="health-metric">
                     <span class="health-label">Salud actual <span class="tooltip-icono" title="Porcentaje de predicciones bien calibradas">?</span></span>
                     <div class="health-grande">
-                        <svg width="150" height="150" viewBox="0 0 120 120" class="health-gauge" style="--valor: 81;">
+                        <svg width="150" height="150" viewBox="0 0 120 120" class="health-gauge" role="img" aria-label="Salud del motor">
+                            <defs>
+                                <linearGradient id="grad-health-unico" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" style="stop-color:#64e4a9;stop-opacity:1" />
+                                    <stop offset="100%" style="stop-color:#7be1c8;stop-opacity:1" />
+                                </linearGradient>
+                            </defs>
                             <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="7"/>
                             <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="7" stroke-dasharray="4 6"/>
-                            <circle cx="60" cy="60" r="52" fill="none" stroke="url(#grad-health)" stroke-width="7" stroke-linecap="round" stroke-dasharray="calc(52 * 3.14 * 1.62 / 100)" stroke-dashoffset="0" style="transition: stroke-dasharray 0.5s;"/>
-                            <defs>
-                                <linearGradient id="grad-health" x1="0%" y1="0%" x2="100%" y2="100%">
-                                    <stop offset="0%" style="stop-color:#64e4a9;stop-opacity:1" />
-                                    <stop offset="100%" style="stop-color:#7be1c8;stop-opacity:1" />
-                                </linearGradient>
-                            </defs>
-                            <circle id="salud-gauge-arco" cx="60" cy="60" r="52" fill="none" stroke="url(#grad-health)" stroke-width="7" stroke-linecap="round" stroke-dasharray="0 999" stroke-dashoffset="0" style="transition: stroke-dasharray 0.6s;"/>
-                            <defs>
-                                <linearGradient id="grad-health" x1="0%" y1="0%" x2="100%" y2="100%">
-                                    <stop offset="0%" style="stop-color:#64e4a9;stop-opacity:1" />
-                                    <stop offset="100%" style="stop-color:#7be1c8;stop-opacity:1" />
-                                </linearGradient>
-                            </defs>
+                            <circle id="salud-gauge-arco" cx="60" cy="60" r="52" fill="none" stroke="url(#grad-health-unico)" stroke-width="7" stroke-linecap="round" pathLength="100" stroke-dasharray="0 100" stroke-dashoffset="25" transform="rotate(90 60 60)" style="transition: stroke-dasharray 0.6s;"/>
                             <text id="salud-gauge-texto" x="60" y="58" text-anchor="middle" font-family="var(--font-mono)" font-weight="700" font-size="30" fill="var(--text)">—</text>
                             <text id="salud-gauge-estado" x="60" y="74" text-anchor="middle" font-family="var(--font-mono)" font-weight="600" font-size="8.5" fill="#70839a" letter-spacing="1">SIN DATOS</text>
                         </svg>
@@ -410,7 +403,7 @@
     <section class="dash-info">
         <details class="dash-info-item">
             <summary title="Estadísticas de ligas top con actualización automática">
-                <span class="dash-info-icono">📡</span>
+                <span class="dash-info-icono"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.9 19.1a10 10 0 0 1 0-14.2M7.8 16.2a6 6 0 0 1 0-8.4M16.2 7.8a6 6 0 0 1 0 8.4M19.1 4.9a10 10 0 0 1 0 14.2"/><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/></svg></span>
                 <strong>Datos verificados</strong>
                 <span class="dash-info-hint">Cara a cara · tablas · xG</span>
             </summary>
@@ -419,7 +412,7 @@
 
         <details class="dash-info-item">
             <summary title="Modelo Poisson + Dixon-Coles con corrección de marcadores bajos">
-                <span class="dash-info-icono">🧮</span>
+                <span class="dash-info-icono"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h4"/></svg></span>
                 <strong>Poisson + Dixon-Coles</strong>
                 <span class="dash-info-hint">19 mercados · recencia 70/25/5</span>
             </summary>
@@ -428,7 +421,7 @@
 
         <details class="dash-info-item">
             <summary title="Cada predicción se contrasta contra el resultado real">
-                <span class="dash-info-icono">⚡</span>
+                <span class="dash-info-icono"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2 4 14h6l-1 8 9-12h-6z"/></svg></span>
                 <strong>Auto-calibración</strong>
                 <span class="dash-info-hint">Brier Score · mejora continua</span>
             </summary>
@@ -437,7 +430,7 @@
 
         <details class="dash-info-item">
             <summary title="Herramienta de análisis, no oráculo">
-                <span class="dash-info-icono">🛡️</span>
+                <span class="dash-info-icono"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2 4 6v6c0 5 3.4 8.4 8 10 4.6-1.6 8-5 8-10V6z"/><path d="m9 12 2 2 4-4"/></svg></span>
                 <strong>Sin promesas falsas</strong>
                 <span class="dash-info-hint">Solo +18 · riesgo explícito</span>
             </summary>
@@ -480,14 +473,9 @@
     </div>
 
     <div id="bloque-combinadas"></div>
-    <div style="margin: 20px 0; text-align: center;">
-        <button class="landing-primary" onclick="abrirModalArmarCombinada()" style="background: linear-gradient(135deg, var(--green), var(--brand)); color: #07120d; font-weight: 700; padding: 12px 24px; border-radius: var(--radius-lg); font-size: 1rem; box-shadow: 0 4px 16px -6px rgba(100, 228, 169, 0.65); cursor: pointer; display: inline-flex; align-items: center; gap: 8px;">
-            <span>⚽ Armar Combinada Manual</span>
-        </button>
-    </div>
-    <!-- FAB FLOTANTE ARMAR COMBINADA MANUAL -->
+    <!-- FAB FLOTANTE ARMAR COMBINADA MANUAL (único acceso; el botón centrado duplicado se eliminó) -->
     <button id="btn-fab-combinada" class="btn-fab-combinada" onclick="abrirModalArmarCombinada()" style="display:none;" aria-label="Armar Combinada Manual">
-        <span style="font-size:1.1rem;">⚽</span>
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 7l3.5 2.5-1.3 4h-4.4l-1.3-4z"/><path d="M12 2v5M5.5 6.5l4 2M18.5 6.5l-4 2M4 16l4.8-2.5M20 16l-4.8-2.5M8.5 21.5L9.8 17M15.5 21.5l-1.3-4.5"/></svg>
         <span>Armar Combinada</span>
     </button>
 
@@ -1165,7 +1153,9 @@
 
       const partidos = (datos.matches || []).filter(p => p.status === 'SCHEDULED' || p.status === 'TIMED');
       cache[claveCache] = partidos;
-      guardarCachePersistente(claveCache, partidos);
+      // No persistir listas vacías: un [] cacheado haría que "Mañana" parezca
+      // permanentemente vacío aunque el backend ya tenga partidos.
+      if (partidos.length > 0) guardarCachePersistente(claveCache, partidos);
       return partidos;
     } catch (e) {
       console.warn("Error trayendo partidos de la API, usando respaldo local:", e);
@@ -1194,7 +1184,7 @@
 
       const partidos = (datos.matches || []).filter(p => p.status === 'FINISHED');
       cache[claveCache] = partidos;
-      guardarCachePersistente(claveCache, partidos);
+      if (partidos.length > 0) guardarCachePersistente(claveCache, partidos);
       return partidos;
     } catch (e) {
       console.error("Error trayendo partidos finalizados", e);
@@ -3511,6 +3501,9 @@
  }
 
   // ============ FILTROS RÁPIDOS DE PICKS ============
+  // Nota: 'manana'/'semana'/'otra' usan el mismo pipeline de fetch (obtenerPartidos)
+  // que 'hoy'; un estado vacío ahí es falta de datos del backend para ese rango,
+  // no un bug del filtro local (ver renderizarPartidosFiltrados).
   let filtroRapidoActual = 'todos';
 
   function setFiltroRapido(tipo, event) {
@@ -3549,12 +3542,18 @@
     });
 
     if (lista.length === 0) {
+      const esManana = (typeof ultimaFechaCargada !== 'undefined' && ultimaFechaCargada === 'manana');
       const mensaje = terminoBusqueda
         ? `No encontramos partidos que coincidan con "${terminoBusqueda}".`
         : filtroRapidoActual === 'favoritos'
         ? 'No tienes partidos de equipos favoritos programados para esta fecha.'
+        : esManana
+        ? 'No hay partidos programados para mañana en las ligas cubiertas. Probá con "Esta semana".'
         : 'No hay partidos para mostrar con este filtro.';
-      contenedor.innerHTML = `<p style="text-align:center; color:#8fa896;">${mensaje}</p>`;
+      const accionManana = (!terminoBusqueda && esManana && filtroRapidoActual !== 'favoritos')
+        ? `<div style="margin-top:12px;"><button class="boton-reintentar" onclick="document.querySelectorAll('.pestaña')[2]?.click()">Ver Esta semana</button></div>`
+        : '';
+      contenedor.innerHTML = `<div class="estado-vacio" style="text-align:center; color:#8fa896;"><p style="margin:0;">${mensaje}</p>${accionManana}</div>`;
       requestAnimationFrame(() => contenedor.classList.add('visible'));
       document.getElementById('bloque-combinadas').innerHTML = '';
       return;
@@ -3710,7 +3709,8 @@
     const avisoDespertar = setTimeout(() => {
       if (contenedor.querySelector('.skeleton-tarjeta')) {
         contenedor.innerHTML = `
-          <div class="aviso-servidor">
+          <div class="aviso-servidor aviso-servidor-carga">
+            <span class="estado-spinner" aria-hidden="true"></span>
             <p><strong>Armando la jugada...</strong></p>
             <p>El servidor gratuito estaba en el banco y ya está entrando a la cancha. Un momento más.</p>
           </div>
