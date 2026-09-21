@@ -206,6 +206,17 @@ class ModeloEstadistico:
         desviacion = ratio - 1
         return 1 + max(-limite, min(limite, desviacion))
     
+    def _desviacionTabla(self, tabla, team_id):
+        """Telemetría: desviación cruda de la tabla sin el límite (para recalibrar limiteTabla)."""
+        info = (tabla or {}).get('mapa', {}).get(team_id)
+        promedio = (tabla or {}).get('promedioLiga')
+        if not info or not promedio:
+            return None
+        try:
+            return round(info['puntosPorPartido'] / promedio - 1, 4)
+        except Exception:
+            return None
+    
     def fuerzaAtaqueDefensa(self, tabla, team_id, es_local=True):
         """Fuerza de ataque y defensa relativa a la liga, separada por localía"""
         contexto = tabla.get('contextoLocal') if es_local else tabla.get('contextoVisita')
@@ -919,7 +930,33 @@ class ModeloEstadistico:
                 'tablaInfo': {
                     'fLocal': round(f_tabla_local * 1000) / 1000,
                     'fVisita': round(f_tabla_visita * 1000) / 1000
-                }
+                },
+                # --- Telemetría de recalibración (ADITIVA: no altera cálculos) ---
+                # Recomputa los factores multiplicativos con las mismas funciones
+                # puras (factorH2H/factorTendencia/factorDescanso) para que el
+                # backtesting del recalibrador sea exacto. Ver recalibracion.py.
+                'perfilLigaGoles': perfil_liga_actual.get('goles'),
+                'factores': {
+                    'localia': factor_localia_usado,
+                    'ligaBase': factor_liga_usado,
+                    'ligaAjustado': factor_liga_ajustado,
+                    'tablaLocal': round(f_tabla_local * 1000) / 1000,
+                    'tablaVisita': round(f_tabla_visita * 1000) / 1000,
+                    'h2hLocal': self.factorH2H(h2h, True),
+                    'h2hVisita': self.factorH2H(h2h, False),
+                    'tendenciaLocal': self.factorTendencia(
+                        stats_local['tendencia']['direccion'], goles_recientes_local, prom_goles_liga),
+                    'tendenciaVisita': self.factorTendencia(
+                        stats_visita['tendencia']['direccion'], goles_recientes_visita, prom_goles_liga),
+                    'descansoLocal': self.factorDescanso(stats_local['diasDescansoUltimoPartido']),
+                    'descansoVisita': self.factorDescanso(stats_visita['diasDescansoUltimoPartido']),
+                    'tablaDesviacionLocal': self._desviacionTabla(tabla, id_local),
+                    'tablaDesviacionVisita': self._desviacionTabla(tabla, id_visita)
+                },
+                'tendenciaDireccionLocal': stats_local['tendencia'].get('direccion'),
+                'tendenciaDireccionVisita': stats_visita['tendencia'].get('direccion'),
+                'sinNadaEnJuego': partido_sin_nada_en_juego,
+                'pocaData': partidos_min < self.config.PARTIDOS_MINIMOS_CONFIABLES
             }
         }
         
@@ -1047,17 +1084,78 @@ class ModeloAprendizajeAutomatico:
 
 # ==================== GENERADOR DE PRONOSTICOS ====================
 
+# ==================== TELEMETRÍA PARA RECALIBRACIÓN ====================
+
+def registrar_telemetria(salida, uso_datos_ejemplo, ruta_archivo='pronosticos_historicos.jsonl'):
+    """Append-only del histórico oficial de pronósticos (diseño: telemetría, fase 2).
+
+    Por cada corrida agrega UNA línea JSON con los insumos por partido (lambdas,
+    factores multiplicativos y probabilidades finales post-ML). Es la fuente de
+    verdad que consume recalibracion.py para el backtesting y el cruce
+    anti-manipulación. NO altera el contenido de pronosticos.json.
+    """
+    try:
+        registro_corrida = {
+            'corridaId': salida.get('generadoEn'),
+            'generadoEn': salida.get('generadoEn'),
+            'datosDeEjemplo': bool(uso_datos_ejemplo),
+            'modelo': salida.get('modelo', {}),
+            'pronosticos': {}
+        }
+        for pid, data in (salida.get('pronosticos') or {}).items():
+            partido = data.get('partido', {})
+            pron = data.get('pronosticos', {})
+            registro_corrida['pronosticos'][pid] = {
+                'partido': {
+                    'id': partido.get('id'),
+                    'homeTeam': {'id': (partido.get('homeTeam') or {}).get('id'),
+                                 'name': (partido.get('homeTeam') or {}).get('name')},
+                    'awayTeam': {'id': (partido.get('awayTeam') or {}).get('id'),
+                                 'name': (partido.get('awayTeam') or {}).get('name')},
+                    'competition': partido.get('competition'),
+                    'utcDate': partido.get('utcDate'),
+                    'status': partido.get('status')
+                },
+                'generadoEn': data.get('generadoEn'),
+                'datosDeEjemplo': bool(uso_datos_ejemplo),
+                'sinNadaEnJuego': pron.get('sinNadaEnJuego'),
+                'pocaData': pron.get('pocaData'),
+                'parametrosModelo': pron.get('parametrosModelo', {}),
+                'seleccionados': [
+                    {'categoria': m.get('categoria'),
+                     'seleccion': m.get('seleccion'),
+                     'probabilidad': m.get('probabilidad'),
+                     'parametros': m.get('parametros')}
+                    for m in (pron.get('seleccionados') or [])
+                ],
+                'probMarcador': pron.get('probMarcador')
+            }
+        with open(ruta_archivo, 'a', encoding='utf-8') as f:
+            f.write(json.dumps(registro_corrida, ensure_ascii=False, separators=(',', ':')) + '\n')
+        print(f"Telemetría registrada en {ruta_archivo} "
+              f"({len(registro_corrida['pronosticos'])} partidos, datosDeEjemplo={bool(uso_datos_ejemplo)})")
+        return True
+    except Exception as e:
+        # La telemetría NUNCA debe romper la generación de pronósticos.
+        print(f"ADVERTENCIA: no se pudo registrar la telemetría de recalibración: {e}")
+        return False
+
+
 class GeneradorPronosticos:
     def __init__(self):
         self.config = Config()
         self.modelo_estadistico = ModeloEstadistico(self.config)
         self.modelo_ml = ModeloAprendizajeAutomatico()
         self.pronosticos = {}
+        # Telemetría de recalibración: True cuando la generación usa datos de
+        # ejemplo (integración con el backend todavía no conectada).
+        self.usoDatosDeEjemplo = True
     
     def cargarDatosDesdeBackend(self, backend_url: str):
         """Carga datos desde el backend (simulado para ahora)"""
         # En implementación real, esto haría llamadas al backend
         # Para ahora, usamos datos de ejemplo
+        self.usoDatosDeEjemplo = True
         return self._datosEjemplo()
     
     def _datosEjemplo(self):
@@ -1220,6 +1318,10 @@ class GeneradorPronosticos:
             json.dump(salida, f, indent=2, ensure_ascii=False)
         
         print(f"Pronósticos guardados en {ruta_archivo}")
+        
+        # Telemetría para el sistema de recalibración (recalibracion.py).
+        # Es append-only y nunca rompe la generación si falla.
+        registrar_telemetria(salida, self.usoDatosDeEjemplo)
         return salida
 
 # ==================== FUNCIÓN PRINCIPAL ====================
