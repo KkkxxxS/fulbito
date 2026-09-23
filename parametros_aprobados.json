@@ -1,0 +1,28 @@
+{
+  "estado": "aprobada",
+  "aprobadoEn": "2026-09-21",
+  "overrides": {
+    "calibracion": {
+      "factorLocalia": 1.04,
+      "rhoDixonColes": -0.04,
+      "limiteTabla": 0.1,
+      "porLiga": {
+        "ARG": 1.04,
+        "URU": 0.96
+      },
+      "porCategoria": {
+        "resultado": 1.05
+      }
+    },
+    "multiplicadoresAjuste": {
+      "ewma": 0.3,
+      "h2h": 1.0
+    },
+    "platt": {
+      "resultado": {
+        "a": -0.15,
+        "b": 0.95
+      }
+    }
+  }
+}
