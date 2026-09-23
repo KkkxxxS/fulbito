@@ -60,6 +60,13 @@ except Exception as e:  # pragma: no cover
     PRONOSTICOS_IMPORT_OK = False
     _ERROR_IMPORT = e
 
+    def _motor_no_disponible(*args, **kwargs):
+        raise RuntimeError(f"pronosticos.py no está disponible: {_ERROR_IMPORT}")
+
+    Config = None
+    matrizMarcadores = _motor_no_disponible
+    verificarMercado = _motor_no_disponible
+
 # ==================== CONFIGURACIÓN DEL SISTEMA ====================
 
 BACKEND_URL = "https://fulbito-forh.onrender.com"
@@ -302,7 +309,8 @@ def indexar_historico(registros_historico):
             if genero > fecha:
                 continue  # generación posterior al kickoff no es la fuente del pick
             actual = indice.get(pid)
-            if actual is None or parsear_fecha(actual.get("generadoEn")) < genero:
+            genero_actual = parsear_fecha((actual or {}).get("generadoEn"))
+            if genero_actual is None or genero_actual < genero:
                 indice[pid] = data
     stats = {"partidos": len(indice), "lineasCorruptas": n_lineas_corruptas}
     return indice, stats
@@ -903,6 +911,8 @@ def proponer_peso(parametro, alcance, muestras_sub, valores, cambio_base):
     cambio_final["valorPropuesto"] = final
     b_train_fin = brier_backtest(muestras_sub, cambio_final, valores, idx_train)
     b_val_fin = brier_backtest(muestras_sub, cambio_final, valores, idx_val)
+    if b_train_fin is None or b_val_fin is None:
+        return None
     mejora_holdout_final = b_val_act - b_val_fin
     if mejora_holdout_final < MEJORA_MINIMA_BRIER:
         return None  # el shrinkage neutralizó la mejora: no se propone
