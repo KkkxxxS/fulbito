@@ -1340,7 +1340,9 @@ def modo_propuesta(args, rutas):
         print(f"  SIN PROPUESTA: solo {delta} verificaciones nuevas desde la última "
               f"propuesta (mínimo: {VERIFICACIONES_NUEVAS_MIN}).")
         registrar_bitacora(rutas["bitacora"], corrida(
-            "propuesta", "sin_verificaciones_nuevas", {"partidosVerificados": n, "delta": delta}))
+            "propuesta", "ABORTADO",
+            {"motivo": "Insuficientes verificaciones nuevas (<10)",
+             "partidosVerificados": n, "delta": delta}))
         return 0
 
     valores = valores_base(cargar_overrides(rutas["aprobados"]))

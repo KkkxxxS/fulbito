@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "generadoEn": "2026-09-18T02:34:06.672867+00:00",
+  "generadoEn": "2026-09-23T02:18:41.277381+00:00",
   "modelo": {
     "tipo": "Poisson + Dixon-Coles + ML",
     "rhoDixonColes": -0.04,
@@ -29,26 +29,25 @@
       "pronosticos": {
         "seleccionados": [
           {
-            "categoria": "handicap",
+            "categoria": "resultado",
             "parametros": {
-              "lado": "visita",
-              "valor": 2
+              "lado": "local"
             },
-            "seleccion": "Liverpool -1 (gana por 2+)",
-            "probabilidad": 92,
-            "sinApuesta": false,
+            "seleccion": "Gana Arsenal",
+            "probabilidad": 47,
+            "sinApuesta": true,
             "confianza": "Media",
-            "contexto": "Liverpool promedia 1.6 goles de visita · Mejor tabla",
-            "explicacion": "La superioridad en la tabla y los duelos previos indican que Liverpool podría imponerse con margen."
+            "contexto": "Encuentro disputado · Liverpool mejor ubicado",
+            "explicacion": "Ambos equipos muestran paridad estadística, por lo que el resultado se perfila ajustado."
           },
           {
             "categoria": "totalgoles",
             "parametros": {
-              "linea": 3.5,
+              "linea": 2.5,
               "direccion": "mas"
             },
-            "seleccion": "Más de 3.5 goles",
-            "probabilidad": 92,
+            "seleccion": "Más de 2.5 goles",
+            "probabilidad": 58,
             "sinApuesta": false,
             "confianza": "Media",
             "contexto": "Encuentro disputado · Liverpool mejor ubicado",
@@ -60,7 +59,7 @@
               "si": true
             },
             "seleccion": "Ambos anotan: Sí",
-            "probabilidad": 92,
+            "probabilidad": 59,
             "sinApuesta": false,
             "confianza": "Media",
             "contexto": "Encuentro disputado · Liverpool mejor ubicado",
@@ -69,109 +68,109 @@
           {
             "categoria": "marcador",
             "parametros": {
-              "gl": 0,
-              "gv": 8
+              "gl": 1,
+              "gv": 1
             },
-            "seleccion": "0-8",
-            "probabilidad": 92,
-            "sinApuesta": false,
+            "seleccion": "1-1",
+            "probabilidad": 10,
+            "sinApuesta": true,
             "confianza": "Media",
             "contexto": "Encuentro disputado · Liverpool mejor ubicado",
             "explicacion": "Predicción calculada mediante Poisson y Dixon-Coles en base al historial reciente."
           }
         ],
-        "marcadorProbable": "0-8",
-        "probMarcador": 800,
+        "marcadorProbable": "1-1",
+        "probMarcador": 10,
         "top3Marcadores": [
           {
-            "marcador": "0-8",
-            "probabilidad": 800
+            "marcador": "1-1",
+            "probabilidad": 10
           },
           {
-            "marcador": "1-8",
-            "probabilidad": 800
+            "marcador": "2-1",
+            "probabilidad": 9
           },
           {
-            "marcador": "2-8",
-            "probabilidad": 800
+            "marcador": "1-2",
+            "probabilidad": 7
           }
         ],
         "catalogoCompleto": [
           {
-            "seleccion": "Liverpool marca",
-            "probabilidad": 32400
-          },
-          {
             "seleccion": "Más de 1.5 goles",
-            "probabilidad": 32300
-          },
-          {
-            "seleccion": "Más de 2.5 goles",
-            "probabilidad": 32000
-          },
-          {
-            "seleccion": "Arsenal o Liverpool (12)",
-            "probabilidad": 28800
+            "probabilidad": 84
           },
           {
             "seleccion": "Arsenal marca",
-            "probabilidad": 28800
+            "probabilidad": 84
           },
           {
-            "seleccion": "Liverpool o Empate (X2)",
-            "probabilidad": 24000
+            "seleccion": "Arsenal o Liverpool (12)",
+            "probabilidad": 76
           },
           {
-            "seleccion": "Gana Liverpool",
-            "probabilidad": 20400
-          },
-          {
-            "seleccion": "Liverpool -2 (gana por 3+)",
-            "probabilidad": 13300
+            "seleccion": "Liverpool marca",
+            "probabilidad": 76
           },
           {
             "seleccion": "Arsenal o Empate (1X)",
-            "probabilidad": 12000
-          },
-          {
-            "seleccion": "Más de 3.5 goles",
-            "probabilidad": 9200
-          },
-          {
-            "seleccion": "Ambos anotan: Sí",
-            "probabilidad": 9200
-          },
-          {
-            "seleccion": "Liverpool -1 (gana por 2+)",
-            "probabilidad": 9200
-          },
-          {
-            "seleccion": "0-8",
-            "probabilidad": 9200
-          },
-          {
-            "seleccion": "Gana Arsenal",
-            "probabilidad": 8400
-          },
-          {
-            "seleccion": "Empate",
-            "probabilidad": 3600
+            "probabilidad": 71
           },
           {
             "seleccion": "Menos de 3.5 goles",
-            "probabilidad": 1000
+            "probabilidad": 59
+          },
+          {
+            "seleccion": "Ambos anotan: Sí",
+            "probabilidad": 59
+          },
+          {
+            "seleccion": "Más de 2.5 goles",
+            "probabilidad": 58
+          },
+          {
+            "seleccion": "Liverpool o Empate (X2)",
+            "probabilidad": 53
+          },
+          {
+            "seleccion": "Gana Arsenal",
+            "probabilidad": 47
+          },
+          {
+            "seleccion": "Más de 3.5 goles",
+            "probabilidad": 41
           },
           {
             "seleccion": "Menos de 2.5 goles",
-            "probabilidad": 400
-          },
-          {
-            "seleccion": "Menos de 1.5 goles",
-            "probabilidad": 100
+            "probabilidad": 37
           },
           {
             "seleccion": "Ambos anotan: No",
-            "probabilidad": -28700
+            "probabilidad": 36
+          },
+          {
+            "seleccion": "Gana Liverpool",
+            "probabilidad": 29
+          },
+          {
+            "seleccion": "Arsenal -1 (gana por 2+)",
+            "probabilidad": 26
+          },
+          {
+            "seleccion": "Empate",
+            "probabilidad": 24
+          },
+          {
+            "seleccion": "Menos de 1.5 goles",
+            "probabilidad": 16
+          },
+          {
+            "seleccion": "Arsenal -2 (gana por 3+)",
+            "probabilidad": 12
+          },
+          {
+            "seleccion": "1-1",
+            "probabilidad": 10
           }
         ],
         "combosPartido": [
@@ -182,42 +181,62 @@
               "btts"
             ],
             "partes": [
-              "Más de 3.5 goles",
+              "Más de 2.5 goles",
               "Ambos anotan: Sí"
             ],
-            "probabilidad": 28400
+            "probabilidad": 54
           },
           {
             "titulo": "Combinada extra",
             "tipos": [
-              "handicap",
+              "resultado",
               "totalgoles"
             ],
             "partes": [
-              "Liverpool -1 (gana por 2+)",
-              "Más de 3.5 goles"
+              "Gana Arsenal",
+              "Más de 2.5 goles"
             ],
-            "probabilidad": 16300
+            "probabilidad": 34
           }
         ],
         "partidosMin": 8,
         "pocaData": false,
-        "favoritoLocal": false,
-        "nombreFavorito": "Liverpool",
+        "favoritoLocal": true,
+        "nombreFavorito": "Arsenal",
         "sinNadaEnJuego": false,
         "parametrosModelo": {
           "lambdaLocal": 1.833,
-          "lambdaVisita": 1.434,
+          "lambdaVisita": 1.417,
           "rhoDixonColes": -0.04,
-          "factorLocalia": 1.08,
+          "factorLocalia": 1.04,
           "factorLiga": 1.04,
           "tablaInfo": {
             "fLocal": 0.947,
             "fVisita": 1.1
-          }
+          },
+          "perfilLigaGoles": 1.04,
+          "factores": {
+            "localia": 1.04,
+            "ligaBase": 1.0,
+            "ligaAjustado": 1.04,
+            "tablaLocal": 0.947,
+            "tablaVisita": 1.1,
+            "h2hLocal": 1.0,
+            "h2hVisita": 1.0,
+            "tendenciaLocal": 1.03,
+            "tendenciaVisita": 1.0,
+            "descansoLocal": 1.0,
+            "descansoVisita": 0.99,
+            "tablaDesviacionLocal": -0.0526,
+            "tablaDesviacionVisita": 0.2105
+          },
+          "tendenciaDireccionLocal": "subiendo",
+          "tendenciaDireccionVisita": "neutral",
+          "sinNadaEnJuego": false,
+          "pocaData": false
         }
       },
-      "generadoEn": "2026-09-18T02:34:06.672826+00:00"
+      "generadoEn": "2026-09-23T02:18:41.277369+00:00"
     }
   }
 }

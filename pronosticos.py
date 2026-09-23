@@ -6,6 +6,8 @@ Genera pronosticos.json para el frontend.
 
 import json
 import math
+import os
+import pickle
 import numpy as np
 from datetime import datetime, timezone
 from typing import Dict, List, Any, Optional
@@ -62,6 +64,10 @@ class Config:
     LIMITES_LIMITE_TABLA: tuple = (0.03, 0.12)
     MUESTRA_MINIMA_RHO: int = 40
     MUESTRA_MINIMA_TABLA: int = 25
+    # Fase 2: peso del xG (Expected Goals) al mezclar con los goles reales en la
+    # fuerza de ataque/defensa. 0.0 reproduce exactamente el comportamiento
+    # previo (solo goles reales).
+    PESO_XG: float = 0.35
 
 # ==================== TIPOS DE DATOS ====================
 @dataclass
@@ -116,6 +122,26 @@ def poisson(k: int, lambda_val: float) -> float:
     if k < 0 or k > 8:
         return 0.0
     return (lambda_val ** k) * math.exp(-lambda_val) / factorial(k)
+
+def _json_default(o):
+    """Convierte tipos numpy a nativos de Python para que json.dump no truene.
+
+    Varios valores del motor (favoritoLocal, probabilidades, etc.) salen de
+    operaciones sobre el np.array de `matrizMarcadores`, así que son
+    numpy.bool_ / numpy.float64 / numpy.int64 en vez de bool/float/int nativos.
+    El módulo json estándar no sabe serializarlos (TypeError). Centralizar la
+    conversión acá evita tener que castear campo por campo en cada cálculo.
+    """
+    if isinstance(o, (np.bool_,)):
+        return bool(o)
+    if isinstance(o, (np.integer,)):
+        return int(o)
+    if isinstance(o, (np.floating,)):
+        return float(o)
+    if isinstance(o, np.ndarray):
+        return o.tolist()
+    raise TypeError(f"Object of type {type(o).__name__} is not JSON serializable")
+
 
 def matrizMarcadores(lambda_local: float, lambda_visita: float, max_goles: int = 8, rho: float = -0.04):
     """Genera matriz de probabilidades de marcadores con Dixon-Coles"""
@@ -297,6 +323,76 @@ class ModeloEstadistico:
         
         return {'ataque': ataque, 'defensa': defensa}
     
+    def fuerzaAtaqueDefensaConXG(self, tabla, team_id, es_local=True, partido_data=None, peso_xg=None):
+        """Fuerza de ataque/defensa con soporte opcional de xG (Expected Goals).
+
+        Fase 2: si `partido_data` trae `xg_local` / `xg_visitante`, mezcla el
+        resultado de `fuerzaAtaqueDefensa` (goles reales) con la razón del xG
+        respecto al promedio de la liga:
+
+            valor_final = (1 - peso_xg) * valor_real + peso_xg * valor_xg
+
+        y aplica el mismo clamp [0.5, 1.8] de `fuerzaAtaqueDefensa`.
+
+        Compatibilidad hacia atrás: sin `partido_data` o sin xG utilizable
+        devuelve EXACTAMENTE el objeto calculado por `fuerzaAtaqueDefensa`
+        (mismo dict, mismos valores), por lo que el motor no cambia su salida.
+
+        - Ataque: el xG a favor del equipo se compara con `promedioLigaGolesFavor`.
+        - Defensa: se usa el xG generado por el rival como proxy de goles
+          concedidos y se compara con `promedioLigaGolesContra`. Si el rival no
+          trae xG, la defensa se deja intacta (solo se mezcla el ataque).
+        """
+        base = self.fuerzaAtaqueDefensa(tabla, team_id, es_local=es_local)
+
+        if not isinstance(partido_data, dict) or not isinstance(tabla, dict):
+            return base
+
+        peso = self.config.PESO_XG if peso_xg is None else peso_xg
+        try:
+            peso = float(peso)
+        except (TypeError, ValueError):
+            peso = self.config.PESO_XG
+        peso = max(0.0, min(1.0, peso))
+        if peso == 0.0:
+            return base
+
+        xg_favor = partido_data.get('xg_local') if es_local else partido_data.get('xg_visitante')
+        xg_contra = partido_data.get('xg_visitante') if es_local else partido_data.get('xg_local')
+
+        prom_favor = tabla.get('promedioLigaGolesFavor')
+        prom_contra = tabla.get('promedioLigaGolesContra')
+
+        ataque_xg = None
+        defensa_xg = None
+
+        if xg_favor is not None and prom_favor:
+            try:
+                ataque_xg = float(xg_favor) / float(prom_favor)
+            except (TypeError, ValueError, ZeroDivisionError):
+                ataque_xg = None
+
+        if xg_contra is not None and prom_contra:
+            try:
+                defensa_xg = float(xg_contra) / float(prom_contra)
+            except (TypeError, ValueError, ZeroDivisionError):
+                defensa_xg = None
+
+        if ataque_xg is None and defensa_xg is None:
+            return base
+
+        ataque = base['ataque']
+        defensa = base['defensa']
+        if ataque_xg is not None:
+            ataque = (1 - peso) * ataque + peso * ataque_xg
+        if defensa_xg is not None:
+            defensa = (1 - peso) * defensa + peso * defensa_xg
+
+        ataque = max(0.5, min(1.8, ataque))
+        defensa = max(0.5, min(1.8, defensa))
+
+        return {'ataque': ataque, 'defensa': defensa}
+
     def calcularTendencia(self, partidos_ordenados, team_id):
         """Calcula tendencia reciente de un equipo incluyendo promedio de goles recientes (EWMA)"""
         if len(partidos_ordenados) < 4:
@@ -579,10 +675,13 @@ class ModeloEstadistico:
         candidatos.append({'categoria': 'handicap', 'parametros': {'lado': lado_favorito, 'valor': 3}, 'seleccion': f'{nombre_favorito} -2 (gana por 3+)', 'probabilidad': p_handicap2})
         
         # Marcador exacto
+        # NOTA: `matriz` es un dict con la matriz y su getter en la clave 'get'.
+        # `matriz.get(i, j)` invocaba el dict.get nativo (key=i, default=j) y
+        # devolvía basura; el acceso correcto es matriz['get'](i, j).
         celdas = []
         for i in range(max_goles + 1):
             for j in range(max_goles + 1):
-                celdas.append({'i': i, 'j': j, 'p': matriz.get(i, j)})
+                celdas.append({'i': i, 'j': j, 'p': matriz['get'](i, j)})
         
         celdas.sort(key=lambda x: x['p'], reverse=True)
         marcador_top = celdas[0]
@@ -620,7 +719,12 @@ class ModeloEstadistico:
 
         def agregar_candidato(candidato):
             if candidato and candidato['categoria'] not in categorias_usadas:
-                seleccionados.append(candidato)
+                # Copia superficial: `candidatos` conserva sus probabilidades crudas
+                # (0-1), que es lo que espera catalogoCompleto, mientras que
+                # `seleccionados` se muta in-place a escala 0-100 más abajo. Sin la
+                # copia, ambos compartían los mismos dicts y catalogoCompleto
+                # multiplicaba x100 dos veces (4700 en vez de 47).
+                seleccionados.append(dict(candidato))
                 categorias_usadas.add(candidato['categoria'])
                 return True
             return False
@@ -775,17 +879,28 @@ class ModeloEstadistico:
         
         return razones[:2]
     
-    def generarPronosticos(self, stats_local, stats_visita, nombre_local, nombre_visita, h2h, tabla, id_local, id_visita, codigo_liga):
-        """Genera pronósticos para un partido"""
+    def generarPronosticos(self, stats_local, stats_visita, nombre_local, nombre_visita, h2h, tabla, id_local, id_visita, codigo_liga,
+                           partido_data=None, peso_xg=None):
+        """Genera pronósticos para un partido.
+
+        `partido_data` y `peso_xg` son opcionales (Fase 2): si el diccionario del
+        partido trae `xg_local` / `xg_visitante`, la fuerza de ataque/defensa
+        mezcla los goles reales con el xG ponderado por `peso_xg`
+        (Config.PESO_XG = 0.35 por defecto). Sin xG disponible la salida es
+        idéntica a la de la Fase 1.
+        """
         # Estimador base
         lambda_local = (stats_local['local']['golesFavor'] + stats_visita['visita']['golesContra']) / 2
         lambda_visita = (stats_visita['visita']['golesFavor'] + stats_local['local']['golesContra']) / 2
         lambda_local_base = lambda_local
         lambda_visita_base = lambda_visita
         
-        # Fuerza de ataque/defensa (Separando condición de local y visitante)
-        fuerza_local = self.fuerzaAtaqueDefensa(tabla, id_local, es_local=True)
-        fuerza_visita = self.fuerzaAtaqueDefensa(tabla, id_visita, es_local=False)
+        # Fuerza de ataque/defensa (Separando condición de local y visitante).
+        # Con xG disponible en `partido_data` se mezcla goles reales + xG.
+        fuerza_local = self.fuerzaAtaqueDefensaConXG(
+            tabla, id_local, es_local=True, partido_data=partido_data, peso_xg=peso_xg)
+        fuerza_visita = self.fuerzaAtaqueDefensaConXG(
+            tabla, id_visita, es_local=False, partido_data=partido_data, peso_xg=peso_xg)
         lambda_local *= math.sqrt(fuerza_local['ataque'] * fuerza_visita['defensa'])
         lambda_visita *= math.sqrt(fuerza_visita['ataque'] * fuerza_local['defensa'])
         
@@ -947,9 +1062,23 @@ class ModeloEstadistico:
             m['contexto'] = c_txt
             m['explicacion'] = e_txt
 
-        # Catálogo completo
+        # Catálogo completo.
+        # `seleccionados` ya está calibrado (ajuste por categoría x suavizado) y en
+        # escala 0-100; para que no aparezcan dos números distintos del mismo mercado
+        # en la misma pantalla, los 4 mercados compartidos publican ese valor
+        # calibrado y el resto mantiene su probabilidad cruda x100.
+        probabilidad_calibrada_por_seleccion = {m['seleccion']: m['probabilidad'] for m in seleccionados}
+
         catalogo_completo = sorted(
-            [{'seleccion': c['seleccion'], 'probabilidad': round(c['probabilidad'] * 100)} for c in candidatos],
+            [
+                {
+                    'seleccion': c['seleccion'],
+                    'probabilidad': probabilidad_calibrada_por_seleccion.get(
+                        c['seleccion'], round(c['probabilidad'] * 100)
+                    ),
+                }
+                for c in candidatos
+            ],
             key=lambda x: x['probabilidad'],
             reverse=True
         )
@@ -1177,7 +1306,8 @@ def registrar_telemetria(salida, uso_datos_ejemplo, ruta_archivo='pronosticos_hi
                 'probMarcador': pron.get('probMarcador')
             }
         with open(ruta_archivo, 'a', encoding='utf-8') as f:
-            f.write(json.dumps(registro_corrida, ensure_ascii=False, separators=(',', ':')) + '\n')
+            f.write(json.dumps(registro_corrida, ensure_ascii=False, separators=(',', ':'),
+                               default=_json_default) + '\n')
         print(f"Telemetría registrada en {ruta_archivo} "
               f"({len(registro_corrida['pronosticos'])} partidos, datosDeEjemplo={bool(uso_datos_ejemplo)})")
         return True
@@ -1272,7 +1402,8 @@ class GeneradorPronosticos:
             partido['homeTeam']['name'], partido['awayTeam']['name'],
             h2h, tabla,
             partido['homeTeam']['id'], partido['awayTeam']['id'],
-            partido['competition']['code']
+            partido['competition']['code'],
+            partido_data=partido
         )
     
     def generarTodosLosPronosticos(self, datos):
@@ -1361,7 +1492,7 @@ class GeneradorPronosticos:
         }
         
         with open(ruta_archivo, 'w', encoding='utf-8') as f:
-            json.dump(salida, f, indent=2, ensure_ascii=False)
+            json.dump(salida, f, indent=2, ensure_ascii=False, default=_json_default)
         
         print(f"Pronósticos guardados en {ruta_archivo}")
         
@@ -1369,6 +1500,224 @@ class GeneradorPronosticos:
         # Es append-only y nunca rompe la generación si falla.
         registrar_telemetria(salida, self.usoDatosDeEjemplo)
         return salida
+
+# ==================== MOTOR INTELIGENTE HÍBRIDO (FASE 2) ====================
+
+# Archivos .json que son datos del propio sistema y NO modelos pre-entrenados:
+# se excluyen explícitamente de la búsqueda de modelos ML.
+ARCHIVOS_DATOS_NO_MODELO = (
+    'pronosticos.json',
+    'propuesta_recalibracion.json',
+    'parametros_aprobados.json',
+)
+
+
+def _candidatosModeloMl(directorio_modelo: str):
+    """Rutas de modelos pre-entrenados en `directorio_modelo`, por preferencia.
+
+    Primero los formatos nativos de XGBoost (.json / .ubj), porque se cargan con
+    `XGBClassifier().load_model()` y no ejecutan código arbitrario. Solo si no
+    hay ninguno se ofrecen los `.pkl` (requieren `pickle.load`).
+    """
+    if not directorio_modelo or not os.path.isdir(directorio_modelo):
+        return []
+
+    try:
+        entradas = sorted(os.listdir(directorio_modelo))
+    except OSError:
+        return []
+
+    nativos = []
+    pickles = []
+    for nombre in entradas:
+        ruta = os.path.join(directorio_modelo, nombre)
+        if not os.path.isfile(ruta):
+            continue
+        nombre_min = nombre.lower()
+        if nombre_min in ARCHIVOS_DATOS_NO_MODELO:
+            continue
+        if nombre_min.endswith('.json') or nombre_min.endswith('.ubj'):
+            nativos.append(ruta)
+        elif nombre_min.endswith('.pkl'):
+            pickles.append(ruta)
+
+    return nativos + pickles
+
+
+def _cargarModeloMl(directorio_modelo: str = "."):
+    """Carga el primer modelo usable del directorio. Devuelve `(modelo, ruta)`.
+
+    Si no hay modelo o ninguno es cargable devuelve `(None, None)`: el ensamble
+    híbrido cae entonces al motor estadístico puro.
+    """
+    for ruta in _candidatosModeloMl(directorio_modelo):
+        try:
+            if ruta.lower().endswith('.pkl'):
+                with open(ruta, 'rb') as f:
+                    return pickle.load(f), ruta
+            modelo = xgb.XGBClassifier()
+            modelo.load_model(ruta)
+            return modelo, ruta
+        except Exception as e:
+            print(f"[WARN] No se pudo cargar el modelo ML '{ruta}': {e}")
+    return None, None
+
+
+def prediccion_hibrida(partido_data: dict, modelo_estadistico=None,
+                       w1: float = 0.60, w2: float = 0.40,
+                       directorio_modelo: str = "."):
+    """Ensamble híbrido: motor estadístico (Poisson + Dixon-Coles) + modelo ML.
+
+    - `p_poisson` = P(gana local) con `matrizMarcadores` + `sumaMatriz` a partir
+      de `partido_data['parametrosModelo']` (lambdaLocal, lambdaVisita,
+      rhoDixonColes).
+    - `p_ml` = probabilidad del modelo pre-entrenado (.json/.ubj nativo de
+      XGBoost o .pkl) evaluado sobre `partido_data['features_ml']`.
+    - `p_final` = w1 * p_poisson + w2 * p_ml (pesos normalizados). Si no hay
+      modelo, no hay features o falla la predicción, `p_final = p_poisson`.
+
+    Devuelve: {'pPoisson', 'pMl', 'pFinal', 'pesosUsados', 'modeloMlCargado'}.
+    """
+    partido_data = partido_data if isinstance(partido_data, dict) else {}
+    parametros = partido_data.get('parametrosModelo') or {}
+
+    lambda_local = parametros.get('lambdaLocal')
+    lambda_visita = parametros.get('lambdaVisita')
+    if lambda_local is None or lambda_visita is None:
+        faltan = [k for k, v in (('lambdaLocal', lambda_local),
+                                 ('lambdaVisita', lambda_visita)) if v is None]
+        raise ValueError(
+            "prediccion_hibrida requiere partido_data['parametrosModelo'] con "
+            "'lambdaLocal' y 'lambdaVisita' (salida de "
+            "ModeloEstadistico.generarPronosticos). Faltan: " + ", ".join(faltan)
+        )
+
+    rho = parametros.get('rhoDixonColes')
+    if rho is None and modelo_estadistico is not None:
+        calibracion = getattr(modelo_estadistico, 'calibracion_actual', None) or {}
+        rho = calibracion.get('rhoDixonColes')
+    if rho is None:
+        rho = Config.RHO_DIXON_COLES
+
+    try:
+        lambda_local = float(lambda_local)
+        lambda_visita = float(lambda_visita)
+        rho = float(rho)
+    except (TypeError, ValueError) as e:
+        raise ValueError(f"prediccion_hibrida: parámetros no numéricos ({e})")
+
+    matriz = matrizMarcadores(lambda_local, lambda_visita, Config.MAX_GOLES, rho)
+    max_goles = matriz['dim'] - 1
+    p_poisson = sumaMatriz(matriz, max_goles, lambda i, j: i > j)
+
+    modelo_ml, ruta_modelo = _cargarModeloMl(directorio_modelo)
+    p_ml = None
+    features = partido_data.get('features_ml')
+
+    if modelo_ml is not None and features is not None:
+        try:
+            X = np.asarray(features, dtype=float)
+            if X.ndim == 1:
+                X = X.reshape(1, -1)
+            if not hasattr(modelo_ml, 'predict_proba'):
+                raise AttributeError("el modelo cargado no implementa predict_proba")
+            proba = np.asarray(modelo_ml.predict_proba(X), dtype=float)
+            if proba.ndim == 2 and proba.shape[1] > 1:
+                p_ml = float(proba[0][1])
+            else:
+                p_ml = float(proba.ravel()[0])
+            p_ml = max(0.0, min(1.0, p_ml))
+        except Exception as e:
+            print(f"[WARN] prediccion_hibrida: fallo al predecir con el modelo ML "
+                  f"'{ruta_modelo}': {e}. Se usa solo el motor estadístico.")
+            p_ml = None
+    elif modelo_ml is not None:
+        print("[WARN] prediccion_hibrida: hay modelo ML pero el partido no trae "
+              "'features_ml'; se usa solo el motor estadístico.")
+
+    try:
+        w1 = max(0.0, float(w1))
+        w2 = max(0.0, float(w2))
+    except (TypeError, ValueError):
+        w1, w2 = 0.60, 0.40
+    total_pesos = w1 + w2
+    if total_pesos <= 0:
+        w1, w2, total_pesos = 0.60, 0.40, 1.0
+    w1_norm, w2_norm = w1 / total_pesos, w2 / total_pesos
+
+    if p_ml is None:
+        # Compatibilidad hacia atrás: sin ML, el motor estadístico manda solo.
+        p_final = p_poisson
+        pesos_usados = {'w1': 1.0, 'w2': 0.0}
+    else:
+        p_final = w1_norm * p_poisson + w2_norm * p_ml
+        pesos_usados = {'w1': round(w1_norm, 4), 'w2': round(w2_norm, 4)}
+
+    return {
+        'pPoisson': float(round(p_poisson, 4)),
+        'pMl': float(round(p_ml, 4)) if p_ml is not None else None,
+        'pFinal': float(round(max(0.0, min(1.0, p_final)), 4)),
+        'pesosUsados': pesos_usados,
+        'modeloMlCargado': ruta_modelo,
+    }
+
+
+# ==================== VALUE BETTING (EV + KELLY FRACCIONADO) ====================
+
+def _evVacio(motivo: str) -> Dict[str, Any]:
+    """Respuesta neutra de `calcular_ev` cuando la entrada no es válida."""
+    return {
+        'ev': 0.0,
+        'evPorcentaje': 0.0,
+        'probabilidadImplicita': None,
+        'kellyCompleto': 0.0,
+        'kellyFraccionado': 0.0,
+        'tieneValor': False,
+        'error': motivo,
+    }
+
+
+def calcular_ev(probabilidad_modelo, cuota_casa, kelly_factor: float = 0.25):
+    """Valor esperado (EV) y Kelly fraccionado de una apuesta (value betting).
+
+    - `ev = p * (cuota - 1) - (1 - p)` (por unidad apostada).
+    - Kelly completo: `f* = (p * b - (1 - p)) / b` con `b = cuota - 1`; nunca
+      negativo (si el edge es negativo, `kelly_completo = 0.0`).
+    - Kelly fraccionado: `f* * kelly_factor` (cuarto de Kelly por defecto).
+
+    Nunca lanza excepción: ante entradas inválidas devuelve todos los valores en
+    0/None más la clave `'error'` con el motivo.
+    """
+    try:
+        p = float(probabilidad_modelo)
+        cuota = float(cuota_casa)
+        factor = float(kelly_factor)
+    except (TypeError, ValueError):
+        return _evVacio("probabilidad y cuota deben ser numéricas")
+
+    if not math.isfinite(p) or not math.isfinite(cuota):
+        return _evVacio("probabilidad y cuota deben ser finitas")
+    if not (0.0 < p < 1.0):
+        return _evVacio(f"probabilidad fuera del intervalo (0, 1): {p}")
+    if cuota <= 1.0:
+        return _evVacio(f"la cuota debe ser mayor que 1.0: {cuota}")
+    if not math.isfinite(factor):
+        return _evVacio("kelly_factor debe ser finito")
+    factor = max(0.0, min(1.0, factor))
+
+    b = cuota - 1.0
+    ev = p * b - (1.0 - p)
+    kelly_completo = max(0.0, (p * b - (1.0 - p)) / b)
+
+    return {
+        'ev': round(ev, 4),
+        'evPorcentaje': round(ev * 100.0, 2),
+        'probabilidadImplicita': round(1.0 / cuota, 4),
+        'kellyCompleto': round(kelly_completo, 4),
+        'kellyFraccionado': round(kelly_completo * factor, 4),
+        'tieneValor': ev > 0,
+    }
+
 
 # ==================== FUNCIÓN PRINCIPAL ====================
 

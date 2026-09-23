@@ -47,3 +47,6 @@ test-output/
 # Python cache
 __pycache__/
 *.pyc
+
+# Pipeline output (regenerado en cada corrida, consumido por el frontend)
+pronosticos.json
