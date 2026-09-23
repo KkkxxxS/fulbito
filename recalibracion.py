@@ -548,7 +548,13 @@ def integridad_probabilidades(muestras):
     constante), así que el sistema aborta y lo reporta.
     """
     if not muestras:
-        return {"degenerado": False, "n": 0}
+        return {
+            "degenerado": False,
+            "n": 0,
+            "pctEnTechoClamp": None,
+            "valoresDistintos": 0,
+            "motivo": None,
+        }
     probs = [round(m["pPredicha"], 4) for m in muestras]
     n_techo = sum(1 for p in probs if p >= CLAMP_TECHO - 1e-9)
     distintos = len(set(probs))
@@ -1285,9 +1291,12 @@ def modo_diagnostico(args, rutas):
           f"(mínimo del sistema: {N_MINIMO_PARTIDOS})")
     print(f"  Descartes por sanity: {json.dumps(reporte['descartados'], ensure_ascii=False)}")
     integridad = integridad_probabilidades(muestras)
-    print(f"  Integridad de probabilidades oficiales: "
-          f"techo_clamp={integridad['pctEnTechoClamp']} "
-          f"valores_distintos={integridad['valoresDistintos']}")
+    if integridad["n"] > 0:
+        print(f"  Integridad de probabilidades oficiales: "
+              f"techo_clamp={integridad['pctEnTechoClamp']} "
+              f"valores_distintos={integridad['valoresDistintos']}")
+    else:
+        print("  Integridad de probabilidades oficiales: sin muestras verificadas aún (n=0).")
     if integridad["degenerado"]:
         print("  ADVERTENCIA: " + integridad["motivo"])
     if reporte["partidosVerificados"] < N_MINIMO_PARTIDOS:
@@ -1318,9 +1327,12 @@ def modo_propuesta(args, rutas):
     print(f"  Descartes por sanity: {json.dumps(reporte['descartados'], ensure_ascii=False)}")
 
     integridad = integridad_probabilidades(muestras)
-    print(f"  Integridad de probabilidades oficiales: "
-          f"techo_clamp={integridad['pctEnTechoClamp']} "
-          f"valores_distintos={integridad['valoresDistintos']}")
+    if integridad["n"] > 0:
+        print(f"  Integridad de probabilidades oficiales: "
+              f"techo_clamp={integridad['pctEnTechoClamp']} "
+              f"valores_distintos={integridad['valoresDistintos']}")
+    else:
+        print("  Integridad de probabilidades oficiales: sin muestras verificadas aún (n=0).")
     if integridad["degenerado"]:
         print("  ABORTADO: " + integridad["motivo"])
         registrar_bitacora(rutas["bitacora"], corrida(
