@@ -8,8 +8,12 @@ import json
 import math
 import os
 import pickle
+import time
+import urllib.request
+import urllib.error
+import urllib.parse
 import numpy as np
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import Dict, List, Any, Optional
 from dataclasses import dataclass
 from scipy import stats
@@ -44,6 +48,24 @@ def cargar_parametros_aprobados(path="parametros_aprobados.json"):
     return data.get("overrides", {})
 
 # ==================== CONFIGURACIÓN ====================
+# Ingesta desde el backend real (ver GeneradorPronosticos.cargarDatosDesdeBackend).
+# Mismo contrato que usa el frontend (app-model.js / BACKEND_URL):
+BACKEND_URL_DEFAULT = "https://fulbito-forh.onrender.com"
+BACKEND_COMPETICIONES_DEFAULT = "PL,PD,BL1,SA,FL1,CL,DED,ELC,BSA,PPL"
+BACKEND_TIMEOUT_SEG = 30
+BACKEND_INTENTOS = 3
+# Tope de partidos por corrida: limita llamadas a /api/equipo y /api/partido
+# (2-3 por partido) para no agotar la cuota de football-data.org.
+BACKEND_MAX_PARTIDOS = 30
+BACKEND_PAUSA_SEG = 6.0  # pausa entre llamadas (cuota gratuita ~10 req/min)
+
+COMPETICION_NOMBRE = {
+    'PL': 'Premier League', 'PD': 'La Liga', 'BL1': 'Bundesliga',
+    'SA': 'Serie A', 'FL1': 'Ligue 1', 'CL': 'Champions League',
+    'DED': 'Eredivisie', 'ELC': 'Championship', 'BSA': 'Brasileirao',
+    'PPL': 'Primeira Liga',
+}
+
 @dataclass
 class Config:
     MAX_GOLES: int = 8
@@ -227,6 +249,116 @@ def verificarMercado(categoria, parametros, goles_local, goles_visita):
     return False
 
 # ==================== MODELO ESTADÍSTICO ====================
+
+# ---------- Ingesta desde el backend (solo lectura, sin lógica de cálculo) ---
+# Réplica en Python de app-model.js: obtenerPartidos / obtenerTabla /
+# obtenerStatsEquipo / obtenerHeadToHead (misma forma de respuesta del backend,
+# mismas fórmulas de agregación). No toca ninguna función de cálculo del motor.
+
+def _http_get_json(url: str, intentos: int = BACKEND_INTENTOS,
+                   timeout: int = BACKEND_TIMEOUT_SEG):
+    """GET con reintentos y timeout (mismo patrón que recalibracion.py)."""
+    ultimo_error = None
+    for intento in range(1, intentos + 1):
+        try:
+            req = urllib.request.Request(
+                url, headers={'Accept': 'application/json',
+                              'User-Agent': 'fulbito-pronosticos/1.0'})
+            with urllib.request.urlopen(req, timeout=timeout) as resp:
+                return json.loads(resp.read().decode('utf-8'))
+        except Exception as e:
+            ultimo_error = e
+            print(f"[WARN] GET {url} (intento {intento}/{intentos}): {e}")
+            if intento < intentos:
+                time.sleep(2.0 * intento)
+    raise RuntimeError(f"GET {url} falló tras {intentos} intentos: {ultimo_error}")
+
+
+def _parse_fecha_utc(s):
+    try:
+        if not s:
+            return None
+        return datetime.fromisoformat(str(s).replace('Z', '+00:00'))
+    except (ValueError, TypeError):
+        return None
+
+
+def _promedio_ponderado(valores, pesos):
+    if not valores:
+        return 0.0
+    suma_v = sum(v * p for v, p in zip(valores, pesos))
+    suma_p = sum(pesos)
+    return suma_v / suma_p if suma_p > 0 else 0.0
+
+
+def _pesos_recencia_por_fecha(registros, fecha_ref=None):
+    """Peso 0.5^(dias/45) — igual que app-model.js pesosRecenciaPorFecha."""
+    vida_media = 45.0
+    ref = fecha_ref or datetime.now(timezone.utc)
+    pesos = []
+    for r in registros:
+        f = _parse_fecha_utc(r.get('fecha'))
+        dias = max(0.0, (ref - f).total_seconds() / 86400.0) if f else 0.0
+        pesos.append(0.5 ** (dias / vida_media))
+    return pesos
+
+
+def _gol_ajustado(gol_crudo, factor):
+    return float(gol_crudo) * (0.5 + 0.5 * float(factor))
+
+
+def _factor_fuerza_rival(tabla, rival_id, lado_rival):
+    """Igual que app-model.js factorFuerzaRival. lado: 'defensa'|'ataque'."""
+    info = (tabla or {}).get('mapa', {}).get(rival_id)
+    if not info:
+        return 1.0
+    if lado_rival == 'defensa':
+        gc = info.get('golesContraPorPartido')
+        prom = (tabla or {}).get('promedioLigaGolesContra')
+        if gc is None or not prom:
+            return 1.0
+        return max(0.65, min(1.5, prom / max(gc, 0.15)))
+    gf = info.get('golesFavorPorPartido')
+    prom = (tabla or {}).get('promedioLigaGolesFavor')
+    if gf is None or not prom:
+        return 1.0
+    return max(0.65, min(1.5, prom / max(gf, 0.15)))
+
+
+def _aplicar_shrinkage(valor, partidos_jugados, promedio_liga_equipo,
+                       confianza_plena=10):
+    peso = min(partidos_jugados / confianza_plena, 1.0)
+    return valor * peso + promedio_liga_equipo * (1.0 - peso)
+
+
+def _calcular_tendencia(partidos_ordenados, team_id):
+    """Igual que app-model.js calcularTendencia (mitades, umbral 0.5)."""
+    if len(partidos_ordenados) < 4:
+        return {'direccion': 'neutral', 'racha': []}
+
+    def pts(p):
+        es_local = (p.get('homeTeam') or {}).get('id') == team_id
+        ft = (p.get('score') or {}).get('fullTime') or {}
+        g_eq = (ft.get('home') if es_local else ft.get('away')) or 0
+        g_rv = (ft.get('away') if es_local else ft.get('home')) or 0
+        if g_eq > g_rv:
+            return {'pts': 3, 'r': 'G'}
+        if g_eq == g_rv:
+            return {'pts': 1, 'r': 'E'}
+        return {'pts': 0, 'r': 'P'}
+
+    pxp = [pts(p) for p in partidos_ordenados]
+    mitad = len(pxp) // 2
+    prom_rec = sum(x['pts'] for x in pxp[:mitad]) / len(pxp[:mitad])
+    prom_ant = sum(x['pts'] for x in pxp[mitad:]) / len(pxp[mitad:])
+    if prom_rec - prom_ant >= 0.5:
+        direccion = 'subiendo'
+    elif prom_ant - prom_rec >= 0.5:
+        direccion = 'bajando'
+    else:
+        direccion = 'neutral'
+    return {'direccion': direccion, 'racha': [x['r'] for x in pxp[:5][::-1]]}
+
 
 class ModeloEstadistico:
     def __init__(self, config: Config):
@@ -1328,12 +1460,246 @@ class GeneradorPronosticos:
         self.usoDatosDeEjemplo = True
     
     def cargarDatosDesdeBackend(self, backend_url: str):
-        """Carga datos desde el backend (simulado para ahora)"""
-        # En implementación real, esto haría llamadas al backend
-        # Para ahora, usamos datos de ejemplo
-        self.usoDatosDeEjemplo = True
-        return self._datosEjemplo()
-    
+        """Carga partidos por jugar + insumos desde el backend real.
+
+        Endpoints (mismo contrato que el frontend, ver app-model.js y
+        server/server.js):
+          GET {base}/api/partidos?competitions=..&dateFrom=..&dateTo=..
+          GET {base}/api/liga/:code/standings
+          GET {base}/api/equipo/:id/stats
+          GET {base}/api/partido/:id/h2h
+        Si algo falla o no hay partidos por jugar, cae a _datosEjemplo()
+        con usoDatosDeEjemplo=True (el guardrail de recalibracion.py
+        aborta entonces y no contamina el histórico).
+        """
+        base = (backend_url or '').strip() or BACKEND_URL_DEFAULT
+        # 'http://localhost:3000' es el placeholder histórico de main():
+        # apunta al mismo server.js que en producción vive en Render.
+        if base in ('http://localhost:3000', 'http://127.0.0.1:3000'):
+            base = BACKEND_URL_DEFAULT
+        try:
+            return self._cargar_desde_backend(base)
+        except Exception as e:
+            print(f"[WARN] cargarDatosDesdeBackend: {e}; uso datos de ejemplo")
+            self.usoDatosDeEjemplo = True
+            return self._datosEjemplo()
+    def _tabla_desde_standings(self, datos):
+        """Mapea GET /api/liga/:code/standings a la forma interna de tabla."""
+        # El backend hoy solo expone el bloque TOTAL (sin HOME/AWAY): los
+        # contextos quedan vacios con promedios None (el motor ya lo maneja).
+        filas = []
+        for bloque in (datos or {}).get('standings', []) or []:
+            if bloque.get('type') == 'TOTAL':
+                filas = bloque.get('table', []) or []
+                break
+        mapa = {}
+        suma_ppp = 0.0
+        suma_gf = suma_gc = suma_pj = 0
+        con_goles = True
+        for fila in filas:
+            tid = (fila.get('team') or {}).get('id')
+            pj = fila.get('playedGames') or 0
+            ppp = (fila.get('points', 0) / pj) if pj > 0 else 1.0
+            suma_ppp += ppp
+            gf = fila.get('goalsFor')
+            gc = fila.get('goalsAgainst')
+            ok = isinstance(gf, (int, float)) and isinstance(gc, (int, float)) and pj > 0
+            if ok:
+                suma_gf += gf
+                suma_gc += gc
+                suma_pj += pj
+            else:
+                con_goles = False
+            mapa[tid] = {
+                'posicion': fila.get('position'),
+                'puntosPorPartido': ppp,
+                'totalEquipos': len(filas),
+                'partidosJugados': pj,
+                'golesFavorPorPartido': (gf / pj) if ok else None,
+                'golesContraPorPartido': (gc / pj) if ok else None,
+            }
+        n = len(filas)
+        return {
+            'mapa': mapa,
+            'promedioLiga': (suma_ppp / n) if n > 0 else 1.3,
+            'promedioLigaGolesFavor': (suma_gf / suma_pj) if (con_goles and suma_pj > 0) else None,
+            'promedioLigaGolesContra': (suma_gc / suma_pj) if (con_goles and suma_pj > 0) else None,
+            'contextoLocal': {'mapa': {}, 'promedioGolesFavor': None, 'promedioGolesContra': None},
+            'contextoVisita': {'mapa': {}, 'promedioGolesFavor': None, 'promedioGolesContra': None},
+        }
+
+    def _h2h_desde_respuesta(self, datos):
+        h2h = (datos or {}).get('head2head')
+        if not h2h or not h2h.get('numberOfMatches'):
+            return {'disponible': False}
+    def _stats_desde_matches(self, partidos_equipo, team_id, codigo_liga, tabla):
+        """Mapea GET /api/equipo/:id/stats a stats (formulas de app-model.js)."""
+        prom_liga = self.modelo_estadistico.promedioLiga(codigo_liga)
+        ordenados = sorted(
+            partidos_equipo or [],
+            key=lambda p: _parse_fecha_utc(p.get('utcDate')) or datetime.min.replace(tzinfo=timezone.utc),
+            reverse=True)
+        dias_descanso = None
+        if ordenados:
+            f0 = _parse_fecha_utc(ordenados[0].get('utcDate'))
+            if f0:
+                dias_descanso = (datetime.now(timezone.utc) - f0).total_seconds() / 86400.0
+        victorias = empates = 0
+        reg_todos, reg_local, reg_visita = [], [], []
+        for p in ordenados:
+            es_local = (p.get('homeTeam') or {}).get('id') == team_id
+            rival = ((p.get('awayTeam') or {}).get('id') if es_local
+                     else (p.get('homeTeam') or {}).get('id'))
+            ft = (p.get('score') or {}).get('fullTime') or {}
+            g_eq = (ft.get('home') if es_local else ft.get('away')) or 0
+            g_rv = (ft.get('away') if es_local else ft.get('home')) or 0
+            if g_eq > g_rv:
+                victorias += 1
+            elif g_eq == g_rv:
+                empates += 1
+            f_def = _factor_fuerza_rival(tabla, rival, 'defensa') if tabla else 1.0
+            f_atq = _factor_fuerza_rival(tabla, rival, 'ataque') if tabla else 1.0
+            reg = {'favor': _gol_ajustado(g_eq, f_def),
+                   'contra': _gol_ajustado(g_rv, f_atq),
+                   'fecha': p.get('utcDate')}
+            reg_todos.append(reg)
+            (reg_local if es_local else reg_visita).append(reg)
+        cantidad = len(ordenados) or 1
+        prom_favor = _promedio_ponderado(
+            [r['favor'] for r in reg_todos], _pesos_recencia_por_fecha(reg_todos))
+        prom_contra = _promedio_ponderado(
+            [r['contra'] for r in reg_todos], _pesos_recencia_por_fecha(reg_todos))
+        loc_f = _promedio_ponderado(
+            [r['favor'] for r in reg_local], _pesos_recencia_por_fecha(reg_local)) if reg_local else prom_favor
+        loc_c = _promedio_ponderado(
+            [r['contra'] for r in reg_local], _pesos_recencia_por_fecha(reg_local)) if reg_local else prom_contra
+        vis_f = _promedio_ponderado(
+            [r['favor'] for r in reg_visita], _pesos_recencia_por_fecha(reg_visita)) if reg_visita else prom_favor
+        vis_c = _promedio_ponderado(
+            [r['contra'] for r in reg_visita], _pesos_recencia_por_fecha(reg_visita)) if reg_visita else prom_contra
+        return {
+            'promedioGolesFavor': prom_favor,
+            'promedioGolesContra': prom_contra,
+            'puntosPromedio': (victorias * 3 + empates) / cantidad,
+            'partidosJugados': len(ordenados),
+            'local': {'golesFavor': _aplicar_shrinkage(loc_f, len(reg_local), prom_liga),
+                      'golesContra': _aplicar_shrinkage(loc_c, len(reg_local), prom_liga)},
+            'visita': {'golesFavor': _aplicar_shrinkage(vis_f, len(reg_visita), prom_liga),
+                       'golesContra': _aplicar_shrinkage(vis_c, len(reg_visita), prom_liga)},
+            'tendencia': _calcular_tendencia(ordenados, team_id),
+            'diasDescansoUltimoPartido': dias_descanso,
+        }
+    def _cargar_desde_backend(self, base: str):
+        hoy = datetime.now(timezone.utc).date()
+        comps = BACKEND_COMPETICIONES_DEFAULT
+        partidos = []
+        # Ventanas de 7 dias (football-data.org: max 10 dias por llamada).
+        # Se barren hoy..+28d hasta juntar partidos por jugar.
+        for ini in [hoy + timedelta(days=d) for d in (0, 7, 14, 21)]:
+            fin = ini + timedelta(days=6)
+            url = (f"{base}/api/partidos?competitions={comps}"
+                   f"&dateFrom={ini.isoformat()}&dateTo={fin.isoformat()}")
+            datos = _http_get_json(url)
+            if not isinstance(datos, dict) or not isinstance(datos.get('matches'), list):
+                raise RuntimeError(f"forma inesperada en /api/partidos ({ini}..{fin})")
+            for m in datos['matches']:
+                if m.get('status') in ('SCHEDULED', 'TIMED'):
+                    partidos.append(m)
+            time.sleep(BACKEND_PAUSA_SEG)
+            if len(partidos) >= BACKEND_MAX_PARTIDOS:
+                break
+        partidos = partidos[:BACKEND_MAX_PARTIDOS]
+        if not partidos:
+            print("[WARN] backend sin partidos por jugar; uso ejemplo")
+            self.usoDatosDeEjemplo = True
+            return self._datosEjemplo()
+        print(f"[INFO] backend: {len(partidos)} partidos por jugar")
+        tablas_cache = {}
+
+        def tabla_de(codigo):
+            if codigo not in tablas_cache:
+                datos = _http_get_json(f"{base}/api/liga/{codigo}/standings")
+                tablas_cache[codigo] = self._tabla_desde_standings(datos)
+                time.sleep(BACKEND_PAUSA_SEG)
+            return tablas_cache[codigo]
+
+        out = {'partidos': [], 'stats_locales': [],
+               'stats_visitantes': [], 'tablas': [], 'h2hs': []}
+        for m in partidos:
+            comp = m.get('competition') or {}
+            codigo = comp.get('code') or 'DEFAULT'
+            ht = m.get('homeTeam') or {}
+            at = m.get('awayTeam') or {}
+            try:
+                tabla = tabla_de(codigo)
+            except Exception as e:
+                print(f"[WARN] standings {codigo}: {e}; tabla vacia")
+                tabla = {'mapa': {}, 'promedioLiga': 1.3,
+                         'promedioLigaGolesFavor': None,
+                         'promedioLigaGolesContra': None,
+                         'contextoLocal': {'mapa': {}, 'promedioGolesFavor': None,
+                                           'promedioGolesContra': None},
+                         'contextoVisita': {'mapa': {}, 'promedioGolesFavor': None,
+                                            'promedioGolesContra': None}}
+            try:
+                dl = _http_get_json(f"{base}/api/equipo/{ht.get('id')}/stats")
+                time.sleep(BACKEND_PAUSA_SEG)
+                ml = dl.get('matches', []) if isinstance(dl, dict) else []
+            except Exception as e:
+                print(f"[WARN] stats equipo {ht.get('id')}: {e}; defaults")
+                ml = []
+            try:
+                dv = _http_get_json(f"{base}/api/equipo/{at.get('id')}/stats")
+                time.sleep(BACKEND_PAUSA_SEG)
+                mv = dv.get('matches', []) if isinstance(dv, dict) else []
+            except Exception as e:
+                print(f"[WARN] stats equipo {at.get('id')}: {e}; defaults")
+                mv = []
+            try:
+                dh = _http_get_json(f"{base}/api/partido/{m.get('id')}/h2h")
+                time.sleep(BACKEND_PAUSA_SEG)
+                h2h = self._h2h_desde_respuesta(dh)
+            except Exception as e:
+                print(f"[WARN] h2h partido {m.get('id')}: {e}; no disponible")
+                h2h = {'disponible': False}
+            if not ml:
+                sl = {'promedioGolesFavor': 1.0, 'promedioGolesContra': 1.0,
+                      'puntosPromedio': 1.0, 'partidosJugados': 0,
+                      'local': {'golesFavor': 1.0, 'golesContra': 1.0},
+                      'visita': {'golesFavor': 1.0, 'golesContra': 1.0},
+                      'tendencia': {'direccion': 'neutral', 'racha': []},
+                      'diasDescansoUltimoPartido': None}
+            else:
+                sl = self._stats_desde_matches(ml, ht.get('id'), codigo, tabla)
+            if not mv:
+                sv = {'promedioGolesFavor': 1.0, 'promedioGolesContra': 1.0,
+                      'puntosPromedio': 1.0, 'partidosJugados': 0,
+                      'local': {'golesFavor': 1.0, 'golesContra': 1.0},
+                      'visita': {'golesFavor': 1.0, 'golesContra': 1.0},
+                      'tendencia': {'direccion': 'neutral', 'racha': []},
+                      'diasDescansoUltimoPartido': None}
+            else:
+                sv = self._stats_desde_matches(mv, at.get('id'), codigo, tabla)
+            out['partidos'].append({
+                'id': str(m.get('id')),
+                'homeTeam': {'id': ht.get('id'), 'name': ht.get('name')},
+                'awayTeam': {'id': at.get('id'), 'name': at.get('name')},
+                'competition': {'name': comp.get('name') or COMPETICION_NOMBRE.get(codigo, codigo),
+                                'code': codigo},
+                'utcDate': m.get('utcDate'),
+                'status': m.get('status'),
+                # Sin xG en el backend: se omite xg_local/xg_visitante
+                # y el motor usa sus fallbacks existentes.
+            })
+            out['stats_locales'].append(sl)
+            out['stats_visitantes'].append(sv)
+            out['tablas'].append(tabla)
+            out['h2hs'].append(h2h)
+        self.usoDatosDeEjemplo = False
+        return out
+
+
+
     def _datosEjemplo(self):
         """Datos de ejemplo para demostración"""
         return {
