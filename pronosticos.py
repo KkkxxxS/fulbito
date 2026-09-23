@@ -17,6 +17,30 @@ from sklearn.preprocessing import StandardScaler
 import warnings
 warnings.filterwarnings('ignore')
 
+
+def cargar_parametros_aprobados(path="parametros_aprobados.json"):
+    """
+    Lee overrides aprobados y los aplica sobre la calibración activa.
+    No rompe si el archivo no existe, está mal formado, o el estado no es 'aprobada'.
+    """
+    import json, os
+
+    if not os.path.exists(path):
+        return None
+
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+    except (json.JSONDecodeError, OSError) as e:
+        print(f"[WARN] No se pudo leer {path}: {e}")
+        return None
+
+    if data.get("estado") != "aprobada":
+        print(f"[INFO] parametros_aprobados.json existe pero estado='{data.get('estado')}', se ignora")
+        return None
+
+    return data.get("overrides", {})
+
 # ==================== CONFIGURACIÓN ====================
 @dataclass
 class Config:
@@ -132,10 +156,11 @@ def matrizMarcadores(lambda_local: float, lambda_visita: float, max_goles: int =
 def sumaMatriz(matriz, max_goles, condicion):
     """Suma elementos de matriz que satisfacen una condición"""
     s = 0.0
+    getter = matriz['get']
     for i in range(max_goles + 1):
         for j in range(max_goles + 1):
             if condicion(i, j):
-                s += matriz.get(i, j)
+                s += getter(i, j)
     return s
 
 def verificarMercado(categoria, parametros, goles_local, goles_visita):
@@ -181,6 +206,27 @@ class ModeloEstadistico:
     def __init__(self, config: Config):
         self.config = config
         self.calibracion_actual = self._calibracionPorDefecto()
+
+        overrides = cargar_parametros_aprobados()
+
+        if overrides:
+            calibracion = overrides.get("calibracion", {})
+            if "factorLocalia" in calibracion:
+                self.calibracion_actual["factorLocalia"] = calibracion["factorLocalia"]
+            if "rhoDixonColes" in calibracion:
+                self.calibracion_actual["rhoDixonColes"] = calibracion["rhoDixonColes"]
+            if "porLiga" in calibracion:
+                self.calibracion_actual["porLiga"] = calibracion["porLiga"]
+            if "porCategoria" in calibracion:
+                self.calibracion_actual["porCategoria"] = calibracion["porCategoria"]
+
+            mult = overrides.get("multiplicadoresAjuste", {})
+            if "ewma" in mult:
+                self.calibracion_actual["multEWMA"] = mult["ewma"]
+            if "h2h" in mult:
+                self.calibracion_actual["multH2H"] = mult["h2h"]
+
+            self.calibracion_actual["platt"] = overrides.get("platt", {})
     
     def _calibracionPorDefecto(self):
         return {
