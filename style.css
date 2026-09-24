@@ -3991,6 +3991,16 @@ input {
   flex-shrink: 0;
 }
 
+/* Estado vacío del gauge: explica qué falta en vez de dejar "SIN DATOS" huérfano */
+.health-gauge-nota {
+  margin: -4px auto 0;
+  max-width: 26ch;
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 0.72rem;
+  line-height: 1.45;
+}
+
 .health-gauge {
   width: 100%;
   height: auto;
@@ -5914,6 +5924,13 @@ body.home-mode #vista-inicio .dash-header-sub {
   transform: translateY(0);
 }
 
+/* Apertura explícita por JS: :focus-within no basta en Safari/toque */
+.dash-perfil-wrap.abierta .dash-perfil-panel {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
 .dash-perfil-item {
   padding: 8px 10px;
   text-align: left;
@@ -5932,8 +5949,8 @@ body.home-mode #vista-inicio .dash-header-sub {
 /* --- KPIs SUPERIORES --- */
 body.home-mode #vista-inicio .dash-kpis {
   display: grid;
-  /* Las 4 tarjetas KPI siempre en UNA sola fila horizontal */
-  grid-template-columns: repeat(4, 1fr);
+  /* Las 3 tarjetas KPI siempre en UNA sola fila horizontal */
+  grid-template-columns: repeat(3, 1fr);
   gap: 16px;
   margin: 0;
   padding: 12px 0;
@@ -5999,6 +6016,13 @@ body.home-mode #vista-inicio .dash-kpi-accion:focus-visible {
   background: rgba(255, 155, 176, 0.1);
   border-color: rgba(255, 155, 176, 0.24);
   color: #ff9bb0;
+}
+
+/* Chip en estado vacío: sin datos verificados todavía (nunca "Óptimo" inventado) */
+.dash-kpi-chip.neutral {
+  background: rgba(148, 170, 199, 0.1);
+  border-color: rgba(148, 170, 199, 0.26);
+  color: var(--text-dim);
 }
 
 .dash-kpi-label {
@@ -6158,7 +6182,7 @@ body.home-mode #vista-inicio .dash-seccion { padding: 12px 0; margin: 0; }
 
 /* --- RESPONSIVE DEL DASHBOARD --- */
 @media (max-width: 1180px) {
-  /* Los 4 KPIs siguen en una sola fila: solo se compactan espacios y tipografía */
+  /* Los 3 KPIs siguen en una sola fila: solo se compactan espacios y tipografía */
   body.home-mode #vista-inicio .dash-kpis { gap: 12px; }
   body.home-mode #vista-inicio .dash-kpi { padding: 11px 12px 10px; }
   .dash-kpi-valor { font-size: 1.4rem; }
@@ -6224,7 +6248,7 @@ body.home-mode #vista-inicio .dash-seccion { padding: 12px 0; margin: 0; }
   .dash-perfil-datos { display: none; }
 
   body.home-mode #vista-inicio .dash-kpis {
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 8px;
   }
 
@@ -6245,9 +6269,9 @@ body.home-mode #vista-inicio .dash-seccion { padding: 12px 0; margin: 0; }
 }
 
 @media (max-width: 440px) {
-  /* Las 4 tarjetas KPI se mantienen en UNA sola fila también en móvil */
+  /* Las 3 tarjetas KPI se mantienen en UNA sola fila también en móvil */
   body.home-mode #vista-inicio .dash-kpis {
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 6px;
   }
 
@@ -6354,6 +6378,12 @@ body.home-mode #vista-inicio .dash-plegable .health-card {
 }
 
 body.home-mode #vista-inicio .dash-plegable .health-metric { gap: 10px; }
+
+/* El contenedor del gauge acompaña al SVG reducido: sin aire muerto debajo */
+body.home-mode #vista-inicio .dash-plegable .health-grande {
+  width: 116px;
+  height: 116px;
+}
 
 body.home-mode #vista-inicio .dash-plegable .health-grande svg {
   width: 116px;

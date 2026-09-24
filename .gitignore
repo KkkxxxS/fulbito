@@ -44,6 +44,9 @@ coverage/
 test-output/
 *.local
 
+# Capturas/artefactos de validación visual (scratch local, no es código)
+_shots/
+
 # Python cache
 __pycache__/
 *.pyc

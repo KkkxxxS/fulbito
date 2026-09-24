@@ -125,12 +125,12 @@
     <div class="dash-sidebar-pie">
         <div class="dash-pie-bloque">
             <span class="dash-pie-label" data-i18n="pieSalud">Salud del motor</span>
-            <strong class="dash-pie-valor" id="sidebar-salud">81%</strong>
-            <div class="dash-pie-barra"><span id="sidebar-salud-barra" style="width:81%;"></span></div>
+            <strong class="dash-pie-valor" id="sidebar-salud">—</strong>
+            <div class="dash-pie-barra"><span id="sidebar-salud-barra" style="width:0%;"></span></div>
         </div>
         <div class="dash-pie-fila">
             <span data-i18n="pieBrier">Brier</span>
-            <strong id="sidebar-brier">0.17</strong>
+            <strong id="sidebar-brier">—</strong>
         </div>
         <div class="dash-pie-fila">
             <span data-i18n="piePicks">Picks auditados</span>
@@ -152,26 +152,16 @@
         <div class="dash-header">
         <div class="dash-header-saludo">
             <p class="dash-eyebrow" data-i18n="eyebrow">Panel de control</p>
-            <h2 id="hero-saludo" class="dashboard-title" style="font-size: 1.5rem !important; line-height: 1.3 !important; margin: 0 0 12px 0 !important;">Hola, Usuario — Tu centro de inteligencia predictiva</h2>
-            <p class="dash-header-sub" data-i18n="sub">Modelo Poisson + Dixon-Coles con calibración y Brier Score auditables.</p>
+            <h2 id="hero-saludo" class="dashboard-title" style="font-size: 1.15rem !important; line-height: 1.25 !important; margin: 0 0 6px 0 !important;">Hola, Usuario</h2>
+            <p class="dash-header-sub" data-i18n="sub">Poisson + Dixon-Coles · Brier auditable.</p>
         </div>
         <div class="dash-header-acciones">
             <div class="dash-buscador">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
                 <input type="search" id="input-busqueda-dash" placeholder="Buscar equipo o liga…" oninput="sincronizarBusquedaDashboard(this.value)">
             </div>
-            <button class="dash-icono-btn" id="btn-notificaciones" onclick="mostrarNotificaciones(event)" title="Alertas del motor" aria-label="Notificaciones">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
-                <span class="dash-badge-notif" id="notif-contador" style="display:none;">0</span>
-            </button>
-            <button class="dash-icono-btn" id="btn-tema" onclick="alternarTema()" title="Cambiar tema (claro / oscuro)" aria-label="Cambiar tema">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
-            </button>
-            <button class="dash-icono-btn dash-idioma" id="btn-idioma" onclick="alternarIdioma()" title="Cambiar idioma (ES / EN)" aria-label="Cambiar idioma">
-                <span id="idioma-actual">ES</span>
-            </button>
             <div class="dash-perfil-wrap">
-                <button class="dash-perfil" id="btn-perfil" type="button" title="Perfil y ajustes" aria-haspopup="true" aria-label="Perfil de usuario">
+                <button class="dash-perfil" id="btn-perfil" type="button" onclick="alternarPerfil(event)" aria-expanded="false" title="Perfil y ajustes" aria-haspopup="true" aria-label="Perfil de usuario">
                     <span class="dash-perfil-avatar" id="perfil-avatar" aria-hidden="true">U</span>
                     <span class="dash-perfil-datos">
                         <strong id="perfil-nombre">Usuario</strong>
@@ -192,28 +182,15 @@
     <div class="dash-kpis">
         <article class="dash-kpi">
             <div class="dash-kpi-top">
-                <span class="dash-kpi-icono verde">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg>
-                </span>
-                <span class="dash-kpi-chip" id="kpi-salud-chip">Óptimo</span>
-            </div>
-            <span class="dash-kpi-label" data-i18n="kpiSalud">Salud del motor <span class="dash-tip" data-tip="Derivada del Brier Score: 100 − (Brier × 90). Mide qué tan bien calibradas están las probabilidades.">?</span></span>
-            <strong class="dash-kpi-valor" id="kpi-salud">81%</strong>
-            <span class="dash-kpi-pie" id="kpi-brier">Brier Score 0.17</span>
-            <div class="dash-kpi-barra"><span id="kpi-salud-barra" style="width:81%;"></span></div>
-        </article>
-
-        <article class="dash-kpi">
-            <div class="dash-kpi-top">
                 <span class="dash-kpi-icono cyan">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="0.6" fill="currentColor"/></svg>
                 </span>
-                <span class="dash-kpi-chip" id="kpi-aciertos-chip">Histórico</span>
+                <span class="dash-kpi-chip neutral" id="kpi-aciertos-chip">Sin datos</span>
             </div>
             <span class="dash-kpi-label" data-i18n="kpiAciertos">Aciertos <span class="dash-tip" data-tip="% de mercados acertados sobre picks ya liquidados contra el resultado real.">?</span></span>
-            <strong class="dash-kpi-valor" id="kpi-aciertos">74%</strong>
-            <span class="dash-kpi-pie" id="kpi-verificados">Histórico auditado</span>
-            <div class="dash-kpi-barra"><span id="kpi-aciertos-barra" style="width:74%;"></span></div>
+            <strong class="dash-kpi-valor" id="kpi-aciertos">—</strong>
+            <span class="dash-kpi-pie" id="kpi-verificados">Sin datos todavía</span>
+            <div class="dash-kpi-barra"><span id="kpi-aciertos-barra" style="width:0%;"></span></div>
         </article>
 
         <article class="dash-kpi">
@@ -236,8 +213,8 @@
                 <span class="dash-kpi-chip rosa" data-i18n="kpiHoyChip">Ver</span>
             </div>
             <span class="dash-kpi-label" data-i18n="kpiHoy">Predicciones hoy <span class="dash-tip" data-tip="Recomendaciones activas del motor para la jornada de hoy (9 mercados por partido).">?</span></span>
-            <strong class="dash-kpi-valor" id="kpi-hoy">∞</strong>
-            <span class="dash-kpi-pie" id="kpi-hoy-pie">9 mercados por partido</span>
+            <strong class="dash-kpi-valor" id="kpi-hoy">…</strong>
+            <span class="dash-kpi-pie" id="kpi-hoy-pie">Cargando la jornada de hoy…</span>
         </article>
     </div>
 
@@ -379,6 +356,7 @@
                             <text id="salud-gauge-estado" x="60" y="74" text-anchor="middle" font-family="var(--font-mono)" font-weight="600" font-size="8.5" fill="#70839a" letter-spacing="1">SIN DATOS</text>
                         </svg>
                     </div>
+                    <p class="health-gauge-nota" id="salud-gauge-nota">Se activa después del primer partido verificado</p>
                     <div class="health-stats">
                         <div class="health-stat"><span class="health-stat-dot verde"></span><span id="salud-stat-brier">Brier —</span></div>
                         <div class="health-stat"><span class="health-stat-dot cyan"></span><span id="salud-stat-picks">0 picks</span></div>
@@ -573,22 +551,22 @@
         <div class="telemetria-card">
             <div class="telemetria-card-top">
                 <span class="telemetria-icon">⚙️</span>
-                <span class="telemetria-badge ok">Calibrado</span>
+                <span class="telemetria-badge warn" id="telemetria-salud-badge">Sin datos</span>
             </div>
-            <strong class="telemetria-valor" id="telemetria-salud">81%</strong>
+            <strong class="telemetria-valor" id="telemetria-salud">—</strong>
             <span class="telemetria-label">Salud del motor</span>
-            <div class="telemetria-progreso"><div class="telemetria-progreso-fill" style="width:81%"></div></div>
+            <div class="telemetria-progreso"><div class="telemetria-progreso-fill" id="telemetria-salud-fill" style="width:0%"></div></div>
             <small class="telemetria-sub">Precisión ponderada global</small>
         </div>
 
         <div class="telemetria-card">
             <div class="telemetria-card-top">
                 <span class="telemetria-icon">🎯</span>
-                <span class="telemetria-badge info">Óptimo</span>
+                <span class="telemetria-badge warn" id="telemetria-brier-badge">Sin datos</span>
             </div>
-            <strong class="telemetria-valor" id="telemetria-brier">0.17</strong>
+            <strong class="telemetria-valor" id="telemetria-brier">—</strong>
             <span class="telemetria-label">Brier Score</span>
-            <div class="telemetria-progreso"><div class="telemetria-progreso-fill" style="width:72%; background:linear-gradient(90deg, #0284c7, #38bdf8);"></div></div>
+            <div class="telemetria-progreso"><div class="telemetria-progreso-fill" id="telemetria-brier-fill" style="width:0%; background:linear-gradient(90deg, #0284c7, #38bdf8);"></div></div>
             <small class="telemetria-sub">0.00 = perfección · 0.25 = azar</small>
         </div>
 
@@ -733,7 +711,6 @@
         <button class="landing-primary" onclick="abrirModalArmarCombinada()">
             <span data-i18n="doblesManual">Armar combinada manual</span>
         </button>
-        <button class="dash-boton-suave" onclick="generarDoblesDelDia()" id="btn-generar-dobles" data-i18n="doblesGenerar">Recalcular con la jornada de hoy</button>
     </div>
     <div id="contenedor-dobles" class="dash-live-lista"></div>
 </section>
@@ -759,6 +736,30 @@
 
   let ligaSeleccionada = 'TODAS';
   let partidosDelRango = [];
+  // KPI "Predicciones hoy": null = aún sin cargar; Number = partidos con fecha local de hoy.
+  let partidosDeHoy = null;
+  // El backend no respondió: lo que se ve en pantalla son datos demo, no la jornada real.
+  let kpiHoyModoDemo = false;
+
+  function actualizarKpiHoy() {
+    const setTxt = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
+    if (kpiHoyModoDemo) {
+      // Sin servidor no podemos afirmar cuántos partidos hay hoy: no inventamos el número.
+      setTxt('kpi-hoy', '—');
+      setTxt('kpi-hoy-pie', 'Sin conexión con el servidor · datos demo');
+    } else if (partidosDeHoy === null) {
+      setTxt('kpi-hoy', '…');
+      setTxt('kpi-hoy-pie', 'Cargando la jornada de hoy…');
+    } else if (partidosDeHoy === 0) {
+      setTxt('kpi-hoy', '0');
+      setTxt('kpi-hoy-pie', 'No hay partidos programados para hoy');
+    } else {
+      setTxt('kpi-hoy', String(partidosDeHoy));
+      setTxt('kpi-hoy-pie', partidosDeHoy === 1
+        ? 'partido con pronóstico hoy · 9 mercados'
+        : 'partidos con pronóstico hoy · 9 mercados');
+    }
+  }
 
   // ============ SALUDO DINÁMICO SEGÚN LA HORA LOCAL DEL USUARIO ============
   // Saludo genérico por hora (mañana / tarde / noche) + nombre opcional desde
@@ -779,7 +780,7 @@
     } catch (e) { /* localStorage bloqueado: usamos el genérico */ }
 
     const el = document.getElementById('hero-saludo');
-    if (el) el.textContent = `${saludo}, ${nombre} — Tu centro de inteligencia predictiva`;
+    if (el) el.textContent = `${saludo}, ${nombre}`;
 
     // El chip de perfil muestra solo avatar + nombre (sin badge de plan).
     const nombrePerfil = document.getElementById('perfil-nombre');
@@ -858,6 +859,44 @@
     if (nav) nav.classList.remove('menu-abierto');
   }
 
+// ============ HEADER: notificaciones/tema/idioma ocultos a propósito ============
+// - Campana: requiere backend de alertas que no existe → se quitó del DOM.
+// - Luna (tema): no hay CSS de tema claro en el repo y rediseñar la paleta
+//   está fuera de alcance → se quitó del DOM.
+// - ES/EN: no hay sistema i18n implementado (solo atributos data-i18n huérfanos)
+//   → se quitó del DOM.
+// Mientras exista un elemento con apariencia de botón debe responder al click.
+
+  // ============ PERFIL (dropdown del header) ============
+  // Antes solo existía el CSS (:focus-within) y en varios navegadores/toque
+  // el click no enfocaba el botón, así que el panel nunca aparecía.
+  function alternarPerfil(event) {
+    if (event) event.stopPropagation();
+    const wrap = document.querySelector('.dash-perfil-wrap');
+    if (!wrap) return;
+    const abierto = wrap.classList.toggle('abierta');
+    const btn = document.getElementById('btn-perfil');
+    if (btn) btn.setAttribute('aria-expanded', abierto ? 'true' : 'false');
+  }
+
+  function cerrarPerfil() {
+    const wrap = document.querySelector('.dash-perfil-wrap');
+    if (!wrap || !wrap.classList.contains('abierta')) return;
+    wrap.classList.remove('abierta');
+    const btn = document.getElementById('btn-perfil');
+    if (btn) btn.setAttribute('aria-expanded', 'false');
+  }
+
+  document.addEventListener('click', (e) => {
+    const wrap = document.querySelector('.dash-perfil-wrap');
+    if (!wrap) return;
+    // Clic afuera → cerrar. Clic en un ítem del menú → cerrar tras actuar.
+    if (!wrap.contains(e.target) || e.target.closest('.dash-perfil-item')) cerrarPerfil();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') cerrarPerfil();
+  });
+
   // ============ BUSQUEDA ============
   let terminoBusqueda = '';
 
@@ -870,6 +909,30 @@
     else if (vistaActual === 'favoritos') renderizarFavoritos();
     else if (vistaActual === 'analitica') { const h = leerHistorial(); renderHistorial(calcularEstadisticasHistorial(h), h); }
     else if (vistaActual === 'historial') { renderHistorialCompleto(leerHistorial()); }
+  }
+
+  // Los dos inputs del header/vista escriben en el MISMO estado de búsqueda.
+  function sincronizarBusquedaDashboard(valor) {
+    const sidebar = document.getElementById('input-busqueda');
+    if (sidebar && sidebar.value !== valor) sidebar.value = valor;
+    // En vistas sin listado, saltar a Pronosticos para que el filtro sea visible.
+    if (!['pronosticos', 'favoritos', 'analitica', 'historial'].includes(vistaActual)) {
+      cambiarVista('pronosticos');
+    }
+    onBuscar(valor);
+  }
+
+  function onBuscarIntegrado(valor) {
+    const sidebar = document.getElementById('input-busqueda');
+    if (sidebar && sidebar.value !== valor) sidebar.value = valor;
+    onBuscar(valor);
+  }
+
+  function enfocarBuscador(event) {
+    if (event) event.preventDefault();
+    const candidatos = [document.getElementById('input-busqueda-dash'), document.getElementById('input-busqueda')];
+    const visible = candidatos.find(el => el && el.offsetParent !== null);
+    if (visible) visible.focus();
   }
 
   function coincideBusqueda(partido) {
@@ -906,48 +969,87 @@
       badge.style.display = n > 0 ? 'inline-flex' : 'none';
       badge.textContent = n;
     }
-
-    const favoritosHome = document.getElementById('hero-favoritos-guardados');
-    if (favoritosHome) favoritosHome.textContent = n;
   }
 
-  function actualizarKPIsHome() {
-    // Nota: leerHistorial() ya incluye el merge con el pool global del servidor
-    // (cargarHistorialCompartido fusiona el remoto en localStorage). Por tanto,
-    // el "Track record del motor" mostrado aquí combina historial global + local.
-    let historial = [];
-    try { historial = leerHistorial() || []; } catch (e) { historial = []; }
+  // ============ SALUD DEL MOTOR: ESTADO ÚNICO (fuente de verdad) ============
+  // UNA sola función calcula el estado y UNA sola lo pinta en todos los
+  // lugares: KPI superior, sidebar, sección "Salud del motor Fulbito" y
+  // telemetría de Analítica. Fuente única: leerHistorial(), que tras
+  // cargarHistorialCompartido() refleja el pool verificado del servidor
+  // (la misma fuente que audita recalibracion.py). Con 0 partidos verificados,
+  // TODOS los lugares muestran "Sin datos todavía" — nunca números inventados.
+  function calcularEstadoSalud() {
+    const historial = leerHistorial();
     let stats = null, brier = null;
     try { stats = calcularEstadisticasHistorial(historial); } catch (e) { stats = null; }
     try { brier = calcularBrierScore(historial); } catch (e) { brier = null; }
+    const conDatos = !!(stats && stats.totalVerificados > 0);
+    const brierNum = (brier && typeof brier.brier === 'number') ? brier.brier : null;
+    const pct = conDatos ? stats.general : null;
+    const salud = conDatos
+      ? (brierNum !== null ? Math.max(0, Math.min(100, Math.round(100 - (brierNum * 90)))) : pct)
+      : null;
+    return {
+      conDatos, salud, pct, brierNum,
+      totalVerificados: conDatos ? stats.totalVerificados : 0,
+      stats: conDatos ? stats : null
+    };
+  }
 
+  function pintarSaludMotor(e) {
     const setTxt = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
     const setWidth = (id, pct) => { const el = document.getElementById(id); if (el) el.style.width = pct; };
+    const setAttr = (id, attr, val) => { const el = document.getElementById(id); if (el) el.setAttribute(attr, val); };
+    const setChip = (id, vacio) => { const el = document.getElementById(id); if (el) el.classList.toggle('neutral', vacio); };
+    const chipSalud = e.salud === null ? 'Sin datos' : (e.salud >= 80 ? 'Óptimo' : e.salud >= 60 ? 'Estable' : 'En revisión');
+    const brierTxt = e.brierNum !== null ? e.brierNum.toFixed(2) : '—';
 
-    const tieneDatos = !!(stats && stats.totalVerificados > 0);
-    const pctAciertos = tieneDatos ? stats.general : null;
-    const totalVerif = tieneDatos ? stats.totalVerificados : 0;
-    const brierTxt = (brier && typeof brier.brier === 'number') ? brier.brier.toFixed(2) : '—';
-    const salud = (brier && typeof brier.brier === 'number')
-      ? Math.max(0, Math.min(100, Math.round(100 - (brier.brier * 90))))
-      : (tieneDatos ? stats.general : null);
+    // Aciertos (la "Salud del motor" vive solo en sidebar + sección inferior)
+    setTxt('kpi-aciertos', e.pct !== null ? `${e.pct}%` : '—');
+    setTxt('kpi-aciertos-chip', e.conDatos ? 'Histórico' : 'Sin datos'); setChip('kpi-aciertos-chip', !e.conDatos);
+    setTxt('kpi-verificados', e.conDatos ? `${e.totalVerificados} verificados` : 'Sin datos todavía');
+    setWidth('kpi-aciertos-barra', e.pct !== null ? `${e.pct}%` : '0%');
 
-    // Salud del motor
-    setTxt('kpi-salud', salud !== null ? `${salud}%` : '—');
-    setTxt('kpi-brier', tieneDatos || brierTxt !== '—' ? `Brier Score ${brierTxt}` : 'Brier Score —');
-    if (salud !== null) setWidth('kpi-salud-barra', `${salud}%`);
-    // Aciertos
-    setTxt('kpi-aciertos', pctAciertos !== null ? `${pctAciertos}%` : '—');
-    setTxt('kpi-verificados', totalVerif > 0 ? `${totalVerif} verificados` : 'Sin datos verificados');
-    if (pctAciertos !== null) setWidth('kpi-aciertos-barra', `${pctAciertos}%`);
-    // Predicciones hoy (placeholder honesto)
-    setTxt('kpi-hoy', '—');
-    setTxt('kpi-hoy-pie', '9 mercados por partido');
+    // Sidebar (referencia rápida)
+    setTxt('sidebar-salud', e.salud !== null ? `${e.salud}%` : '—');
+    setWidth('sidebar-salud-barra', e.salud !== null ? `${e.salud}%` : '0%');
+    setTxt('sidebar-brier', brierTxt);
+    setTxt('sidebar-picks', String(e.totalVerificados));
 
-    // Favoritos (IDs nuevos hero-* y antiguo kpi-favoritos)
+    // Sección "Salud del motor Fulbito" (detalle expandido)
+    setTxt('salud-gauge-texto', e.salud !== null ? `${e.salud}%` : '—');
+    setTxt('salud-gauge-estado', e.conDatos ? chipSalud.toUpperCase() : 'SIN DATOS');
+    setAttr('salud-gauge-arco', 'stroke-dasharray', e.salud !== null ? `${e.salud} 100` : '0 100');
+    setTxt('salud-stat-brier', `Brier ${brierTxt}`);
+    setTxt('salud-stat-picks', `${e.totalVerificados} picks`);
+    const gaugeNota = document.getElementById('salud-gauge-nota');
+    if (gaugeNota) gaugeNota.style.display = e.conDatos ? 'none' : '';
+    const lista = document.getElementById('salud-mercados-lista');
+    if (lista) {
+      if (e.stats && e.stats.categorias.length) {
+        lista.innerHTML = e.stats.categorias.map(c => {
+          const nivel = c.porcentaje >= 80 ? 'alto' : c.porcentaje >= 60 ? 'bueno' : 'media';
+          const nivelTxt = nivel === 'alto' ? 'Alta' : nivel === 'bueno' ? 'Media' : 'Baja';
+          return `<div class="health-mercado-item">
+            <span class="health-mercado-nombre">${c.titulo}<span class="health-mercado-nivel ${nivel}">${nivelTxt}</span></span>
+            <div class="health-barra"><div style="width:${Math.min(100, c.porcentaje)}%"></div></div>
+            <span class="health-mercado-valor">${c.porcentaje}%</span>
+          </div>`;
+        }).join('');
+      } else {
+        lista.innerHTML = '<p class="health-sub" style="margin:0;">Sin mercados verificados todavía.</p>';
+      }
+    }
+  }
+
+  function actualizarKPIsHome() {
+    pintarSaludMotor(calcularEstadoSalud());
+    const setTxt = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
+    actualizarKpiHoy();
+
+    // Favoritos: el número vive en el KPI "Tus favoritos" (tarjeta del inicio)
     let nFav = 0;
     try { nFav = leerFavoritos().length; } catch (e) { nFav = 0; }
-    setTxt('hero-favoritos-guardados', String(nFav));
     setTxt('kpi-favoritos', String(nFav));
   }
 
@@ -2640,21 +2742,24 @@
       const respuesta = await fetch(`${BACKEND_URL}/api/historial`);
       if (!respuesta.ok) return;
       const datos = await respuesta.json();
-      const remoto = Array.isArray(datos.historial) ? datos.historial : [];
+      // Si la respuesta no trae la lista esperada, no tocamos nada (mejor
+      // conservar lo local que borrar historial por una respuesta inválida).
+      if (!Array.isArray(datos.historial)) return;
+      const remoto = datos.historial;
       const local = leerHistorialLocal();
-      // Merge: priorizar remoto (la fuente de verdad), pero incorporar entradas
-      // locales más nuevas que el remoto no tenga todavía (migración de dispositivos
-      // o recuperación tras limpieza de caché).
+      // El pool del servidor es la fuente de verdad de lo VERIFICADO (es lo
+      // que audita recalibracion.py). Un pick verificado local que el servidor
+      // no conoce es huérfano de un pool anterior (p. ej. redeploy del backend):
+      // se descarta para que la UI muestre el estado real (hoy: 0 verificados)
+      // y para no re-sembrar el pool con datos viejos. Los picks locales
+      // pendientes (verificado: false) sí se conservan y se suben.
       const idsRemotos = new Set(remoto.map(h => h.partidoId));
-      const soloLocal = local.filter(h => !idsRemotos.has(h.partidoId));
+      const soloLocal = local.filter(h => !idsRemotos.has(h.partidoId) && !h.verificado);
       const fusionado = [...remoto, ...soloLocal].slice(-200);
-      // Si el local tenía algo que el remoto no, subimos el merge.
       if (soloLocal.length > 0) {
         sincronizarHistorialRemoto(fusionado);
       }
-      if (fusionado.length > 0) {
-        localStorage.setItem(CLAVE_HISTORIAL, JSON.stringify(fusionado));
-      }
+      localStorage.setItem(CLAVE_HISTORIAL, JSON.stringify(fusionado));
       localStorage.setItem(CLAVE_HISTORIAL_SINCRO, String(Date.now()));
       historialSincronizadoEnSesion = true;
     } catch (e) {
@@ -3001,21 +3106,34 @@
   }
 
   function actualizarTelemetriaAnalitica() {
+    // Mismo estado único que el dashboard (fuente de verdad única).
+    const e = calcularEstadoSalud();
     const historial = leerHistorial();
-    const stats = calcularEstadisticasHistorial(historial);
-    const brier = calcularBrierScore(historial);
     const saludEl = document.getElementById('telemetria-salud');
     const brierEl = document.getElementById('telemetria-brier');
+    const badgeSalud = document.getElementById('telemetria-salud-badge');
+    const badgeBrier = document.getElementById('telemetria-brier-badge');
+    const fillSalud = document.getElementById('telemetria-salud-fill');
+    const fillBrier = document.getElementById('telemetria-brier-fill');
     const muestrasEl = document.getElementById('telemetria-muestras');
     const faltanTxt = document.getElementById('telemetria-faltan-txt');
     const barra = document.getElementById('telemetria-progreso-barra');
 
-    if (brier && typeof brier.brier === 'number') {
-      const salud = Math.max(0, Math.min(100, Math.round(100 - (brier.brier * 90))));
-      if (saludEl) saludEl.textContent = `${salud}%`;
-      if (brierEl) brierEl.textContent = brier.brier.toFixed(2);
-    } else if (stats && typeof stats.general === 'number') {
-      if (saludEl) saludEl.textContent = `${stats.general}%`;
+    if (saludEl) saludEl.textContent = e.salud !== null ? `${e.salud}%` : '—';
+    if (brierEl) brierEl.textContent = e.brierNum !== null ? e.brierNum.toFixed(2) : '—';
+    if (badgeSalud) {
+      badgeSalud.textContent = e.conDatos ? 'Calibrado' : 'Sin datos';
+      badgeSalud.className = 'telemetria-badge ' + (e.conDatos ? 'ok' : 'warn');
+    }
+    if (badgeBrier) {
+      badgeBrier.textContent = e.conDatos ? 'Óptimo' : 'Sin datos';
+      badgeBrier.className = 'telemetria-badge ' + (e.conDatos ? 'info' : 'warn');
+    }
+    if (fillSalud) fillSalud.style.width = e.salud !== null ? `${e.salud}%` : '0%';
+    if (fillBrier) {
+      fillBrier.style.width = e.brierNum !== null
+        ? `${Math.max(0, Math.min(100, Math.round((1 - e.brierNum / 0.25) * 100)))}%`
+        : '0%';
     }
 
     const c = calibracionActual;
@@ -3773,7 +3891,10 @@
     let partidos = await obtenerPartidos(fechaInicio, fechaFin);
     clearTimeout(avisoDespertar);
 
-    if (partidos.error) {
+    // obtenerPartidos devuelve PARTIDOS_FALLBACK cuando el backend no responde:
+    // eso es contenido demo (fechas fijas), no la jornada real.
+    const usandoDemo = !Array.isArray(partidos) || partidos === PARTIDOS_FALLBACK;
+    if (!Array.isArray(partidos)) {
       partidos = PARTIDOS_FALLBACK;
     }
 
@@ -3785,6 +3906,15 @@
     }
 
     partidosDelRango = partidos;
+    if (tipoFecha === 'hoy') {
+      // La vista y el KPI leen de la misma lista, con el mismo criterio de fecha:
+      // solo cuentan los partidos cuya fecha local es hoy.
+      kpiHoyModoDemo = usandoDemo;
+      partidosDeHoy = usandoDemo
+        ? null
+        : partidos.filter(p => fechaLocalDePartido(p.utcDate) === diaObjetivo).length;
+      actualizarKpiHoy();
+    }
     ligaSeleccionada = 'TODAS';
     renderFiltroLigas();
     await renderizarPartidosFiltrados();
@@ -3942,7 +4072,7 @@
     renderFiltroLigas();
   }
 
-  cargarHistorialCompartido();
+  cargarHistorialCompartido().finally(() => actualizarKPIsHome());
   actualizarContadorFavoritos();
   actualizarContadorMisPredicciones();
   actualizarKPIsHome();
