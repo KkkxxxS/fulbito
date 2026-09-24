@@ -3178,6 +3178,27 @@ input {
 }
 .aviso-servidor strong { color: var(--luxury); }
 
+/* ===== Aviso de datos demo (backend caído) ===== */
+/* Banner honesto arriba de la lista: las tarjetas son PARTIDOS_FALLBACK, no la jornada real. */
+.aviso-datos-demo {
+  display: flex; align-items: flex-start; gap: var(--sp-3);
+  text-align: left;
+  padding: 14px 16px;
+  border: 1px solid rgba(242, 196, 116, 0.30);
+  border-radius: var(--radius);
+  background: linear-gradient(180deg, rgba(242, 196, 116, 0.10), rgba(11, 16, 22, 0.55));
+  box-shadow: var(--shadow-card);
+}
+.aviso-datos-demo-icono { font-size: 1rem; line-height: 1.5; flex-shrink: 0; }
+.aviso-datos-demo-texto strong {
+  display: block; color: var(--gold);
+  font-size: 0.86rem; font-weight: 700; letter-spacing: 0.01em;
+}
+.aviso-datos-demo-texto p {
+  margin: 4px 0 0; color: var(--text-muted);
+  font-size: 0.83rem; line-height: 1.55; max-width: 68ch;
+}
+
 .historial-pendientes {
   margin: 18px auto 0;
   max-width: 540px;

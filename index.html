@@ -740,6 +740,9 @@
   let partidosDeHoy = null;
   // El backend no respondió: lo que se ve en pantalla son datos demo, no la jornada real.
   let kpiHoyModoDemo = false;
+  // Lo mismo para las listas: si el backend está caído, las tarjetas son PARTIDOS_FALLBACK
+  // y hay que avisarlo arriba de la lista (el número del KPI solo no alcanza).
+  let partidosModoDemo = false;
 
   function actualizarKpiHoy() {
     const setTxt = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
@@ -3666,6 +3669,21 @@
   }
 
   // ============ RENDER PRINCIPAL DE PARTIDOS ============
+
+  // Aviso honesto cuando la lista viene de PARTIDOS_FALLBACK (backend caído):
+  // sin esto, la pestaña "Hoy" mostraba tarjetas demo (06/09) sin decirlo.
+  function avisoDatosDemoHTML() {
+    return `
+      <div class="aviso-datos-demo" role="status">
+        <span class="aviso-datos-demo-icono" aria-hidden="true">⚠️</span>
+        <div class="aviso-datos-demo-texto">
+          <strong>Sin conexión con el servidor · datos demo</strong>
+          <p>No pudimos traer los partidos reales, así que lo que ves abajo son partidos de ejemplo (fechas fijas). Sus pronósticos muestran cómo funciona Fulbito, no la jornada de verdad.</p>
+        </div>
+      </div>
+    `;
+  }
+
   async function renderizarPartidosFiltrados() {
     const contenedor = document.getElementById('contenedor-partidos');
     contenedor.classList.remove('visible');
@@ -3686,18 +3704,21 @@
     });
 
     if (lista.length === 0) {
+      const esHoy = (typeof ultimaFechaCargada !== 'undefined' && ultimaFechaCargada === 'hoy');
       const esManana = (typeof ultimaFechaCargada !== 'undefined' && ultimaFechaCargada === 'manana');
       const mensaje = terminoBusqueda
         ? `No encontramos partidos que coincidan con "${terminoBusqueda}".`
         : filtroRapidoActual === 'favoritos'
         ? 'No tienes partidos de equipos favoritos programados para esta fecha.'
+        : esHoy
+        ? 'Hoy no hay partidos programados en las ligas que cubrimos. Probá con "Mañana" o "Esta semana".'
         : esManana
         ? 'No hay partidos programados para mañana en las ligas cubiertas. Probá con "Esta semana".'
         : 'No hay partidos para mostrar con este filtro.';
-      const accionManana = (!terminoBusqueda && esManana && filtroRapidoActual !== 'favoritos')
-        ? `<div style="margin-top:12px;"><button class="boton-reintentar" onclick="document.querySelectorAll('.pestaña')[2]?.click()">Ver Esta semana</button></div>`
+      const accionFecha = (!terminoBusqueda && filtroRapidoActual !== 'favoritos' && (esHoy || esManana))
+        ? `<div style="margin-top:12px;"><button class="boton-reintentar" onclick="document.querySelectorAll('.pestaña')[${esHoy ? 1 : 2}]?.click()">Ver ${esHoy ? 'Mañana' : 'Esta semana'}</button></div>`
         : '';
-      contenedor.innerHTML = `<div class="estado-vacio" style="text-align:center; color:#8fa896;"><p style="margin:0;">${mensaje}</p>${accionManana}</div>`;
+      contenedor.innerHTML = `${partidosModoDemo ? avisoDatosDemoHTML() : ''}<div class="estado-vacio" style="text-align:center; color:#8fa896;"><p style="margin:0;">${mensaje}</p>${accionFecha}</div>`;
       requestAnimationFrame(() => contenedor.classList.add('visible'));
       document.getElementById('bloque-combinadas').innerHTML = '';
       return;
@@ -3746,7 +3767,7 @@
       registrarPronostico(partido, pronosticos);
     }
 
-    contenedor.innerHTML = htmlFinal;
+    contenedor.innerHTML = (partidosModoDemo ? avisoDatosDemoHTML() : '') + htmlFinal;
     renderCombinadas(seleccionesParaCombinar);
 
         const historialActualizado = await actualizarHistorialYCalibracion();
@@ -3788,6 +3809,8 @@
   async function cargarFinalizados() {
     const contenedor = document.getElementById('contenedor-partidos');
     const contenedorCombinadas = document.getElementById('bloque-combinadas');
+    // Los finalizados no tienen respaldo demo: su error se muestra tal cual.
+    partidosModoDemo = false;
     contenedor.classList.remove('visible');
     contenedor.innerHTML = skeletonHTML();
     contenedorCombinadas.innerHTML = '';
@@ -3897,12 +3920,14 @@
     if (!Array.isArray(partidos)) {
       partidos = PARTIDOS_FALLBACK;
     }
+    partidosModoDemo = usandoDemo;
 
-    if (diaObjetivo && Array.isArray(partidos)) {
-      const filtrados = partidos.filter(p => fechaLocalDePartido(p.utcDate) === diaObjetivo);
-      if (filtrados.length > 0) {
-        partidos = filtrados;
-      }
+    // Con datos reales recortamos al día de la pestaña aunque quede vacío: si el rango
+    // [hoy, mañana] trae partidos de otro día, mostrarlos bajo "Hoy"/"Mañana" contradecía
+    // al KPI (que ya cuenta solo los partidos del día local). En modo demo no filtramos,
+    // para que el visitante vea igual las tarjetas de ejemplo (el aviso aclara que son demo).
+    if (diaObjetivo && Array.isArray(partidos) && !usandoDemo) {
+      partidos = partidos.filter(p => fechaLocalDePartido(p.utcDate) === diaObjetivo);
     }
 
     partidosDelRango = partidos;
@@ -3955,6 +3980,11 @@
     finConsulta.setDate(finConsulta.getDate() + 1);
 
     let partidos = await obtenerPartidos(formatearFecha(inicioConsulta), formatearFecha(finConsulta));
+    // Igual que en cargarPartidos: PARTIDOS_FALLBACK significa backend caído (datos demo).
+    partidosModoDemo = !Array.isArray(partidos) || partidos === PARTIDOS_FALLBACK;
+    if (!Array.isArray(partidos)) {
+      partidos = PARTIDOS_FALLBACK;
+    }
     if (partidos.error) {
       contenedor.innerHTML = `<p style="text-align:center; color:#ff6b6b;">Error: ${partidos.mensaje}</p>`;
       requestAnimationFrame(() => contenedor.classList.add('visible'));
@@ -3963,7 +3993,8 @@
 
     partidos = partidos.filter(p => fechaLocalDePartido(p.utcDate) === valor);
 
-    if (partidos.length === 0 && valor < formatearFecha(new Date())) {
+    // Sin servidor no podemos afirmar que esa fecha ya pasó: mostramos el aviso demo.
+    if (partidos.length === 0 && !partidosModoDemo && valor < formatearFecha(new Date())) {
       contenedor.innerHTML = `<p style="text-align:center; color:#8fa896;">Esa fecha ya pasó, así que esos partidos ya se jugaron (o ya no están programados). Elige hoy o una fecha futura para ver pronósticos, o mira la pestaña "Finalizados" para ver resultados verificados.</p>`;
       requestAnimationFrame(() => contenedor.classList.add('visible'));
       document.getElementById('bloque-combinadas').innerHTML = '';
@@ -4007,8 +4038,10 @@
       contenedor.innerHTML = `<p style="text-align:center; color:#ff6b6b;">Error: ${partidos.mensaje}</p>`;
       return;
     }
+    // Backend caído: los partidos son demo y la lista tiene que avisarlo.
+    partidosModoDemo = !Array.isArray(partidos) || partidos === PARTIDOS_FALLBACK;
 
-    partidosFavoritosCache = partidos.filter(p =>
+    partidosFavoritosCache = (Array.isArray(partidos) ? partidos : []).filter(p =>
       favoritos.includes(p.homeTeam.id) || favoritos.includes(p.awayTeam.id)
     );
 
@@ -4029,8 +4062,10 @@
     if (lista.length === 0) {
       const mensaje = terminoBusqueda
         ? `Ninguno de tus favoritos coincide con "${terminoBusqueda}".`
+        : partidosModoDemo
+        ? 'Sin conexión con el servidor no podemos confirmar si tus equipos favoritos juegan en los próximos 7 días.'
         : 'Tus equipos favoritos no juegan en los próximos 7 días.';
-      contenedor.innerHTML = `<p style="text-align:center; color:#8fa896;">${mensaje}</p>`;
+      contenedor.innerHTML = `${partidosModoDemo ? avisoDatosDemoHTML() : ''}<p style="text-align:center; color:#8fa896;">${mensaje}</p>`;
       return;
     }
 
@@ -4060,7 +4095,7 @@
       registrarPronostico(partido, pronosticos);
     }
 
-    contenedor.innerHTML = htmlFinal;
+    contenedor.innerHTML = (partidosModoDemo ? avisoDatosDemoHTML() : '') + htmlFinal;
   }
 
   // ============ INICIALIZACION ============
