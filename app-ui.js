@@ -9,7 +9,47 @@
     marcador: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg>'
   };
 
-  function iconoMercado(tipo) {
+  function renderDesignCard(partido, pronosticos, colorClass = 'green') {
+  const fecha = new Date(partido.utcDate);
+  const fechaTexto = fecha.toLocaleDateString('es-PE', { day: '2-digit', month: 'short' });
+  const horaTexto = fecha.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' });
+
+  const tiempo = tiempoHastaPartido(partido.utcDate);
+  const probMain = pronosticos.seleccionados[0]?.probabilidad || 0;
+
+  return `
+    <div class="design-card motion-card">
+      <div class="design-card-border ${colorClass}"></div>
+      <div class="design-card-header">
+        <span class="design-card-date">${fechaTexto} · ${horaTexto}</span>
+        <span class="design-card-countdown">${tiempo.texto}</span>
+      </div>
+      <div class="design-card-teams">
+        <div class="design-card-team">
+          <img src="${partido.homeTeam.crest}" alt="" onerror="this.style.display='none'">
+          <span>${partido.homeTeam.name}</span>
+        </div>
+        <span class="design-card-vs">VS</span>
+        <div class="design-card-team">
+          <img src="${partido.awayTeam.crest}" alt="" onerror="this.style.display='none'">
+          <span>${partido.awayTeam.name}</span>
+        </div>
+      </div>
+      <div class="design-card-footer">
+        <span class="design-card-league">${partido.competition.name}</span>
+        <div class="design-card-prob-container">
+          <span class="design-card-prob-label">Probabilidad</span>
+          <div class="design-card-prob-bar">
+            <div class="design-card-prob-fill" style="width: ${probMain}%"></div>
+          </div>
+          <span class="design-card-prob-val">${probMain}%</span>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function iconoMercado(tipo) {
     return `<span class="fila-icono">${ICONOS_MERCADO[tipo] || ''}</span>`;
   }
 
@@ -1162,7 +1202,14 @@
         const respPron = await fetch('pronosticos.json');
         const datosPron = respPron.ok ? await respPron.json() : null;
         const pronosticos = datosPron && datosPron.pronosticos ? datosPron.pronosticos[partido.id]?.pronosticos || datosPron.pronosticos[Object.keys(datosPron.pronosticos)[0]]?.pronosticos : null;
-        htmlFinal += crearTarjetaHTML(partido, pronosticos || { seleccionados: [], marcadorProbable: '-', probMarcador: 0, top3Marcadores: [], catalogoCompleto: [], combosPartido: [], favoritoLocal: false, nombreFavorito: '', sinNadaEnJuego: false, parametrosModelo: {} }, statsLocal, statsVisita, h2h, tabla);
+
+        // Use Premium Design Card for matches with high confidence (prob > 75%)
+        const isPremium = pronosticos?.seleccionados[0]?.probabilidad > 75;
+        const cardHTML = isPremium
+          ? renderDesignCard(partido, pronosticos, 'green')
+          : crearTarjetaHTML(partido, pronosticos || { seleccionados: [], marcadorProbable: '-', probMarcador: 0, top3Marcadores: [], catalogoCompleto: [], combosPartido: [], favoritoLocal: false, nombreFavorito: '', sinNadaEnJuego: false, parametrosModelo: {} }, statsLocal, statsVisita, h2h, tabla);
+        htmlFinal += cardHTML;
+
         const mejorSel = mejorSeleccionDePartido(partido, pronosticos);
         if (mejorSel) seleccionesParaCombinar.push(mejorSel);
         registrarPronostico(partido, pronosticos);

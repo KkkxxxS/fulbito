@@ -6604,3 +6604,154 @@ h1, .hero h1, .dashboard-title {
     margin-bottom: 12px !important;
     font-weight: 600 !important;
 }
+
+/* ============ DESIGN PREDICTION CARDS (PREMIUM) ============ */
+.design-card {
+  position: relative;
+  background: linear-gradient(180deg, rgba(20, 32, 48, 0.95), rgba(12, 18, 26, 0.98));
+  border: 1px solid rgba(173, 186, 202, 0.15);
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow: 0 20px 40px -20px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  overflow: hidden;
+  transition: transform 0.3s var(--ease), box-shadow 0.3s var(--ease), border-color 0.3s var(--ease);
+  cursor: pointer;
+}
+
+.design-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(123, 225, 200, 0.3);
+  box-shadow: 0 25px 50px -20px rgba(0, 0, 0, 0.8);
+}
+
+.design-card-border {
+  position: absolute;
+  left: 0;
+  top: 20px;
+  bottom: 20px;
+  width: 4px;
+  border-radius: 0 4px 4px 0;
+}
+
+.design-card-border.green { background: var(--green); box-shadow: 0 0 12px var(--green); }
+.design-card-border.gold { background: var(--gold); box-shadow: 0 0 12px var(--gold); }
+.design-card-border.rosa { background: var(--red); box-shadow: 0 0 12px var(--red); }
+
+.design-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.design-card-date {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.design-card-countdown {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--gold);
+  background: rgba(242, 196, 116, 0.1);
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(242, 196, 116, 0.2);
+}
+
+.design-card-teams {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.design-card-team {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.design-card-team img {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.4));
+}
+
+.design-card-team span {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.1rem;
+  color: var(--text);
+  text-align: center;
+}
+
+.design-card-vs {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  font-weight: 700;
+}
+
+.design-card-footer {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(173, 186, 202, 0.1);
+}
+
+.design-card-league {
+  display: block;
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+  font-weight: 500;
+}
+
+.design-card-prob-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.design-card-prob-label {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.design-card-prob-bar {
+  flex: 1;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 999px;
+  overflow: hidden;
+  position: relative;
+}
+
+.design-card-prob-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--green), var(--brand));
+  box-shadow: 0 0 10px rgba(100, 228, 169, 0.4);
+  transition: width 1s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.design-card-prob-val {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--text);
+  min-width: 40px;
+  text-align: right;
+}
+
