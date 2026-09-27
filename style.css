@@ -129,6 +129,32 @@
 .app-nav, .modal-overlay, .tooltip-icono, .partido-card, .fila-mercado {
   will-change: transform;
 }
+
+/* ============ GLOW CARD SPOTLIGHT EFFECT ============ */
+.glow-card {
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.glow-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle at var(--glow-x, 50%) var(--glow-y, 50%),
+    var(--glow-color, rgba(123, 225, 200, 0.15)) 0%,
+    transparent 60%
+  );
+  z-index: -1;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  opacity: 0;
+}
+
+.glow-card:hover::before {
+  opacity: 1;
+}
 /* Habilitar aceleración GPU en todo el documento cuando se hacen transiciones */
 .app-nav { transform: translateZ(0); }
 /* Containment para reducir el ámbito de los recálculos de layout */

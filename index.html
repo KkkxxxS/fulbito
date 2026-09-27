@@ -728,6 +728,30 @@
   // ============ CONFIGURACION ============
   const BACKEND_URL = "https://fulbito-forh.onrender.com";
   const COMPETICIONES = "PL,PD,BL1,SA,FL1,CL,DED,ELC,BSA,PPL";
+
+  /**
+   * GlowCard Implementation
+   * Updates CSS custom properties based on mouse position relative to the card.
+   */
+  function initGlowCards() {
+    const cards = document.querySelectorAll('.dash-kpi, .dash-quick-card');
+
+    cards.forEach(card => {
+      card.classList.add('glow-card');
+
+      card.addEventListener('pointermove', (e) => {
+        const rect = card.getBoundingClientRect();
+        const x = ((e.clientX - rect.left) / rect.width) * 100;
+        const y = ((e.clientY - rect.top) / rect.height) * 100;
+
+        requestAnimationFrame(() => {
+          card.style.setProperty('--glow-x', `${x}%`);
+          card.style.setProperty('--glow-y', `${y}%`);
+        });
+      });
+    });
+  }
+
   const NOMBRES_LIGA = {
     PL: "Premier League", PD: "La Liga", BL1: "Bundesliga",
     SA: "Serie A", FL1: "Ligue 1", CL: "Champions League",
@@ -793,6 +817,7 @@
     if (avatarPerfil) avatarPerfil.textContent = nombre.charAt(0).toUpperCase();
   }
   aplicarSaludoDinamico();
+  initGlowCards();
 
   // ============ VISTAS (app shell) ============
   let vistaActual = 'inicio';
