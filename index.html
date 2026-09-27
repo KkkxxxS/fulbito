@@ -153,7 +153,7 @@
         <div class="dash-header">
         <div class="dash-header-saludo">
             <p class="dash-eyebrow" data-i18n="eyebrow">Panel de control</p>
-            <h2 id="hero-saludo" class="dashboard-title" style="font-size: 1.15rem !important; line-height: 1.25 !important; margin: 0 0 6px 0 !important;">Hola, Usuario</h2>
+            <h2 id="hero-saludo" class="dashboard-title aurora-text" style="font-size: 1.15rem !important; line-height: 1.25 !important; margin: 0 0 6px 0 !important;">Hola, Usuario</h2>
             <p class="dash-header-sub" data-i18n="sub">Poisson + Dixon-Coles · Brier auditable.</p>
         </div>
         <div class="dash-header-acciones">
@@ -179,53 +179,56 @@
         </div>
     </div>
 
-    <!-- ============ KPIs CLAVE ============ -->
-    <div class="dash-kpis">
-        <article class="dash-kpi">
-            <div class="dash-kpi-top">
-                <span class="dash-kpi-icono cyan">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="0.6" fill="currentColor"/></svg>
-                </span>
-                <span class="dash-kpi-chip neutral" id="kpi-aciertos-chip">Sin datos</span>
+    <!-- ============ DASHBOARD BENTO GRID ============ -->
+    <div class="dash-bento-grid">
+        <!-- KPI Aciertos: Grande / Destacado -->
+        <article class="bento-item kpi-card beam-card">
+            <div class="dash-kpi">
+                <div class="dash-kpi-top">
+                    <span class="dash-kpi-icono cyan">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="0.6" fill="currentColor"/></svg>
+                    </span>
+                    <span class="dash-kpi-chip neutral" id="kpi-aciertos-chip">Sin datos</span>
+                </div>
+                <span class="dash-kpi-label" data-i18n="kpiAciertos">Aciertos <span class="dash-tip" data-tip="% de mercados acertados sobre picks ya liquidados contra el resultado real.">?</span></span>
+                <strong class="dash-kpi-valor" id="kpi-aciertos">—</strong>
+                <span class="dash-kpi-pie" id="kpi-verificados">Sin datos todavía</span>
+                <div class="dash-kpi-barra"><span id="kpi-aciertos-barra" style="width:0%;"></span></div>
             </div>
-            <span class="dash-kpi-label" data-i18n="kpiAciertos">Aciertos <span class="dash-tip" data-tip="% de mercados acertados sobre picks ya liquidados contra el resultado real.">?</span></span>
-            <strong class="dash-kpi-valor" id="kpi-aciertos">—</strong>
-            <span class="dash-kpi-pie" id="kpi-verificados">Sin datos todavía</span>
-            <div class="dash-kpi-barra"><span id="kpi-aciertos-barra" style="width:0%;"></span></div>
         </article>
 
-        <article class="dash-kpi">
-            <div class="dash-kpi-top">
-                <span class="dash-kpi-icono oro">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 2.6 2.9 5.9 6.5.95-4.7 4.6 1.1 6.45L12 17.4 6.2 20.5l1.1-6.45-4.7-4.6 6.5-.95z"/></svg>
-                </span>
-                <span class="dash-kpi-chip">☆</span>
+        <!-- KPI Favoritos: Pequeño -->
+        <article class="bento-item">
+            <div class="dash-kpi">
+                <div class="dash-kpi-top">
+                    <span class="dash-kpi-icono oro">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 2.6 2.9 5.9 6.5.95-4.7 4.6 1.1 6.45L12 17.4 6.2 20.5l1.1-6.45-4.7-4.6 6.5-.95z"/></svg>
+                    </span>
+                    <span class="dash-kpi-chip">☆</span>
+                </div>
+                <span class="dash-kpi-label" data-i18n="kpiFavoritos">Tus favoritos <span class="dash-tip" data-tip="Equipos que marcaste con la estrella. Sus partidos se priorizan en Predicciones.">?</span></span>
+                <strong class="dash-kpi-valor" id="kpi-favoritos">0</strong>
+                <span class="dash-kpi-pie" data-i18n="kpiFavoritosPie">partidos</span>
             </div>
-            <span class="dash-kpi-label" data-i18n="kpiFavoritos">Tus favoritos <span class="dash-tip" data-tip="Equipos que marcaste con la estrella. Sus partidos se priorizan en Predicciones.">?</span></span>
-            <strong class="dash-kpi-valor" id="kpi-favoritos">0</strong>
-            <span class="dash-kpi-pie" data-i18n="kpiFavoritosPie">partidos</span>
         </article>
 
-        <article class="dash-kpi dash-kpi-accion" role="button" tabindex="0" onclick="cambiarVista('pronosticos')" onkeypress="if(event.key==='Enter')cambiarVista('pronosticos')" title="Ir a las recomendaciones activas de hoy">
-            <div class="dash-kpi-top">
-                <span class="dash-kpi-icono rosa">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v4"/><path d="M12 17v4"/><path d="M3 12h4"/><path d="M17 12h4"/><path d="m6.3 6.3 2.8 2.8"/><path d="m14.9 14.9 2.8 2.8"/><path d="m17.7 6.3-2.8 2.8"/><path d="m9.1 14.9-2.8 2.8"/></svg>
-                </span>
-                <span class="dash-kpi-chip rosa" data-i18n="kpiHoyChip">Ver</span>
+        <!-- KPI Predicciones Hoy: Mediano / Acción -->
+        <article class="bento-item kpi-card-accion">
+            <div class="dash-kpi dash-kpi-accion" role="button" tabindex="0" onclick="cambiarVista('pronosticos')" onkeypress="if(event.key==='Enter')cambiarVista('pronosticos')" title="Ir a las recomendaciones activas de hoy">
+                <div class="dash-kpi-top">
+                    <span class="dash-kpi-icono rosa">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v4"/><path d="M12 17v4"/><path d="M3 12h4"/><path d="M17 12h4"/><path d="m6.3 6.3 2.8 2.8"/><path d="m14.9 14.9 2.8 2.8"/><path d="m17.7 6.3-2.8 2.8"/><path d="m9.1 14.9-2.8 2.8"/></svg>
+                    </span>
+                    <span class="dash-kpi-chip rosa" data-i18n="kpiHoyChip">Ver</span>
+                </div>
+                <span class="dash-kpi-label" data-i18n="kpiHoy">Predicciones hoy <span class="dash-tip" data-tip="Recomendaciones activas del motor para la jornada de hoy (9 mercados por partido).">?</span></span>
+                <strong class="dash-kpi-valor" id="kpi-hoy">…</strong>
+                <span class="dash-kpi-pie" id="kpi-hoy-pie">Cargando la jornada de hoy…</span>
             </div>
-            <span class="dash-kpi-label" data-i18n="kpiHoy">Predicciones hoy <span class="dash-tip" data-tip="Recomendaciones activas del motor para la jornada de hoy (9 mercados por partido).">?</span></span>
-            <strong class="dash-kpi-valor" id="kpi-hoy">…</strong>
-            <span class="dash-kpi-pie" id="kpi-hoy-pie">Cargando la jornada de hoy…</span>
         </article>
-    </div>
 
-        <!-- ============ ACCESOS RÁPIDOS ============ -->
-    <div class="dash-seccion">
-        <div class="dash-seccion-head">
-            <h2 data-i18n="accesosTitulo">Accesos rápidos</h2>
-            <span class="dash-seccion-nota" data-i18n="accesosNota">Un clic para entrar</span>
-        </div>
-        <div class="dash-quick">
+        <!-- Acceso Rápido: Predicciones IA -->
+        <article class="bento-item quick-access">
             <button class="dash-quick-card" onclick="cambiarVista('pronosticos')" title="Partidos analizados por el motor, con 9 mercados y probabilidad calibrada">
                 <span class="dash-quick-icono verde">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5a3 3 0 0 0-2.9 2.2A3 3 0 0 0 7 12.5a3 3 0 0 0 2.2 5.2H11a2 2 0 0 0 2-2V7a2 2 0 0 0-1-2z"/><path d="M12 5a3 3 0 0 1 2.9 2.2A3 3 0 0 1 17 12.5a3 3 0 0 1-2.2 5.2H13a2 2 0 0 1-2-2V7a2 2 0 0 1 1-2z"/></svg>
@@ -236,7 +239,10 @@
                 </span>
                 <span class="dash-quick-flecha">→</span>
             </button>
+        </article>
 
+        <!-- Acceso Rápido: Analítica -->
+        <article class="bento-item quick-access">
             <button class="dash-quick-card" onclick="cambiarVista('analitica')" title="Calibración en vivo y factores autoajustados por resultados reales">
                 <span class="dash-quick-icono cyan">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m7 14 3.5-4 3 3L20 6"/></svg>
@@ -247,7 +253,10 @@
                 </span>
                 <span class="dash-quick-flecha">→</span>
             </button>
+        </article>
 
+        <!-- Acceso Rápido: Mis Predicciones -->
+        <article class="bento-item quick-access">
             <button class="dash-quick-card" onclick="cambiarVista('mispredicciones')" title="Tus picks marcados con 📌, pendientes y ya verificados">
                 <span class="dash-quick-icono oro">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
@@ -258,7 +267,10 @@
                 </span>
                 <span class="dash-quick-flecha">→</span>
             </button>
+        </article>
 
+        <!-- Acceso Rápido: Favoritos -->
+        <article class="bento-item quick-access">
             <button class="dash-quick-card" onclick="cambiarVista('favoritos')" title="Partidos de tus equipos seguidos en los próximos 7 días">
                 <span class="dash-quick-icono rosa">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m12 2.6 2.9 5.9 6.5.95-4.7 4.6 1.1 6.45L12 17.4 6.2 20.5l1.1-6.45-4.7-4.6 6.5-.95z"/></svg>
@@ -269,7 +281,10 @@
                 </span>
                 <span class="dash-quick-flecha">→</span>
             </button>
+        </article>
 
+        <!-- Acceso Rápido: Transparencia -->
+        <article class="bento-item quick-access">
             <button class="dash-quick-card" onclick="cambiarVista('historial')" title="Historial público: cada pick liquidado contra el resultado real y Brier Score auditado">
                 <span class="dash-quick-icono violeta">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"/><path d="M21 12a9 9 0 1 1-9-9"/><path d="M21 5v6h-6"/></svg>
@@ -280,7 +295,7 @@
                 </span>
                 <span class="dash-quick-flecha">→</span>
             </button>
-        </div>
+        </article>
     </div>
 
                 <!-- (KPIs migrados a las tarjetas superiores del dashboard) -->

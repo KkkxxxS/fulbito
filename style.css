@@ -130,7 +130,249 @@
   will-change: transform;
 }
 
-/* ============ GLOW CARD SPOTLIGHT EFFECT ============ */
+/* ============ MAGIC UI PATTERNS ============ */
+
+/* 1. Bento Grid Layout */
+.dash-bento-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-areas:
+    "kpi1 kpi2 kpi3 quick1"
+    "kpi1 kpi2 kpi3 quick2"
+    "quick3 quick4 quick5 quick2";
+  margin-bottom: 24px;
+  will-change: transform;
+}
+
+.bento-item {
+  position: relative;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(11, 17, 24, 0.95) 100%);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  transition: transform 0.3s var(--ease), box-shadow 0.3s var(--ease), border-color 0.3s var(--ease);
+  will-change: transform;
+  font-variant-numeric: tabular-nums;
+  box-shadow: var(--shadow-card);
+}
+
+.bento-item:hover {
+  transform: translateY(-4px) translateZ(0);
+  box-shadow: 0 20px 40px -20px rgba(0,0,0,0.8),
+              inset 0 1px 0 rgba(255,255,255,0.05);
+  border-color: rgba(123, 225, 200, 0.3);
+}
+
+/* Shadcn-style KPI Card Adaptation */
+.dash-kpi {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.dash-kpi-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.dash-kpi-icono {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--line);
+}
+
+.dash-kpi-icono svg { width: 18px; height: 18px; }
+
+.dash-kpi-chip {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.05);
+  color: var(--text-muted);
+  border: 1px solid var(--line);
+}
+
+.dash-kpi-label {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.dash-kpi-valor {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 2.2rem;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1;
+  letter-spacing: -0.03em;
+  margin-bottom: 4px;
+}
+
+.dash-kpi-pie {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  display: block;
+  margin-bottom: 12px;
+}
+
+.dash-kpi-barra {
+  height: 4px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.dash-kpi-barra span {
+  height: 100%;
+  background: var(--brand);
+  transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Quick Access as Bento Item */
+.quick-access {
+  padding: 0;
+  overflow: hidden;
+}
+
+.quick-access .dash-quick-card {
+  width: 100%;
+  height: 100%;
+  background: none;
+  border: none;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.2s var(--ease);
+}
+
+.quick-access .dash-quick-card:hover {
+  background: rgba(255,255,255,0.03);
+}
+
+.quick-access .dash-quick-icono {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line);
+}
+
+.quick-access .dash-quick-icono svg { width: 20px; height: 20px; }
+
+.quick-access .dash-quick-texto {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.quick-access .dash-quick-texto strong {
+  font-size: 0.9rem;
+  color: var(--text);
+  font-weight: 600;
+}
+
+.quick-access .dash-quick-texto small {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.quick-access .dash-quick-flecha {
+  margin-left: auto;
+  color: var(--text-dim);
+  font-size: 1.2rem;
+  transition: transform 0.2s var(--ease);
+}
+
+.quick-access .dash-quick-card:hover .dash-quick-flecha {
+  transform: translateX(4px);
+  color: var(--brand);
+}
+
+/* 2. Blur Fade Entrance */
+@keyframes blurFadeIn {
+  0% { opacity: 0; filter: blur(10px); transform: translateY(10px); }
+  100% { opacity: 1; filter: blur(0); transform: translateY(0); }
+}
+
+.blur-fade-in {
+  animation: blurFadeIn 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
+  will-change: opacity, filter, transform;
+}
+
+/* 3. Border Beam Effect */
+.beam-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.beam-card::after {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  background: conic-gradient(from 0deg, transparent, var(--brand), transparent 30%);
+  animation: rotateBeam 4s linear infinite;
+  z-index: -1;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: destination-out;
+  mask-composite: exclude;
+  padding: 2px;
+  pointer-events: none;
+}
+
+@keyframes rotateBeam {
+  to { transform: rotate(360deg); }
+}
+
+/* 4. Aurora Text */
+.aurora-text {
+  background: linear-gradient(
+    to right,
+    var(--text) 0%,
+    var(--brand) 25%,
+    var(--gold) 50%,
+    var(--brand) 75%,
+    var(--text) 100%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: auroraMove 5s linear infinite;
+  will-change: background-position;
+}
+
+@keyframes auroraMove {
+  to { background-position: 200% center; }
+}
+
+@media (max-width: 768px) {
+  .dash-bento-grid {
+    grid-template-columns: 1fr;
+    grid-template-areas: none;
+  }
+}
 .glow-card {
   position: relative;
   overflow: hidden;
