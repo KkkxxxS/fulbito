@@ -7002,3 +7002,2641 @@ h1, .hero h1, .dashboard-title {
   text-align: right;
 }
 
+/* ============================================
+   ANIMACIONES MEJORADAS - PRONÓSTICOS Y DASHBOARD
+   ============================================ */
+
+/* === ANIMACIONES DE ENTRADA === */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInLeft {
+  from { opacity: 0; transform: translateX(-20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes fadeInRight {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fillBar {
+  from { width: 0; }
+}
+
+@keyframes pulseLive {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+  50% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+}
+
+@keyframes pulseActive {
+  0%, 100% { box-shadow: 0 4px 16px -6px rgba(100, 228, 169, 0.65); }
+  50% { box-shadow: 0 4px 20px -4px rgba(100, 228, 169, 0.8); }
+}
+
+@keyframes progressFill {
+  from { width: 0; }
+}
+
+@keyframes countUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes popIn {
+  0% { transform: scale(0); opacity: 0; }
+  70% { transform: scale(1.2); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes bounceIn {
+  0% { transform: scale(0); }
+  50% { transform: scale(1.3); }
+  70% { transform: scale(0.9); }
+  100% { transform: scale(1); }
+}
+
+@keyframes floatButton {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+@keyframes pulseDot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.2); }
+}
+
+@keyframes rotateBeam {
+  100% { transform: rotate(360deg); }
+}
+
+/* === TARJETAS DE PARTIDOS - ENTRADA ESCALONADA === */
+.tarjeta-partido {
+  animation: fadeInUp 0.5s ease-out forwards;
+  opacity: 0;
+  transition: transform 0.3s cubic-bezier(0.2, 0.7, 0.2, 1),
+              box-shadow 0.3s cubic-bezier(0.2, 0.7, 0.2, 1),
+              border-color 0.3s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.tarjeta-partido:nth-child(1) { animation-delay: 0.05s; }
+.tarjeta-partido:nth-child(2) { animation-delay: 0.1s; }
+.tarjeta-partido:nth-child(3) { animation-delay: 0.15s; }
+.tarjeta-partido:nth-child(4) { animation-delay: 0.2s; }
+.tarjeta-partido:nth-child(5) { animation-delay: 0.25s; }
+.tarjeta-partido:nth-child(6) { animation-delay: 0.3s; }
+.tarjeta-partido:nth-child(7) { animation-delay: 0.35s; }
+.tarjeta-partido:nth-child(8) { animation-delay: 0.4s; }
+.tarjeta-partido:nth-child(n+9) { animation-delay: 0.45s; }
+
+/* === HOVER MEJORADO EN TARJETAS === */
+.tarjeta-partido:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.5),
+              0 0 20px -5px rgba(100, 228, 169, 0.15);
+  border-color: rgba(100, 228, 169, 0.3);
+}
+
+/* === BARRAS DE PROBABILIDAD ANIMADAS === */
+.barra-relleno {
+  width: 0 !important;
+  animation: fillBar 1s ease-out forwards;
+  animation-delay: 0.3s;
+}
+
+/* === EFECTO PULSE PARA PARTIDOS EN VIVO === */
+.partido-en-vivo {
+  animation: pulseLive 2s ease-in-out infinite;
+}
+
+/* === TRANSICIÓN SUAVE ENTRE PESTAÑAS === */
+.pestaña {
+  transition: all 0.25s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.pestaña:hover {
+  transform: translateY(-2px);
+}
+
+/* === DASHBOARD BENTO GRID - ANIMACIÓN DE ENTRADA === */
+.bento-item {
+  animation: scaleIn 0.4s ease-out forwards;
+  opacity: 0;
+}
+
+.bento-item:nth-child(1) { animation-delay: 0.05s; }
+.bento-item:nth-child(2) { animation-delay: 0.1s; }
+.bento-item:nth-child(3) { animation-delay: 0.15s; }
+.bento-item:nth-child(4) { animation-delay: 0.2s; }
+.bento-item:nth-child(5) { animation-delay: 0.25s; }
+.bento-item:nth-child(6) { animation-delay: 0.3s; }
+.bento-item:nth-child(7) { animation-delay: 0.35s; }
+.bento-item:nth-child(8) { animation-delay: 0.4s; }
+
+/* === EFECTO GLOW EN TARJETAS DESTACADAS === */
+.kpi-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.kpi-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent);
+  transition: left 0.6s ease;
+}
+
+.kpi-card:hover::before {
+  left: 100%;
+}
+
+/* === GAUGE DE SALUD DEL MOTOR ANIMADO === */
+#salud-gauge-arco {
+  transition: stroke-dasharray 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* === MICRO-INTERACCIONES EN BOTONES === */
+.dash-quick-card {
+  transition: all 0.25s cubic-bezier(0.2, 0.7, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.dash-quick-card:hover {
+  transform: translateX(4px);
+}
+
+/* === ANIMACIÓN DE ENCABEZADO === */
+.dash-header {
+  animation: slideDown 0.5s ease-out forwards;
+}
+
+/* === ANIMACIÓN PARA ICONOS === */
+.dash-kpi-icono {
+  transition: transform 0.3s ease;
+}
+
+.dash-kpi-icono:hover {
+  transform: scale(1.1) rotate(5deg);
+}
+
+/* === ANIMACIÓN DE PROGRESO === */
+.dash-kpi-barra span {
+  animation: progressFill 1.5s ease-out forwards;
+  animation-delay: 0.5s;
+}
+
+/* === ANIMACIÓN PARA TARJETAS DE EQUIPOS === */
+.equipo-info {
+  transition: transform 0.2s ease;
+}
+
+.equipo-info:hover {
+  transform: translateX(4px);
+}
+
+/* === ANIMACIÓN PARA BOTONES DE FILTRO === */
+.filtro-liga-btn.activa {
+  animation: pulseActive 2s ease-in-out infinite;
+}
+
+/* === ANIMACIÓN PARA MODALES === */
+.modal-overlay {
+  animation: fadeIn 0.2s ease-out;
+}
+
+.modal-container {
+  animation: scaleIn 0.3s ease-out;
+}
+
+/* === ANIMACIÓN PARA TENDENCIAS === */
+.tendencia-sube {
+  animation: trendUp 0.5s ease-out;
+}
+
+.tendencia-baja {
+  animation: trendDown 0.5s ease-out;
+}
+
+@keyframes trendUp {
+  0% { transform: translateY(10px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes trendDown {
+  0% { transform: translateY(-10px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+/* === ANIMACIÓN PARA RACHAS === */
+.racha-punto {
+  animation: popIn 0.3s ease-out backwards;
+}
+
+.racha-punto:nth-child(1) { animation-delay: 0.1s; }
+.racha-punto:nth-child(2) { animation-delay: 0.15s; }
+.racha-punto:nth-child(3) { animation-delay: 0.2s; }
+.racha-punto:nth-child(4) { animation-delay: 0.25s; }
+.racha-punto:nth-child(5) { animation-delay: 0.3s; }
+
+/* === ANIMACIÓN PARA COMBINADAS === */
+.tarjeta-combinada {
+  animation: fadeInUp 0.5s ease-out forwards;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.tarjeta-combinada:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 25px -10px rgba(0, 0, 0, 0.4);
+}
+
+/* === ANIMACIÓN PARA FAB FLOTANTE === */
+.btn-fab-combinada {
+  transition: transform 0.3s cubic-bezier(0.2, 0.7, 0.2, 1);
+  animation: floatButton 3s ease-in-out infinite;
+}
+
+.btn-fab-combinada:hover {
+  transform: scale(1.1);
+}
+
+/* === ANIMACIÓN PARA NAV TABS === */
+.nav-tab {
+  transition: all 0.2s cubic-bezier(0.2, 0.7, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.nav-tab::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 0;
+  height: 2px;
+  background: var(--brand);
+  transition: width 0.3s ease;
+}
+
+.nav-tab:hover::before,
+.nav-tab.activa::before {
+  width: 100%;
+}
+
+/* === ANIMACIÓN PARA CONTADOR DE FAVORITOS === */
+.contador-favoritos {
+  animation: bounceIn 0.5s ease-out;
+}
+
+/* === ANIMACIÓN PARA PUNTO VIVO === */
+.dash-punto-vivo {
+  animation: pulseDot 1.5s ease-in-out infinite;
+}
+
+/* === ANIMACIÓN PARA BEAM CARD === */
+.beam-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.beam-card::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: conic-gradient(from 0deg, transparent, rgba(100, 228, 169, 0.1), transparent 30%);
+  animation: rotateBeam 4s linear infinite;
+}
+
+/* === ANIMACIÓN PARA KPIs === */
+.dash-kpi-valor {
+  animation: countUp 0.8s ease-out forwards;
+}
+
+/* === ANIMACIÓN PARA HEALTH CARDS === */
+.health-card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.health-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px -8px rgba(0, 0, 0, 0.3);
+}
+
+/* === ANIMACIÓN PARA TELEMETRÍA === */
+.telemetria-card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.telemetria-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 25px -10px rgba(0, 0, 0, 0.4);
+}
+
+.telemetria-progreso-fill {
+  animation: progressFill 1.5s ease-out forwards;
+  animation-delay: 0.5s;
+}
+
+/* === ANIMACIÓN PARA HISTORIAL === */
+.historial-partido {
+  animation: fadeInLeft 0.4s ease-out forwards;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.historial-partido:hover {
+  transform: translateX(4px);
+  border-color: rgba(100, 228, 169, 0.3);
+}
+
+/* === ANIMACIÓN PARA PRECISIÓN GENERAL === */
+.precision-general {
+  animation: scaleIn 0.5s ease-out forwards;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.precision-general:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 30px -12px rgba(0, 0, 0, 0.4);
+}
+
+/* === ANIMACIÓN PARA LANDING PRIMARY === */
+.landing-primary {
+  transition: all 0.3s cubic-bezier(0.2, 0.7, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.landing-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 30px -10px rgba(100, 228, 169, 0.5);
+}
+
+/* === ANIMACIÓN PARA INPUTS DE BÚSQUEDA === */
+input[type="search"],
+input[type="date"] {
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+input[type="search"]:focus,
+input[type="date"]:focus {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px rgba(100, 228, 169, 0.15);
+}
+
+/* === ANIMACIÓN PARA BOTONES DE PERFIL === */
+.dash-perfil-item {
+  transition: background 0.2s ease, padding-left 0.2s ease;
+}
+
+.dash-perfil-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+  padding-left: 20px;
+}
+
+/* === ANIMACIÓN PARA DASH INFO ITEMS === */
+.dash-info-item {
+  animation: fadeInUp 0.4s ease-out forwards;
+}
+
+.dash-info-item:nth-child(1) { animation-delay: 0.1s; }
+.dash-info-item:nth-child(2) { animation-delay: 0.15s; }
+.dash-info-item:nth-child(3) { animation-delay: 0.2s; }
+.dash-info-item:nth-child(4) { animation-delay: 0.25s; }
+
+/* === ANIMACIÓN PARA DASH CTA === */
+.dash-cta {
+  animation: fadeInUp 0.6s ease-out forwards;
+  animation-delay: 0.3s;
+}
+
+/* === ANIMACIÓN PARA VISTAS === */
+.vista-activa {
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
+/* === ANIMACIÓN PARA FILAS DE MERCADO === */
+.fila-mercado {
+  animation: fadeInLeft 0.4s ease-out forwards;
+}
+
+.fila-mercado:nth-child(1) { animation-delay: 0.1s; }
+.fila-mercado:nth-child(2) { animation-delay: 0.15s; }
+.fila-mercado:nth-child(3) { animation-delay: 0.2s; }
+.fila-mercado:nth-child(4) { animation-delay: 0.25s; }
+.fila-mercado:nth-child(5) { animation-delay: 0.3s; }
+.fila-mercado:nth-child(n+6) { animation-delay: 0.35s; }
+
+/* === ANIMACIÓN PARA COMBOS DE PARTIDO === */
+.combo-partido {
+  animation: fadeInRight 0.4s ease-out forwards;
+}
+
+.combo-partido:nth-child(1) { animation-delay: 0.35s; }
+.combo-partido:nth-child(2) { animation-delay: 0.4s; }
+.combo-partido:nth-child(3) { animation-delay: 0.45s; }
+
+/* === ANIMACIÓN PARA MARCADORES PROBABLES === */
+.marcador-chip {
+  transition: all 0.2s ease;
+  animation: popIn 0.4s ease-out backwards;
+}
+
+.marcador-chip:nth-child(1) { animation-delay: 0.5s; }
+.marcador-chip:nth-child(2) { animation-delay: 0.55s; }
+.marcador-chip:nth-child(3) { animation-delay: 0.6s; }
+
+.marcador-chip:hover {
+  transform: translateY(-2px);
+  background: rgba(100, 228, 169, 0.1);
+  border-color: var(--brand);
+}
+
+/* === ANIMACIÓN PARA CATÁLOGO === */
+.catalogo-fila {
+  animation: fadeInLeft 0.3s ease-out forwards;
+}
+
+.catalogo-fila:nth-child(1) { animation-delay: 0.05s; }
+.catalogo-fila:nth-child(2) { animation-delay: 0.1s; }
+.catalogo-fila:nth-child(3) { animation-delay: 0.15s; }
+.catalogo-fila:nth-child(4) { animation-delay: 0.2s; }
+.catalogo-fila:nth-child(5) { animation-delay: 0.25s; }
+.catalogo-fila:nth-child(n+6) { animation-delay: 0.3s; }
+
+/* === ANIMACIÓN PARA DASHBOARD CARDS === */
+.dashboard-card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.dashboard-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 25px -10px rgba(0, 0, 0, 0.4);
+}
+
+/* === ANIMACIÓN PARA DASHBOARD VALOR === */
+.dashboard-valor {
+  animation: countUp 0.6s ease-out forwards;
+}
+
+/* === ANIMACIÓN PARA VS CIRCULO === */
+.vs-circulo {
+  display: inline-block;
+  transition: transform 0.3s ease;
+}
+
+.vs-circulo:hover {
+  transform: scale(1.2) rotate(10deg);
+}
+
+/* === ANIMACIÓN PARA MARCADOR ESTIMADO === */
+.marcador-estimado-badge {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.marcador-estimado-badge:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px -4px rgba(0, 0, 0, 0.3);
+}
+
+/* === ANIMACIÓN PARA H2H === */
+.info-h2h-pill {
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.info-h2h-pill:hover {
+  transform: scale(1.02);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* === ANIMACIÓN PARA ETIQUETA PICK PRINCIPAL === */
+.etiqueta-pick-principal {
+  animation: pulseDot 2s ease-in-out infinite;
+}
+
+/* === ANIMACIÓN PARA BOTÓN MI PREDICCIÓN === */
+.boton-mi-prediccion {
+  transition: all 0.2s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.boton-mi-prediccion:hover {
+  transform: scale(1.1);
+}
+
+/* === ANIMACIÓN PARA BADGE NO BET === */
+.badge-nobet-tag {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+/* === ANIMACIÓN PARA FILA SIN APUESTA === */
+.fila-sin-apuesta {
+  animation: fadeInLeft 0.4s ease-out forwards;
+}
+
+/* === ANIMACIÓN PARA EXPLICACIÓN === */
+.fila-explicacion-block {
+  animation: fadeIn 0.4s ease-out forwards;
+  animation-delay: 0.25s;
+}
+
+/* === ANIMACIÓN PARA CONTEXTO === */
+.fila-contexto-block {
+  animation: fadeIn 0.4s ease-out forwards;
+  animation-delay: 0.15s;
+}
+
+/* === ANIMACIÓN PARA RAZONES === */
+.fila-razon {
+  animation: fadeInLeft 0.3s ease-out forwards;
+}
+
+.fila-razon:nth-child(1) { animation-delay: 0.3s; }
+.fila-razon:nth-child(2) { animation-delay: 0.35s; }
+.fila-razon:nth-child(3) { animation-delay: 0.4s; }
+.fila-razon:nth-child(4) { animation-delay: 0.45s; }
+.fila-razon:nth-child(5) { animation-delay: 0.5s; }
+
+/* === ANIMACIÓN PARA CUOTA IMPLÍCITA === */
+.cuota-implicita-tag {
+  transition: all 0.2s ease;
+}
+
+.cuota-implicita-tag:hover {
+  transform: scale(1.05);
+  background: rgba(100, 228, 169, 0.1);
+  border-color: var(--brand);
+}
+
+/* === ANIMACIÓN PARA TARJETAS DE COMPETICIONES === */
+#vista-competiciones .dashboard-card {
+  animation: fadeInUp 0.5s ease-out forwards;
+}
+
+/* === ANIMACIÓN PARA TARJETAS DE RANKING === */
+#vista-ranking .dashboard-card {
+  animation: fadeInUp 0.5s ease-out forwards;
+}
+
+/* === ANIMACIÓN PARA TARJETAS DE DOBLES === */
+#vista-dobles .tarjeta-combinada {
+  animation: fadeInUp 0.5s ease-out forwards;
+}
+
+/* === ANIMACIÓN PARA TARJETAS DE ANALÍTICA === */
+#vista-analitica .telemetria-card {
+  animation: fadeInUp 0.5s ease-out forwards;
+}
+
+/* === ANIMACIÓN PARA TARJETAS DE HISTORIAL === */
+#vista-historial .historial-partido {
+  animation: fadeInLeft 0.4s ease-out forwards;
+}
+
+/* === ANIMACIÓN PARA TARJETAS DE LIVE === */
+#vista-live .tarjeta-partido {
+  animation: fadeInUp 0.5s ease-out forwards;
+}
+
+/* === ANIMACIÓN PARA TARJETAS DE FAVORITOS === */
+#vista-favoritos .tarjeta-partido {
+  animation: fadeInUp 0.5s ease-out forwards;
+}
+
+/* === ANIMACIÓN PARA TARJETAS DE MIS PREDICCIONES === */
+#vista-mispredicciones .tarjeta-partido {
+  animation: fadeInUp 0.5s ease-out forwards;
+}
+
+/* === ANIMACIÓN PARA CONTENEDOR DE PARTIDOS === */
+#contenedor-partidos {
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
+/* === ANIMACIÓN PARA BLOQUE DE COMBINADAS === */
+#bloque-combinadas {
+  animation: fadeInUp 0.6s ease-out forwards;
+  animation-delay: 0.2s;
+}
+
+/* === ANIMACIÓN PARA PESTAÑAS DE FECHA === */
+.pestañas-fecha {
+  animation: slideDown 0.4s ease-out forwards;
+}
+
+/* === ANIMACIÓN PARA BARRA DE FILTROS === */
+.barra-filtros-unificada {
+  animation: fadeInUp 0.4s ease-out forwards;
+  animation-delay: 0.1s;
+}
+
+/* === ANIMACIÓN PARA PILLS DE LIGAS === */
+.filtro-ligas-pills {
+  animation: fadeInLeft 0.4s ease-out forwards;
+  animation-delay: 0.15s;
+}
+
+/* === ANIMACIÓN PARA INPUT DE BÚSQUEDA === */
+.input-buscar-integrado {
+  animation: fadeInRight 0.4s ease-out forwards;
+  animation-delay: 0.2s;
+}
+
+/* === ANIMACIÓN PARA DASHBOARD PERSONAL === */
+.dashboard-personal {
+  animation: fadeInUp 0.5s ease-out forwards;
+}
+
+/* === ANIMACIÓN PARA DASHBOARD TITULO === */
+.dashboard-titulo {
+  animation: slideDown 0.5s ease-out forwards;
+}
+
+/* === ANIMACIÓN PARA DASHBOARD GRID === */
+.dashboard-grid {
+  animation: fadeInUp 0.5s ease-out forwards;
+  animation-delay: 0.2s;
+}
+
+/* === ANIMACIÓN PARA MOTOR HEALTH SECTION === */
+.motor-health-section {
+  animation: fadeInUp 0.5s ease-out forwards;
+}
+
+/* === ANIMACIÓN PARA MOTOR HEALTH HEADER === */
+.motor-health-header {
+  animation: slideDown 0.5s ease-out forwards;
+}
+
+/* === ANIMACIÓN PARA MOTOR HEALTH GRID === */
+.motor-health-grid {
+  animation: fadeInUp 0.5s ease-out forwards;
+  animation-delay: 0.2s;
+}
+
+/* === ANIMACIÓN PARA DASH INFO === */
+.dash-info {
+  animation: fadeInUp 0.5s ease-out forwards;
+  animation-delay: 0.3s;
+}
+
+/* === ANIMACIÓN PARA APP NAV === */
+.app-nav {
+  animation: fadeInLeft 0.5s ease-out forwards;
+}
+
+/* === ANIMACIÓN PARA DASH SIDEBAR === */
+.dash-sidebar {
+  animation: fadeInLeft 0.5s ease-out forwards;
+}
+
+/* === ANIMACIÓN PARA DASH LOGO === */
+.dash-logo {
+  transition: all 0.2s ease;
+}
+
+.dash-logo:hover {
+  transform: scale(1.05);
+}
+
+/* === ANIMACIÓN PARA DASH LOGO MARK === */
+.dash-logo-mark {
+  transition: transform 0.3s ease;
+}
+
+.dash-logo:hover .dash-logo-mark {
+  transform: rotate(360deg);
+}
+
+/* === ANIMACIÓN PARA DASH PERFIL === */
+.dash-perfil {
+  transition: all 0.2s ease;
+}
+
+.dash-perfil:hover {
+  transform: translateY(-2px);
+}
+
+/* === ANIMACIÓN PARA DASH PERFIL AVATAR === */
+.dash-perfil-avatar {
+  transition: transform 0.3s ease;
+}
+
+.dash-perfil:hover .dash-perfil-avatar {
+  transform: scale(1.1);
+}
+
+/* === ANIMACIÓN PARA DASH PERFIL CHEVRON === */
+.dash-perfil-chevron {
+  transition: transform 0.3s ease;
+}
+
+.dash-perfil[aria-expanded="true"] .dash-perfil-chevron {
+  transform: rotate(180deg);
+}
+
+/* === ANIMACIÓN PARA DASH PERFIL PANEL === */
+.dash-perfil-panel {
+  animation: slideDown 0.3s ease-out;
+}
+
+/* === ANIMACIÓN PARA APP NAV HAMBURGUESA === */
+.app-nav-hamburguesa {
+  transition: all 0.2s ease;
+}
+
+.app-nav-hamburguesa:hover {
+  transform: scale(1.1);
+}
+
+/* === ANIMACIÓN PARA DASH SIDEBAR CERRAR === */
+.dash-sidebar-cerrar {
+  transition: transform 0.2s ease;
+}
+
+.dash-sidebar-cerrar:hover {
+  transform: rotate(90deg);
+}
+
+/* === ANIMACIÓN PARA BOTÓN REINICIAR === */
+.boton-reiniciar {
+  transition: all 0.2s ease;
+}
+
+.boton-reiniciar:hover {
+  transform: scale(1.05);
+}
+
+/* === ANIMACIÓN PARA FILTROS DE HISTORIAL === */
+.historial-filtro-grupo {
+  transition: background 0.2s ease;
+  border-radius: var(--radius-sm);
+  padding: 4px;
+}
+
+.historial-filtro-grupo:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+/* === ANIMACIÓN PARA TARJETAS DE CALIBRACIÓN === */
+.calibracion-item {
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.calibracion-item:hover {
+  transform: translateX(4px);
+  border-color: rgba(242, 196, 116, 0.3);
+}
+
+/* === ANIMACIÓN PARA FILAS DE CALIBRACIÓN === */
+.calibracion-fila {
+  transition: background 0.2s ease;
+}
+
+.calibracion-fila:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* === ANIMACIÓN PARA TARJETAS DE TELEMETRÍA ICONO === */
+.telemetria-icon {
+  display: inline-block;
+  transition: transform 0.3s ease;
+}
+
+.telemetria-card:hover .telemetria-icon {
+  transform: scale(1.2) rotate(10deg);
+}
+
+/* === ANIMACIÓN PARA TARJETAS DE TELEMETRÍA BADGE === */
+.telemetria-badge {
+  transition: all 0.2s ease;
+}
+
+.telemetria-badge:hover {
+  transform: scale(1.05);
+}
+
+/* === ANIMACIÓN PARA AVISO DE RIESGO === */
+.aviso-riesgo {
+  animation: fadeIn 0.6s ease-out forwards;
+  animation-delay: 0.3s;
+}
+
+/* === ANIMACIÓN PARA ICONO DE AVISO === */
+.aviso-riesgo .icono {
+  display: inline-block;
+  animation: pulseDot 2s ease-in-out infinite;
+}
+
+/* === ANIMACIÓN PARA SELECTOR DE FECHA PERSONALIZADA === */
+.selector-fecha-personalizada {
+  animation: slideDown 0.3s ease-out;
+}
+
+/* === ANIMACIÓN PARA BOTONES DE PESTAÑAS === */
+#vista-pronosticos .pestaña {
+  transition: all 0.25s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+#vista-pronosticos .pestaña:hover {
+  transform: translateY(-2px);
+}
+
+#vista-pronosticos .pestaña.activa {
+  animation: pulseActive 2s ease-in-out infinite;
+}
+
+/* === ANIMACIÓN PARA BOTÓN DE FECHA PERSONALIZADA === */
+#vista-pronosticos .pestaña-finalizados {
+  transition: all 0.25s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+#vista-pronosticos .pestaña-finalizados:hover {
+  transform: translateY(-2px);
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #ff8d8d;
+}
+
+/* === ANIMACIÓN PARA TARJETAS DE FINALIZADOS === */
+#vista-pronosticos .historial-partido {
+  animation: fadeInLeft 0.4s ease-out forwards;
+}
+
+/* === ANIMACIÓN PARA BADGES DE FINALIZADOS === */
+#vista-pronosticos .historial-partido-badge {
+  transition: transform 0.2s ease;
+}
+
+#vista-pronosticos .historial-partido-badge:hover {
+  transform: scale(1.1);
+}
+
+/* === ANIMACIÓN PARA ENCABEZADO DE PARTIDO === */
+.encabezado-partido {
+  animation: fadeIn 0.5s ease-out forwards;
+  animation-delay: 0.1s;
+}
+
+/* === ANIMACIÓN PARA TOPBAR DE PARTIDO === */
+.tarjeta-partido-topbar {
+  animation: slideDown 0.4s ease-out forwards;
+}
+
+/* === ANIMACIÓN PARA CENTRO DE PARTIDO === */
+.centro-partido {
+  animation: scaleIn 0.5s ease-out forwards;
+  animation-delay: 0.2s;
+}
+
+/* === ANIMACIÓN PARA AVISOS DE DATOS === */
+.aviso-datos {
+  animation: fadeIn 0.5s ease-out forwards;
+  animation-delay: 0.3s;
+}
+
+/* === ANIMACIÓN PARA LISTA DE MERCADOS === */
+.lista-mercados {
+  animation: fadeInUp 0.5s ease-out forwards;
+  animation-delay: 0.2s;
+}
+
+/* === ANIMACIÓN PARA BOTÓN EXPANDIR === */
+.boton-expandir {
+  transition: all 0.2s ease;
+}
+
+.boton-expandir:hover {
+  background: rgba(100, 228, 169, 0.1);
+  border-color: var(--brand);
+}
+
+/* === ANIMACIÓN PARA COMBOS DE PARTIDO TITULO === */
+.combos-partido-titulo {
+  animation: fadeInLeft 0.4s ease-out forwards;
+  animation-delay: 0.35s;
+}
+
+/* === ANIMACIÓN PARA COMBO PARTIDO HEADER === */
+.combo-partido-header {
+  transition: background 0.2s ease;
+  border-radius: var(--radius-xs);
+  padding: 2px 4px;
+}
+
+.combo-partido-header:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+/* === ANIMACIÓN PARA TÍTULO DE MARCADORES PROBABLES === */
+.marcadores-probables-titulo {
+  animation: fadeInLeft 0.4s ease-out forwards;
+  animation-delay: 0.45s;
+}
+
+/* === ANIMACIÓN PARA MARCADORES PROBABLES === */
+.marcadores-probables {
+  animation: fadeInUp 0.5s ease-out forwards;
+  animation-delay: 0.5s;
+}
+
+/* === ANIMACIÓN PARA CATÁLOGO COMPLETO === */
+.catalogo-completo {
+  animation: slideDown 0.3s ease-out;
+}
+
+/* === ANIMACIÓN PARA FILAS DE MERCADO AL EXPANDIR === */
+.lista-mercados.expandido .fila-mercado:nth-child(n+3) {
+  display: block;
+  animation: fadeInUp 0.4s ease-out forwards;
+}
+
+.lista-mercados.expandido .fila-mercado:nth-child(3) { animation-delay: 0.05s; }
+.lista-mercados.expandido .fila-mercado:nth-child(4) { animation-delay: 0.1s; }
+.lista-mercados.expandido .fila-mercado:nth-child(5) { animation-delay: 0.15s; }
+.lista-mercados.expandido .fila-mercado:nth-child(n+6) { animation-delay: 0.2s; }
+
+/* === ANIMACIÓN PARA FILA HEADER === */
+.fila-header {
+  transition: background 0.2s ease;
+  border-radius: var(--radius-xs);
+  padding: 2px 4px;
+}
+
+.fila-header:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+/* === ANIMACIÓN PARA ICONO DE MERCADO === */
+.fila-icono {
+  transition: transform 0.3s ease;
+}
+
+.fila-mercado:hover .fila-icono {
+  transform: scale(1.1) rotate(5deg);
+}
+
+/* === ANIMACIÓN PARA BARRA DE PROBABILIDAD EN FILA === */
+.barra-probabilidad {
+  transition: all 0.3s ease;
+}
+
+.fila-mercado:hover .barra-probabilidad {
+  height: 6px;
+}
+
+/* === ANIMACIÓN PARA FILA EXPLICACIÓN BLOCK === */
+.fila-explicacion-block {
+  transition: background 0.2s ease;
+  border-radius: var(--radius-xs);
+  padding: 4px 6px;
+}
+
+.fila-explicacion-block:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+/* === ANIMACIÓN PARA FILA CONTEXTO BLOCK === */
+.fila-contexto-block {
+  transition: background 0.2s ease;
+  border-radius: var(--radius-xs);
+  padding: 4px 6px;
+}
+
+.fila-contexto-block:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+/* === ANIMACIÓN PARA BOTONES DE MODAL === */
+.modal-footer button {
+  transition: all 0.2s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.modal-footer button:hover {
+  transform: translateY(-2px);
+}
+
+/* === ANIMACIÓN PARA BOTÓN LIMPIAR === */
+button[onclick="limpiarCombinadaManual()"]:hover {
+  background: rgba(239, 68, 68, 0.3) !important;
+}
+
+/* === ANIMACIÓN PARA BOTÓN COMPARTIR MODAL === */
+button[onclick="compartirCombinadaManual()"]:hover {
+  background: rgba(100, 228, 169, 0.3) !important;
+}
+
+/* === ANIMACIÓN PARA BOTÓN GUARDAR === */
+button[onclick="guardarCombinadaGuardada()"]:hover {
+  background: rgba(242, 196, 116, 0.3) !important;
+}
+
+/* === ANIMACIÓN PARA BOTÓN CONFIRMAR === */
+button[onclick="confirmarCombinadaManual()"]:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 8px 20px -8px rgba(100, 228, 169, 0.6);
+}
+
+/* === ANIMACIÓN PARA BOTÓN CERRAR MODAL === */
+button[onclick="cerrarModalArmarCombinada()"]:hover,
+button[onclick="cerrarCombinadaAsistida()"]:hover {
+  transform: rotate(90deg);
+  color: var(--red) !important;
+}
+
+/* === ANIMACIÓN PARA TARJETAS DE HISTORIAL HEADER === */
+.historial-partido-header {
+  transition: background 0.2s ease;
+}
+
+.historial-partido-header:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+/* === ANIMACIÓN PARA ITEMS DE MERCADO EN HISTORIAL === */
+.historial-mercado-item {
+  transition: transform 0.2s ease;
+}
+
+.historial-mercado-item:hover {
+  transform: translateX(4px);
+}
+
+/* === ANIMACIÓN PARA CHECK DE MERCADO === */
+.historial-mercado-check {
+  transition: transform 0.2s ease;
+}
+
+.historial-mercado-item:hover .historial-mercado-check {
+  transform: scale(1.2);
+}
+
+/* === ANIMACIÓN PARA BADGE DE PARTIDO === */
+.historial-partido-badge {
+  transition: transform 0.2s ease;
+}
+
+.historial-partido-badge:hover {
+  transform: scale(1.1);
+}
+
+/* === ANIMACIÓN PARA PRECISIÓN GENERAL NUM === */
+.precision-general-num {
+  animation: countUp 0.8s ease-out forwards;
+}
+
+/* === ANIMACIÓN PARA PRECISIÓN GENERAL LABEL === */
+.precision-general-label {
+  animation: fadeInLeft 0.6s ease-out forwards;
+  animation-delay: 0.2s;
+}
+
+/* === ANIMACIÓN PARA ICONOS DE TELEMETRÍA VALOR === */
+.telemetria-valor {
+  font-variant-numeric: tabular-nums;
+  animation: countUp 0.8s ease-out forwards;
+}
+
+/* === ANIMACIÓN PARA LABEL DE TELEMETRÍA === */
+.telemetria-label {
+  animation: fadeInLeft 0.6s ease-out forwards;
+  animation-delay: 0.2s;
+}
+
+/* === ANIMACIÓN PARA SUB DE TELEMETRÍA === */
+.telemetria-sub {
+  animation: fadeIn 0.8s ease-out forwards;
+  animation-delay: 0.4s;
+}
+
+/* === ANIMACIÓN PARA CONTROLES DE ANALÍTICA === */
+.analitica-controles {
+  animation: fadeInUp 0.5s ease-out forwards;
+}
+
+/* === ANIMACIÓN PARA LABEL DE CONTROLES === */
+.analitica-controles-label {
+  animation: fadeInLeft 0.5s ease-out forwards;
+}
+
+/* === ANIMACIÓN PARA BLOQUE DE HISTORIAL EN ANALÍTICA === */
+#bloque-historial {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+/* === ANIMACIÓN PARA VISTA ANALÍTICA HEADER === */
+.vista-analitica-header {
+  animation: slideDown 0.5s ease-out forwards;
+}
+
+/* === ANIMACIÓN PARA GRID DE TELEMETRÍA === */
+.telemetria-grid {
+  animation: fadeInUp 0.5s ease-out forwards;
+  animation-delay: 0.2s;
+}
+
+/* === ANIMACIÓN PARA CONTROLES DE ANALÍTICA WRAPPER === */
+.analitica-controles-wrapper {
+  animation: fadeInUp 0.5s ease-out forwards;
+  animation-delay: 0.3s;
+}
+
+/* === ANIMACIÓN PARA VISTA HISTORIAL HEADER === */
+.historial-header {
+  animation: slideDown 0.5s ease-out forwards;
+}
+
+/* === ANIMACIÓN PARA FILTROS DE HISTORIAL === */
+.historial-filtros {
+  animation: fadeInUp 0.5s ease-out forwards;
+  animation-delay: 0.2s;
+}
+
+/* === ANIMACIÓN PARA BOTÓN REINICIAR EN HISTORIAL === */
+#vista-historial .boton-reiniciar {
+  animation: fadeInRight 0.5s ease-out forwards;
+  animation-delay: 0.3s;
+}
+
+/* === ANIMACIÓN PARA VISTA FAVORITOS HEADER === */
+#vista-favoritos h2 {
+  animation: slideDown 0.5s ease-out forwards;
+}
+
+#vista-favoritos .subtitulo-vista {
+  animation: fadeIn 0.5s ease-out forwards;
+  animation-delay: 0.1s;
+}
+
+/* === ANIMACIÓN PARA VISTA MIS PREDICCIONES HEADER === */
+#vista-mispredicciones h2 {
+  animation: slideDown 0.5s ease-out forwards;
+}
+
+#vista-mispredicciones .subtitulo-vista {
+  animation: fadeIn 0.5s ease-out forwards;
+  animation-delay: 0.1s;
+}
+
+/* === ANIMACIÓN PARA VISTA HISTORIAL HEADER === */
+#vista-historial h2 {
+  animation: slideDown 0.5s ease-out forwards;
+}
+
+#vista-historial .subtitulo-vista {
+  animation: fadeIn 0.5s ease-out forwards;
+  animation-delay: 0.1s;
+}
+
+/* === ANIMACIÓN PARA VISTA COMPETICIONES HEADER === */
+#vista-competiciones h2 {
+  animation: slideDown 0.5s ease-out forwards;
+}
+
+#vista-competiciones .subtitulo-vista {
+  animation: fadeIn 0.5s ease-out forwards;
+  animation-delay: 0.1s;
+}
+
+/* === ANIMACIÓN PARA VISTA RANKING HEADER === */
+#vista-ranking h2 {
+  animation: slideDown 0.5s ease-out forwards;
+}
+
+#vista-ranking .subtitulo-vista {
+  animation: fadeIn 0.5s ease-out forwards;
+  animation-delay: 0.1s;
+}
+
+/* === ANIMACIÓN PARA VISTA DOBLES HEADER === */
+#vista-dobles h2 {
+  animation: slideDown 0.5s ease-out forwards;
+}
+
+#vista-dobles .subtitulo-vista {
+  animation: fadeIn 0.5s ease-out forwards;
+  animation-delay: 0.1s;
+}
+
+/* === ANIMACIÓN PARA VISTA LIVE HEADER === */
+#vista-live h2 {
+  animation: slideDown 0.5s ease-out forwards;
+}
+
+#vista-live .subtitulo-vista {
+  animation: fadeIn 0.5s ease-out forwards;
+  animation-delay: 0.1s;
+}
+
+/* === ANIMACIÓN PARA GRID DE COMPETICIONES === */
+#vista-competiciones .dashboard-grid {
+  animation: fadeInUp 0.5s ease-out forwards;
+  animation-delay: 0.2s;
+}
+
+/* === ANIMACIÓN PARA GRID DE RANKING === */
+#vista-ranking .dashboard-grid {
+  animation: fadeInUp 0.5s ease-out forwards;
+  animation-delay: 0.2s;
+}
+
+/* === ANIMACIÓN PARA BLOQUE DE COMBINADAS EN DOBLES === */
+#vista-dobles .bloque-combinadas {
+  animation: fadeInUp 0.6s ease-out forwards;
+  animation-delay: 0.2s;
+}
+
+/* === ANIMACIÓN PARA TÍTULO DE COMBINADAS === */
+.bloque-combinadas h3 {
+  animation: fadeInLeft 0.6s ease-out forwards;
+  animation-delay: 0.1s;
+}
+
+/* === ANIMACIÓN PARA SUBTÍTULO DE COMBINADAS === */
+.bloque-combinadas .subtitulo-combinadas {
+  animation: fadeInRight 0.6s ease-out forwards;
+  animation-delay: 0.15s;
+}
+
+/* === ANIMACIÓN PARA PIERNAS DE COMBINADA === */
+.pierna-combinada {
+  animation: fadeInLeft 0.4s ease-out forwards;
+}
+
+.pierna-combinada:nth-child(1) { animation-delay: 0.1s; }
+.pierna-combinada:nth-child(2) { animation-delay: 0.15s; }
+.pierna-combinada:nth-child(3) { animation-delay: 0.2s; }
+.pierna-combinada:nth-child(4) { animation-delay: 0.25s; }
+
+/* === ANIMACIÓN PARA COMBO PARTIDO PCT === */
+.combo-partido-pct {
+  font-variant-numeric: tabular-nums;
+  animation: countUp 0.6s ease-out forwards;
+}
+
+/* === ANIMACIÓN PARA PARTES DE COMBO === */
+.combo-partido-partes {
+  animation: fadeIn 0.5s ease-out forwards;
+  animation-delay: 0.1s;
+}
+
+/* === ANIMACIÓN PARA MARCADOR CHIP EM === */
+.marcador-chip em {
+  font-style: normal;
+  font-variant-numeric: tabular-nums;
+}
+
+/* === ANIMACIÓN PARA FILA SELECCIÓN === */
+.fila-seleccion {
+  animation: fadeIn 0.4s ease-out forwards;
+  animation-delay: 0.1s;
+}
+
+/* === ANIMACIÓN PARA NOMBRE DE MERCADO === */
+.fila-mercado-nombre {
+  animation: fadeInLeft 0.3s ease-out forwards;
+  animation-delay: 0.15s;
+}
+
+/* === ANIMACIÓN PARA TÍTULO DE FILA === */
+.fila-titulo {
+  animation: fadeInLeft 0.3s ease-out forwards;
+}
+
+/* === ANIMACIÓN PARA CUERPO DE MERCADO === */
+.fila-mercado-cuerpo {
+  animation: fadeInUp 0.4s ease-out forwards;
+  animation-delay: 0.1s;
+}
+
+/* === ANIMACIÓN PARA FOOTER DE MERCADO === */
+.fila-mercado-footer {
+  animation: fadeInRight 0.4s ease-out forwards;
+  animation-delay: 0.35s;
+}
+
+/* === ANIMACIÓN PARA STRONG DE CUOTA === */
+.cuota-implicita-tag strong {
+  color: var(--brand);
+  font-variant-numeric: tabular-nums;
+}
+
+/* === ANIMACIÓN PARA ICONO DE INFO NO BET === */
+.icono-info-nobet {
+  display: inline-block;
+  animation: pulseDot 2s ease-in-out infinite;
+}
+
+/* === ANIMACIÓN PARA DETALLE NO BET === */
+.fila-nobet-detalle {
+  animation: fadeIn 0.5s ease-out forwards;
+  animation-delay: 0.2s;
+}
+
+/* === ANIMACIÓN PARA CUOTA IMPLÍCITA EN NO BET === */
+.cuota-implicita {
+  font-variant-numeric: tabular-nums;
+  animation: countUp 0.6s ease-out forwards;
+}
+
+/* === ANIMACIÓN PARA BOTÓN MI PREDICCIÓN ACTIVO === */
+.boton-mi-prediccion.activo {
+  animation: pulseActive 2s ease-in-out infinite;
+}
+
+/* === ANIMACIÓN PARA H2H ICONO === */
+.h2h-icono {
+  display: inline-block;
+  transition: transform 0.3s ease;
+}
+
+.info-h2h-pill:hover .h2h-icono {
+  transform: rotate(15deg);
+}
+
+/* === ANIMACIÓN PARA BADGE CONFIANZA LECTURA === */
+.badge-confianza-lectura {
+  transition: all 0.2s ease;
+}
+
+.badge-confianza-lectura:hover {
+  transform: scale(1.05);
+}
+
+/* === ANIMACIÓN PARA TENDENCIA === */
+.tendencia {
+  display: inline-block;
+  transition: transform 0.3s ease;
+}
+
+.tendencia:hover {
+  transform: scale(1.2);
+}
+
+/* === ANIMACIÓN PARA TENDENCIA NEUTRAL === */
+.tendencia-neutral {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+/* === ANIMACIÓN PARA BADGE POSICION === */
+.badge-posicion {
+  transition: all 0.2s ease;
+}
+
+.badge-posicion:hover {
+  transform: scale(1.1);
+}
+
+/* === ANIMACIÓN PARA ESTRELLA FAVORITO === */
+.estrella-favorito {
+  transition: all 0.2s ease;
+}
+
+.estrella-favorito:hover {
+  transform: scale(1.3) rotate(15deg);
+}
+
+/* === ANIMACIÓN PARA ESTRELLA FAVORITO ACTIVA === */
+.estrella-favorito.activa {
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+/* === ANIMACIÓN PARA RACHA VISUAL === */
+.racha-visual {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+/* === ANIMACIÓN PARA EQUIPO INFO === */
+.equipo-info {
+  transition: transform 0.2s ease;
+}
+
+/* === ANIMACIÓN PARA ALINEACION IZQ === */
+.alineacion-izq {
+  animation: fadeInLeft 0.5s ease-out forwards;
+}
+
+/* === ANIMACIÓN PARA ALINEACION DER === */
+.alineacion-der {
+  animation: fadeInRight 0.5s ease-out forwards;
+}
+
+/* === ANIMACIÓN PARA ESCUDO === */
+.escudo {
+  transition: transform 0.3s ease;
+}
+
+.equipo-info:hover .escudo {
+  transform: scale(1.1);
+}
+
+/* === ANIMACIÓN PARA EQUIPO NOMBRE TEND === */
+.equipo-nombre-tend {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+/* === ANIMACIÓN PARA EQUIPO === */
+.equipo {
+  animation: fadeInLeft 0.3s ease-out forwards;
+}
+
+/* === ANIMACIÓN PARA TOPBAR IZQ === */
+.partido-topbar-izq {
+  animation: fadeInLeft 0.4s ease-out forwards;
+}
+
+/* === ANIMACIÓN PARA TOPBAR DER === */
+.partido-topbar-der {
+  animation: fadeInRight 0.4s ease-out forwards;
+}
+
+/* === ANIMACIÓN PARA PARTIDO LIGA TAG === */
+.partido-liga-tag {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+/* === ANIMACIÓN PARA PARTIDO FECHA TAG === */
+.partido-fecha-tag {
+  animation: fadeIn 0.3s ease-out forwards;
+  animation-delay: 0.1s;
+}
+
+/* === ANIMACIÓN PARA CHIP CUENTA REGRESIVA === */
+.chip-cuenta-regresiva {
+  animation: fadeInRight 0.3s ease-out forwards;
+  animation-delay: 0.1s;
+}
+
+/* === ANIMACIÓN PARA CHIP URGENTE === */
+.chip-cuenta-regresiva.urgente {
+  animation: pulse 2s ease-in-out infinite;
+}
+
+/* === ANIMACIÓN PARA DESIGN CARD === */
+.design-card {
+  animation: fadeInUp 0.5s ease-out forwards;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.design-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.5);
+}
+
+/* === ANIMACIÓN PARA DESIGN CARD BORDER === */
+.design-card-border {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+/* === ANIMACIÓN PARA DESIGN CARD HEADER === */
+.design-card-header {
+  animation: slideDown 0.4s ease-out forwards;
+}
+
+/* === ANIMACIÓN PARA DESIGN CARD DATE === */
+.design-card-date {
+  animation: fadeInLeft 0.3s ease-out forwards;
+}
+
+/* === ANIMACIÓN PARA DESIGN CARD COUNTDOWN === */
+.design-card-countdown {
+  animation: fadeInRight 0.3s ease-out forwards;
+}
+
+/* === ANIMACIÓN PARA DESIGN CARD TEAMS === */
+.design-card-teams {
+  animation: fadeInUp 0.5s ease-out forwards;
+  animation-delay: 0.1s;
+}
+
+/* === ANIMACIÓN PARA DESIGN CARD TEAM === */
+.design-card-team {
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
+.design-card-team:nth-child(1) { animation-delay: 0.15s; }
+.design-card-team:nth-child(3) { animation-delay: 0.2s; }
+
+/* === ANIMACIÓN PARA DESIGN CARD VS === */
+.design-card-vs {
+  animation: scaleIn 0.5s ease-out forwards;
+  animation-delay: 0.25s;
+}
+
+/* === ANIMACIÓN PARA DESIGN CARD FOOTER === */
+.design-card-footer {
+  animation: fadeInUp 0.5s ease-out forwards;
+  animation-delay: 0.3s;
+}
+
+/* === ANIMACIÓN PARA DESIGN CARD LEAGUE === */
+.design-card-league {
+  animation: fadeInLeft 0.3s ease-out forwards;
+  animation-delay: 0.3s;
+}
+
+/* === ANIMACIÓN PARA DESIGN CARD PROB CONTAINER === */
+.design-card-prob-container {
+  animation: fadeInRight 0.3s ease-out forwards;
+  animation-delay: 0.35s;
+}
+
+/* === ANIMACIÓN PARA DESIGN CARD PROB LABEL === */
+.design-card-prob-label {
+  animation: fadeInLeft 0.3s ease-out forwards;
+  animation-delay: 0.35s;
+}
+
+/* === ANIMACIÓN PARA DESIGN CARD PROB BAR === */
+.design-card-prob-bar {
+  animation: fadeInRight 0.3s ease-out forwards;
+  animation-delay: 0.4s;
+}
+
+/* === ANIMACIÓN PARA DESIGN CARD PROB FILL === */
+.design-card-prob-fill {
+  animation: fillBar 1s ease-out forwards;
+  animation-delay: 0.5s;
+}
+
+/* === ANIMACIÓN PARA DESIGN CARD PROB VAL === */
+.design-card-prob-val {
+  animation: countUp 0.6s ease-out forwards;
+  animation-delay: 0.6s;
+}
+
+/* === ANIMACIÓN PARA SKELETON TARJETA === */
+.skeleton-tarjeta {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+/* === ANIMACIÓN PARA SKELETON LINEA === */
+.skeleton-linea {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+.skeleton-linea:nth-child(1) { animation-delay: 0.1s; }
+.skeleton-linea:nth-child(2) { animation-delay: 0.2s; }
+.skeleton-linea:nth-child(3) { animation-delay: 0.3s; }
+.skeleton-linea:nth-child(4) { animation-delay: 0.4s; }
+
+/* === ANIMACIÓN PARA AVISO SERVIDOR === */
+.aviso-servidor {
+  animation: fadeInUp 0.5s ease-out forwards;
+}
+
+/* === ANIMACIÓN PARA PIE PAGINA === */
+.pie-pagina {
+  animation: fadeInUp 0.6s ease-out forwards;
+}
+
+/* === ANIMACIÓN PARA MARCA FOOTER === */
+.marca-footer {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+/* === ANIMACIÓN PARA MODAL OVERLAY === */
+.modal-overlay {
+  animation: fadeIn 0.2s ease-out;
+}
+
+/* === ANIMACIÓN PARA MODAL CONTAINER === */
+.modal-container {
+  animation: scaleIn 0.3s ease-out;
+}
+
+/* === ANIMACIÓN PARA MODAL HEADER === */
+.modal-header {
+  animation: slideDown 0.3s ease-out;
+}
+
+/* === ANIMACIÓN PARA MODAL BODY === */
+.modal-body,
+#modal-combinada-body,
+#asistida-body {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* === ANIMACIÓN PARA MODAL FOOTER === */
+.modal-footer {
+  animation: slideDown 0.3s ease-out;
+}
+
+/* === ANIMACIÓN PARA RESUMEN DE COMBINADA === */
+#modal-combinada-resumen {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* === ANIMACIÓN PARA CONTADORES DE COMBINADA === */
+#comb-count-picks,
+#comb-prob-total,
+#comb-cuota-total {
+  font-variant-numeric: tabular-nums;
+  transition: all 0.3s ease;
+}
+
+/* === ANIMACIÓN PARA BOTONES DE FOOTER DE COMBINADA === */
+#asistida-footer button {
+  transition: all 0.2s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+#asistida-footer button:hover {
+  transform: translateY(-2px);
+}
+
+/* === ANIMACIÓN PARA STEPPER === */
+#asistida-step-1,
+#asistida-step-2 {
+  transition: all 0.3s ease;
+}
+
+/* === ANIMACIÓN PARA BODY DE ASISTIDA === */
+#asistida-body {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* === ANIMACIÓN PARA FOOTER DE ASISTIDA === */
+#asistida-footer {
+  animation: slideDown 0.3s ease-out;
+}
+
+/* === ANIMACIÓN PARA VISTA ACTIVA === */
+.vista-activa {
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
+/* === ANIMACIÓN PARA VISTA PRONÓSTICOS ACTIVA === */
+#vista-pronosticos.vista-activa {
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
+/* === ANIMACIÓN PARA VISTA INICIO ACTIVA === */
+#vista-inicio.vista-activa {
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
+/* === ANIMACIÓN PARA TRANSICIÓN DE VISTAS === */
+.vista {
+  transition: opacity 0.3s ease;
+}
+
+/* === ANIMACIÓN PARA VISTA OCULTA === */
+.vista:not(.vista-activa) {
+  opacity: 0;
+  pointer-events: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* === ANIMACIÓN PARA VISTA MOSTRADA === */
+.vista.vista-activa {
+  opacity: 1;
+  pointer-events: auto;
+  position: relative;
+  overflow: visible;
+}
+
+/* === ANIMACIÓN PARA CONTENIDO DE VISTA === */
+.vista-activa > * {
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
+/* === ANIMACIÓN PARA PRIMER ELEMENTO DE VISTA === */
+.vista-activa > *:nth-child(1) { animation-delay: 0.05s; }
+.vista-activa > *:nth-child(2) { animation-delay: 0.1s; }
+.vista-activa > *:nth-child(3) { animation-delay: 0.15s; }
+.vista-activa > *:nth-child(4) { animation-delay: 0.2s; }
+.vista-activa > *:nth-child(5) { animation-delay: 0.25s; }
+.vista-activa > *:nth-child(n+6) { animation-delay: 0.3s; }
+
+/* === ANIMACIÓN PARA SCROLL SUAVE === */
+html {
+  scroll-behavior: smooth;
+}
+
+/* === ANIMACIÓN PARA BODY === */
+body {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+/* === ANIMACIÓN PARA MAIN === */
+main {
+  animation: fadeInUp 0.4s ease-out forwards;
+}
+
+/* === ANIMACIÓN PARA LANDING SHELL === */
+.landing-shell {
+  animation: fadeIn 0.6s ease-out forwards;
+}
+
+/* === ANIMACIÓN PARA LANDING INNER === */
+.landing-inner {
+  animation: fadeInUp 0.6s ease-out forwards;
+;
+}
+
+/* === ANIMACIÓN PARA LANDING TOPBAR === */
+.landing-topbar {
+  animation: slideDown 0.5s ease-out forwards;
+}
+
+/* === ANIMACIÓN PARA LANDING BRAND === */
+.landing-brand {
+  animation: fadeInLeft 0.5s ease-out forwards;
+}
+
+/* === ANIMACIÓN PARA LANDING NAV === */
+.landing-nav {
+  animation: fadeInRight 0.5s ease-out forwards;
+}
+
+/* === ANIMACIÓN PARA LANDING TOPBAR CTA === */
+.landing-topbar-cta {
+  animation: fadeInRight 0.5s ease-out forwards;
+  animation-delay: 0.1s;
+}
+
+/* === ANIMACIÓN PARA LANDING INNER H1 === */
+.landing-inner h1 {
+  animation: slideDown 0.6s ease-out forwards;
+  animation-delay: 0.1s;
+}
+
+/* === ANIMACIÓN PARA LANDING INNER SPAN === */
+.landing-inner h1 span {
+  animation: fadeIn 0.8s ease-out forwards;
+  animation-delay: 0.3s;
+}
+
+/* === ANIMACIÓN PARA LANDING INNER P === */
+.landing-inner p {
+  animation: fadeInUp 0.6s ease-out forwards;
+  animation-delay: 0.2s;
+}
+
+/* === ANIMACIÓN PARA LANDING CTA ROW === */
+.landing-cta-row {
+  animation: fadeInUp 0.6s ease-out forwards;
+  animation-delay: 0.3s;
+}
+
+/* === ANIMACIÓN PARA LANDING PRIMARY === */
+.landing-primary {
+  animation: fadeInRight 0.5s ease-out forwards;
+  animation-delay: 0.4s;
+}
+
+/* === ANIMACIÓN PARA LANDING SECONDARY === */
+.landing-secondary {
+  animation: fadeInLeft 0.5s ease-out forwards;
+  animation-delay: 0.45s;
+}
+
+/* === ANIMACIÓN PARA LANDING SECTIONS === */
+.landing-sections {
+  animation: fadeInUp 0.6s ease-out forwards;
+;
+}
+
+/* === ANIMACIÓN PARA LANDING CTA FINAL === */
+.landing-cta-final {
+  animation: fadeInUp 0.6s ease-out forwards;
+  animation-delay: 0.2s;
+}
+
+/* === ANIMACIÓN PARA LANDING CTA FINAL INNER === */
+.landing-cta-final-inner {
+  animation: fadeInUp 0.6s ease-out forwards;
+  animation-delay: 0.3s;
+}
+
+/* === ANIMACIÓN PARA LANDING CTA FINAL H2 === */
+.landing-cta-final-inner h2 {
+  animation: slideDown 0.5s ease-out forwards;
+  animation-delay: 0.4s;
+}
+
+/* === ANIMACIÓN PARA LANDING CTA FINAL P === */
+.landing-cta-final-inner p {
+  animation: fadeIn 0.6s ease-out forwards;
+  animation-delay: 0.5s;
+}
+
+/* === ANIMACIÓN PARA LANDING CTA FINAL BUTTONS === */
+.landing-cta-final-inner .landing-primary,
+.landing-cta-final-inner .landing-secondary {
+  animation: fadeInUp 0.5s ease-out forwards;
+  animation-delay: 0.6s;
+}
+
+/* === ANIMACIÓN PARA DASH HEADER SALUDO === */
+.dash-header-saludo {
+  animation: fadeInLeft 0.5s ease-out forwards;
+}
+
+/* === ANIMACIÓN PARA DASH HEADER ACCIONES === */
+.dash-header-acciones {
+  animation: fadeInRight 0.5s ease-out forwards;
+}
+
+/* === ANIMACIÓN PARA DASH EYEBROW === */
+.dash-eyebrow {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+/* === ANIMACIÓN PARA DASH SALUDO H2 === */
+#hero-saludo {
+  animation: slideDown 0.5s ease-out forwards;
+  animation-delay: 0.1s;
+}
+
+/* === ANIMACIÓN PARA DASH HEADER SUB === */
+.dash-header-sub {
+  animation: fadeIn 0.5s ease-out forwards;
+  animation-delay: 0.2s;
+}
+
+/* === ANIMACIÓN PARA DASH BUSCADOR === */
+.dash-buscador {
+  animation: fadeInRight 0.5s ease-out forwards;
+  animation-delay: 0.15s;
+}
+
+/* === ANIMACIÓN PARA DASH PERFIL WRAP === */
+.dash-perfil-wrap {
+  animation: fadeInRight 0.5s ease-out forwards;
+  animation-delay: 0.2s;
+}
+
+/* === ANIMACIÓN PARA DASH PERFIL DATOS === */
+.dash-perfil-datos {
+  animation: fadeInLeft 0.4s ease-out forwards;
+  animation-delay: 0.25s;
+}
+
+/* === ANIMACIÓN PARA DASH NAV GRUPO === */
+.dash-nav-grupo {
+  animation: fadeIn 0.5s ease-out forwards;
+  animation-delay: 0.25s;
+}
+
+/* === ANIMACIÓN PARA APP NAV BUSCADOR === */
+.app-nav-buscador {
+  animation: fadeInUp 0.5s ease-out forwards;
+  animation-delay: 0.15s;
+}
+
+/* === ANIMACIÓN PARA DASH SIDEBAR CABECERA === */
+.dash-sidebar-cabecera {
+  animation: slideDown 0.5s ease-out forwards;
+}
+
+/* === ANIMACIÓN PARA DASH LOGO TEXTO === */
+.dash-logo-texto {
+  animation: fadeInRight 0.5s ease-out forwards;
+  animation-delay: 0.1s;
+}
+
+/* === ANIMACIÓN PARA DASH NAV === */
+.dash-nav {
+  animation: fadeInLeft 0.5s ease-out forwards;
+  animation-delay: 0.2s;
+}
+
+/* === ANIMACIÓN PARA NAV TAB ICONO === */
+.nav-tab-icono {
+  transition: transform 0.3s ease;
+}
+
+.nav-tab:hover .nav-tab-icono {
+  transform: scale(1.1) rotate(5deg);
+}
+
+/* === ANIMACIÓN PARA NAV TAB ACTIVA === */
+.nav-tab.activa {
+  animation: pulseActive 2s ease-in-out infinite;
+}
+
+/* === ANIMACIÓN PARA APP NAV HAMBURGUESA SPAN === */
+.app-nav-hamburguesa span {
+  transition: all 0.3s ease;
+}
+
+.app-nav-hamburguesa:hover span:nth-child(1) {
+  transform: translateY(-2px);
+}
+
+.app-nav-hamburguesa:hover span:nth-child(3) {
+  transform: translateY(2px);
+}
+
+/* === ANIMACIÓN PARA FILTRO LIGA BTN === */
+.filtro-liga-btn {
+  transition: all 0.25s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.filtro-liga-btn:hover {
+  transform: translateY(-2px);
+}
+
+/* === ANIMACIÓN PARA FILTRO BTN === */
+.filtro-btn {
+  transition: all 0.2s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.filtro-btn:hover {
+  transform: translateY(-2px);
+}
+
+.filtro-btn.activa {
+  animation: pulseActive 2s ease-in-out infinite;
+}
+
+/* === ANIMACIÓN PARA FILTRO ESTADO === */
+.filtro-estado {
+  transition: all 0.2s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.filtro-estado:hover {
+  transform: translateY(-2px);
+}
+
+.filtro-estado.activa {
+  animation: pulseActive 2s ease-in-out infinite;
+}
+
+/* === ANIMACIÓN PARA BOTÓN COMPARTIR === */
+.boton-compartir {
+  transition: all 0.2s ease;
+}
+
+.boton-compartir:hover {
+  transform: scale(1.02);
+}
+
+/* === ANIMACIÓN PARA TARJETAS DE HISTORIAL === */
+.historial-partido {
+  animation: fadeInLeft 0.4s ease-out forwards;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.historial-partido:hover {
+  transform: translateX(4px);
+  border-color: rgba(100, 228, 169, 0.3);
+}
+
+/* === ANIMACIÓN PARA HEALTH STATS === */
+.health-stat {
+  transition: transform 0.2s ease;
+}
+
+.health-stat:hover {
+  transform: translateX(4px);
+}
+
+/* === ANIMACIÓN PARA HEALTH STAT DOT === */
+.health-stat-dot {
+  transition: transform 0.3s ease;
+}
+
+.health-stat:hover .health-stat-dot {
+  transform: scale(1.3);
+}
+
+/* === ANIMACIÓN PARA HEALTH LABEL === */
+.health-label {
+  animation: fadeInLeft 0.5s ease-out forwards;
+  animation-delay: 0.2s;
+}
+
+/* === ANIMACIÓN PARA HEALTH SUB === */
+.health-sub {
+  animation: fadeInRight 0.5s ease-out forwards;
+  animation-delay: 0.25s;
+}
+
+/* === ANIMACIÓN PARA HEALTH GRANDE === */
+.health-grande {
+  animation: scaleIn 0.6s ease-out forwards;
+  animation-delay: 0.3s;
+}
+
+/* === ANIMACIÓN PARA HEALTH GAUGE NOTA === */
+.health-gauge-nota {
+  animation: fadeIn 0.6s ease-out forwards;
+  animation-delay: 0.5s;
+}
+
+/* === ANIMACIÓN PARA HEALTH MERCADOS LISTA === */
+.health-mercados {
+  animation: fadeInUp 0.5s ease-out forwards;
+  animation-delay: 0.4s;
+}
+
+/* === ANIMACIÓN PARA HEALTH NOTA === */
+.health-nota {
+  animation: fadeIn 0.6s ease-out forwards;
+  animation-delay: 0.4s;
+}
+
+/* === ANIMACIÓN PARA MOTOR HEALTH CARD === */
+.motor-health-grid .health-card {
+  animation: fadeInUp 0.5s ease-out forwards;
+}
+
+.motor-health-grid .health-card:nth-child(1) { animation-delay: 0.1s; }
+.motor-health-grid .health-card:nth-child(2) { animation-delay: 0.2s; }
+
+/* === ANIMACIÓN PARA DASHBOARD CARD === */
+.dashboard-card {
+  animation: fadeInUp 0.5s ease-out forwards;
+}
+
+.dashboard-card:nth-child(1) { animation-delay: 0.1s; }
+.dashboard-card:nth-child(2) { animation-delay: 0.15s; }
+.dashboard-card:nth-child(3) { animation-delay: 0.2s; }
+.dashboard-card:nth-child(4) { animation-delay: 0.25s; }
+
+/* === ANIMACIÓN PARA DASHBOARD LABEL === */
+.dashboard-label {
+  animation: fadeInLeft 0.4s ease-out forwards;
+}
+
+/* === ANIMACIÓN PARA DASHBOARD CARD SMALL === */
+.dashboard-card small {
+  animation: fadeIn 0.6s ease-out forwards;
+  animation-delay: 0.4s;
+}
+
+/* === ANIMACIÓN PARA CALIBRACION RANGO FILA === */
+.calibracion-rango-fila {
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.calibracion-rango-fila:hover {
+  transform: translateX(4px);
+  border-color: rgba(242, 196, 116, 0.3);
+}
+
+/* === ANIMACIÓN PARA CALIBRACION RANGO HEADER === */
+.calibracion-rango-header {
+  transition: background 0.2s ease;
+}
+
+.calibracion-rango-header:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+/* === ANIMACIÓN PARA CALIBRACION BARRA ITEM === */
+.calibracion-barra-item {
+  transition: background 0.2s ease;
+  border-radius: var(--radius-xs);
+  padding: 2px 4px;
+}
+
+.calibracion-barra-item:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+/* === ANIMACIÓN PARA CALIBRACION BARRA RELLENO === */
+.calibracion-barra-relleno {
+  transition: width 1s ease;
+}
+
+/* === ANIMACIÓN PARA CALIBRACION BARRA VALOR === */
+.calibracion-barra-valor {
+  font-variant-numeric: tabular-nums;
+  animation: countUp 0.6s ease-out forwards;
+}
+
+/* === ANIMACIÓN PARA CALIBRACION VACIO === */
+.calibracion-vacio {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+/* === ANIMACIÓN PARA CALIBRACION CATEGORIAS === */
+.calibracion-categorias {
+  animation: fadeInUp 0.5s ease-out forwards;
+  animation-delay: 0.2s;
+}
+
+/* === ANIMACIÓN PARA CALIBRACION FILA FACTOR === */
+.calibracion-fila-factor {
+  font-variant-numeric: tabular-nums;
+  transition: transform 0.2s ease;
+}
+
+.calibracion-fila-factor:hover {
+  transform: scale(1.1);
+}
+
+/* === ANIMACIÓN PARA CALIBRACION FILA MUESTRAS === */
+.calibracion-fila-muestras {
+  font-variant-numeric: tabular-nums;
+}
+
+/* === ANIMACIÓN PARA CALIBRACION ITEM TITULO === */
+.calibracion-item-titulo {
+  animation: fadeInLeft 0.4s ease-out forwards;
+}
+
+/* === ANIMACIÓN PARA CALIBRACION ITEM VALOR === */
+.calibracion-item-valor {
+  font-variant-numeric: tabular-nums;
+  animation: countUp 0.6s ease-out forwards;
+;
+}
+
+/* === ANIMACIÓN PARA BLOQUE COMBINADAS === */
+.bloque-combinadas {
+  animation: fadeInUp 0.6s ease-out forwards;
+  animation-delay: 0.2s;
+}
+
+/* === ANIMACIÓN PARA TARJETAS DE COMBINADA === */
+.tarjeta-combinada:nth-child(1) { animation-delay: 0.05s; }
+.tarjeta-combinada:nth-child(2) { animation-delay: 0.1s; }
+.tarjeta-combinada:nth-child(3) { animation-delay: 0.15s; }
+.tarjeta-combinada:nth-child(4) { animation-delay: 0.2s; }
+.tarjeta-combinada:nth-child(5) { animation-delay: 0.25s; }
+.tarjeta-combinada:nth-child(n+6) { animation-delay: 0.3s; }
+
+/* === ANIMACIÓN PARA ENCABEZADO COMBINADA === */
+.encabezado-combinada {
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
+/* === ANIMACIÓN PARA ETIQUETA COMBINADA === */
+.etiqueta-combinada {
+  animation: fadeInLeft 0.3s ease-out forwards;
+}
+
+/* === ANIMACIÓN PARA BADGE COMBINADA === */
+.badge-combinada {
+  transition: all 0.2s ease;
+}
+
+.badge-combinada:hover {
+  transform: scale(1.1);
+}
+
+/* === ANIMACIÓN PARA PROB COMBINADA === */
+.prob-combinada {
+  font-variant-numeric: tabular-nums;
+  animation: countUp 0.6s ease-out forwards;
+}
+
+/* === ANIMACIÓN PARA PIERNAS COMBINADA === */
+.pierna-combinada .num {
+  transition: all 0.2s ease;
+}
+
+.pierna-combinada:hover .num {
+  transform: scale(1.2);
+  background: var(--brand);
+  color: white;
+}
+
+/* === ANIMACIÓN PARA PIERNA COMBINADA DETALLE === */
+.pierna-combinada .detalle {
+  animation: fadeInLeft 0.3s ease-out forwards;
+}
+
+/* === ANIMACIÓN PARA PIERNA COMBINADA PCT === */
+.pierna-combinada .pct {
+  font-variant-numeric: tabular-nums;
+  animation: countUp 0.5s ease-out forwards;
+;
+}
+
+/* === ANIMACIÓN PARA HISTORIAL PARTIDO EQUIPOS === */
+.historial-partido-equipos {
+  animation: fadeInLeft 0.4s ease-out forwards;
+}
+
+/* === ANIMACIÓN PARA HISTORIAL PARTIDO MARCADOR === */
+.historial-partido-marcador {
+  font-variant-numeric: tabular-nums;
+  animation: fadeInRight 0.4s ease-out forwards;
+}
+
+/* === ANIMACIÓN PARA HISTORIAL MERCADO ITEM === */
+.historial-mercado-item.acierto {
+  animation: fadeInLeft 0.3s ease-out forwards;
+;
+}
+
+.historial-mercado-item.fallo {
+  animation: fadeInLeft 0.3s ease-out forwards;
+;
+  opacity: 0.85;
+}
+
+/* === ANIMACIÓN PARA VISTA ANALITICA CONTROLES === */
+.analitica-controles {
+  animation: fadeInUp 0.5s ease-out forwards;
+;
+}
+
+/* === ANIMACIÓN PARA VISTA ANALITICA FILTRO BTN === */
+#vista-analitica .filtro-btn {
+  transition: all 0.2s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+#vista-analitica .filtro-btn:hover {
+  transform: translateY(-2px);
+}
+
+#vista-analitica .filtro-btn.activa {
+  animation: pulseActive 2s ease-in-out infinite;
+}
+
+/* === ANIMACIÓN PARA VISTA COMPETICIONES GRID === */
+#vista-competiciones .dashboard-grid {
+  animation: fadeInUp 0.5s ease-out forwards;
+  animation-delay: 0.2s;
+}
+
+/* === ANIMACIÓN PARA VISTA RANKING GRID === */
+#vista-ranking .dashboard-grid {
+  animation: fadeInUp 0.5s ease-out forwards;
+  animation-delay: 0.2s;
+}
+
+/* === ANIMACIÓN PARA VISTA DOBLES BLOQUE COMBINADAS === */
+#vista-dobles .bloque-combinadas {
+  animation: fadeInUp 0.6s ease-out forwards;
+  animation-delay: 0.2s;
+}
+
+/* === ANIMACIÓN PARA VISTA FAVORITOS CONTENEDOR === */
+#contenedor-favoritos {
+  animation: fadeIn 0.4s ease-out forwards;
+;
+}
+
+/* === ANIMACIÓN PARA VISTA MIS PREDICCIONES CONTENEDOR === */
+#contenedor-mispredicciones {
+  animation: fadeIn 0.4s ease-out forwards;
+;
+}
+
+/* === ANIMACIÓN PARA VISTA HISTORIAL CONTENEDOR === */
+#vista-historial .historial-partido {
+  animation: fadeInLeft 0.4s ease-out forwards;
+;
+}
+
+#vista-historial .historial-partido:nth-child(1) { animation-delay: 0.05s; }
+#vista-historial .historial-partido:nth-child(2) { animation-delay: 0.1s; }
+#vista-historial .historial-partido:nth-child(3) { animation-delay: 0.15s; }
+#vista-historial .historial-partido:nth-child(4) { animation-delay: 0.2s; }
+#vista-historial .historial-partido:nth-child(5) { animation-delay: 0.25s; }
+#vista-historial .historial-partido:nth-child(n+6) { animation-delay: 0.3s; }
+
+/* === ANIMACIÓN PARA VISTA HISTORIAL PRECISION === */
+#vista-historial .precision-general {
+  animation: scaleIn 0.5s ease-out forwards;
+  animation-delay: 0.2s;
+}
+
+/* === ANIMACIÓN PARA VISTA ANALITICA HISTORIAL === */
+#vista-analitica #bloque-historial {
+  animation: fadeIn 0.5s ease-out forwards;
+;
+}
+
+/* === ANIMACIÓN PARA VISTA ANALITICA HISTORIAL PARTIDO === */
+#vista-analitica .historial-partido {
+  animation: fadeInLeft 0.4s ease-out forwards;
+;
+}
+
+/* === ANIMACIÓN PARA VISTA LIVE CONTENEDOR === */
+#contenedor-live {
+  animation: fadeIn 0.4s ease-out forwards;
+;
+}
+
+/* === ANIMACIÓN PARA VISTA LIVE PARTIDO EN VIVO === */
+#vista-live .partido-en-vivo {
+  animation: pulseLive 2s ease-in-out infinite;
+}
+
+/* === ANIMACIÓN PARA VISTA PRONÓSTICOS PESTAÑAS === */
+#vista-pronosticos .pestañas-fecha {
+  animation: slideDown 0.4s ease-out forwards;
+;
+}
+
+/* === ANIMACIÓN PARA VISTA PRONÓSTICOS BARRA FILTROS === */
+#vista-pronosticos .barra-filtros-unificada {
+  animation: fadeInUp 0.4s ease-out forwards;
+  animation-delay: 0.1s;
+}
+
+/* === ANIMACIÓN PARA VISTA PRONÓSTICOS PILLS LIGAS === */
+#vista-pronosticos .filtro-ligas-pills {
+  animation: fadeInLeft 0.4s ease-out forwards;
+  animation-delay: 0.15s;
+}
+
+/* === ANIMACIÓN PARA VISTA PRONÓSTICOS INPUT BUSCAR === */
+#vista-pronosticos .input-buscar-integrado {
+  animation: fadeInRight 0.4s ease-out forwards;
+  animation-delay: 0.2s;
+}
+
+/* === ANIMACIÓN PARA VISTA PRONÓSTICOS FILTROS RAPIDOS === */
+#vista-pronosticos #filtros-rapidos-pills {
+  animation: fadeInUp 0.4s ease-out forwards;
+  animation-delay: 0.25s;
+}
+
+/* === ANIMACIÓN PARA VISTA PRONÓSTICOS CONTENEDOR PARTIDOS === */
+#vista-pronosticos #contenedor-partidos {
+  animation: fadeIn 0.4s ease-out forwards;
+  animation-delay: 0.3s;
+}
+
+/* === ANIMACIÓN PARA VISTA PRONÓSTICOS BLOQUE COMBINADAS === */
+#vista-pronosticos #bloque-combinadas {
+  animation: fadeInUp 0.6s ease-out forwards;
+  animation-delay: 0.4s;
+}
+
+/* === ANIMACIÓN PARA VISTA PRONÓSTICOS FAB === */
+#vista-pronosticos .btn-fab-combinada {
+  animation: floatButton 3s ease-in-out infinite;
+}
+
+/* === ANIMACIÓN PARA VISTA PRONÓSTICOS SELECTOR FECHA === */
+#vista-pronosticos .selector-fecha-personalizada {
+  animation: slideDown 0.3s ease-out;
+}
+
+/* === ANIMACIÓN PARA VISTA PRONÓSTICOS HISTORIAL PARTIDO === */
+#vista-pronosticos .historial-partido {
+  animation: fadeInLeft 0.4s ease-out forwards;
+;
+}
+
+/* === ANIMACIÓN PARA VISTA PRONÓSTICOS HISTORIAL BADGE === */
+#vista-pronosticos .historial-partido-badge {
+  transition: transform 0.2s ease;
+}
+
+#vista-pronosticos .historial-partido-badge:hover {
+  transform: scale(1.1);
+}
+
+/* === ANIMACIÓN PARA VISTA FAVORITOS TARJETAS === */
+#vista-favoritos .tarjeta-partido {
+  animation: fadeInUp 0.5s ease-out forwards;
+;
+}
+
+/* === ANIMACIÓN PARA VISTA FAVORITOS TARJETAS RETRASO === */
+#vista-favoritos .tarjeta-partido:nth-child(1) { animation-delay: 0.05s; }
+#vista-favoritos .tarjeta-partido:nth-child(2) { animation-delay: 0.1s; }
+#vista-favoritos .tarjeta-partido:nth-child(3) { animation-delay: 0.15s; }
+#vista-favoritos .tarjeta-partido:nth-child(4) { animation-delay: 0.2s; }
+#vista-favoritos .tarjeta-partido:nth-child(5) { animation-delay: 0.25s; }
+#vista-favoritos .tarjeta-partido:nth-child(n+6) { animation-delay: 0.3s; }
+
+/* === ANIMACIÓN PARA VISTA MIS PREDICCIONES TARJETAS === */
+#vista-mispredicciones .tarjeta-partido {
+  animation: fadeInUp 0.5s ease-out forwards;
+;
+}
+
+/* === ANIMACIÓN PARA VISTA MIS PREDICCIONES TARJETAS RETRASO === */
+#vista-mispredicciones .tarjeta-partido:nth-child(1) { animation-delay: 0.05s; }
+#vista-mispredicciones .tarjeta-partido:nth-child(2) { animation-delay: 0.1s; }
+#vista-mispredicciones .tarjeta-partido:nth-child(3) { animation-delay: 0.15s; }
+#vista-mispredicciones .tarjeta-partido:nth-child(4) { animation-delay: 0.2s; }
+#vista-mispredicciones .tarjeta-partido:nth-child(5) { animation-delay: 0.25s; }
+#vista-mispredicciones .tarjeta-partido:nth-child(n+6) { animation-delay: 0.3s; }
+
+/* === ANIMACIÓN PARA VISTA LIVE TARJETAS === */
+#vista-live .tarjeta-partido {
+  animation: fadeInUp 0.5s ease-out forwards;
+;
+}
+
+/* === ANIMACIÓN PARA VISTA LIVE TARJETAS RETRASO === */
+#vista-live .tarjeta-partido:nth-child(1) { animation-delay: 0.05s; }
+#vista-live .tarjeta-partido:nth-child(2) { animation-delay: 0.1s; }
+#vista-live .tarjeta-partido:nth-child(3) { animation-delay: 0.15s; }
+#vista-live .tarjeta-partido:nth-child(4) { animation-delay: 0.2s; }
+#vista-live .tarjeta-partido:nth-child(5) { animation-delay: 0.25s; }
+#vista-live .tarjeta-partido:nth-child(n+6) { animation-delay: 0.3s; }
+
+/* === ANIMACIÓN PARA VISTA ANALITICA TELEMETRIA CARDS === */
+#vista-analitica .telemetria-card {
+  animation: fadeInUp 0.5s ease-out forwards;
+;
+}
+
+#vista-analitica .telemetria-card:nth-child(1) { animation-delay: 0.05s; }
+#vista-analitica .telemetria-card:nth-child(2) { animation-delay: 0.1s; }
+#vista-analitica .telemetria-card:nth-child(3) { animation-delay: 0.15s; }
+#vista-analitica .telemetria-card:nth-child(4) { animation-delay: 0.2s; }
+
+/* === ANIMACIÓN PARA VISTA COMPETICIONES DASHBOARD CARDS === */
+#vista-competiciones .dashboard-card {
+  animation: fadeInUp 0.5s ease-out forwards;
+;
+}
+
+#vista-competiciones .dashboard-card:nth-child(1) { animation-delay: 0.05s; }
+#vista-competiciones .dashboard-card:nth-child(2) { animation-delay: 0.1s; }
+#vista-competiciones .dashboard-card:nth-child(3) { animation-delay: 0.15s; }
+#vista-competiciones .dashboard-card:nth-child(4) { animation-delay: 0.2s; }
+#vista-competiciones .dashboard-card:nth-child(5) { animation-delay: 0.25s; }
+#vista-competiciones .dashboard-card:nth-child(n+6) { animation-delay: 0.3s; }
+
+/* === ANIMACIÓN PARA VISTA RANKING DASHBOARD CARDS === */
+#vista-ranking .dashboard-card {
+  animation: fadeInUp 0.5s ease-out forwards;
+;
+}
+
+#vista-ranking .dashboard-card:nth-child(1) { animation-delay: 0.05s; }
+#vista-ranking .dashboard-card:nth-child(2) { animation-delay: 0.1s; }
+#vista-ranking .dashboard-card:nth-child(3) { animation-delay: 0.15s; }
+#vista-ranking .dashboard-card:nth-child(4) { animation-delay: 0.2s; }
+#vista-ranking .dashboard-card:nth-child(5) { animation-delay: 0.25s; }
+#vista-ranking .dashboard-card:nth-child(n+6) { animation-delay: 0.3s; }
+
+/* === ANIMACIÓN PARA VISTA DOBLES TARJETAS COMBINADA === */
+#vista-dobles .tarjeta-combinada {
+  animation: fadeInUp 0.5s ease-out forwards;
+;
+}
+
+#vista-dobles .tarjeta-combinada:nth-child(1) { animation-delay: 0.05s; }
+#vista-dobles .tarjeta-combinada:nth-child(2) { animation-delay: 0.1s; }
+#vista-dobles .tarjeta-combinada:nth-child(3) { animation-delay: 0.15s; }
+#vista-dobles .tarjeta-combinada:nth-child(4) { animation-delay: 0.2s; }
+#vista-dobles .tarjeta-combinada:nth-child(5) { animation-delay: 0.25s; }
+#vista-dobles .tarjeta-combinada:nth-child(n+6) { animation-delay: 0.3s; }
+
+/* === ANIMACIÓN PARA BENTO ITEMS EN DASHBOARD === */
+.dash-bento-grid .bento-item {
+  animation: scaleIn 0.4s ease-out forwards;
+  opacity: 0;
+}
+
+.dash-bento-grid .bento-item:nth-child(1) { animation-delay: 0.05s; }
+.dash-bento-grid .bento-item:nth-child(2) { animation-delay: 0.1s; }
+.dash-bento-grid .bento-item:nth-child(3) { animation-delay: 0.15s; }
+.dash-bento-grid .bento-item:nth-child(4) { animation-delay: 0.2s; }
+.dash-bento-grid .bento-item:nth-child(5) { animation-delay: 0.25s; }
+.dash-bento-grid .bento-item:nth-child(6) { animation-delay: 0.3s; }
+.dash-bento-grid .bento-item:nth-child(7) { animation-delay: 0.35s; }
+.dash-bento-grid .bento-item:nth-child(8) { animation-delay: 0.4s; }
+
+/* === ANIMACIÓN PARA KPIs EN DASHBOARD === */
+.dash-kpi-valor {
+  animation: countUp 0.8s ease-out forwards;
+}
+
+/* === ANIMACIÓN PARA KPIs EN DASHBOARD CON RETRASO === */
+.dash-bento-grid .bento-item:nth-child(1) .dash-kpi-valor { animation-delay: 0.2s; }
+.dash-bento-grid .bento-item:nth-child(2) .dash-kpi-valor { animation-delay: 0.3s; }
+.dash-bento-grid .bento-item:nth-child(3) .dash-kpi-valor { animation-delay: 0.4s; }
+
+/* === ANIMACIÓN PARA BARRA DE KPI EN DASHBOARD === */
+.dash-kpi-barra span {
+  animation: progressFill 1.5s ease-out forwards;
+  animation-delay: 0.5s;
+}
+
+/* === ANIMACIÓN PARA HEALTH CARDS EN DASHBOARD === */
+.health-card {
+  animation: fadeInUp 0.5s ease-out forwards;
+;
+}
+
+.health-card:nth-child(1) { animation-delay: 0.1s; }
+.health-card:nth-child(2) { animation-delay: 0.2s; }
+
+/* === ANIMACIÓN PARA HEALTH STATS EN DASHBOARD === */
+.health-stat {
+  animation: fadeInLeft 0.4s ease-out forwards;
+;
+}
+
+.health-stat:nth-child(1) { animation-delay: 0.3s; }
+.health-stat:nth-child(2) { animation-delay: 0.35s; }
+.health-stat:nth-child(3) { animation-delay: 0.4s; }
+
+/* === ANIMACIÓN PARA DASHBOARD PERSONAL === */
+.dashboard-personal {
+  animation: fadeInUp 0.5s ease-out forwards;
+;
+}
+
+/* === ANIMACIÓN PARA DASHBOARD TITULO === */
+.dashboard-titulo {
+  animation: slideDown 0.5s ease-out forwards;
+;
+}
+
+/* === ANIMACIÓN PARA DASHBOARD GRID === */
+.dashboard-grid {
+  animation: fadeInUp 0.5s ease-out forwards;
+  animation-delay: 0.2s;
+}
+
+/* === ANIMACIÓN PARA DASHBOARD CARDS RETRASO === */
+.dashboard-grid .dashboard-card:nth-child(1) { animation-delay: 0.1s; }
+.dashboard-grid .dashboard-card:nth-child(2) { animation-delay: 0.15s; }
+.dashboard-grid .dashboard-card:nth-child(3) { animation-delay: 0.2s; }
+.dashboard-grid .dashboard-card:nth-child(4) { animation-delay: 0.25s; }
+
+/* === ANIMACIÓN PARA DASHBOARD CARD VALOR RETRASO === */
+.dashboard-grid .dashboard-card:nth-child(1) .dashboard-valor { animation-delay: 0.2s; }
+.dashboard-grid .dashboard-card:nth-child(2) .dashboard-valor { animation-delay: 0.25s; }
+.dashboard-grid .dashboard-card:nth-child(3) .dashboard-valor { animation-delay: 0.3s; }
+.dashboard-grid .dashboard-card:nth-child(4) .dashboard-valor { animation-delay: 0.35s; }
+
+/* === ANIMACIÓN PARA MOTOR HEALTH SECTION === */
+.motor-health-section {
+  animation: fadeInUp 0.5s ease-out forwards;
+;
+}
+
+/* === ANIMACIÓN PARA MOTOR HEALTH HEADER === */
+.motor-health-header {
+  animation: slideDown 0.5s ease-out forwards;
+;
+}
+
+/* === ANIMACIÓN PARA MOTOR HEALTH GRID === */
+.motor-health-grid {
+  animation: fadeInUp 0.5s ease-out forwards;
+  animation-delay: 0.2s;
+}
+
+/* === ANIMACIÓN PARA MOTOR HEALTH CARD RETRASO === */
+.motor-health-grid .health-card:nth-child(1) { animation-delay: 0.1s; }
+.motor-health-grid .health-card:nth-child(2) { animation-delay: 0.2s; }
+
+/* === ANIMACIÓN PARA DASH INFO === */
+.dash-info {
+  animation: fadeInUp 0.5s ease-out forwards;
+  animation-delay: 0.3s;
+}
+
+/* === ANIMACIÓN PARA DASH CTA === */
+.dash-cta {
+  animation: fadeInUp 0.6s ease-out forwards;
+  animation-delay: 0.3s;
+}
+
+/* === ANIMACIÓN PARA DASH CTA KICKER === */
+.dash-cta-kicker {
+  animation: fadeInLeft 0.5s ease-out forwards;
+  animation-delay: 0.35s;
+}
+
+/* === ANIMACIÓN PARA DASH CTA H2 === */
+.dash-cta h2 {
+  animation: slideDown 0.5s ease-out forwards;
+  animation-delay: 0.4s;
+}
+
+/* === ANIMACIÓN PARA LANDING PRIMARY EN CTA === */
+.dash-cta .landing-primary {
+  animation: fadeInRight 0.5s ease-out forwards;
+  animation-delay: 0.45s;
+}
+
