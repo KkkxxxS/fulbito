@@ -11,6 +11,19 @@
 }
 
 /* ============ ANIMACIONES GLOBALES & LANDING ============ */
+.motion-card {
+  will-change: transform, opacity;
+}
+.motion-button {
+  transition: background 0.2s var(--ease), color 0.2s var(--ease);
+}
+.motion-pop {
+  will-change: transform, opacity;
+}
+.motion-count {
+  font-variant-numeric: tabular-nums;
+}
+
 @keyframes fulbitoFadeInUp {
   0% { opacity: 0; transform: translateY(24px); }
   100% { opacity: 1; transform: translateY(0); }
@@ -2032,7 +2045,7 @@ main {
 .tarjeta-partido:hover {
   border-color: rgba(100,228,169,0.38);
   box-shadow: 0 22px 42px -24px rgba(0,0,0,0.92), 0 0 20px rgba(100,228,169,0.06);
-  transform: translateY(-2px);
+  transform: translateY(-2px) scale(1.02);
 }
 @keyframes aparecerTarjeta { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 

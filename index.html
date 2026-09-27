@@ -22,6 +22,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="dns-prefetch" href="https://fulbito-forh.onrender.com">
     <link rel="stylesheet" href="style.css?v=6">
+    <script src="https://cdn.jsdelivr.net/npm/motion@11.11.13/dist/motion.js"></script>
     <link rel="canonical" href="https://kkkxxxs.github.io/fulbito/">
 
     <style>
@@ -2443,13 +2444,13 @@
     const explicacionTxt = datos.explicacion ? `<div class="fila-explicacion-block"><span class="explicacion-label">Explicación:</span> ${datos.explicacion}</div>` : '';
 
     return `
-      <div class="fila-mercado mercado-${datos.tipo} ${esPrincipal ? 'mercado-principal' : ''}">
+      <div class="fila-mercado motion-card mercado-${datos.tipo} ${esPrincipal ? 'mercado-principal motion-pop' : ''}">
         ${esPrincipal ? `<span class="etiqueta-pick-principal">★ Pick del partido</span>` : ''}
         ${contextoTxt}
         <div class="fila-header">
           <div class="fila-header-izq">
             ${iconoMercado(datos.tipo)}
-            <span class="fila-porcentaje">${datos.probabilidad}%</span>
+            <span class="fila-porcentaje motion-count">${datos.probabilidad}%</span>
           </div>
           <div class="fila-header-der">
             <span class="badge-confianza-lectura ${conf.clase}">Confianza: ${conf.etiqueta}</span>
@@ -3027,16 +3028,82 @@
       </div>
     `;
   }
-  function reiniciarHistorial() {
-    if (!confirm('¿Seguro que quieres borrar todo el historial de aciertos guardado en este navegador? Esta acción no se puede deshacer. También se reinicia la auto-calibración.')) return;
-    try {
-      localStorage.removeItem(CLAVE_HISTORIAL);
-      localStorage.removeItem(CLAVE_CALIBRACION);
-    } catch (e) {}
-    calibracionActual = calibracionPorDefecto();
-    renderHistorial(null);
-    renderHistorialCompleto([]);
+  function triggerUIAnimations() {
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReducedMotion) return;
+
+    // 1. Match Card Entrance (Staggered)
+    const cards = document.querySelectorAll('.tarjeta-partido');
+    if (cards.length > 0) {
+      motion.stagger(cards, {
+        opacity: [0, 1],
+        y: [20, 0],
+        duration: 0.4,
+        easing: "ease-out"
+      }, {
+        delay: 0.06
+      });
+    }
+
+    // 2. Suggested Market 'Pop'
+    const pops = document.querySelectorAll('.mercado-principal');
+    if (pops.length > 0) {
+      motion(pops, {
+        scale: [0.9, 1],
+        opacity: [0, 1],
+        duration: 0.3,
+        easing: [0.175, 0.885, 0.32, 1.275]
+      });
+    }
+
+    // 3. Accuracy Count-up
+    const pctElements = document.querySelectorAll('.motion-count');
+    pctElements.forEach(el => {
+      const finalVal = parseInt(el.textContent);
+      if (isNaN(finalVal)) return;
+
+      const currentVal = { value: 0 };
+      motion(currentVal, {
+        value: finalVal,
+        duration: 0.8,
+        easing: "ease-out",
+        onUpdate: () => {
+          el.textContent = `${Math.round(currentVal.value)}%`;
+        }
+      });
+    });
   }
+
+  // Global event delegation for button press effect
+  document.addEventListener('mousedown', (e) => {
+    const btn = e.target.closest('.boton-expandir, .boton-compartir, .boton-pick, .nav-tab');
+    if (btn && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      motion(btn, { scale: 0.96, duration: 0.1 });
+    }
+  });
+
+  document.addEventListener('mouseup', (e) => {
+    const btn = e.target.closest('.boton-expandir, .boton-compartir, .boton-pick, .nav-tab');
+    if (btn && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      motion(btn, { scale: 1, duration: 0.1 });
+    }
+  });
+
+  // Card hover effects (using motion for smooth scale/shadow)
+  document.addEventListener('mouseover', (e) => {
+    const card = e.target.closest('.tarjeta-partido');
+    if (card && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      motion(card, { scale: 1.02, boxShadow: "0 22px 42px -24px rgba(0,0,0,0.92), 0 0 20px rgba(100,228,169,0.06)", duration: 0.2 });
+    }
+  });
+
+  document.addEventListener('mouseout', (e) => {
+    const card = e.target.closest('.tarjeta-partido');
+    if (card && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      motion(card, { scale: 1, boxShadow: "inset 0 1px 0 rgba(255,255,255,0.05), 0 18px 36px -24px rgba(0,0,0,0.85)", duration: 0.2 });
+    }
+  });
+
 
   // ============ EXPORTAR / IMPORTAR DATOS (respaldo entre navegadores) ============
   const CLAVES_EXPORTABLES = [CLAVE_FAVORITOS, CLAVE_MIS_PREDICCIONES, CLAVE_HISTORIAL, CLAVE_CALIBRACION];
@@ -3770,6 +3837,11 @@
     contenedor.innerHTML = (partidosModoDemo ? avisoDatosDemoHTML() : '') + htmlFinal;
     renderCombinadas(seleccionesParaCombinar);
 
+    // Trigger animations after DOM is ready
+    if (typeof triggerUIAnimations === 'function') {
+      requestAnimationFrame(() => triggerUIAnimations());
+    }
+
         const historialActualizado = await actualizarHistorialYCalibracion();
     if (vistaActual === 'analitica') renderHistorial(calcularEstadisticasHistorial(historialActualizado), historialActualizado);
     if (vistaActual === 'historial') renderHistorialCompleto(historialActualizado);
@@ -4096,6 +4168,10 @@
     }
 
     contenedor.innerHTML = (partidosModoDemo ? avisoDatosDemoHTML() : '') + htmlFinal;
+
+    if (typeof triggerUIAnimations === 'function') {
+      requestAnimationFrame(() => triggerUIAnimations());
+    }
   }
 
   // ============ INICIALIZACION ============
