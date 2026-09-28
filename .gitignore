@@ -53,3 +53,5 @@ __pycache__/
 
 # Pipeline output (regenerado en cada corrida, consumido por el frontend)
 pronosticos.json
+
+.agents/
