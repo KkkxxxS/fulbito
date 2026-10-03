@@ -1,28 +1,6 @@
 {
-  "estado": "aprobada",
-  "aprobadoEn": "2026-09-21",
-  "overrides": {
-    "calibracion": {
-      "factorLocalia": 1.04,
-      "rhoDixonColes": -0.04,
-      "limiteTabla": 0.1,
-      "porLiga": {
-        "ARG": 1.04,
-        "URU": 0.96
-      },
-      "porCategoria": {
-        "resultado": 1.05
-      }
-    },
-    "multiplicadoresAjuste": {
-      "ewma": 0.3,
-      "h2h": 1.0
-    },
-    "platt": {
-      "resultado": {
-        "a": -0.15,
-        "b": 0.95
-      }
-    }
-  }
+  "estado": "ninguna",
+  "aprobadoEn": null,
+  "nota": "Sin overrides activos. El motor corre con los valores base de Config. Los overrides solo se aplican cuando recalibracion.py genera una propuesta sobre datos REALES y se aprueba explicitamente con `recalibracion.py --aprobar <ID>`. No reintroducir aqui valores aprobados sobre datos de ejemplo: alteran el modelo en produccion sin evidencia que los respalde.",
+  "overrides": {}
 }

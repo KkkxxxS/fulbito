@@ -91,6 +91,12 @@ class Config:
     # fuerza de ataque/defensa. 0.0 reproduce exactamente el comportamiento
     # previo (solo goles reales).
     PESO_XG: float = 0.35
+    # Multiplicadores de los ajustes internos, expuestos para que un override
+    # aprobado pueda sustituirlos (antes eran literales en el código y ningún
+    # override los alcanzaba). recalibracion.py los replica en BASE_PESO_EWMA y
+    # BASE_H2H_MAX: si se mueven, hay que moverlos allá también.
+    PESO_EWMA_BASE: float = 0.30
+    AJUSTE_MAX_H2H_BASE: float = 0.05
 
 # ==================== TIPOS DE DATOS ====================
 @dataclass
@@ -375,9 +381,19 @@ class ModeloEstadistico:
             if "rhoDixonColes" in calibracion:
                 self.calibracion_actual["rhoDixonColes"] = calibracion["rhoDixonColes"]
             if "porLiga" in calibracion:
-                self.calibracion_actual["porLiga"] = calibracion["porLiga"]
+                ligas_conocidas = set(BACKEND_COMPETICIONES_DEFAULT.split(','))
+                por_liga = calibracion["porLiga"] or {}
+                filtrado = {}
+                for k, v in por_liga.items():
+                    if k not in ligas_conocidas:
+                        print(f"[WARN] porLiga.override: '{k}' no es una liga de BACKEND_COMPETICIONES_DEFAULT; se ignora")
+                        continue
+                    filtrado[k] = v
+                self.calibracion_actual["porLiga"] = filtrado
             if "porCategoria" in calibracion:
                 self.calibracion_actual["porCategoria"] = calibracion["porCategoria"]
+            if "limiteTabla" in calibracion:
+                self.calibracion_actual["limiteTabla"] = calibracion["limiteTabla"]
 
             mult = overrides.get("multiplicadoresAjuste", {})
             if "ewma" in mult:
@@ -397,8 +413,37 @@ class ModeloEstadistico:
             'muestrasTabla': 0,
             'porCategoria': {},
             'porLiga': {},
+            # Multiplicadores de los ajustes internos. Los defaults reproducen
+            # exactamente el comportamiento previo (literales 0.30 y 0.05), de
+            # modo que un override los sustituye en vez de ignorarse.
+            'multEWMA': self.config.PESO_EWMA_BASE,
+            'multH2H': self.config.AJUSTE_MAX_H2H_BASE,
+            'platt': {},
             'actualizadoEn': None
         }
+
+    def aplicarPlatt(self, probabilidad, categoria):
+        """Recalibración tipo Platt por categoría: sigmoid(a + b * logit(p)).
+
+        Es la MISMA transformación que valida el backtesting de
+        recalibracion.proponer_platt, para que la mejora de Brier que ese
+        script promete sea la que el motor efectivamente produce. Sin override
+        para la categoría devuelve la probabilidad sin tocar. El clamp 0.08-0.92
+        coincide con el del motor.
+        """
+        params = (self.calibracion_actual.get('platt') or {}).get(categoria)
+        if not params:
+            return probabilidad
+        try:
+            a = float(params['a'])
+            b = float(params['b'])
+        except (KeyError, TypeError, ValueError):
+            return probabilidad
+        p = min(max(probabilidad, 0.02), 0.98)
+        z = math.log(p / (1.0 - p))
+        z = a + b * z
+        sigmoide = 1.0 / (1.0 + math.exp(-z)) if z >= 0 else math.exp(z) / (1.0 + math.exp(z))
+        return min(max(sigmoide, 0.08), 0.92)
     
     def factorTabla(self, tabla, team_id):
         """Factor de ajuste por posición en la tabla"""
@@ -589,7 +634,8 @@ class ModeloEstadistico:
         if racha_goles_recientes is not None and goles_promedio_general is not None and goles_promedio_general > 0:
             ratio = racha_goles_recientes / goles_promedio_general
             # EWMA amortiguado (cap estricto entre 0.90 y 1.12 para evitar lambdas absurdas)
-            factor_ewma = 1.0 + (ratio - 1.0) * 0.30
+            peso_ewma = self.calibracion_actual.get('multEWMA', self.config.PESO_EWMA_BASE)
+            factor_ewma = 1.0 + (ratio - 1.0) * peso_ewma
             factor_ewma = max(0.90, min(1.12, factor_ewma))
             return factor_base * factor_ewma
             
@@ -704,7 +750,7 @@ class ModeloEstadistico:
             peso_muestra *= (total / 4.0) * 0.5 # Fuerte atenuación para 2 o 3 partidos
             
         dominio_local = (h2h['victoriasLocal'] - h2h['victoriasVisita']) / total
-        ajuste_max = 0.05
+        ajuste_max = self.calibracion_actual.get('multH2H', self.config.AJUSTE_MAX_H2H_BASE)
         ajuste_crudo = dominio_local * ajuste_max * peso_muestra
         
         ajuste = max(-0.05, min(0.05, ajuste_crudo))
@@ -1174,6 +1220,10 @@ class ModeloEstadistico:
             ajuste = self.calibracion_actual['porCategoria'].get(m['categoria'], 1.0)
             suavizado = 0.96 if m['probabilidad'] < 0.5 else 0.92
             m['probabilidad'] = min(0.92, max(0.08, m['probabilidad'] * ajuste * suavizado))
+            # Platt va DESPUÉS del ajuste por categoría y del suavizado: es
+            # exactamente el valor que recalibracion.py toma como probabilidad
+            # oficial al medir la mejora de Brier de esta calibración.
+            m['probabilidad'] = self.aplicarPlatt(m['probabilidad'], m['categoria'])
         
         for m in seleccionados:
             m['probabilidad'] = round(m['probabilidad'] * 100)

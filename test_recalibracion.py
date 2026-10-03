@@ -17,6 +17,7 @@ que producirán pronosticos.py (telemetría) y el frontend (historial), y valida
   9. Guardia de integridad: probabilidades oficiales degeneradas => abortado
  10. Paridad de suma de matriz motor <-> recalibrador
 11. Corridas de ejemplo VIEJAS no envenenan el histórico append-only
+12. Todo override aprobado altera de verdad el cálculo del motor
 """
 
 import json
@@ -42,13 +43,12 @@ PERFIL_GOLES = {"PL": 1.04, "PD": 0.96, "BL1": 1.07, "SA": 0.94, "FL1": 0.98}
 
 
 def prob_mercado(cat, params, ll, lv, rho=-0.04):
-    """Probabilidad real del mercado.
+    """Probabilidad real del mercado, derivada de la matriz del motor.
 
-    Usa `sumar_matriz` (la lambda 'get' de la matriz) y NO `sumaMatriz` de
-    pronosticos.py: esa función hace `matriz.get(i, j)` sobre un dict, que en
-    Python devuelve el índice `j` como default => "probabilidades" de 84.0 que el
-    motor clampa a 0.92. Con esa función, todos los mercados del dataset salían
-    idénticos (92%) y el diagnóstico/backtesting quedaban midiendo ruido.
+    Usa `sumar_matriz`, que delega en `sumaMatriz` de pronosticos.py: esta accede
+    a la lambda `'get'` de la matriz (`matriz['get'](i, j)`), o sea la probabilidad
+    real de la celda. Es exactamente lo que mide el motor, que es lo que hace
+    comparables las propuestas de calibración.
     """
     matriz = matrizMarcadores(ll, lv, 8, rho)
     return sumar_matriz(matriz, 8, lambda i, j: verificarMercado(cat, params, i, j))
@@ -559,6 +559,108 @@ def escenario_telemetria_motor(tmp):
     assertion("recalibrador aborta con datos de ejemplo", "ABORTADO" in salida, salida[-600:])
 
 
+def escenario_overrides_llegan_al_motor(tmp):
+    """Todo override aprobado tiene que alterar el cálculo del motor.
+
+    Antes `__init__` aceptaba 4 familias y descartaba el resto: `limiteTabla`,
+    `multiplicadoresAjuste.ewma`, `multiplicadoresAjuste.h2h` y `platt` se
+    guardaban en `calibracion_actual` y nunca se leían. Peor: recalibracion.py
+    mide la mejora de Brier que producirían, así que proponía cambios cuyo
+    efecto era ficticio.
+    """
+    print("Escenario 12: los overrides aprobados alteran el motor")
+    from pronosticos import ModeloEstadistico, Config
+
+    d = os.path.join(tmp, "e12"); os.makedirs(d)
+    overrides = {
+        "estado": "aprobada",
+        "aprobadoEn": "2026-10-03",
+        "overrides": {
+            "calibracion": {
+                "factorLocalia": 1.20,
+                "rhoDixonColes": 0.02,
+                "limiteTabla": 0.03,
+                "porLiga": {"PL": 1.05},
+                "porCategoria": {"resultado": 1.10},
+            },
+            "multiplicadoresAjuste": {"ewma": 0.90, "h2h": 0.02},
+            "platt": {"resultado": {"a": 0.20, "b": 1.10}},
+        },
+    }
+    ruta = os.path.join(d, "parametros_aprobados.json")
+    with open(ruta, "w", encoding="utf-8") as f:
+        json.dump(overrides, f, ensure_ascii=False)
+
+    cwd = os.getcwd()
+    os.chdir(d)  # cargar_parametros_aprobados() resuelve relativo al CWD
+    try:
+        modelo = ModeloEstadistico(Config())
+    finally:
+        os.chdir(cwd)
+    cal = modelo.calibracion_actual
+
+    assertion("factorLocalia aplicado", cal["factorLocalia"] == 1.20, str(cal.get("factorLocalia")))
+    assertion("rhoDixonColes aplicado", cal["rhoDixonColes"] == 0.02, str(cal.get("rhoDixonColes")))
+    assertion("limiteTabla aplicado", cal["limiteTabla"] == 0.03, str(cal.get("limiteTabla")))
+    assertion("porLiga aplicado", cal["porLiga"].get("PL") == 1.05, str(cal.get("porLiga")))
+    assertion("porCategoria aplicado", cal["porCategoria"].get("resultado") == 1.10,
+              str(cal.get("porCategoria")))
+
+    # limiteTabla tiene que MOVER factorTabla, no solo quedar guardado.
+    tabla = {"mapa": {1: {"puntosPorPartido": 3.0}}, "promedioLiga": 1.0}
+    # Modelo BASE: se construye en un directorio SIN parametros_aprobados.json
+    # para comparar contra el comportamiento por defecto.
+    d_base = os.path.join(tmp, "e12_base"); os.makedirs(d_base)
+    os.chdir(d_base)
+    try:
+        sin_override = ModeloEstadistico(Config())
+    finally:
+        os.chdir(cwd)
+
+    # limiteTabla tiene que MOVER factorTabla, no solo quedar guardado.
+    tabla = {"mapa": {1: {"puntosPorPartido": 3.0}}, "promedioLiga": 1.0}
+    con_override = modelo.factorTabla(tabla, 1)
+    # Sin override el limite es 0.10; el override lo baja a 0.03 => menos ajuste.
+    assertion("limiteTabla cambia el ajuste por tabla",
+              con_override < sin_override.factorTabla(tabla, 1),
+              f"override={con_override} vs base={sin_override.factorTabla(tabla, 1)}")
+
+    # El multiplicador EWMA tiene que cambiar factorTendencia. La razon de goles
+    # se elige para que NINGUNO de los dos multiplicadores sature el cap 0.90-1.12.
+    racha, promedio = 1.32, 1.2  # ratio 1.10 => 1.03 con 0.30, 1.09 con 0.90
+    con_ewma = modelo.factorTendencia("neutral", racha, promedio)
+    sin_ewma = sin_override.factorTendencia("neutral", racha, promedio)
+    assertion("multEWMA cambia factorTendencia", con_ewma != sin_ewma,
+              f"override={con_ewma} vs base={sin_ewma}")
+
+    # Y el multiplicador H2H tiene que cambiar factorH2H.
+    h2h = {"disponible": True, "totalPartidos": 10,
+           "victoriasLocal": 6, "empates": 2, "victoriasVisita": 2}
+    con_h2h = modelo.factorH2H(h2h, True)
+    sin_h2h = sin_override.factorH2H(h2h, True)
+    assertion("multH2H cambia factorH2H", con_h2h != sin_h2h,
+              f"override={con_h2h} vs base={sin_h2h}")
+
+    # Platt: misma fórmula que usa el backtesting (sigmoid(a + b*logit(p))).
+    import math
+    def esperado(p):
+        pc = min(max(p, 0.02), 0.98)
+        z = math.log(pc / (1 - pc))
+        z = 0.20 + 1.10 * z
+        sig = 1.0 / (1.0 + math.exp(-z)) if z >= 0 else math.exp(z) / (1.0 + math.exp(z))
+        return min(max(sig, 0.08), 0.92)
+    assertion("platt disponible en el modelo", hasattr(modelo, "aplicarPlatt"))
+    assertion("platt recalibra la categoría 'resultado'",
+              abs(modelo.aplicarPlatt(0.50, "resultado") - esperado(0.50)) < 1e-9,
+              f"{modelo.aplicarPlatt(0.50, 'resultado')} vs {esperado(0.50)}")
+    assertion("platt NO toca las categorías sin override",
+              abs(modelo.aplicarPlatt(0.50, "btts") - 0.50) < 1e-9,
+              str(modelo.aplicarPlatt(0.50, "btts")))
+    assertion("platt respeta el clamp 0.08-0.92",
+              0.08 <= modelo.aplicarPlatt(0.999, "resultado") <= 0.92,
+              str(modelo.aplicarPlatt(0.999, "resultado")))
+
+
 def main():
     print("=== PRUEBAS DEL SISTEMA DE RECALIBRACIÓN SUPERVISADA ===")
     tmp = tempfile.mkdtemp(prefix="recalibracion_test_")
@@ -576,6 +678,7 @@ def main():
         escenario_paridad_suma_matriz()
         escenario_historico_envenenado(tmp)
         escenario_telemetria_motor(tmp)
+        escenario_overrides_llegan_al_motor(tmp)
     except AssertionError as e:
         print(f"\nPRUEBA FALLIDA: {e}")
         fallos = 1
