@@ -7,6 +7,7 @@
     "start": "cd server && node server.js",
     "dev": "cd server && node --watch server.js",
     "test": "python test_recalibracion.py",
+    "test:parity": "python test_paridad.py",
     "verify": "node verify-model.js",
     "smoke": "node smoke-frontend.js",
     "check": "node -c app-model.js && node -c app-ui.js && node -c app-init.js && node -c app-animaciones.js && node -c menu-toggle.js && node -c sw.js && node -c server/server.js && node -c verify-model.js"

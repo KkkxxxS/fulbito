@@ -15,6 +15,11 @@ jobs:
         with:
           python-version: '3.11'
       - run: pip install -r requirements.txt
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Validar paridad del modelo (Python vs JS)
+        run: python test_paridad.py
       - run: python pronosticos.py
       - name: Recalibración supervisada (diagnóstico + propuesta)
         id: recalibracion
