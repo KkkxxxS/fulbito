@@ -1,6 +1,30 @@
-// ============ CONFIGURACION ============
+  // ============ CONFIGURACION ============
   const BACKEND_URL = "https://fulbito-forh.onrender.com";
   const COMPETICIONES = "PL,PD,BL1,SA,FL1,CL,DED,ELC,BSA,PPL";
+
+  /**
+   * GlowCard Implementation
+   * Updates CSS custom properties based on mouse position relative to the card.
+   */
+  function initGlowCards() {
+    const cards = document.querySelectorAll('.dash-kpi, .dash-quick-card');
+
+    cards.forEach(card => {
+      card.classList.add('glow-card');
+
+      card.addEventListener('pointermove', (e) => {
+        const rect = card.getBoundingClientRect();
+        const x = ((e.clientX - rect.left) / rect.width) * 100;
+        const y = ((e.clientY - rect.top) / rect.height) * 100;
+
+        requestAnimationFrame(() => {
+          card.style.setProperty('--glow-x', `${x}%`);
+          card.style.setProperty('--glow-y', `${y}%`);
+        });
+      });
+    });
+  }
+
   const NOMBRES_LIGA = {
     PL: "Premier League", PD: "La Liga", BL1: "Bundesliga",
     SA: "Serie A", FL1: "Ligue 1", CL: "Champions League",
@@ -10,42 +34,121 @@
 
   let ligaSeleccionada = 'TODAS';
   let partidosDelRango = [];
+  // KPI "Predicciones hoy": null = aún sin cargar; Number = partidos con fecha local de hoy.
+  let partidosDeHoy = null;
+  // El backend no respondió: lo que se ve en pantalla son datos demo, no la jornada real.
+  let kpiHoyModoDemo = false;
+  // Lo mismo para las listas: si el backend está caído, las tarjetas son PARTIDOS_FALLBACK
+  // y hay que avisarlo arriba de la lista (el número del KPI solo no alcanza).
+  let partidosModoDemo = false;
+
+  function actualizarKpiHoy() {
+    const setTxt = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
+    if (kpiHoyModoDemo) {
+      // Sin servidor no podemos afirmar cuántos partidos hay hoy: no inventamos el número.
+      setTxt('kpi-hoy', '—');
+      setTxt('kpi-hoy-pie', 'Sin conexión con el servidor · datos demo');
+    } else if (partidosDeHoy === null) {
+      setTxt('kpi-hoy', '…');
+      setTxt('kpi-hoy-pie', 'Cargando la jornada de hoy…');
+    } else if (partidosDeHoy === 0) {
+      setTxt('kpi-hoy', '0');
+      setTxt('kpi-hoy-pie', 'No hay partidos programados para hoy');
+    } else {
+      setTxt('kpi-hoy', String(partidosDeHoy));
+      setTxt('kpi-hoy-pie', partidosDeHoy === 1
+        ? 'partido con pronóstico hoy · 9 mercados'
+        : 'partidos con pronóstico hoy · 9 mercados');
+    }
+  }
+
+  // ============ SALUDO DINÁMICO SEGÚN LA HORA LOCAL DEL USUARIO ============
+  // Saludo genérico por hora (mañana / tarde / noche) + nombre opcional desde
+  // localStorage ('userName'). Sin nombre guardado queda "Usuario".
+  function aplicarSaludoDinamico() {
+    const hora = new Date().getHours();
+    let saludo;
+    if (hora >= 5 && hora < 12) saludo = 'Buenos días';
+    else if (hora >= 12 && hora < 19) saludo = 'Buenas tardes';
+    else saludo = 'Buenas noches';
+
+    // Nombre del usuario: es opcional y sale de localStorage (no hay cuentas
+    // ni planes). Si no hay nada guardado, queda el genérico "Usuario".
+    let nombre = 'Usuario';
+    try {
+      const guardado = (localStorage.getItem('userName') || '').trim();
+      if (guardado) nombre = guardado;
+    } catch (e) { /* localStorage bloqueado: usamos el genérico */ }
+
+    const el = document.getElementById('hero-saludo');
+    if (el) el.textContent = `${saludo}, ${nombre}`;
+
+    // El chip de perfil muestra solo avatar + nombre (sin badge de plan).
+    const nombrePerfil = document.getElementById('perfil-nombre');
+    if (nombrePerfil) nombrePerfil.textContent = nombre;
+    const avatarPerfil = document.getElementById('perfil-avatar');
+    if (avatarPerfil) avatarPerfil.textContent = nombre.charAt(0).toUpperCase();
+  }
+  aplicarSaludoDinamico();
+  initGlowCards();
 
   // ============ VISTAS (app shell) ============
-  let vistaActual = 'pronosticos';
+  let vistaActual = 'inicio';
   let favoritosCargadosAlMenosUnaVez = false;
   let filtroHistorial = 'todos';
 
   function cambiarVista(vista, actualizarHash = true) {
-    const vistaReal = vista;
-    vistaActual = vistaReal;
+    vistaActual = vista;
+    document.body.classList.toggle('home-mode', vista === 'inicio');
 
     document.querySelectorAll('.vista').forEach(sec => sec.classList.remove('vista-activa'));
-    const vistaNode = document.getElementById(`vista-${vistaReal}`);
+    const vistaNode = document.getElementById(`vista-${vista}`);
     if (vistaNode) vistaNode.classList.add('vista-activa');
 
-    document.querySelectorAll('.nav-tab').forEach(btn => btn.classList.toggle('activa', btn.dataset.vista === vistaReal));
+    document.querySelectorAll('.nav-tab').forEach(btn => btn.classList.toggle('activa', btn.dataset.vista === vista));
 
     const buscador = document.getElementById('input-busqueda');
     if (buscador) {
-      buscador.style.display = (vistaReal === 'mispredicciones') ? 'none' : '';
-      buscador.placeholder = vistaReal === 'favoritos' ? 'Buscar en tus favoritos…' : (vistaReal === 'analitica' || vistaReal === 'historial') ? 'Buscar equipo o liga en el historial…' : 'Buscar equipo o liga…';
+      buscador.style.display = (vista === 'mispredicciones') ? 'none' : '';
+      buscador.placeholder = vista === 'favoritos' ? 'Buscar en tus favoritos…' : (vista === 'analitica' || vista === 'historial') ? 'Buscar equipo o liga en el historial…' : 'Buscar equipo o liga…';
     }
 
     cerrarMenuMovil();
-    if (actualizarHash) history.replaceState(null, '', `#${vistaReal}`);
+    if (actualizarHash) history.replaceState(null, '', `#${vista}`);
     window.scrollTo({ top: document.querySelector('main').offsetTop - 10, behavior: 'smooth' });
 
-    if (vistaReal === 'inicio') {
-      actualizarHistorialYCalibracion().then(() => actualizarDashboardPersonal());
-    } else if (vistaReal === 'favoritos') {
+    if (vista === 'favoritos') {
       cargarFavoritos();
-    } else if (vistaReal === 'analitica') {
-      actualizarHistorialYCalibracion().then(h => renderHistorial(calcularEstadisticasHistorial(h), h));
-    } else if (vistaReal === 'historial') {
-      actualizarHistorialYCalibracion().then(h => renderHistorialCompleto(h));
-    } else if (vistaReal === 'mispredicciones') {
-      actualizarHistorialYCalibracion().then(() => renderMisPredicciones());
+     } else if (vista === 'analitica') {
+      // Re-asegurar sync con backend antes de mostrar, así si el usuario
+      // borró caché y abre "Analítica" ve su historial completo.
+      cargarHistorialCompartido().finally(() =>
+        actualizarHistorialYCalibracion().then(h => renderHistorial(calcularEstadisticasHistorial(h), h))
+      );
+    } else if (vista === 'historial') {
+      cargarHistorialCompartido().finally(() =>
+        actualizarHistorialYCalibracion().then(h => renderHistorialCompleto(h))
+      );
+    } else if (vista === 'mispredicciones') {
+      cargarHistorialCompartido().finally(() =>
+        actualizarHistorialYCalibracion().then(() => renderMisPredicciones())
+      );
+    } else if (vista === 'inicio') {
+      // También en inicio: refrescar desde backend para que los KPIs reflejen
+      // lo último aunque hayas limpiado caché.
+      cargarHistorialCompartido().finally(() =>
+        actualizarHistorialYCalibracion().then(() => actualizarKPIsHome())
+      );
+    }
+
+    // Control visibilidad FAB Armar Combinada (solo visible en vista pronosticos)
+    const fabCombinada = document.getElementById('btn-fab-combinada');
+    if (fabCombinada) {
+      if (vista === 'pronosticos') {
+        fabCombinada.style.display = 'inline-flex';
+      } else {
+        fabCombinada.style.display = 'none';
+      }
     }
   }
 
@@ -58,32 +161,43 @@
     if (nav) nav.classList.remove('menu-abierto');
   }
 
-  // ============ CERRAR MENÚ AL HACER CLIC FUERA O SALIR DEL ÁREA ============
-  function inicializarCierreMenu() {
-    const nav = document.getElementById('app-nav');
-    const hamburguesa = document.getElementById('boton-menu-movil');
-    if (!nav) return;
+// ============ HEADER: notificaciones/tema/idioma ocultos a propósito ============
+// - Campana: requiere backend de alertas que no existe → se quitó del DOM.
+// - Luna (tema): no hay CSS de tema claro en el repo y rediseñar la paleta
+//   está fuera de alcance → se quitó del DOM.
+// - ES/EN: no hay sistema i18n implementado (solo atributos data-i18n huérfanos)
+//   → se quitó del DOM.
+// Mientras exista un elemento con apariencia de botón debe responder al click.
 
-    // Cerrar menú al hacer clic fuera
-    document.addEventListener('click', (e) => {
-      if (!nav.contains(e.target) && !(hamburguesa && hamburguesa.contains(e.target))) {
-        cerrarMenuMovil();
-      }
-    });
-
-    // Cerrar menú cuando el cursor sale del área del navegador
-    nav.addEventListener('mouseleave', () => {
-      cerrarMenuMovil();
-    });
-
-    // Abrir menú al enfocar el buscador (ya está abierto)
-    const buscador = document.getElementById('input-busqueda');
-    if (buscador) buscador.addEventListener('focus', () => {
-      if (vistaActual !== 'favoritos') {
-        nav.classList.add('menu-abierto');
-      }
-    });
+  // ============ PERFIL (dropdown del header) ============
+  // Antes solo existía el CSS (:focus-within) y en varios navegadores/toque
+  // el click no enfocaba el botón, así que el panel nunca aparecía.
+  function alternarPerfil(event) {
+    if (event) event.stopPropagation();
+    const wrap = document.querySelector('.dash-perfil-wrap');
+    if (!wrap) return;
+    const abierto = wrap.classList.toggle('abierta');
+    const btn = document.getElementById('btn-perfil');
+    if (btn) btn.setAttribute('aria-expanded', abierto ? 'true' : 'false');
   }
+
+  function cerrarPerfil() {
+    const wrap = document.querySelector('.dash-perfil-wrap');
+    if (!wrap || !wrap.classList.contains('abierta')) return;
+    wrap.classList.remove('abierta');
+    const btn = document.getElementById('btn-perfil');
+    if (btn) btn.setAttribute('aria-expanded', 'false');
+  }
+
+  document.addEventListener('click', (e) => {
+    const wrap = document.querySelector('.dash-perfil-wrap');
+    if (!wrap) return;
+    // Clic afuera → cerrar. Clic en un ítem del menú → cerrar tras actuar.
+    if (!wrap.contains(e.target) || e.target.closest('.dash-perfil-item')) cerrarPerfil();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') cerrarPerfil();
+  });
 
   // ============ BUSQUEDA ============
   let terminoBusqueda = '';
@@ -97,6 +211,30 @@
     else if (vistaActual === 'favoritos') renderizarFavoritos();
     else if (vistaActual === 'analitica') { const h = leerHistorial(); renderHistorial(calcularEstadisticasHistorial(h), h); }
     else if (vistaActual === 'historial') { renderHistorialCompleto(leerHistorial()); }
+  }
+
+  // Los dos inputs del header/vista escriben en el MISMO estado de búsqueda.
+  function sincronizarBusquedaDashboard(valor) {
+    const sidebar = document.getElementById('input-busqueda');
+    if (sidebar && sidebar.value !== valor) sidebar.value = valor;
+    // En vistas sin listado, saltar a Pronosticos para que el filtro sea visible.
+    if (!['pronosticos', 'favoritos', 'analitica', 'historial'].includes(vistaActual)) {
+      cambiarVista('pronosticos');
+    }
+    onBuscar(valor);
+  }
+
+  function onBuscarIntegrado(valor) {
+    const sidebar = document.getElementById('input-busqueda');
+    if (sidebar && sidebar.value !== valor) sidebar.value = valor;
+    onBuscar(valor);
+  }
+
+  function enfocarBuscador(event) {
+    if (event) event.preventDefault();
+    const candidatos = [document.getElementById('input-busqueda-dash'), document.getElementById('input-busqueda')];
+    const visible = candidatos.find(el => el && el.offsetParent !== null);
+    if (visible) visible.focus();
   }
 
   function coincideBusqueda(partido) {
@@ -135,6 +273,88 @@
     }
   }
 
+  // ============ SALUD DEL MOTOR: ESTADO ÚNICO (fuente de verdad) ============
+  // UNA sola función calcula el estado y UNA sola lo pinta en todos los
+  // lugares: KPI superior, sidebar, sección "Salud del motor Fulbito" y
+  // telemetría de Analítica. Fuente única: leerHistorial(), que tras
+  // cargarHistorialCompartido() refleja el pool verificado del servidor
+  // (la misma fuente que audita recalibracion.py). Con 0 partidos verificados,
+  // TODOS los lugares muestran "Sin datos todavía" — nunca números inventados.
+  function calcularEstadoSalud() {
+    const historial = leerHistorial();
+    let stats = null, brier = null;
+    try { stats = calcularEstadisticasHistorial(historial); } catch (e) { stats = null; }
+    try { brier = calcularBrierScore(historial); } catch (e) { brier = null; }
+    const conDatos = !!(stats && stats.totalVerificados > 0);
+    const brierNum = (brier && typeof brier.brier === 'number') ? brier.brier : null;
+    const pct = conDatos ? stats.general : null;
+    const salud = conDatos
+      ? (brierNum !== null ? Math.max(0, Math.min(100, Math.round(100 - (brierNum * 90)))) : pct)
+      : null;
+    return {
+      conDatos, salud, pct, brierNum,
+      totalVerificados: conDatos ? stats.totalVerificados : 0,
+      stats: conDatos ? stats : null
+    };
+  }
+
+  function pintarSaludMotor(e) {
+    const setTxt = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
+    const setWidth = (id, pct) => { const el = document.getElementById(id); if (el) el.style.width = pct; };
+    const setAttr = (id, attr, val) => { const el = document.getElementById(id); if (el) el.setAttribute(attr, val); };
+    const setChip = (id, vacio) => { const el = document.getElementById(id); if (el) el.classList.toggle('neutral', vacio); };
+    const chipSalud = e.salud === null ? 'Sin datos' : (e.salud >= 80 ? 'Óptimo' : e.salud >= 60 ? 'Estable' : 'En revisión');
+    const brierTxt = e.brierNum !== null ? e.brierNum.toFixed(2) : '—';
+
+    // Aciertos (la "Salud del motor" vive solo en sidebar + sección inferior)
+    setTxt('kpi-aciertos', e.pct !== null ? `${e.pct}%` : '—');
+    setTxt('kpi-aciertos-chip', e.conDatos ? 'Histórico' : 'Sin datos'); setChip('kpi-aciertos-chip', !e.conDatos);
+    setTxt('kpi-verificados', e.conDatos ? `${e.totalVerificados} verificados` : 'Sin datos todavía');
+    setWidth('kpi-aciertos-barra', e.pct !== null ? `${e.pct}%` : '0%');
+
+    // Sidebar (referencia rápida)
+    setTxt('sidebar-salud', e.salud !== null ? `${e.salud}%` : '—');
+    setWidth('sidebar-salud-barra', e.salud !== null ? `${e.salud}%` : '0%');
+    setTxt('sidebar-brier', brierTxt);
+    setTxt('sidebar-picks', String(e.totalVerificados));
+
+    // Sección "Salud del motor Fulbito" (detalle expandido)
+    setTxt('salud-gauge-texto', e.salud !== null ? `${e.salud}%` : '—');
+    setTxt('salud-gauge-estado', e.conDatos ? chipSalud.toUpperCase() : 'SIN DATOS');
+    setAttr('salud-gauge-arco', 'stroke-dasharray', e.salud !== null ? `${e.salud} 100` : '0 100');
+    setTxt('salud-stat-brier', `Brier ${brierTxt}`);
+    setTxt('salud-stat-picks', `${e.totalVerificados} picks`);
+    const gaugeNota = document.getElementById('salud-gauge-nota');
+    if (gaugeNota) gaugeNota.style.display = e.conDatos ? 'none' : '';
+    const lista = document.getElementById('salud-mercados-lista');
+    if (lista) {
+      if (e.stats && e.stats.categorias.length) {
+        lista.innerHTML = e.stats.categorias.map(c => {
+          const nivel = c.porcentaje >= 80 ? 'alto' : c.porcentaje >= 60 ? 'bueno' : 'media';
+          const nivelTxt = nivel === 'alto' ? 'Alta' : nivel === 'bueno' ? 'Media' : 'Baja';
+          return `<div class="health-mercado-item">
+            <span class="health-mercado-nombre">${c.titulo}<span class="health-mercado-nivel ${nivel}">${nivelTxt}</span></span>
+            <div class="health-barra"><div style="width:${Math.min(100, c.porcentaje)}%"></div></div>
+            <span class="health-mercado-valor">${c.porcentaje}%</span>
+          </div>`;
+        }).join('');
+      } else {
+        lista.innerHTML = '<p class="health-sub" style="margin:0;">Sin mercados verificados todavía.</p>';
+      }
+    }
+  }
+
+  function actualizarKPIsHome() {
+    pintarSaludMotor(calcularEstadoSalud());
+    const setTxt = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
+    actualizarKpiHoy();
+
+    // Favoritos: el número vive en el KPI "Tus favoritos" (tarjeta del inicio)
+    let nFav = 0;
+    try { nFav = leerFavoritos().length; } catch (e) { nFav = 0; }
+    setTxt('kpi-favoritos', String(nFav));
+  }
+
   function toggleFavorito(teamId, event) {
     event.stopPropagation();
     let favoritos = leerFavoritos();
@@ -154,79 +374,6 @@
   function partidoTieneFavorito(partido) {
     const favoritos = leerFavoritos();
     return favoritos.includes(partido.homeTeam.id) || favoritos.includes(partido.awayTeam.id);
-  }
-
-  // ============ CALCULAR NIVEL DE CONFIANZA ============
-  function calcularNivelConfianza(probabilidad) {
-    if (!probabilidad) return { nivel: 'baja', label: 'Baja', color: '#ff8d8d' };
-    if (probabilidad >= 70) return { nivel: 'alta', label: 'Alta', color: '#64e4a9' };
-    if (probabilidad >= 55) return { nivel: 'media', label: 'Media', color: '#f2c474' };
-    return { nivel: 'baja', label: 'Baja', color: '#ff8d8d' };
-  }
-
-  function badgeNivelConfianza(probabilidad) {
-    const conf = calcularNivelConfianza(probabilidad);
-    return `<span class="nivel-confianza ${conf.nivel}"><span class="indicador-confianza"></span> ${conf.label}</span>`;
-  }
-
-  // ============ ACTUALIZAR DASHBOARD PERSONAL ============
-  function actualizarDashboardPersonal() {
-    const historial = leerHistorial();
-    const miasPredicciones = leerMisPredicciones();
-    
-    // Calcular stats de mis predicciones
-    let miasVerificadas = [];
-    let miasAciertos = 0;
-    let miasSumaProb = 0;
-    let miasPendientes = 0;
-    
-    miasPredicciones.forEach(pick => {
-      const h = historial.find(x => x.partidoId === pick.partidoId);
-      if (h && h.verificado) {
-        const mercado = h.mercados.find(m => m.categoria === pick.categoria);
-        if (mercado) {
-          miasVerificadas.push(mercado);
-          miasSumaProb += mercado.probabilidad;
-          if (mercado.acierto) miasAciertos++;
-        }
-      } else {
-        miasPendientes++;
-      }
-    });
-    
-    // Actualizar elementos del dashboard
-    const dashTusPicks = document.getElementById('dash-tus-picks');
-    if (dashTusPicks) {
-      dashTusPicks.textContent = miasPredicciones.length;
-      const dashTusPicksDesc = document.getElementById('dash-tus-picks-desc');
-      if (dashTusPicksDesc) dashTusPicksDesc.textContent = miasPendientes > 0 
-        ? `${miasPendientes} sin verificar`
-        : 'Todos verificados';
-      
-      if (miasVerificadas.length > 0) {
-        const tuPrecision = Math.round((miasAciertos / miasVerificadas.length) * 100);
-        const tuConfianza = Math.round(miasSumaProb / miasVerificadas.length);
-        const elPrecision = document.getElementById('dash-tu-precision');
-        if (elPrecision) elPrecision.textContent = tuPrecision + '%';
-        const elPrecisionDesc = document.getElementById('dash-tu-precision-desc');
-        if (elPrecisionDesc) elPrecisionDesc.textContent = `${miasAciertos}/${miasVerificadas.length} acertadas`;
-        const elConfianza = document.getElementById('dash-tu-confianza');
-        if (elConfianza) elConfianza.textContent = tuConfianza + '%';
-      }
-    }
-  }
-
-  // ============ FILTRO AVANZADO HISTORIAL ============
-  let filtrosActuales = {
-    resultado: 'todos',
-    mercado: 'todos-mercados',
-    confianza: 'todas',
-    periodo: 'mes'
-  };
-
-  function filtrarHistorial(tipo, valor) {
-    filtrosActuales[tipo] = valor;
-    actualizarHistorialYCalibracion().then(h => renderHistorialCompleto(h));
   }
 
   // ============ MIS PREDICCIONES (picks que el usuario marca a mano) ============
@@ -283,7 +430,6 @@
       boton.title = activa ? 'Quitar de Mis Predicciones' : 'Marcar como mi predicción';
     }
     if (vistaActual === 'mispredicciones') renderMisPredicciones();
-    if (vistaActual === 'inicio') actualizarDashboardPersonal();
   }
 
   function botonMiPrediccion(partidoId, categoria) {
@@ -398,16 +544,6 @@
 
   const cache = {};
 
-  async function fetchConTiempo(url, opciones = {}) {
-    const controlador = new AbortController();
-    const temporizador = setTimeout(() => controlador.abort(), 20000);
-    try {
-      return await fetch(url, { ...opciones, signal: controlador.signal });
-    } finally {
-      clearTimeout(temporizador);
-    }
-  }
-
   function formatearFecha(date) {
     const anio = date.getFullYear();
     const mes = String(date.getMonth() + 1).padStart(2, '0');
@@ -418,6 +554,12 @@
   function fechaLocalDePartido(utcDateStr) {
     return formatearFecha(new Date(utcDateStr));
   }
+
+  // Datos de respaldo para cuando el backend no responda
+  const PARTIDOS_FALLBACK = [
+    { homeTeam: { name: "Arsenal", id: 57 }, awayTeam: { name: "Liverpool", id: 40 }, competition: { name: "Premier League", code: "PL" }, utcDate: "2026-09-06T14:00:00Z", status: "SCHEDULED" },
+    { homeTeam: { name: "Real Madrid", id: 86 }, awayTeam: { name: "Barcelona", id: 81 }, competition: { name: "La Liga", code: "PD" }, utcDate: "2026-09-06T18:30:00Z", status: "SCHEDULED" }
+  ];
 
   async function obtenerPartidos(fechaInicio, fechaFin) {
     const claveCache = `matches-${fechaInicio}-${fechaFin}`;
@@ -431,21 +573,22 @@
 
     try {
       const url = `${BACKEND_URL}/api/partidos?competitions=${COMPETICIONES}&dateFrom=${fechaInicio}&dateTo=${fechaFin}`;
-      const resp = await fetchConTiempo(url);
+      const resp = await fetch(url);
       const datos = await resp.json();
 
       if (datos.error || datos.errorCode) {
         console.error("Respuesta con error de la API:", datos);
-        return { error: true, mensaje: datos.message || datos.error || "Error desconocido de la API" };
+        return PARTIDOS_FALLBACK;
       }
 
       const partidos = (datos.matches || []).filter(p => p.status === 'SCHEDULED' || p.status === 'TIMED');
       cache[claveCache] = partidos;
-      guardarCachePersistente(claveCache, partidos);
+      // No persistir listas vacías: un [] cacheado haría que "Mañana" parezca
+      // permanentemente vacío aunque el backend ya tenga partidos.
+      if (partidos.length > 0) guardarCachePersistente(claveCache, partidos);
       return partidos;
     } catch (e) {
-      console.error("Error trayendo partidos", e);
-      console.warn("Usando datos de respaldo para partidos");
+      console.warn("Error trayendo partidos de la API, usando respaldo local:", e);
       return PARTIDOS_FALLBACK;
     }
   }
@@ -462,7 +605,7 @@
 
     try {
       const url = `${BACKEND_URL}/api/partidos?competitions=${COMPETICIONES}&dateFrom=${fechaInicio}&dateTo=${fechaFin}`;
-      const resp = await fetchConTiempo(url);
+      const resp = await fetch(url);
       const datos = await resp.json();
 
       if (datos.error || datos.errorCode) {
@@ -471,7 +614,7 @@
 
       const partidos = (datos.matches || []).filter(p => p.status === 'FINISHED');
       cache[claveCache] = partidos;
-      guardarCachePersistente(claveCache, partidos);
+      if (partidos.length > 0) guardarCachePersistente(claveCache, partidos);
       return partidos;
     } catch (e) {
       console.error("Error trayendo partidos finalizados", e);
@@ -492,7 +635,7 @@
 
     try {
       const url = `${BACKEND_URL}/api/liga/${codigoLiga}/standings`;
-      const resp = await fetchConTiempo(url);
+      const resp = await fetch(url);
       const datos = await resp.json();
       const tabla = datos.standings?.find(s => s.type === 'TOTAL')?.table || [];
       const tablaHome = datos.standings?.find(s => s.type === 'HOME')?.table || [];
@@ -662,80 +805,6 @@
     DED: 1.60, ELC: 1.30, BSA: 1.25, PPL: 1.35, DEFAULT: 1.40
   };
 
-  const PERFIL_LIGA = {
-    PL: { goles: 1.04, localia: 1.05, perfil: 'alto' },
-    PD: { goles: 0.96, localia: 1.04, perfil: 'equilibrado' },
-    BL1: { goles: 1.07, localia: 1.06, perfil: 'alto' },
-    SA: { goles: 0.94, localia: 1.03, perfil: 'equilibrado' },
-    FL1: { goles: 0.98, localia: 1.02, perfil: 'equilibrado' },
-    CL: { goles: 1.02, localia: 1.07, perfil: 'alto' },
-    DED: { goles: 1.12, localia: 1.08, perfil: 'alto' },
-    ELC: { goles: 0.92, localia: 1.01, perfil: 'bajo' },
-    BSA: { goles: 0.9, localia: 1.04, perfil: 'bajo' },
-    PPL: { goles: 0.95, localia: 1.03, perfil: 'equilibrado' },
-    DEFAULT: { goles: 1, localia: 1.03, perfil: 'equilibrado' }
-  };
-
-  function clamp(value, min, max) {
-    return Math.min(Math.max(value, min), max);
-  }
-
-  function perfilLiga(codigoLiga) {
-    return PERFIL_LIGA[codigoLiga] ?? PERFIL_LIGA.DEFAULT;
-  }
-
-  function perfilEquipo(tabla, teamId) {
-    const info = tabla?.mapa?.[teamId];
-    if (!info) return { ataque: 1, defensa: 1, fuerza: 1 };
-
-    const promedioAtaque = tabla.promedioLigaGolesFavor || 1.4;
-    const promedioDefensa = tabla.promedioLigaGolesContra || 1.2;
-    const ataque = info.golesFavorPorPartido ? info.golesFavorPorPartido / promedioAtaque : 1;
-    const defensa = info.golesContraPorPartido ? info.golesContraPorPartido / promedioDefensa : 1;
-    const fuerza = info.puntosPorPartido && tabla.promedioLiga ? info.puntosPorPartido / tabla.promedioLiga : 1;
-
-    return {
-      ataque: clamp(ataque, 0.75, 1.5),
-      defensa: clamp(defensa, 0.75, 1.5),
-      fuerza: clamp(fuerza, 0.8, 1.3)
-    };
-  }
-
-  function perfilPartido(statsLocal, statsVisita, h2h, tabla, idLocal, idVisita) {
-    const localPerfil = perfilEquipo(tabla, idLocal);
-    const visitaPerfil = perfilEquipo(tabla, idVisita);
-
-    let tipo = 'equilibrado';
-    let fuerzaLocal = 1;
-    let fuerzaVisita = 1;
-
-    if (localPerfil.fuerza > 1.12 && visitaPerfil.fuerza < 0.96) {
-      tipo = 'clase';
-      fuerzaLocal *= 1.04;
-      fuerzaVisita *= 0.97;
-    } else if (localPerfil.fuerza < 0.9 && visitaPerfil.fuerza > 1.1) {
-      tipo = 'sorpresa';
-      fuerzaLocal *= 0.97;
-      fuerzaVisita *= 1.04;
-    }
-
-    if (h2h?.disponible && h2h.totalPartidos >= 6) {
-      const sesgo = (h2h.victoriasLocal - h2h.victoriasVisita) / h2h.totalPartidos;
-      if (Math.abs(sesgo) > 0.18) {
-        tipo = 'derbi';
-        fuerzaLocal *= 1 + Math.max(-0.04, Math.min(0.04, sesgo * 0.25));
-        fuerzaVisita *= 1 - Math.max(-0.04, Math.min(0.04, sesgo * 0.25));
-      }
-    }
-
-    const tendenciaLocal = statsLocal?.tendencia?.direccion === 'subiendo' ? 1.03 : statsLocal?.tendencia?.direccion === 'bajando' ? 0.97 : 1;
-    const tendenciaVisita = statsVisita?.tendencia?.direccion === 'subiendo' ? 1.03 : statsVisita?.tendencia?.direccion === 'bajando' ? 0.97 : 1;
-    fuerzaLocal *= tendenciaLocal;
-    fuerzaVisita *= tendenciaVisita;
-
-    return { tipo, fuerzaLocal: clamp(fuerzaLocal, 0.9, 1.18), fuerzaVisita: clamp(fuerzaVisita, 0.9, 1.18) };
-  }
-
   function promedioLiga(codigoLiga) {
     return PROMEDIO_GOLES_POR_LIGA[codigoLiga] ?? PROMEDIO_GOLES_POR_LIGA.DEFAULT;
   }
@@ -844,7 +913,8 @@
 
     try {
       const url = `${BACKEND_URL}/api/equipo/${teamId}/stats`;
-      const resp = await fetchConTiempo(url);
+      const resp = await fetch(url);
+      if (!resp.ok) throw new Error('Stats equipo no disponibles (HTTP ' + resp.status + ')');
       const datos = await resp.json();
       const partidos = datos.matches || [];
 
@@ -929,7 +999,8 @@
 
     try {
       const url = `${BACKEND_URL}/api/partido/${partidoId}/h2h`;
-      const resp = await fetchConTiempo(url);
+      const resp = await fetch(url);
+      if (!resp.ok) throw new Error('H2H no disponible (HTTP ' + resp.status + ')');
       const datos = await resp.json();
 
       const h2h = datos.head2head;
@@ -957,70 +1028,52 @@
     }
   }
 
-  // ============ MODELO DE POISSON (optimizado) ============
-  // Tabla de factoriales precalculada (0! a 8!) y de términos lambda^k / k!
-  // para evitar Math.pow y Math.exp repetidos en cada predicción de partido.
-  const FACTORIALES = [1, 1, 2, 6, 24, 120, 720, 5040, 40320];
-
-  function poisson(k, lambda) {
-    if (k < 0 || k > 8) return 0;
-    const num = Math.pow(lambda, k) * Math.exp(-lambda);
-    const den = FACTORIALES[k] || FACTORIALES[8];
-    return num / den;
+  // ============ MODELO DE POISSON ============
+  function factorial(n) {
+    let r = 1;
+    for (let i = 2; i <= n; i++) r *= i;
+    return r;
   }
 
-  const RHO_DIXON_COLES = -0.04; // calibrado más cercano a datos verificados para mayor precisión
+  function poisson(k, lambda) {
+    return (Math.pow(lambda, k) * Math.exp(-lambda)) / factorial(k);
+  }
 
-  function tauDixonColes(gl, gv, lL, lV, rho) {
-    if (gl === 0 && gv === 0) return 1 - (lL * lV * rho);
-    if (gl === 0 && gv === 1) return 1 + (lL * rho);
-    if (gl === 1 && gv === 0) return 1 + (lV * rho);
-    if (gl === 1 && gv === 1) return 1 - rho;
+  const RHO_DIXON_COLES = -0.06;
+
+  function tauDixonColes(golesLocal, golesVisita, lambdaLocal, lambdaVisita, rho) {
+    if (golesLocal === 0 && golesVisita === 0) return 1 - (lambdaLocal * lambdaVisita * rho);
+    if (golesLocal === 0 && golesVisita === 1) return 1 + (lambdaLocal * rho);
+    if (golesLocal === 1 && golesVisita === 0) return 1 + (lambdaVisita * rho);
+    if (golesLocal === 1 && golesVisita === 1) return 1 - rho;
     return 1;
   }
 
-  // Matriz como array plano indexado por [i * dim + j] para mejor cache locality
-  function matrizMarcadores(lambdaLocal, lambdaVisita, maxGoles = 8, rho = RHO_DIXON_COLES) {
-    const dim = maxGoles + 1;
-    const matriz = new Float64Array(dim * dim);
-    const poissonL = new Float64Array(dim);
-    const poissonV = new Float64Array(dim);
-    const expL = Math.exp(-lambdaLocal);
-    const expV = Math.exp(-lambdaVisita);
-    let potenciaL = 1, potenciaV = 1;
-    for (let k = 0; k < dim; k++) {
-      poissonL[k] = potenciaL * expL / FACTORIALES[k];
-      poissonV[k] = potenciaV * expV / FACTORIALES[k];
-      potenciaL *= lambdaLocal;
-      potenciaV *= lambdaVisita;
+ function matrizMarcadores(lambdaLocal, lambdaVisita, maxGoles = 8, rho = RHO_DIXON_COLES) {
+  const matriz = [];
+  let sumaTotal = 0;
+  for (let i = 0; i <= maxGoles; i++) {
+    matriz[i] = [];
+    for (let j = 0; j <= maxGoles; j++) {
+      const base = poisson(i, lambdaLocal) * poisson(j, lambdaVisita);
+      const ajustado = base * tauDixonColes(i, j, lambdaLocal, lambdaVisita, rho);
+      matriz[i][j] = ajustado;
+      sumaTotal += ajustado;
     }
-    const lambdaLRho = lambdaLocal * rho;
-    const lambdaVRho = lambdaVisita * rho;
-    const lambdaLVRho = lambdaLocal * lambdaVisita * rho;
-    let sumaTotal = 0;
-    for (let i = 0; i < dim; i++) {
-      for (let j = 0; j < dim; j++) {
-        const base = poissonL[i] * poissonV[j];
-        let tau = 1;
-        if (i === 0 && j === 0) tau = 1 - lambdaLVRho;
-        else if (i === 0 && j === 1) tau = 1 + lambdaLRho;
-        else if (i === 1 && j === 0) tau = 1 + lambdaVRho;
-        else if (i === 1 && j === 1) tau = 1 - rho;
-        const val = base * tau;
-        matriz[i * dim + j] = val;
-        sumaTotal += val;
-      }
-    }
-    const invSuma = 1 / sumaTotal;
-    for (let n = 0; n < matriz.length; n++) matriz[n] *= invSuma;
-    return { data: matriz, dim, get(i, j) { return matriz[i * dim + j]; } };
   }
+  for (let i = 0; i <= maxGoles; i++) {
+    for (let j = 0; j <= maxGoles; j++) {
+      matriz[i][j] = matriz[i][j] / sumaTotal;
+    }
+  }
+  return matriz;
+}
 
-  const FACTOR_LOCALIA_BASE = 1.08; // mayor impacto de localía para acercarse al resultado real
+  const FACTOR_LOCALIA_BASE = 1.04; // localía realista: los promedios por equipo ya capturan casi toda la ventaja de local; el ajuste extra debe ser leve y no amplificar el ruido
 
   // ============ AUTO-CALIBRACION (usa tu propio historial de aciertos) ============
   const CLAVE_CALIBRACION = 'fulbito_calibracion';
-  const MUESTRA_MINIMA_LOCALIA = 12; // calibración más rápida con datos mínimos
+  const MUESTRA_MINIMA_LOCALIA = 20;
   const MUESTRA_MINIMA_CATEGORIA = 15;
   const MUESTRA_MINIMA_LIGA = 8;
   const LIMITES_FACTOR_LOCALIA = [1.0, 1.25];
@@ -1028,7 +1081,7 @@
   const LIMITES_FACTOR_LIGA = [0.85, 1.18];
   const MUESTRA_MINIMA_RHO = 40;
   const LIMITES_RHO = [-0.20, 0.05];
-  const LIMITE_TABLA_BASE = 0.10; // mayor señal de posición para mejorar precisión
+  const LIMITE_TABLA_BASE = 0.06;
   const LIMITES_LIMITE_TABLA = [0.03, 0.12];
   const MUESTRA_MINIMA_TABLA = 25;
 
@@ -1228,7 +1281,7 @@
     let s = 0;
     for (let i = 0; i <= maxGoles; i++) {
       for (let j = 0; j <= maxGoles; j++) {
-        if (condicion(i, j)) s += matriz.get(i, j);
+        if (condicion(i, j)) s += matriz[i][j];
       }
     }
     return s;
@@ -1307,7 +1360,7 @@
     let celdas = [];
     for (let i = 0; i <= maxGoles; i++) {
       for (let j = 0; j <= maxGoles; j++) {
-        celdas.push({ i, j, p: matriz.get(i, j) });
+        celdas.push({ i, j, p: matriz[i][j] });
       }
     }
     celdas.sort((a, b) => b.p - a.p);
@@ -1424,6 +1477,7 @@
   }
 
   function generarPronosticos(statsLocal, statsVisita, nombreLocal, nombreVisita, h2h, tabla, idLocal, idVisita, codigoLiga) {
+  // Mejora: ajustar pesos por recencia y calibración
     let lambdaLocal = (statsLocal.local.golesFavor + statsVisita.visita.golesContra) / 2;
     let lambdaVisita = (statsVisita.visita.golesFavor + statsLocal.local.golesContra) / 2;
     const lambdaLocalBase = lambdaLocal;
@@ -1445,43 +1499,10 @@
     lambdaVisita *= factorDescanso(statsVisita.diasDescansoUltimoPartido);
 
     const factorLocaliaUsado = calibracionActual.factorLocalia || FACTOR_LOCALIA_BASE;
-    const perfilLigaActual = perfilLiga(codigoLiga);
-    const perfilPartida = perfilPartido(statsLocal, statsVisita, h2h, tabla, idLocal, idVisita);
-    const perfilLocal = perfilEquipo(tabla, idLocal);
-    const perfilVisita = perfilEquipo(tabla, idVisita);
-
-    let ajustePerfilLocal = 1;
-    let ajustePerfilVisita = 1;
-
-    ajustePerfilLocal *= perfilLigaActual.localia;
-    ajustePerfilVisita *= perfilLigaActual.localia;
-    ajustePerfilLocal *= perfilLigaActual.goles;
-    ajustePerfilVisita *= perfilLigaActual.goles * 0.98;
-
-    const ajusteCalidadLocal = 1 + 0.09 * (perfilLocal.ataque - perfilVisita.defensa);
-    const ajusteCalidadVisita = 1 + 0.09 * (perfilVisita.ataque - perfilLocal.defensa);
-    ajustePerfilLocal *= ajusteCalidadLocal;
-    ajustePerfilVisita *= ajusteCalidadVisita;
-
-    ajustePerfilLocal *= perfilPartida.fuerzaLocal;
-    ajustePerfilVisita *= perfilPartida.fuerzaVisita;
-
-    if (perfilPartida.tipo === 'clase') {
-      ajustePerfilLocal *= 1.05;
-      ajustePerfilVisita *= 0.97;
-    } else if (perfilPartida.tipo === 'sorpresa') {
-      ajustePerfilLocal *= 0.96;
-      ajustePerfilVisita *= 1.04;
-    } else if (perfilPartida.tipo === 'derbi') {
-      ajustePerfilLocal *= 1.04;
-      ajustePerfilVisita *= 1.03;
-    }
-
-    lambdaLocal *= factorLocaliaUsado * ajustePerfilLocal;
-    lambdaVisita *= factorLocaliaUsado * ajustePerfilVisita;
+    lambdaLocal *= factorLocaliaUsado;
 
     const factorLigaUsado = calibracionActual.porLiga?.[codigoLiga]?.factor || 1;
-    const factorLigaAjustado = Math.max(0.9, Math.min(1.1, factorLigaUsado * perfilLigaActual.goles));
+    const factorLigaAjustado = Math.max(0.9, Math.min(1.1, factorLigaUsado));
     lambdaLocal *= factorLigaAjustado;
     lambdaVisita *= factorLigaAjustado;
 
@@ -1534,7 +1555,7 @@
 
     const rhoUsado = calibracionActual.rhoDixonColes ?? RHO_DIXON_COLES;
     const matriz = matrizMarcadores(lambdaLocal, lambdaVisita, 8, rhoUsado);
-    const maxGoles = matriz.dim - 1;
+    const maxGoles = matriz.length - 1;
 
     const { candidatos, marcadorProbable, probMarcador, top3Marcadores, favoritoLocal, nombreFavorito } =
       generarCandidatosMercado(matriz, maxGoles, nombreLocal, nombreVisita);
@@ -1604,39 +1625,59 @@
     };
   }
 
-  // Datos de respaldo para cuando el backend no responda
-  const PARTIDOS_FALLBACK = [
-    { homeTeam: { name: "Arsenal", id: 57 }, awayTeam: { name: "Liverpool", id: 40 }, competition: { name: "Premier League", code: "PL" }, utcDate: "2026-09-06T14:00:00Z", status: "SCHEDULED" },
-    { homeTeam: { name: "Real Madrid", id: 86 }, awayTeam: { name: "Barcelona", id: 81 }, competition: { name: "La Liga", code: "PD" }, utcDate: "2026-09-06T18:30:00Z", status: "SCHEDULED" }
-  ];
+  // ============ ICONOS POR MERCADO ============
+  const ICONOS_MERCADO = {
+    resultado: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="0.6" fill="currentColor"/></svg>',
+    doble: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 5v6c0 5 3.4 8.5 8 11 4.6-2.5 8-6 8-11V5l-8-3Z"/><path d="m9 12 2 2 4-4"/></svg>',
+    totalgoles: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10"/><path d="M12 20V4"/><path d="M20 20v-6"/></svg>',
+    btts: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7 3 11l4 4"/><path d="M3 11h12"/><path d="m17 17 4-4-4-4"/><path d="M21 13H9"/></svg>',
+    equipomarca: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.5 15 9l7 1-5.2 4.9L18.2 22 12 18.3 5.8 22l1.4-7.1L2 10l7-1 3-6.5Z"/></svg>',
+    handicap: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z"/></svg>',
+    marcador: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg>'
+  };
 
-  async function obtenerPartidos(fechaInicio, fechaFin) {
-    const claveCache = `matches-${fechaInicio}-${fechaFin}`;
-    if (cache[claveCache]) return cache[claveCache];
-
-    const persistente = leerCachePersistente(claveCache);
-    if (persistente) {
-      cache[claveCache] = persistente;
-      return persistente;
-    }
-
-    try {
-      const url = `${BACKEND_URL}/api/partidos?competitions=${COMPETICIONES}&dateFrom=${fechaInicio}&dateTo=${fechaFin}`;
-      const resp = await fetchConTiempo(url);
-      const datos = await resp.json();
-
-     if (datos.error || datos.errorCode) {
-  console.error("Respuesta con error de la API:", datos);
-  return PARTIDOS_FALLBACK;
-}
-const partidos = (datos.matches || []).filter(p => p.status === 'SCHEDULED' || p.status === 'TIMED');
-      guardarCachePersistente(claveCache, partidos);
-      return partidos;
-    } catch (e) {
-  console.warn("Error trayendo partidos de la API, usando respaldo local:", e);
-  return PARTIDOS_FALLBACK;
-}
+  function iconoMercado(tipo) {
+    return `<span class="fila-icono">${ICONOS_MERCADO[tipo] || ''}</span>`;
   }
-  
 
+  function puntoMercado(tipo) {
+    return `<span class="punto-mercado punto-${tipo}"></span>`;
+  }
+
+  function iconoTendencia(direccion) {
+    if (direccion === 'subiendo') return '<span class="tendencia tendencia-sube" title="En alza">▲</span>';
+    if (direccion === 'bajando') return '<span class="tendencia tendencia-baja" title="En caída">▼</span>';
+    return '<span class="tendencia tendencia-neutral" title="Estable">■</span>';
+  }
+
+  function rachaHTML(racha) {
+    if (!racha || racha.length === 0) return '';
+    return racha.map(r => `<span class="racha-punto racha-${r}">${r}</span>`).join('');
+  }
+
+  function estrellaFavorito(teamId) {
+    const activa = esFavorito(teamId);
+    return `<button class="estrella-favorito ${activa ? 'activa' : ''}" onclick="toggleFavorito(${teamId}, event)" title="${activa ? 'Quitar de favoritos' : 'Marcar como favorito'}">${activa ? '★' : '☆'}</button>`;
+  }
+
+  function bloqueEquipoHTML(nombre, stats, alineacion, escudoUrl, tabla, teamId) {
+    const escudo = escudoUrl ? `<img class="escudo" src="${escudoUrl}" alt="" onerror="this.style.display='none'">` : '';
+    return `
+      <div class="equipo-info ${alineacion}">
+        ${escudo}
+        <div class="equipo-nombre-tend">
+          <span class="equipo">${nombre}</span>
+          ${iconoTendencia(stats.tendencia.direccion)}
+          ${badgePosicion(tabla, teamId)}
+          ${estrellaFavorito(teamId)}
+        </div>
+        <div class="racha-visual">${rachaHTML(stats.tendencia.racha)}</div>
+      </div>
+    `;
+  }
+
+  function cuotaImplicita(probabilidad) {
+    if (!probabilidad || probabilidad <= 0) return '—';
+    return (100 / probabilidad).toFixed(2);
+  }
 

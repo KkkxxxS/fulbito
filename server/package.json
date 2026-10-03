@@ -5,8 +5,7 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node --watch server.js",
-    "verify": "node verify-model.js"
+    "dev": "node --watch server.js"
   },
   "dependencies": {
     "compression": "^1.7.4",

@@ -3,7 +3,7 @@
 // (partidos, stats, tabla de posiciones) cambian todo el tiempo y mostrar una
 // version vieja en cache seria peor que no tener nada.
 
-const CACHE_NAME = 'fulbito-shell-v7';
+const CACHE_NAME = 'fulbito-shell-v8';
 const ARCHIVOS_SHELL = [
   './',
   './index.html',
@@ -14,7 +14,8 @@ const ARCHIVOS_SHELL = [
   './icon-512.png',
   './app-model.js',
   './app-ui.js',
-  './app-ui-menu.js',
+  './app-init.js',
+  './app-animaciones.js',
   './menu-toggle.js'
 ];
 
