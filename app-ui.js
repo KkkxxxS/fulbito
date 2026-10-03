@@ -1,4 +1,4 @@
-  // ============ CUENTA REGRESIVA AL KICKOFF ============
+﻿  // ============ CUENTA REGRESIVA AL KICKOFF ============
   function tiempoHastaPartido(utcDateStr) {
     const ahora = Date.now();
     const inicio = new Date(utcDateStr).getTime();
@@ -11,12 +11,12 @@
       return { texto: `Empieza en ${horas} h${min > 0 ? ' ' + min + ' min' : ''}`, urgente: false };
     }
     const dias = Math.floor(horas / 24);
-    return { texto: `Empieza en ${dias} día${dias > 1 ? 's' : ''}`, urgente: false };
+    return { texto: `Empieza en ${dias} dÃ­a${dias > 1 ? 's' : ''}`, urgente: false };
   }
 
   function chipCuentaRegresiva(utcDateStr) {
     const t = tiempoHastaPartido(utcDateStr);
-    return `<span class="chip-cuenta-regresiva ${t.urgente ? 'urgente' : ''}">${t.urgente ? '🔴' : '⏱'} ${t.texto}</span>`;
+    return `<span class="chip-cuenta-regresiva ${t.urgente ? 'urgente' : ''}">${t.urgente ? 'ðŸ”´' : 'â±'} ${t.texto}</span>`;
   }
 
   function nivelConfianza(probabilidad) {
@@ -47,8 +47,8 @@
             <p class="fila-seleccion">Sin apuesta disponible</p>
           </div>
           <div class="fila-nobet-detalle">
-            <span class="icono-info-nobet">ℹ</span>
-            <p class="cuota-implicita">Ningún mercado de esta categoría supera el umbral mínimo de seguridad (${datos.probabilidad}% real).</p>
+            <span class="icono-info-nobet">â„¹</span>
+            <p class="cuota-implicita">NingÃºn mercado de esta categorÃ­a supera el umbral mÃ­nimo de seguridad (${datos.probabilidad}% real).</p>
           </div>
         </div>
       `;
@@ -56,11 +56,11 @@
     const conf = obtenerConfianza(datos);
     const cuota = cuotaImplicita(datos.probabilidad);
     const contextoTxt = datos.contexto ? `<div class="fila-contexto-block"><span class="contexto-label">Contexto:</span> ${datos.contexto}</div>` : '';
-    const explicacionTxt = datos.explicacion ? `<div class="fila-explicacion-block"><span class="explicacion-label">Explicación:</span> ${datos.explicacion}</div>` : '';
+    const explicacionTxt = datos.explicacion ? `<div class="fila-explicacion-block"><span class="explicacion-label">ExplicaciÃ³n:</span> ${datos.explicacion}</div>` : '';
 
     return `
       <div class="fila-mercado motion-card mercado-${datos.tipo} ${esPrincipal ? 'mercado-principal motion-pop' : ''}">
-        ${esPrincipal ? `<span class="etiqueta-pick-principal">★ Pick del partido</span>` : ''}
+        ${esPrincipal ? `<span class="etiqueta-pick-principal">â˜… Pick del partido</span>` : ''}
         ${contextoTxt}
         <div class="fila-header">
           <div class="fila-header-izq">
@@ -83,7 +83,7 @@
         ${explicacionTxt}
         <div class="fila-razones">${(datos.razones || []).map(r => `<p class="fila-razon">+ ${r}</p>`).join('')}</div>
         <div class="fila-mercado-footer">
-          <span class="cuota-implicita-tag" title="Cuota justa según probabilidad real estimada">Cuota justa: <strong>@${cuota}</strong></span>
+          <span class="cuota-implicita-tag" title="Cuota justa segÃºn probabilidad real estimada">Cuota justa: <strong>@${cuota}</strong></span>
         </div>
       </div>
     `;
@@ -104,7 +104,7 @@
 
   function h2hHTML(h2h) {
     if (!h2h || !h2h.disponible) return '';
-    return `<div class="info-h2h-pill"><span class="h2h-icono">⚖</span> Historial directo (${h2h.totalPartidos} PJ): <strong>${h2h.victoriasLocal}V</strong> local · <strong>${h2h.empates}E</strong> · <strong>${h2h.victoriasVisita}V</strong> visita</div>`;
+    return `<div class="info-h2h-pill"><span class="h2h-icono">âš–</span> Historial directo (${h2h.totalPartidos} PJ): <strong>${h2h.victoriasLocal}V</strong> local Â· <strong>${h2h.empates}E</strong> Â· <strong>${h2h.victoriasVisita}V</strong> visita</div>`;
   }
 
   function crearTarjetaHTML(partido, pronosticos, statsLocal, statsVisita, h2h, tabla) {
@@ -125,7 +125,7 @@
         <div class="tarjeta-partido-topbar">
           <div class="partido-topbar-izq">
             <span class="partido-liga-tag">${liga}</span>
-            <span class="partido-fecha-tag">${fechaTexto} · ${horaTexto}</span>
+            <span class="partido-fecha-tag">${fechaTexto} Â· ${horaTexto}</span>
           </div>
           <div class="partido-topbar-der">
             ${chipCuentaRegresiva(partido.utcDate)}
@@ -136,7 +136,7 @@
           ${bloqueEquipoHTML(local, statsLocal, 'alineacion-izq', partido.homeTeam.crest, tabla, partido.homeTeam.id)}
           <div class="centro-partido">
             <span class="vs-circulo">VS</span>
-            <div class="marcador-estimado-badge" title="Marcador más probable estimado por el modelo">
+            <div class="marcador-estimado-badge" title="Marcador mÃ¡s probable estimado por el modelo">
               <span class="marcador-estimado-label">Estimado</span>
               <strong class="marcador-estimado-val">${pronosticos.marcadorProbable}</strong>
             </div>
@@ -145,20 +145,20 @@
         </div>
 
         ${h2hHTML(h2h)}
-        ${pronosticos.pocaData ? `<p class="aviso-datos">⚠ Datos limitados (${pronosticos.partidosMin} partidos analizados) · pronóstico menos confiable</p>` : ''}
-        ${pronosticos.sinNadaEnJuego ? `<p class="aviso-datos">⚠ Uno de los equipos ya no se juega nada en la tabla (título o descenso resuelto)</p>` : ''}
+        ${pronosticos.pocaData ? `<p class="aviso-datos">âš  Datos limitados (${pronosticos.partidosMin} partidos analizados) Â· pronÃ³stico menos confiable</p>` : ''}
+        ${pronosticos.sinNadaEnJuego ? `<p class="aviso-datos">âš  Uno de los equipos ya no se juega nada en la tabla (tÃ­tulo o descenso resuelto)</p>` : ''}
 
         <div class="lista-mercados" id="mercados-${partido.id}">
           ${pronosticos.seleccionados.map(m => filaMercado(m, partido.id, mejor && m === mejor)).join('')}
         </div>
-        <button class="boton-expandir" onclick="toggleMercados(${partido.id})">Ver más mercados</button>
+        <button class="boton-expandir" onclick="toggleMercados(${partido.id})">Ver mÃ¡s mercados</button>
 
         <div class="combos-partido">
           <p class="combos-partido-titulo">Combina en este partido</p>
           ${pronosticos.combosPartido.map(comboPartidoHTML).join('')}
         </div>
 
-        <p class="marcadores-probables-titulo">Marcadores más probables</p>
+        <p class="marcadores-probables-titulo">Marcadores mÃ¡s probables</p>
         <div class="marcadores-probables">
           ${pronosticos.top3Marcadores.map(m => `<span class="marcador-chip">${m.marcador} <em>${m.probabilidad}%</em></span>`).join('')}
         </div>
@@ -175,7 +175,7 @@
     if (!el) return;
     el.classList.toggle('expandido');
     const btn = el.nextElementSibling;
-    if (btn) btn.textContent = el.classList.contains('expandido') ? 'Ver menos' : 'Ver más mercados';
+    if (btn) btn.textContent = el.classList.contains('expandido') ? 'Ver menos' : 'Ver mÃ¡s mercados';
   }
 
   function toggleCatalogo(partidoId) {
@@ -249,11 +249,11 @@
     if (probabilidad >= 32 && cantidad === 3) return { label: 'Apuesta inteligente', tone: 'smart' };
     if (probabilidad >= 22 && cantidad === 4) return { label: 'Riesgo controlado', tone: 'guarded' };
     if (cantidad >= 5) return { label: 'Punta alta', tone: 'risk' };
-    return { label: 'Selección sólida', tone: 'neutral' };
+    return { label: 'SelecciÃ³n sÃ³lida', tone: 'neutral' };
   }
 
   function textoParaCompartir(etiqueta, combinada) {
-    const lineas = combinada.piernas.map((p, idx) => `${idx + 1}. ${p.equipos} — ${p.mercado}: ${p.seleccion} (${p.probabilidad}%)`);
+    const lineas = combinada.piernas.map((p, idx) => `${idx + 1}. ${p.equipos} â€” ${p.mercado}: ${p.seleccion} (${p.probabilidad}%)`);
     return `${etiqueta} - Fulbito\nProbabilidad combinada: ${combinada.probabilidad}%\n\n${lineas.join('\n')}\n\nfulbito.github.io`;
   }
 
@@ -272,7 +272,7 @@
     try {
       await navigator.clipboard.writeText(texto);
       const original = boton.textContent;
-      boton.textContent = 'Copiado ✓';
+      boton.textContent = 'Copiado âœ“';
       setTimeout(() => { boton.textContent = original; }, 1800);
     } catch (e) {
       console.warn("No se pudo copiar", e);
@@ -321,14 +321,14 @@
     let html = `
       <div class="bloque-combinadas">
         <h3>Combinadas sugeridas</h3>
-        <p class="subtitulo-combinadas">Armadas con la mejor mezcla de valor y diversidad: prioriza probabilidades altas, pero evita repetir mucho el mismo tipo de apuesta y mantener la combinación realista.</p>
+        <p class="subtitulo-combinadas">Armadas con la mejor mezcla de valor y diversidad: prioriza probabilidades altas, pero evita repetir mucho el mismo tipo de apuesta y mantener la combinaciÃ³n realista.</p>
     `;
 
     const doble = generarCombinadaMasValiosa(ordenadas, 2);
     window.__combinadasActuales.push(doble);
     html += tarjetaCombinadaHTML('Combinada doble', doble, window.__combinadasActuales.length - 1);
 
-    const ETIQUETAS_COMBO = { 3: 'Combinada triple', 4: 'Combinada cuádruple', 5: 'Combinada quíntuple' };
+    const ETIQUETAS_COMBO = { 3: 'Combinada triple', 4: 'Combinada cuÃ¡druple', 5: 'Combinada quÃ­ntuple' };
     const maxPiernas = Math.min(5, ordenadas.length);
     for (let n = 3; n <= maxPiernas; n++) {
       const combo = generarCombinadaMasValiosa(ordenadas, n);
@@ -338,8 +338,8 @@
 
     html += `
         <div class="aviso-riesgo">
-          <span class="icono">⚠️</span>
-          <span>Estas combinadas priorizan valor real y variedad, no solo "las probabilidades más altas". Cada pierna que agregas multiplica el riesgo.</span>
+          <span class="icono">âš ï¸</span>
+          <span>Estas combinadas priorizan valor real y variedad, no solo "las probabilidades mÃ¡s altas". Cada pierna que agregas multiplica el riesgo.</span>
         </div>
       </div>
     `;
@@ -349,62 +349,23 @@
 
   // ============ TRACKEADOR DE ACIERTOS ============
   // El historial se guarda en el backend (servidor) para que sobreviva a la
-  // limpieza de caché del navegador. localStorage es solo un espejo/cache local
-  // que se rehidrata al cargar la página. Estrategia: "remote-first, local-fallback".
+  // limpieza de cachÃ© del navegador. localStorage es solo un espejo/cache local
+  // que se rehidrata al cargar la pÃ¡gina. Estrategia: "remote-first, local-fallback".
   const CLAVE_HISTORIAL = 'fulbito_historial_pronosticos';
   const CLAVE_HISTORIAL_SINCRO = 'fulbito_historial_sincro';
   let historialSincronizando = false;
   let historialSincronizadoEnSesion = false;
 
   async function cargarHistorialCompartido() {
-    try {
-      const respuesta = await fetch(`${BACKEND_URL}/api/historial`);
-      if (!respuesta.ok) return;
-      const datos = await respuesta.json();
-      // Si la respuesta no trae la lista esperada, no tocamos nada (mejor
-      // conservar lo local que borrar historial por una respuesta inválida).
-      if (!Array.isArray(datos.historial)) return;
-      const remoto = datos.historial;
-      const local = leerHistorialLocal();
-      // El pool del servidor es la fuente de verdad de lo VERIFICADO (es lo
-      // que audita recalibracion.py). Un pick verificado local que el servidor
-      // no conoce es huérfano de un pool anterior (p. ej. redeploy del backend):
-      // se descarta para que la UI muestre el estado real (hoy: 0 verificados)
-      // y para no re-sembrar el pool con datos viejos. Los picks locales
-      // pendientes (verificado: false) sí se conservan y se suben.
-      const idsRemotos = new Set(remoto.map(h => h.partidoId));
-      const soloLocal = local.filter(h => !idsRemotos.has(h.partidoId) && !h.verificado);
-      const fusionado = [...remoto, ...soloLocal].slice(-200);
-      if (soloLocal.length > 0) {
-        sincronizarHistorialRemoto(fusionado);
-      }
-      localStorage.setItem(CLAVE_HISTORIAL, JSON.stringify(fusionado));
-      localStorage.setItem(CLAVE_HISTORIAL_SINCRO, String(Date.now()));
-      historialSincronizadoEnSesion = true;
-    } catch (e) {
-      console.warn('No se pudo cargar el historial compartido (usando local):', e);
-    }
+    // El pool global es de solo lectura y no debe sobreescribir el localStorage local.
+    return;
   }
 
   async function sincronizarHistorialRemoto(historial) {
-    if (historialSincronizando) return; // Evitar envíos concurrentes
-    historialSincronizando = true;
-    try {
-      const respuesta = await fetch(`${BACKEND_URL}/api/historial`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ historial: historial.slice(-200) })
-      });
-      if (respuesta.ok) {
-        localStorage.setItem(CLAVE_HISTORIAL_SINCRO, String(Date.now()));
-      } else {
-        console.warn('Historial local guardado sin sincronizar con el backend');
-      }
-    } catch (e) {
-      console.warn('Sincronización del historial compartido no disponible:', e);
-    } finally {
-      historialSincronizando = false;
-    }
+    // No-op: el pool global del servidor no se modifica desde el navegador.
+    // Las escrituras requieren X-Api-Key y son exclusivas de backend/CI.
+    // El historial personal vive en localStorage.
+    return;
   }
 
   function leerHistorialLocal() {
@@ -417,8 +378,8 @@
   }
 
   function leerHistorial() {
-    // Si el remoto ya cargó en esta sesión, usar el local (que es espejo del remoto).
-    // Si todavía no sincronizó pero hay datos locales, usarlos (modo offline).
+    // Si el remoto ya cargÃ³ en esta sesiÃ³n, usar el local (que es espejo del remoto).
+    // Si todavÃ­a no sincronizÃ³ pero hay datos locales, usarlos (modo offline).
     return leerHistorialLocal();
   }
 
@@ -461,14 +422,14 @@
   async function actualizarHistorialConResultados() {
     const historial = leerHistorial();
     const hoy = new Date();
-    // Solo considerar pronósticos cuya fecha no sea futura respecto a hoy para evitar dateFrom > dateTo
+    // Solo considerar pronÃ³sticos cuya fecha no sea futura respecto a hoy para evitar dateFrom > dateTo
     const pendientes = historial.filter(h => !h.verificado && new Date(h.fecha).getTime() <= hoy.getTime());
     if (pendientes.length === 0) return leerHistorial();
 
     const fechasPendientes = pendientes.map(h => new Date(h.fecha).getTime());
     let fechaDesde = new Date(Math.min(...fechasPendientes));
     
-    // Limitar fechaDesde a un máximo de 7 días atrás desde hoy para evitar rangos excesivos o bloqueos de la API
+    // Limitar fechaDesde a un mÃ¡ximo de 7 dÃ­as atrÃ¡s desde hoy para evitar rangos excesivos o bloqueos de la API
     const hace7dias = new Date(hoy);
     hace7dias.setDate(hace7dias.getDate() - 7);
     if (fechaDesde.getTime() < hace7dias.getTime()) {
@@ -483,7 +444,7 @@
     let fFromStr = formatearFecha(fechaDesde);
     let fToStr = formatearFecha(hoy);
     if (fFromStr > fToStr) {
-      console.warn(`[Historial] Se detectó fechaDesde (${fFromStr}) posterior a fechaTo (${fToStr}). Intercambiando automáticamente.`);
+      console.warn(`[Historial] Se detectÃ³ fechaDesde (${fFromStr}) posterior a fechaTo (${fToStr}). Intercambiando automÃ¡ticamente.`);
       const temp = fFromStr;
       fFromStr = fToStr;
       fToStr = temp;
@@ -608,7 +569,7 @@
       <div class="calibracion-rango-fila ${!suficiente ? 'pocas-muestras' : ''}">
         <div class="calibracion-rango-header">
           <span class="calibracion-rango-label">${d.label}</span>
-          <span class="calibracion-fila-muestras">${d.muestras} pronósticos</span>
+          <span class="calibracion-fila-muestras">${d.muestras} pronÃ³sticos</span>
         </div>
         <div class="calibracion-barra-item">
           <span class="calibracion-barra-etiqueta">Predicho (promedio)</span>
@@ -616,11 +577,11 @@
           <span class="calibracion-barra-valor">${d.predichoProm}%</span>
         </div>
         <div class="calibracion-barra-item">
-          <span class="calibracion-barra-etiqueta">Acertó de verdad</span>
+          <span class="calibracion-barra-etiqueta">AcertÃ³ de verdad</span>
           <div class="calibracion-barra-fondo"><div class="calibracion-barra-relleno real ${claseDiff}" style="width:${d.realPct}%"></div></div>
           <span class="calibracion-barra-valor">${d.realPct}%</span>
         </div>
-        ${!suficiente ? `<p class="calibracion-vacio">Menos de ${MUESTRA_MINIMA_CALIBRACION_RANGO} muestras — dato aún poco confiable.</p>` : ''}
+        ${!suficiente ? `<p class="calibracion-vacio">Menos de ${MUESTRA_MINIMA_CALIBRACION_RANGO} muestras â€” dato aÃºn poco confiable.</p>` : ''}
       </div>
     `;
   }
@@ -630,15 +591,15 @@
     if (datos.length === 0) {
       return `
         <div class="bloque-combinadas sin-borde-superior">
-          <h3 style="font-size:1.4rem;">Calibración por rango de probabilidad</h3>
-          <p class="subtitulo-combinadas">Todavía no hay suficientes pronósticos verificados para armar este análisis.</p>
+          <h3 style="font-size:1.4rem;">CalibraciÃ³n por rango de probabilidad</h3>
+          <p class="subtitulo-combinadas">TodavÃ­a no hay suficientes pronÃ³sticos verificados para armar este anÃ¡lisis.</p>
         </div>
       `;
     }
     return `
       <div class="bloque-combinadas sin-borde-superior">
-        <h3 style="font-size:1.4rem;">Calibración por rango de probabilidad</h3>
-        <p class="subtitulo-combinadas">Un modelo bien calibrado debería acertar ~80% de las veces cuando dice "80%". Aquí comparamos lo que el modelo predijo contra lo que pasó de verdad, agrupado por rango de confianza.</p>
+        <h3 style="font-size:1.4rem;">CalibraciÃ³n por rango de probabilidad</h3>
+        <p class="subtitulo-combinadas">Un modelo bien calibrado deberÃ­a acertar ~80% de las veces cuando dice "80%". AquÃ­ comparamos lo que el modelo predijo contra lo que pasÃ³ de verdad, agrupado por rango de confianza.</p>
         ${datos.map(filaCalibracionRango).join('')}
       </div>
     `;
@@ -760,7 +721,7 @@
           alert('Ese archivo no tiene datos reconocibles de Fulbito.');
           return;
         }
-        if (!confirm('Esto va a reemplazar tus favoritos, mis predicciones, historial y calibración guardados en este navegador con los del archivo. ¿Continuar?')) return;
+        if (!confirm('Esto va a reemplazar tus favoritos, mis predicciones, historial y calibraciÃ³n guardados en este navegador con los del archivo. Â¿Continuar?')) return;
 
         CLAVES_EXPORTABLES.forEach(clave => {
           if (datos[clave] !== undefined) {
@@ -768,7 +729,7 @@
           }
         });
 
-        alert('Datos importados correctamente. La página se va a recargar.');
+        alert('Datos importados correctamente. La pÃ¡gina se va a recargar.');
         location.reload();
       } catch (err) {
         alert('No se pudo leer ese archivo como backup de Fulbito.');
@@ -778,7 +739,7 @@
     event.target.value = '';
   }
 
-  // ============ TELEMETRÍA Y ANALÍTICA ============
+  // ============ TELEMETRÃA Y ANALÃTICA ============
   let filtroAnaliticaActual = 'todos';
 
   function filtrarAnalitica(categoria, event) {
@@ -791,7 +752,7 @@
   }
 
   function actualizarTelemetriaAnalitica() {
-    // Mismo estado único que el dashboard (fuente de verdad única).
+    // Mismo estado Ãºnico que el dashboard (fuente de verdad Ãºnica).
     const e = calcularEstadoSalud();
     const historial = leerHistorial();
     const saludEl = document.getElementById('telemetria-salud');
@@ -804,14 +765,14 @@
     const faltanTxt = document.getElementById('telemetria-faltan-txt');
     const barra = document.getElementById('telemetria-progreso-barra');
 
-    if (saludEl) saludEl.textContent = e.salud !== null ? `${e.salud}%` : '—';
-    if (brierEl) brierEl.textContent = e.brierNum !== null ? e.brierNum.toFixed(2) : '—';
+    if (saludEl) saludEl.textContent = e.salud !== null ? `${e.salud}%` : 'â€”';
+    if (brierEl) brierEl.textContent = e.brierNum !== null ? e.brierNum.toFixed(2) : 'â€”';
     if (badgeSalud) {
       badgeSalud.textContent = e.conDatos ? 'Calibrado' : 'Sin datos';
       badgeSalud.className = 'telemetria-badge ' + (e.conDatos ? 'ok' : 'warn');
     }
     if (badgeBrier) {
-      badgeBrier.textContent = e.conDatos ? 'Óptimo' : 'Sin datos';
+      badgeBrier.textContent = e.conDatos ? 'Ã“ptimo' : 'Sin datos';
       badgeBrier.className = 'telemetria-badge ' + (e.conDatos ? 'info' : 'warn');
     }
     if (fillSalud) fillSalud.style.width = e.salud !== null ? `${e.salud}%` : '0%';
@@ -840,14 +801,14 @@
     const pctTabla = Math.min(100, Math.max(6, Math.round((c.muestrasTabla / MUESTRA_MINIMA_TABLA) * 100)));
 
     const localiaTexto = c.muestrasLocalia >= MUESTRA_MINIMA_LOCALIA
-      ? `${c.factorLocalia.toFixed(2)}×`
-      : `1.10×`;
+      ? `${c.factorLocalia.toFixed(2)}Ã—`
+      : `1.10Ã—`;
     const rhoTexto = c.muestrasRho >= MUESTRA_MINIMA_RHO
       ? `${c.rhoDixonColes.toFixed(3)}`
       : `-0.080`;
     const tablaTexto = c.muestrasTabla >= MUESTRA_MINIMA_TABLA
-      ? `±${Math.round(c.limiteTabla * 100)}%`
-      : `±6%`;
+      ? `Â±${Math.round(c.limiteTabla * 100)}%`
+      : `Â±6%`;
 
     const filasCat = categorias.length > 0
       ? categorias.map(cat => {
@@ -867,8 +828,8 @@
         }).join('')
       : `
         <div class="calibracion-vacio-card">
-          <span class="calibracion-vacio-icon">⏳</span>
-          <p>Aún no hay suficientes pronósticos verificados por categoría (mínimo ${MUESTRA_MINIMA_CATEGORIA} en cada una) para calcular factores específicos.</p>
+          <span class="calibracion-vacio-icon">â³</span>
+          <p>AÃºn no hay suficientes pronÃ³sticos verificados por categorÃ­a (mÃ­nimo ${MUESTRA_MINIMA_CATEGORIA} en cada una) para calcular factores especÃ­ficos.</p>
         </div>
       `;
 
@@ -876,27 +837,27 @@
       <div class="panel-calibracion-modulo">
         <div class="panel-calibracion-header">
           <div>
-            <h3>Auto-calibración en tiempo real</h3>
-            <p>El modelo compara automáticamente lo que pronosticó contra el resultado real de cada partido que consultes en la app.</p>
+            <h3>Auto-calibraciÃ³n en tiempo real</h3>
+            <p>El modelo compara automÃ¡ticamente lo que pronosticÃ³ contra el resultado real de cada partido que consultes en la app.</p>
           </div>
           <div class="panel-acciones-calibracion">
-            <button class="boton-accion-secundario" onclick="exportarDatos()" title="Exportar respaldo de datos en JSON">📥 Exportar datos</button>
-            <button class="boton-accion-secundario peligro" onclick="reiniciarHistorial()" title="Reiniciar historial y calibración">🔄 Reiniciar</button>
+            <button class="boton-accion-secundario" onclick="exportarDatos()" title="Exportar respaldo de datos en JSON">ðŸ“¥ Exportar datos</button>
+            <button class="boton-accion-secundario peligro" onclick="reiniciarHistorial()" title="Reiniciar historial y calibraciÃ³n">ðŸ”„ Reiniciar</button>
           </div>
         </div>
 
         <div class="calibracion-cards-grid">
           <div class="calibracion-telemetria-card">
             <div class="telemetria-param-header">
-              <span class="telemetria-param-icon">🏠</span>
+              <span class="telemetria-param-icon">ðŸ </span>
               <span class="telemetria-param-nombre">Ventaja de jugar de local</span>
               <span class="badge-telemetria ${c.muestrasLocalia >= MUESTRA_MINIMA_LOCALIA ? 'activo' : 'base'}">
-                ${c.muestrasLocalia >= MUESTRA_MINIMA_LOCALIA ? 'Autoajustado' : 'Base estándar'}
+                ${c.muestrasLocalia >= MUESTRA_MINIMA_LOCALIA ? 'Autoajustado' : 'Base estÃ¡ndar'}
               </span>
             </div>
             <div class="telemetria-param-cuerpo">
               <strong class="telemetria-param-val">${localiaTexto}</strong>
-              <span class="telemetria-param-desc">Ponderación extra a goles esperados del anfitrión</span>
+              <span class="telemetria-param-desc">PonderaciÃ³n extra a goles esperados del anfitriÃ³n</span>
             </div>
             <div class="telemetria-param-progreso">
               <div class="progreso-label">
@@ -909,15 +870,15 @@
 
           <div class="calibracion-telemetria-card">
             <div class="telemetria-param-header">
-              <span class="telemetria-param-icon">⚡</span>
-              <span class="telemetria-param-nombre">Correlación Dixon-Coles (ρ)</span>
+              <span class="telemetria-param-icon">âš¡</span>
+              <span class="telemetria-param-nombre">CorrelaciÃ³n Dixon-Coles (Ï)</span>
               <span class="badge-telemetria ${c.muestrasRho >= MUESTRA_MINIMA_RHO ? 'activo' : 'base'}">
-                ${c.muestrasRho >= MUESTRA_MINIMA_RHO ? 'Autoajustado' : 'Base matemática'}
+                ${c.muestrasRho >= MUESTRA_MINIMA_RHO ? 'Autoajustado' : 'Base matemÃ¡tica'}
               </span>
             </div>
             <div class="telemetria-param-cuerpo">
               <strong class="telemetria-param-val">${rhoTexto}</strong>
-              <span class="telemetria-param-desc">Corrección Poisson para marcadores 0-0, 1-0, 0-1 y 1-1</span>
+              <span class="telemetria-param-desc">CorrecciÃ³n Poisson para marcadores 0-0, 1-0, 0-1 y 1-1</span>
             </div>
             <div class="telemetria-param-progreso">
               <div class="progreso-label">
@@ -930,15 +891,15 @@
 
           <div class="calibracion-telemetria-card">
             <div class="telemetria-param-header">
-              <span class="telemetria-param-icon">📈</span>
+              <span class="telemetria-param-icon">ðŸ“ˆ</span>
               <span class="telemetria-param-nombre">Peso de la tabla de posiciones</span>
               <span class="badge-telemetria ${c.muestrasTabla >= MUESTRA_MINIMA_TABLA ? 'activo' : 'base'}">
-                ${c.muestrasTabla >= MUESTRA_MINIMA_TABLA ? 'Autoajustado' : 'Base ±6%'}
+                ${c.muestrasTabla >= MUESTRA_MINIMA_TABLA ? 'Autoajustado' : 'Base Â±6%'}
               </span>
             </div>
             <div class="telemetria-param-cuerpo">
               <strong class="telemetria-param-val">${tablaTexto}</strong>
-              <span class="telemetria-param-desc">Impacto según diferencia de puntos por partido en la liga</span>
+              <span class="telemetria-param-desc">Impacto segÃºn diferencia de puntos por partido en la liga</span>
             </div>
             <div class="telemetria-param-progreso">
               <div class="progreso-label">
@@ -951,7 +912,7 @@
         </div>
 
         <div class="calibracion-categorias-bloque">
-          <h4>Ajustes de calibración por mercado específico</h4>
+          <h4>Ajustes de calibraciÃ³n por mercado especÃ­fico</h4>
           <div class="calibracion-categorias-grid">${filasCat}</div>
         </div>
       </div>
@@ -967,10 +928,10 @@
         <div class="auditoria-vacia-container">
           <div class="auditoria-vacia-card">
             <div class="auditoria-vacia-head">
-              <span class="auditoria-vacia-icon">🔬</span>
+              <span class="auditoria-vacia-icon">ðŸ”¬</span>
               <div>
-                <h4>Auditoría continua de pronósticos en proceso</h4>
-                <p>El motor compara automáticamente lo que pronosticó contra el resultado real de cada partido que consultes en la app.</p>
+                <h4>AuditorÃ­a continua de pronÃ³sticos en proceso</h4>
+                <p>El motor compara automÃ¡ticamente lo que pronosticÃ³ contra el resultado real de cada partido que consultes en la app.</p>
               </div>
             </div>
             <div class="auditoria-tips-grid">
@@ -986,7 +947,7 @@
               </div>
               <div class="auditoria-tip">
                 <span class="auditoria-tip-num">3</span>
-                <strong>Calibración dinámica</strong>
+                <strong>CalibraciÃ³n dinÃ¡mica</strong>
                 <p>El motor ajusta sus probabilidades para optimizar la tasa de acierto continuo.</p>
               </div>
             </div>
@@ -995,8 +956,8 @@
           <div class="benchmark-referencia-card">
             <div class="benchmark-head">
               <div>
-                <h4>Calibración histórica de referencia del modelo</h4>
-                <p>Precisión promedio calculada sobre 1,000+ partidos auditados de las 5 grandes ligas europeas:</p>
+                <h4>CalibraciÃ³n histÃ³rica de referencia del modelo</h4>
+                <p>PrecisiÃ³n promedio calculada sobre 1,000+ partidos auditados de las 5 grandes ligas europeas:</p>
               </div>
               <span class="chip-status">Brier 0.17</span>
             </div>
@@ -1007,7 +968,7 @@
                   <strong class="color-verde">84%</strong>
                 </div>
                 <div class="benchmark-bar"><div style="width: 84%; background: linear-gradient(90deg, #059669, #34d399);"></div></div>
-                <small>Calibración alta</small>
+                <small>CalibraciÃ³n alta</small>
               </div>
               <div class="benchmark-item">
                 <div class="benchmark-info">
@@ -1015,7 +976,7 @@
                   <strong class="color-verde">81%</strong>
                 </div>
                 <div class="benchmark-bar"><div style="width: 81%; background: linear-gradient(90deg, #059669, #34d399);"></div></div>
-                <small>Calibración alta</small>
+                <small>CalibraciÃ³n alta</small>
               </div>
               <div class="benchmark-item">
                 <div class="benchmark-info">
@@ -1023,7 +984,7 @@
                   <strong class="color-cyan">79%</strong>
                 </div>
                 <div class="benchmark-bar"><div style="width: 79%; background: linear-gradient(90deg, #0284c7, #38bdf8);"></div></div>
-                <small>Calibración buena</small>
+                <small>CalibraciÃ³n buena</small>
               </div>
               <div class="benchmark-item">
                 <div class="benchmark-info">
@@ -1031,7 +992,7 @@
                   <strong class="color-cyan">76%</strong>
                 </div>
                 <div class="benchmark-bar"><div style="width: 76%; background: linear-gradient(90deg, #0284c7, #38bdf8);"></div></div>
-                <small>Calibración media</small>
+                <small>CalibraciÃ³n media</small>
               </div>
             </div>
           </div>
@@ -1061,7 +1022,7 @@
 
       const itemsMercados = mercadosAMostrar.map(m => `
         <span class="historial-mercado-item ${m.acierto ? 'acierto' : 'fallo'}">
-          <span class="historial-mercado-check">${m.acierto ? '✓' : '✕'}</span>
+          <span class="historial-mercado-check">${m.acierto ? 'âœ“' : 'âœ•'}</span>
           ${m.seleccion}
         </span>
       `).join('');
@@ -1095,20 +1056,20 @@
     const brierHTML = brier ? `
       <div class="precision-general" style="margin-top:12px;">
         <span class="precision-general-num" style="color:var(--m-marcador);">${brier.brier}</span>
-        <span class="precision-general-label">Brier Score<br>(0 = calibración perfecta, 0.25 = azar en mercados binarios; basado en ${brier.total} evaluaciones)</span>
+        <span class="precision-general-label">Brier Score<br>(0 = calibraciÃ³n perfecta, 0.25 = azar en mercados binarios; basado en ${brier.total} evaluaciones)</span>
       </div>
     ` : '';
 
     contenedor.innerHTML = `
       <div class="bloque-combinadas sin-borde-superior">
         <div class="historial-header">
-          <p class="subtitulo-combinadas" style="margin:0;">Basado en ${estadisticas.totalVerificados} pronósticos ya verificados en este navegador.</p>
+          <p class="subtitulo-combinadas" style="margin:0;">Basado en ${estadisticas.totalVerificados} pronÃ³sticos ya verificados en este navegador.</p>
           <button class="boton-reiniciar" onclick="reiniciarHistorial()">Reiniciar</button>
         </div>
 
         <div class="precision-general">
           <span class="precision-general-num">${estadisticas.general}%</span>
-          <span class="precision-general-label">Precisión general del modelo<br>(promedio de todos los mercados usados)</span>
+          <span class="precision-general-label">PrecisiÃ³n general del modelo<br>(promedio de todos los mercados usados)</span>
         </div>
         ${brierHTML}
 
@@ -1117,8 +1078,8 @@
         </div>
 
         <div class="tarjeta-combinada" style="margin-top:16px;">
-          <div class="encabezado-combinada"><span class="etiqueta-combinada">Últimos verificados</span></div>
-          ${filasUltimos || '<p style="text-align:center; color:#8fa896;">No hay partidos verificados para esta categoría.</p>'}
+          <div class="encabezado-combinada"><span class="etiqueta-combinada">Ãšltimos verificados</span></div>
+          ${filasUltimos || '<p style="text-align:center; color:#8fa896;">No hay partidos verificados para esta categorÃ­a.</p>'}
         </div>
       </div>
       ${panelCalibracionRangosHTML(historial)}
@@ -1148,7 +1109,7 @@
         <div class="resumen-card">
           <span class="resumen-card-titulo">Picks liquidados</span>
           <span class="resumen-card-valor">${r.totalPicks}</span>
-          <span class="resumen-card-sub">${r.aciertos} ganados · ${r.perdidos} perdidos</span>
+          <span class="resumen-card-sub">${r.aciertos} ganados Â· ${r.perdidos} perdidos</span>
         </div>
         <div class="resumen-card">
           <span class="resumen-card-titulo">Aciertos</span>
@@ -1206,13 +1167,13 @@
         <div class="eval-historial-cuerpo">
           <div class="eval-historial-partido">
             <strong>${ev.local}</strong>
-            <span class="eval-marcador">${ev.marcadorFinal || '—'}</span>
+            <span class="eval-marcador">${ev.marcadorFinal || 'â€”'}</span>
             <strong>${ev.visita}</strong>
           </div>
-          <p class="eval-mercado-titulo">${CATEGORIAS_MERCADO[ev.categoria]?.titulo || ev.categoria} · <em>${ev.seleccion}</em></p>
+          <p class="eval-mercado-titulo">${CATEGORIAS_MERCADO[ev.categoria]?.titulo || ev.categoria} Â· <em>${ev.seleccion}</em></p>
         </div>
         <div class="eval-historial-resultado">
-          <span class="eval-icono ${gano ? 'ok' : 'no'}">${gano ? '✓' : '✕'}</span>
+          <span class="eval-icono ${gano ? 'ok' : 'no'}">${gano ? 'âœ“' : 'âœ•'}</span>
           <span class="eval-confianza">${ev.probabilidad}%</span>
         </div>
       </div>
@@ -1232,7 +1193,7 @@
       const pendientesHTML = pendientes.length > 0
         ? `
           <div class="historial-pendientes">
-            <p class="historial-pendientes-titulo">⏱ ${pendientes.length} partido${pendientes.length > 1 ? 's' : ''} en seguimiento — se liquidan al terminar</p>
+            <p class="historial-pendientes-titulo">â± ${pendientes.length} partido${pendientes.length > 1 ? 's' : ''} en seguimiento â€” se liquidan al terminar</p>
             <div class="historial-pendientes-lista">
               ${pendientes.slice(0, 8).map(p => `
                 <div class="historial-pendiente">
@@ -1246,8 +1207,8 @@
         : '';
       contenedor.innerHTML = `
         <div class="aviso-servidor">
-          <p><strong>Todavía no hay picks liquidados.</strong></p>
-          <p>A medida que los partidos que Fulbito pronosticó terminen, van a aparecer acá con su resultado real.</p>
+          <p><strong>TodavÃ­a no hay picks liquidados.</strong></p>
+          <p>A medida que los partidos que Fulbito pronosticÃ³ terminen, van a aparecer acÃ¡ con su resultado real.</p>
           ${pendientesHTML}
         </div>
         <div class="historial-filtros-barra" style="margin-top:16px;">
@@ -1287,7 +1248,7 @@
       </div>
       <p class="historial-conteo-resultados">${evaluaciones.length} picks encontrados${terminoBusqueda ? ` para "${terminoBusqueda}"` : ''}</p>
       <div class="lista-eval-historial">
-        ${mostrar.length > 0 ? mostrar.map(filaEvaluacionHistorialHTML).join('') : `<p style="text-align:center; color:var(--text-dim); padding:20px 0;">Ningún pick coincide con este filtro.</p>`}
+        ${mostrar.length > 0 ? mostrar.map(filaEvaluacionHistorialHTML).join('') : `<p style="text-align:center; color:var(--text-dim); padding:20px 0;">NingÃºn pick coincide con este filtro.</p>`}
       </div>
       ${evaluaciones.length > LIMITE_HISTORIAL_COMPLETO ? `<p class="historial-conteo-resultados">Mostrando ${mostrar.length} de ${evaluaciones.length}. Usa el buscador para acotar.</p>` : ''}
     `;
@@ -1329,9 +1290,9 @@
    cont.style.cssText = 'display: flex !important; gap: 8px; margin-bottom: 12px; overflow-x: auto; padding-bottom: 4px;';
  }
 
-  // ============ FILTROS RÁPIDOS DE PICKS ============
+  // ============ FILTROS RÃPIDOS DE PICKS ============
   // Nota: 'manana'/'semana'/'otra' usan el mismo pipeline de fetch (obtenerPartidos)
-  // que 'hoy'; un estado vacío ahí es falta de datos del backend para ese rango,
+  // que 'hoy'; un estado vacÃ­o ahÃ­ es falta de datos del backend para ese rango,
   // no un bug del filtro local (ver renderizarPartidosFiltrados).
   let filtroRapidoActual = 'todos';
 
@@ -1352,15 +1313,15 @@
 
   // ============ RENDER PRINCIPAL DE PARTIDOS ============
 
-  // Aviso honesto cuando la lista viene de PARTIDOS_FALLBACK (backend caído):
-  // sin esto, la pestaña "Hoy" mostraba tarjetas demo (06/09) sin decirlo.
+  // Aviso honesto cuando la lista viene de PARTIDOS_FALLBACK (backend caÃ­do):
+  // sin esto, la pestaÃ±a "Hoy" mostraba tarjetas demo (06/09) sin decirlo.
   function avisoDatosDemoHTML() {
     return `
       <div class="aviso-datos-demo" role="status">
-        <span class="aviso-datos-demo-icono" aria-hidden="true">⚠️</span>
+        <span class="aviso-datos-demo-icono" aria-hidden="true">âš ï¸</span>
         <div class="aviso-datos-demo-texto">
-          <strong>Sin conexión con el servidor · datos demo</strong>
-          <p>No pudimos traer los partidos reales, así que lo que ves abajo son partidos de ejemplo (fechas fijas). Sus pronósticos muestran cómo funciona Fulbito, no la jornada de verdad.</p>
+          <strong>Sin conexiÃ³n con el servidor Â· datos demo</strong>
+          <p>No pudimos traer los partidos reales, asÃ­ que lo que ves abajo son partidos de ejemplo (fechas fijas). Sus pronÃ³sticos muestran cÃ³mo funciona Fulbito, no la jornada de verdad.</p>
         </div>
       </div>
     `;
@@ -1393,12 +1354,12 @@
         : filtroRapidoActual === 'favoritos'
         ? 'No tienes partidos de equipos favoritos programados para esta fecha.'
         : esHoy
-        ? 'Hoy no hay partidos programados en las ligas que cubrimos. Probá con "Mañana" o "Esta semana".'
+        ? 'Hoy no hay partidos programados en las ligas que cubrimos. ProbÃ¡ con "MaÃ±ana" o "Esta semana".'
         : esManana
-        ? 'No hay partidos programados para mañana en las ligas cubiertas. Probá con "Esta semana".'
+        ? 'No hay partidos programados para maÃ±ana en las ligas cubiertas. ProbÃ¡ con "Esta semana".'
         : 'No hay partidos para mostrar con este filtro.';
       const accionFecha = (!terminoBusqueda && filtroRapidoActual !== 'favoritos' && (esHoy || esManana))
-        ? `<div style="margin-top:12px;"><button class="boton-reintentar" onclick="document.querySelectorAll('.pestaña')[${esHoy ? 1 : 2}]?.click()">Ver ${esHoy ? 'Mañana' : 'Esta semana'}</button></div>`
+        ? `<div style="margin-top:12px;"><button class="boton-reintentar" onclick="document.querySelectorAll('.pestaÃ±a')[${esHoy ? 1 : 2}]?.click()">Ver ${esHoy ? 'MaÃ±ana' : 'Esta semana'}</button></div>`
         : '';
       contenedor.innerHTML = `${partidosModoDemo ? avisoDatosDemoHTML() : ''}<div class="estado-vacio" style="text-align:center; color:#8fa896;"><p style="margin:0;">${mensaje}</p>${accionFecha}</div>`;
       requestAnimationFrame(() => contenedor.classList.add('visible'));
@@ -1432,7 +1393,7 @@
         h2h, tabla, partido.homeTeam.id, partido.awayTeam.id, codigoLiga
       );
 
-      // Reordenar mercados según filtro rápido activo para destacar la opción elegida
+      // Reordenar mercados segÃºn filtro rÃ¡pido activo para destacar la opciÃ³n elegida
       if (filtroRapidoActual === 'alta_confianza') {
         pronosticos.seleccionados.sort((a, b) => (b.probabilidad || 0) - (a.probabilidad || 0));
       } else if (filtroRapidoActual === 'btts') {
@@ -1475,7 +1436,7 @@
 
     const itemsMercados = h.mercados.map(m => `
       <span class="historial-mercado-item ${m.acierto ? 'acierto' : 'fallo'}">
-        <span class="historial-mercado-check">${m.acierto ? '✓' : '✕'}</span>
+        <span class="historial-mercado-check">${m.acierto ? 'âœ“' : 'âœ•'}</span>
         ${m.seleccion}
       </span>
     `).join('');
@@ -1537,7 +1498,7 @@
     if (lista.length === 0) {
       const mensaje = terminoBusqueda
         ? `No encontramos partidos finalizados que coincidan con "${terminoBusqueda}".`
-        : 'Todavía no hay partidos finalizados y verificados en los últimos 7 días. A medida que veas partidos en "Hoy"/"Mañana" y esos terminen, van a aparecer acá con su resultado real.';
+        : 'TodavÃ­a no hay partidos finalizados y verificados en los Ãºltimos 7 dÃ­as. A medida que veas partidos en "Hoy"/"MaÃ±ana" y esos terminen, van a aparecer acÃ¡ con su resultado real.';
       contenedor.innerHTML = `<p style="text-align:center; color:#8fa896;">${mensaje}</p>`;
       requestAnimationFrame(() => contenedor.classList.add('visible'));
       return;
@@ -1566,7 +1527,7 @@
           <div class="aviso-servidor aviso-servidor-carga">
             <span class="estado-spinner" aria-hidden="true"></span>
             <p><strong>Armando la jugada...</strong></p>
-            <p>El servidor gratuito estaba en el banco y ya está entrando a la cancha. Un momento más.</p>
+            <p>El servidor gratuito estaba en el banco y ya estÃ¡ entrando a la cancha. Un momento mÃ¡s.</p>
           </div>
         `;
         requestAnimationFrame(() => contenedor.classList.add('visible'));
@@ -1609,9 +1570,9 @@
     }
     partidosModoDemo = usandoDemo;
 
-    // Con datos reales recortamos al día de la pestaña aunque quede vacío: si el rango
-    // [hoy, mañana] trae partidos de otro día, mostrarlos bajo "Hoy"/"Mañana" contradecía
-    // al KPI (que ya cuenta solo los partidos del día local). En modo demo no filtramos,
+    // Con datos reales recortamos al dÃ­a de la pestaÃ±a aunque quede vacÃ­o: si el rango
+    // [hoy, maÃ±ana] trae partidos de otro dÃ­a, mostrarlos bajo "Hoy"/"MaÃ±ana" contradecÃ­a
+    // al KPI (que ya cuenta solo los partidos del dÃ­a local). En modo demo no filtramos,
     // para que el visitante vea igual las tarjetas de ejemplo (el aviso aclara que son demo).
     if (diaObjetivo && Array.isArray(partidos) && !usandoDemo) {
       partidos = partidos.filter(p => fechaLocalDePartido(p.utcDate) === diaObjetivo);
@@ -1635,7 +1596,7 @@
   let ultimaFechaCargada = 'hoy';
 
   function cambiarFecha(tipo, event) {
-    document.querySelectorAll('.pestaña').forEach(btn => btn.classList.remove('activa'));
+    document.querySelectorAll('.pestaÃ±a').forEach(btn => btn.classList.remove('activa'));
     event.target.classList.add('activa');
     document.getElementById('selector-fecha-personalizada').style.display = 'none';
     ultimaFechaCargada = tipo;
@@ -1643,7 +1604,7 @@
   }
 
   function mostrarSelectorFecha(event) {
-    document.querySelectorAll('.pestaña').forEach(btn => btn.classList.remove('activa'));
+    document.querySelectorAll('.pestaÃ±a').forEach(btn => btn.classList.remove('activa'));
     event.target.classList.add('activa');
     const selector = document.getElementById('selector-fecha-personalizada');
     selector.style.display = selector.style.display === 'none' ? 'flex' : 'none';
@@ -1667,7 +1628,7 @@
     finConsulta.setDate(finConsulta.getDate() + 1);
 
     let partidos = await obtenerPartidos(formatearFecha(inicioConsulta), formatearFecha(finConsulta));
-    // Igual que en cargarPartidos: PARTIDOS_FALLBACK significa backend caído (datos demo).
+    // Igual que en cargarPartidos: PARTIDOS_FALLBACK significa backend caÃ­do (datos demo).
     partidosModoDemo = !Array.isArray(partidos) || partidos === PARTIDOS_FALLBACK;
     if (!Array.isArray(partidos)) {
       partidos = PARTIDOS_FALLBACK;
@@ -1680,9 +1641,9 @@
 
     partidos = partidos.filter(p => fechaLocalDePartido(p.utcDate) === valor);
 
-    // Sin servidor no podemos afirmar que esa fecha ya pasó: mostramos el aviso demo.
+    // Sin servidor no podemos afirmar que esa fecha ya pasÃ³: mostramos el aviso demo.
     if (partidos.length === 0 && !partidosModoDemo && valor < formatearFecha(new Date())) {
-      contenedor.innerHTML = `<p style="text-align:center; color:#8fa896;">Esa fecha ya pasó, así que esos partidos ya se jugaron (o ya no están programados). Elige hoy o una fecha futura para ver pronósticos, o mira la pestaña "Finalizados" para ver resultados verificados.</p>`;
+      contenedor.innerHTML = `<p style="text-align:center; color:#8fa896;">Esa fecha ya pasÃ³, asÃ­ que esos partidos ya se jugaron (o ya no estÃ¡n programados). Elige hoy o una fecha futura para ver pronÃ³sticos, o mira la pestaÃ±a "Finalizados" para ver resultados verificados.</p>`;
       requestAnimationFrame(() => contenedor.classList.add('visible'));
       document.getElementById('bloque-combinadas').innerHTML = '';
       return;
@@ -1699,8 +1660,8 @@
   function tarjetaFavoritoVaciaHTML() {
     return `
       <div class="aviso-servidor">
-        <p><strong>Aún no sigues ningún equipo.</strong></p>
-        <p>Toca la estrella ☆ junto al nombre de un equipo, en cualquier partido de "Pronósticos", y va a aparecer aquí.</p>
+        <p><strong>AÃºn no sigues ningÃºn equipo.</strong></p>
+        <p>Toca la estrella â˜† junto al nombre de un equipo, en cualquier partido de "PronÃ³sticos", y va a aparecer aquÃ­.</p>
       </div>
     `;
   }
@@ -1725,7 +1686,7 @@
       contenedor.innerHTML = `<p style="text-align:center; color:#ff6b6b;">Error: ${partidos.mensaje}</p>`;
       return;
     }
-    // Backend caído: los partidos son demo y la lista tiene que avisarlo.
+    // Backend caÃ­do: los partidos son demo y la lista tiene que avisarlo.
     partidosModoDemo = !Array.isArray(partidos) || partidos === PARTIDOS_FALLBACK;
 
     partidosFavoritosCache = (Array.isArray(partidos) ? partidos : []).filter(p =>
@@ -1750,8 +1711,8 @@
       const mensaje = terminoBusqueda
         ? `Ninguno de tus favoritos coincide con "${terminoBusqueda}".`
         : partidosModoDemo
-        ? 'Sin conexión con el servidor no podemos confirmar si tus equipos favoritos juegan en los próximos 7 días.'
-        : 'Tus equipos favoritos no juegan en los próximos 7 días.';
+        ? 'Sin conexiÃ³n con el servidor no podemos confirmar si tus equipos favoritos juegan en los prÃ³ximos 7 dÃ­as.'
+        : 'Tus equipos favoritos no juegan en los prÃ³ximos 7 dÃ­as.';
       contenedor.innerHTML = `${partidosModoDemo ? avisoDatosDemoHTML() : ''}<p style="text-align:center; color:#8fa896;">${mensaje}</p>`;
       return;
     }
@@ -1788,4 +1749,5 @@
       requestAnimationFrame(() => triggerUIAnimations());
     }
   }
+
 

@@ -43,6 +43,10 @@ if (!API_KEY) {
   console.warn("ADVERTENCIA: falta FOOTBALL_DATA_API_KEY. Configúrala en las variables de entorno del servicio.");
 }
 
+const HISTORIAL_API_KEY = process.env.HISTORIAL_API_KEY;
+if (!HISTORIAL_API_KEY && process.env.NODE_ENV === 'production') { console.warn('ADVERTENCIA: falta HISTORIAL_API_KEY para escrituras de /api/historial'); }
+function requireHistorialWriteKey(req, res, next){ const k=req.headers['x-api-key']; if(!k||k!==HISTORIAL_API_KEY) return res.status(401).json({error:'unauthorized',message:'X-Api-Key requerido para escrituras'}); next(); }
+
 // ============ HISTORIAL COMPARTIDO GLOBAL ============
 const HISTORIAL_PATH = path.join(__dirname, 'data', 'historial.json');
 
@@ -231,17 +235,14 @@ app.get('/api/historial', (req, res) => {
   res.setHeader('Cache-Control', 'public, max-age=15');
   res.json({ ok: true, historial: leerHistorialGlobal() });
 });
+app.get('/api/historial/stats', (req,res)=>{ const h=leerHistorialGlobal(); const ver=h.filter(x=>x&&x.verificado).length; const ult=h.length>0?(h[h.length-1].fecha||h[h.length-1].timestamp||null):null; res.setHeader('Cache-Control','public, max-age=15'); res.json({ok:true,total:h.length,verificados:ver,ultimo:ult,actualizadoEn:new Date().toISOString()}); });
 
-app.post('/api/historial', (req, res) => {
-  const historial = Array.isArray(req.body?.historial) ? req.body.historial : [];
-  const guardado = guardarHistorialGlobal(historial);
-  res.json({ ok: true, historial: guardado, total: guardado.length });
+app.post('/api/historial', requireHistorialWriteKey, (req, res) => {
+  const c=req.body||{}; const historial=Array.isArray(c.historial)?c.historial:[]; if(historial.length>500)return res.status(400).json({error:'payload_too_large',message:'Máximo 500 entradas'}); const guardado=guardarHistorialGlobal(historial); res.json({ok:true,historial:guardado,total:guardado.length});
 });
 
-app.put('/api/historial', (req, res) => {
-  const historial = Array.isArray(req.body?.historial) ? req.body.historial : [];
-  const guardado = guardarHistorialGlobal(historial);
-  res.json({ ok: true, historial: guardado, total: guardado.length });
+app.put('/api/historial', requireHistorialWriteKey, (req, res) => {
+  const c=req.body||{}; const historial=Array.isArray(c.historial)?c.historial:[]; if(historial.length>500)return res.status(400).json({error:'payload_too_large',message:'Máximo 500 entradas'}); const guardado=guardarHistorialGlobal(historial); res.json({ok:true,historial:guardado,total:guardado.length});
 });
 
 // Helper: responde con ETag para ahorrar ancho de banda cuando el cliente ya tiene la misma versión
