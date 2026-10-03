@@ -6,7 +6,7 @@ Ejecutar:  python test_recalibracion.py
 Genera un dataset sintético DETERMINISTA (semilla fija) con el mismo formato
 que producirán pronosticos.py (telemetría) y el frontend (historial), y valida:
   1. Gate de muestra insuficiente (<50 partidos)
-  2. Abort con datos de ejemplo
+  2. Abort cuando TODO el histórico es de ejemplo
   3. Sanity-checks (marcador inválido, duplicados en conflicto, cruce fallido,
      duplicado envenenado que NO debe borrar el partido limpio)
   4. Generación de propuesta (sesgo deliberado en Over 2.5) y anti-repetición
@@ -15,7 +15,8 @@ que producirán pronosticos.py (telemetría) y el frontend (historial), y valida
   7. Telemetría real del motor (pronosticos.py) + abort por datos de ejemplo
   8. Propuesta de peso interno (factorLocalia) con desvío real del nivel de goles
   9. Guardia de integridad: probabilidades oficiales degeneradas => abortado
- 10. Regresión del bug de suma de matriz del motor (pronosticos.sumaMatriz)
+ 10. Paridad de suma de matriz motor <-> recalibrador
+11. Corridas de ejemplo VIEJAS no envenenan el histórico append-only
 """
 
 import json
@@ -452,29 +453,31 @@ def escenario_integridad(tmp):
               f"exit={codigo_d}")
 
 
-def escenario_bug_motor():
-    """Regresión del bug de suma del motor (pronosticos.sumaMatriz).
+def escenario_paridad_suma_matriz():
+    """Paridad entre la suma del motor y la del recalibrador.
 
-    Documenta el bug como prueba: si alguien arregla `sumaMatriz` en el motor,
-    esta prueba FALLA a propósito y obliga a actualizar `sumar_matriz` y la
-    guardia de integridad. También verifica que la suma correcta da una
-    probabilidad válida y que el frontend no está afectado por ser JS.
+    `pronosticos.sumaMatriz` accede a la lambda `'get'` de la matriz
+    (`matriz['get'](i, j)`), NO a `dict.get`, así que devuelve probabilidades
+    reales. Antes seilea creído lo contrario y esta prueba "documentaba el bug",
+    fallando contra un motor ya correcto. Ahora fija la equivalencia de ambas
+    implementaciones, que es la propiedad realmente importante: el backtesting
+    debe medir exactamente lo que mide el motor.
     """
-    print("Escenario 10: regresión del bug de suma del motor (Python)")
-    from pronosticos import sumaMatriz  # el buggy, importado a propósito
+    print("Escenario 10: paridad de suma de matriz motor <-> recalibrador")
+    from pronosticos import sumaMatriz
 
     matriz = matrizMarcadores(0.98, 1.099, 8, -0.04)
-    rota = sumaMatriz(matriz, 8, lambda i, j: i > j)
-    correcta = sumar_matriz(matriz, 8, lambda i, j: i > j)
+    p_motor = sumaMatriz(matriz, 8, lambda i, j: i > j)
+    p_recal = sumar_matriz(matriz, 8, lambda i, j: i > j)
 
-    assertion("el motor devuelve una suma de índices (bug documentado)",
-              rota > 1.0, f"sumaMatriz devolvió {rota} (se esperaba >1 por el bug)")
-    assertion("la suma correcta es una probabilidad válida",
-              0.0 < correcta < 1.0, f"sumar_matriz devolvió {correcta}")
-    assertion("ambas coinciden con la P(1X2) calculada a mano",
-              abs(correcta - (lambda1x2 := prob_mercado("resultado", {"lado": "local"}, 0.98, 1.099))) < 1e-9,
-              f"{correcta} vs {lambda1x2}")
-    p_local = correcta
+    assertion("la suma del motor es una probabilidad válida (0-1)",
+              0.0 < p_motor < 1.0, f"sumaMatriz devolvió {p_motor}")
+    assertion("el recalibrador coincide con el motor",
+              abs(p_motor - p_recal) < 1e-12, f"{p_motor} vs {p_recal}")
+    assertion("coincide con la P(1X2) calculada a mano",
+              abs(p_motor - (lambda1x2 := prob_mercado("resultado", {"lado": "local"}, 0.98, 1.099))) < 1e-9,
+              f"{p_motor} vs {lambda1x2}")
+    p_local = p_motor
     p_empate = sumar_matriz(matriz, 8, lambda i, j: i == j)
     p_visita = sumar_matriz(matriz, 8, lambda i, j: i < j)
     assertion("las tres probabilidades de 1X2 suman 1",
@@ -482,11 +485,64 @@ def escenario_bug_motor():
               f"{p_local + p_empate + p_visita}")
 
 
+def escenario_historico_envenenado(tmp):
+    """Corridas viejas de ejemplo NO envenenan el histórico append-only.
+
+    Regresión del bloqueo real que abortó 13 corridas seguidas en producción:
+    el flag `datosDeEjemplo` vive a nivel de CORRIDA, y el chequeo abortaba si
+    ANY línea histórica lo traía. Como el .jsonl es append-only, tres corridas
+    de ejemplo de 2026-09-21..23 congelaron la recalibración para siempre,
+    aunque después hubiera 11 corridas reales de 30 partidos.
+    """
+    print("Escenario 11: corridas de ejemplo viejas no bloquean el histórico")
+    d = os.path.join(tmp, "e11"); os.makedirs(d)
+    _, ruta_historial = generar_dataset(d, n_partidos=140)
+    ruta_historico = os.path.join(d, "pronosticos_historicos.jsonl")
+
+    # Se anteponen 3 corridas de ejemplo ANTIGUAS, igual que en producción.
+    with open(ruta_historico, encoding="utf-8") as f:
+        lineas = f.readlines()
+    antiguedad = datetime.now(timezone.utc) - timedelta(days=30)
+    viejas = [{"corridaId": f"vieja-{k}",
+               "generadoEn": (antiguedad + timedelta(days=k)).isoformat(),
+               "datosDeEjemplo": True, "pronosticos": {}} for k in range(3)]
+    with open(ruta_historico, "w", encoding="utf-8") as f:
+        for corrida in viejas:
+            f.write(json.dumps(corrida, ensure_ascii=False) + "\n")
+        f.writelines(lineas)
+
+    codigo, salida = correr(args_prueba(d, ruta_historial))
+    assertion("no aborta por datos de ejemplo", "ABORTADO" not in salida, salida[-600:])
+    assertion("no se registra el aborto por datos de ejemplo",
+              not any(b.get("resultado") == "abortado_datos_de_ejemplo" for b in bitacora_de(d)))
+    assertion("exit code 0", codigo == 0, salida[-600:])
+
+    # Un histórico 100% de ejemplo SÍ debe seguir abortando (no se recalibra
+    # contra datos ficticios): es lo que garantiza el Escenario 2.
+    solo_ejemplo = os.path.join(d, "solo_ejemplo.jsonl")
+    with open(solo_ejemplo, "w", encoding="utf-8") as f:
+        f.write(json.dumps(viejas[0], ensure_ascii=False) + "\n")
+    codigo_e, salida_e = correr(["--modo", "propuesta",
+                                 "--historico-archivo", solo_ejemplo,
+                                 "--dir-salida", d])
+    assertion("si TODO el histórico es de ejemplo, sigue abortando",
+              "ABORTADO" in salida_e, salida_e[-600:])
+
+
 def escenario_telemetria_motor(tmp):
+    """Telemetría real del motor + abort por datos de ejemplo.
+
+    Hermético: se apunta `--backend-url` a un puerto cerrado para forzar el
+    fallback a datos de ejemplo. Antes la prueba dependía de que el backend de
+    Render estuviera dormido; con el backend despierto obtenía `datosDeEjemplo:
+    False` y la prueba fallaba de forma intermitente.
+    """
     print("Escenario 7: telemetría real del motor + abort por datos de ejemplo")
     d = os.path.join(tmp, "e7"); os.makedirs(d)
-    proceso = subprocess.run([sys.executable, os.path.join(BASE, "pronosticos.py")],
-                             cwd=d, capture_output=True, text=True, timeout=900)
+    proceso = subprocess.run(
+        [sys.executable, os.path.join(BASE, "pronosticos.py"),
+         "--backend-url", "http://127.0.0.1:9"],
+        cwd=d, capture_output=True, text=True, timeout=900)
     ruta_telemetria = os.path.join(d, "pronosticos_historicos.jsonl")
     assertion("pronosticos.py corrió sin errores", proceso.returncode == 0,
               (proceso.stdout + proceso.stderr)[-600:])
@@ -517,7 +573,8 @@ def main():
         escenario_rechazar(tmp)
         escenario_peso(tmp)
         escenario_integridad(tmp)
-        escenario_bug_motor()
+        escenario_paridad_suma_matriz()
+        escenario_historico_envenenado(tmp)
         escenario_telemetria_motor(tmp)
     except AssertionError as e:
         print(f"\nPRUEBA FALLIDA: {e}")

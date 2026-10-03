@@ -4,6 +4,7 @@ Script de pronósticos de Fulbito - Modelo estadístico con Poisson + Dixon-Cole
 Genera pronosticos.json para el frontend.
 """
 
+import argparse
 import json
 import math
 import os
@@ -1473,10 +1474,6 @@ class GeneradorPronosticos:
         aborta entonces y no contamina el histórico).
         """
         base = (backend_url or '').strip() or BACKEND_URL_DEFAULT
-        # 'http://localhost:3000' es el placeholder histórico de main():
-        # apunta al mismo server.js que en producción vive en Render.
-        if base in ('http://localhost:3000', 'http://127.0.0.1:3000'):
-            base = BACKEND_URL_DEFAULT
         try:
             return self._cargar_desde_backend(base)
         except Exception as e:
@@ -2087,24 +2084,29 @@ def calcular_ev(probabilidad_modelo, cuota_casa, kelly_factor: float = 0.25):
 
 # ==================== FUNCIÓN PRINCIPAL ====================
 
-def main():
+def main(argv=None):
+    ap = argparse.ArgumentParser(
+        description="Genera pronosticos.json + telemetria desde el backend.")
+    ap.add_argument("--backend-url", default=BACKEND_URL_DEFAULT,
+                    help=f"URL del backend (default: {BACKEND_URL_DEFAULT})")
+    ap.add_argument("--salida", default="pronosticos.json",
+                    help="Ruta del JSON de pronosticos (default: pronosticos.json)")
+    args = ap.parse_args(argv)
+
     print("Generando pronósticos de Fulbito...")
-    
+
     generador = GeneradorPronosticos()
-    
-    # Cargar datos (en implementación real, esto vendría del backend)
-    datos = generador.cargarDatosDesdeBackend('http://localhost:3000')
-    
-    # Generar pronósticos
+
+    datos = generador.cargarDatosDesdeBackend(args.backend_url)
+
     pronosticos = generador.generarTodosLosPronosticos(datos)
-    
-    # Guardar
-    salida = generador.guardarPronosticos('pronosticos.json')
-    
+
+    salida = generador.guardarPronosticos(args.salida)
+
     print(f"Generados {len(pronosticos)} pronósticos")
     print(f"Modelo: Poisson + Dixon-Coles + ML")
     print(f"Probabilidades ajustadas por XGBoost y Regresión Logística")
-    
+
     return salida
 
 if __name__ == '__main__':

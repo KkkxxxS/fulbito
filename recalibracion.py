@@ -45,14 +45,15 @@ from datetime import datetime, timezone, timedelta
 import numpy as np
 
 # La paridad matemática con el motor es por construcción: importamos las
-# funciones puras directamente de pronosticos.py (tiene guard __main__).
-# `sumaMatriz` NO se importa: tiene un bug de shadowing de dict.get y devuelve
-# sumas de índices en lugar de probabilidades. Ver `sumar_matriz` más abajo.
+# funciones puras directamente de pronosticos.py (tiene guard __main__),
+# incluida `sumaMatriz`, que usa la lambda `'get'` de la matriz y por tanto
+# devuelve probabilidades reales.
 try:
     from pronosticos import (
         Config,
         poisson,
         matrizMarcadores,
+        sumaMatriz,
         verificarMercado,
     )
     PRONOSTICOS_IMPORT_OK = True
@@ -66,6 +67,7 @@ except Exception as e:  # pragma: no cover
     Config = None
     matrizMarcadores = _motor_no_disponible
     verificarMercado = _motor_no_disponible
+    sumaMatriz = _motor_no_disponible
 
 # ==================== CONFIGURACIÓN DEL SISTEMA ====================
 
@@ -92,11 +94,12 @@ TOLERANCIA_CRUCE_PROB = 0.03    # ±3 puntos (escala 0-100) al cruzar con el his
 GOLES_MAX_VALIDO = 12
 SPLIT_ENTRENAMIENTO = 0.70      # walk-forward 70/30 por fecha
 
-# Guardia de integridad de la telemetría oficial. Firma del bug de `sumaMatriz`
-# en pronosticos.py: todas las probabilidades quedan pegadas al techo del clamp
-# (0.92) porque la "probabilidad" es en realidad una suma de índices (84.0).
+# Guardia de integridad de la telemetría oficial. Rechaza motoR degenerado: si
+# el motor publicara probabilidades que en realidad NO son probabilidades, casi
+# todas caerían en el mismo valor y la calibración se estaría ajustando sobre
+# ruido. No presupone ningún bug concreto: es una comprobación de distribución.
 CLAMP_TECHO = 0.92
-MOTOR_DEGENERADO_PCT = 0.50     # >=50% de las muestras en el techo => sospechoso
+MOTOR_DEGENERADO_PCT = 0.50     # >=50% de las muestras en un valor => sospechoso
 MOTOR_DEGENERADO_VALORES = 3    # y con <=3 valores distintos en total
 
 # Límites espejo de pronosticos.Config (no se pueden proponer valores fuera de aquí)
@@ -190,24 +193,15 @@ def hash_estable(objeto):
 
 
 def sumar_matriz(matriz, max_goles, condicion):
-    """Suma celdas de la matriz llamando a la función `get` EXPUESTA por la matriz.
+    """Suma celdas de la matriz que satisfacen la condición.
 
-    NO se usa `sumaMatriz` de pronosticos.py a propósito: esa función hace
-    `matriz.get(i, j)` sobre un `dict`, y en Python `dict.get` es el método del
-    diccionario (busca la clave `i`, devuelve el default `j`) — no la lambda
-    `'get'` de la matriz. El resultado son sumas de ÍNDICES, no probabilidades
-    (para `i > j` con dim=9 devuelve 84.0, la suma de los índices de columna).
-    Ese bug está vivo en `pronosticos.py` (afecta también a marcador exacto),
-    pero es un cambio del motor: se arregla en un PR aparte con aprobación. Aquí
-    se usa la lambda correcta para que el backtesting mida probabilidades reales.
+    Delega en `pronosticos.sumaMatriz`: el motor calcula las probabilidades con la
+    lambda `'get'` de la matriz (`matriz['get'](i, j)`), que devuelve la
+    probabilidad real de la celda. Que el backtesting mida EXACTAMENTE lo que mide
+    el motor es lo que hace comparables las propuestas de calibración, así que no
+    se reimplementa la suma aquí.
     """
-    obtener = matriz["get"]
-    total = 0.0
-    for i in range(max_goles + 1):
-        for j in range(max_goles + 1):
-            if condicion(i, j):
-                total += obtener(i, j)
-    return total
+    return sumaMatriz(matriz, max_goles, condicion)
 
 
 def derivar_probabilidad_mercado(categoria, parametros, lambda_local, lambda_visita, rho, max_goles=8):
@@ -295,11 +289,23 @@ def cargar_historico(ruta=RUTA_HISTORICO):
 
 
 def indexar_historico(registros_historico):
-    """Índice por partidoId: la generación oficial MÁS RECIENTE anterior al kickoff."""
+    """Índice por partidoId: la generación oficial MÁS RECIENTE anterior al kickoff.
+
+    Las entradas de corridas marcadas `datosDeEjemplo` se EXCLUYEN del índice en
+    lugar de abortar la corrida entera. El histórico es append-only: abortar si
+    alguna línea histórica vez fue de ejemplo congelaba la recalibración para
+    siempre (3 corridas de ejemplo de 2026-09-21..23 bloquearon 13 corridas
+    seguidas, pese a haber 11 corridas reales posteriores de 30 partidos).
+    """
     indice = {}
     n_lineas_corruptas = 0
+    omitidos_ejemplo = 0
     for reg in registros_historico:
+        corrida_es_ejemplo = bool(reg.get("datosDeEjemplo"))
         for pid, data in (reg.get("pronosticos") or {}).items():
+            if corrida_es_ejemplo or data.get("datosDeEjemplo"):
+                omitidos_ejemplo += 1  # dato ficticio: no entra al índice
+                continue
             partido = data.get("partido") or {}
             fecha = parsear_fecha(partido.get("utcDate"))
             genero = parsear_fecha(data.get("generadoEn"))
@@ -312,7 +318,8 @@ def indexar_historico(registros_historico):
             genero_actual = parsear_fecha((actual or {}).get("generadoEn"))
             if genero_actual is None or genero_actual < genero:
                 indice[pid] = data
-    stats = {"partidos": len(indice), "lineasCorruptas": n_lineas_corruptas}
+    stats = {"partidos": len(indice), "lineasCorruptas": n_lineas_corruptas,
+             "omitidosEjemplo": omitidos_ejemplo}
     return indice, stats
 
 
@@ -334,7 +341,8 @@ def construir_dataset(historial, indice_historico, registros_historico=None):
       3. fechas coherentes (no futuras, no anteriores a 2020)
       4. cruce con el histórico oficial: misma categoría+selección y probabilidad
          coincidente (±3 puntos) => si falla, pick manual o alterado => fuera
-      5. si el histórico oficial proviene de datos de ejemplo => abortar
+      5. si TODO el histórico oficial proviene de datos de ejemplo => abortar
+         (las corridas de ejemplo quedan fuera del índice, no contaminan)
     Devuelve (muestras, reporte). Cada muestra = un mercado evaluado.
     """
     reporte = {
@@ -353,22 +361,17 @@ def construir_dataset(historial, indice_historico, registros_historico=None):
         "notas": [],
     }
 
-    # --- paso 0: detección de datos de ejemplo en el histórico oficial ---
-    # El flag vive a nivel de CORRIDA (registro jsonl); también se revisa el
-    # índice por partido por compatibilidad con telemetrías anteriores.
-    for registro_corrida in (registros_historico or []):
-        if registro_corrida.get("datosDeEjemplo"):
-            reporte["datosDeEjemplo"] = True
-            break
-    if not reporte["datosDeEjemplo"]:
-        for data in indice_historico.values():
-            if data.get("datosDeEjemplo"):
-                reporte["datosDeEjemplo"] = True
-                break
-    if reporte["datosDeEjemplo"]:
+    # --- paso 0: datos de ejemplo ---
+    # `indexar_historico` ya dejó fuera del índice las corridas de ejemplo, así
+    # que acá solo se aborta si NO queda ninguna entrada real. Antes se abortaba
+    # si CUALQUIER línea histórica venía marcada, lo que con un .jsonl
+    # append-only envenenaba el sistema de forma permanente.
+    hay_corridas = bool(registros_historico) if registros_historico is not None else None
+    if not indice_historico and hay_corridas:
+        reporte["datosDeEjemplo"] = True
         reporte["notas"].append(
-            "El histórico oficial proviene de datos de EJEMPLO (pronosticos.py sin "
-            "integración real contra el backend). El sistema no recalibra contra "
+            "Todo el histórico oficial proviene de datos de EJEMPLO (pronosticos.py "
+            "sin integración real contra el backend). El sistema no recalibra contra "
             "datos ficticios; queda pendiente conectar la generación a datos reales."
         )
         return [], reporte
@@ -540,12 +543,12 @@ def curva_calibracion(muestras):
 
 
 def integridad_probabilidades(muestras):
-    """Detecta probabilidades oficiales degeneradas (firma del bug de suma del motor).
+    """Detecta probabilidades oficiales degeneradas (motor que no publica probabilidades).
 
-    Si el motor publica probabilidades que en realidad son sumas de índices, todas
-    caen en el techo del clamp (0.92) y quedan pocos valores distintos. Recalibrar
-    sobre eso produciría propuestas "confiables" sobre ruido (Platt ajustando una
-    constante), así que el sistema aborta y lo reporta.
+    Si el motor publicara un valor constante o casi constante (p. ej. todo pegado a
+    un clamp), la calibración se estaría ajustando sobre ruido: una constante no
+    tiene señal que mejorar. El sistema aborta y lo reporta en vez de proponer
+    cambios sobre ese dataset.
     """
     if not muestras:
         return {
@@ -566,11 +569,11 @@ def integridad_probabilidades(muestras):
         "n": len(probs),
         "pctEnTechoClamp": round(pct_techo, 4),
         "valoresDistintos": distintos,
-        "motivo": ("Probabilidades oficiales degeneradas: casi todas pegadas al "
-                   "techo del clamp con muy pocos valores distintos. Es la firma "
-                   "del bug de suma de la matriz en pronosticos.py "
-                   "(`matriz.get(i, j)` sobre un dict devuelve el índice j). "
-                   "Se recalibraría sobre ruido: no se propone nada.")
+        "motivo": ("Probabilidades oficiales degeneradas: casi todas pegadas a un "
+                   "mismo valor con muy pocos valores distintos, así que no hay "
+                   "señal que recalibrar. Se detectaría, por ejemplo, si el motor "
+                   "aplastara todas las probabilidades contra el techo del clamp "
+                   "(0.92). Se recalibraría sobre ruido: no se propone nada.")
                   if degenerado else None,
     }
 
