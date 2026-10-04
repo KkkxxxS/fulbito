@@ -11,3 +11,4 @@
 {"tipo":"corrida","modo":"propuesta","resultado":"abortado_datos_de_ejemplo","detalle":{},"ts":"2026-10-01T15:27:52.158890+00:00"}
 {"tipo":"corrida","modo":"propuesta","resultado":"abortado_datos_de_ejemplo","detalle":{},"ts":"2026-10-02T14:47:28.473750+00:00"}
 {"tipo":"corrida","modo":"propuesta","resultado":"abortado_datos_de_ejemplo","detalle":{},"ts":"2026-10-03T13:22:13.750102+00:00"}
+{"tipo":"corrida","modo":"propuesta","resultado":"muestra_insuficiente","detalle":{"partidosVerificados":0},"ts":"2026-10-04T14:01:48.269745+00:00"}
