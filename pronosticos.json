@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "generadoEn": "2026-10-04T14:01:47.299456+00:00",
+  "generadoEn": "2026-10-05T17:10:25.597471+00:00",
   "modelo": {
     "tipo": "Poisson + Dixon-Coles + ML",
     "rhoDixonColes": -0.04,
@@ -8,236 +8,6 @@
     "mlUsado": true
   },
   "pronosticos": {
-    "555027": {
-      "partido": {
-        "id": "555027",
-        "homeTeam": {
-          "id": 4287,
-          "name": "Clube do Remo"
-        },
-        "awayTeam": {
-          "id": 1767,
-          "name": "Grêmio FBPA"
-        },
-        "competition": {
-          "name": "Campeonato Brasileiro Série A",
-          "code": "BSA"
-        },
-        "utcDate": "2026-10-07T22:30:00Z",
-        "status": "TIMED"
-      },
-      "pronosticos": {
-        "seleccionados": [
-          {
-            "categoria": "doble",
-            "parametros": {
-              "lado": "1X"
-            },
-            "seleccion": "Clube do Remo o Empate (1X)",
-            "probabilidad": 67,
-            "sinApuesta": false,
-            "confianza": "Media",
-            "contexto": "Clube do Remo promedia 1.2 goles de local · Mejor tabla",
-            "explicacion": "El modelo estadístico apunta a una ventaja clara para Clube do Remo respaldada por su rendimiento reciente."
-          },
-          {
-            "categoria": "totalgoles",
-            "parametros": {
-              "linea": 2.5,
-              "direccion": "menos"
-            },
-            "seleccion": "Menos de 2.5 goles",
-            "probabilidad": 52,
-            "sinApuesta": false,
-            "confianza": "Media",
-            "contexto": "Encuentro disputado · Grêmio FBPA mejor ubicado",
-            "explicacion": "Los promedios ofensivos de ambos clubes sugieren un desarrollo abierto con opciones claras de gol."
-          },
-          {
-            "categoria": "equipomarca",
-            "parametros": {
-              "lado": "local"
-            },
-            "seleccion": "Clube do Remo marca",
-            "probabilidad": 69,
-            "sinApuesta": false,
-            "confianza": "Media",
-            "contexto": "Clube do Remo promedia 1.2 goles de local · Mejor tabla",
-            "explicacion": "Los promedios ofensivos de ambos clubes sugieren un desarrollo abierto con opciones claras de gol."
-          },
-          {
-            "categoria": "marcador",
-            "parametros": {
-              "gl": 1,
-              "gv": 1
-            },
-            "seleccion": "1-1",
-            "probabilidad": 13,
-            "sinApuesta": true,
-            "confianza": "Media",
-            "contexto": "Encuentro disputado · Grêmio FBPA mejor ubicado",
-            "explicacion": "Predicción calculada mediante Poisson y Dixon-Coles en base al historial reciente."
-          }
-        ],
-        "marcadorProbable": "1-1",
-        "probMarcador": 13,
-        "top3Marcadores": [
-          {
-            "marcador": "1-1",
-            "probabilidad": 13
-          },
-          {
-            "marcador": "1-0",
-            "probabilidad": 12
-          },
-          {
-            "marcador": "0-0",
-            "probabilidad": 9
-          }
-        ],
-        "catalogoCompleto": [
-          {
-            "seleccion": "Menos de 3.5 goles",
-            "probabilidad": 78
-          },
-          {
-            "seleccion": "Clube do Remo o Grêmio FBPA (12)",
-            "probabilidad": 72
-          },
-          {
-            "seleccion": "Más de 1.5 goles",
-            "probabilidad": 70
-          },
-          {
-            "seleccion": "Clube do Remo marca",
-            "probabilidad": 69
-          },
-          {
-            "seleccion": "Clube do Remo o Empate (1X)",
-            "probabilidad": 67
-          },
-          {
-            "seleccion": "Grêmio FBPA marca",
-            "probabilidad": 64
-          },
-          {
-            "seleccion": "Grêmio FBPA o Empate (X2)",
-            "probabilidad": 56
-          },
-          {
-            "seleccion": "Menos de 2.5 goles",
-            "probabilidad": 52
-          },
-          {
-            "seleccion": "Ambos anotan: No",
-            "probabilidad": 51
-          },
-          {
-            "seleccion": "Ambos anotan: Sí",
-            "probabilidad": 49
-          },
-          {
-            "seleccion": "Gana Clube do Remo",
-            "probabilidad": 44
-          },
-          {
-            "seleccion": "Más de 2.5 goles",
-            "probabilidad": 43
-          },
-          {
-            "seleccion": "Menos de 1.5 goles",
-            "probabilidad": 30
-          },
-          {
-            "seleccion": "Empate",
-            "probabilidad": 28
-          },
-          {
-            "seleccion": "Gana Grêmio FBPA",
-            "probabilidad": 27
-          },
-          {
-            "seleccion": "Más de 3.5 goles",
-            "probabilidad": 22
-          },
-          {
-            "seleccion": "Clube do Remo -1 (gana por 2+)",
-            "probabilidad": 21
-          },
-          {
-            "seleccion": "1-1",
-            "probabilidad": 13
-          },
-          {
-            "seleccion": "Clube do Remo -2 (gana por 3+)",
-            "probabilidad": 8
-          }
-        ],
-        "combosPartido": [
-          {
-            "titulo": "Combinada segura",
-            "tipos": [
-              "doble",
-              "equipomarca"
-            ],
-            "partes": [
-              "Clube do Remo o Empate (1X)",
-              "Clube do Remo marca"
-            ],
-            "probabilidad": 63
-          },
-          {
-            "titulo": "Combinada extra",
-            "tipos": [
-              "doble",
-              "totalgoles"
-            ],
-            "partes": [
-              "Clube do Remo o Empate (1X)",
-              "Menos de 2.5 goles"
-            ],
-            "probabilidad": 43
-          }
-        ],
-        "partidosMin": 18,
-        "pocaData": false,
-        "favoritoLocal": true,
-        "nombreFavorito": "Clube do Remo",
-        "sinNadaEnJuego": false,
-        "parametrosModelo": {
-          "lambdaLocal": 1.385,
-          "lambdaVisita": 1.031,
-          "rhoDixonColes": -0.04,
-          "factorLocalia": 1.08,
-          "factorLiga": 0.9,
-          "tablaInfo": {
-            "fLocal": 0.9,
-            "fVisita": 0.9
-          },
-          "perfilLigaGoles": 0.9,
-          "factores": {
-            "localia": 1.08,
-            "ligaBase": 1.0,
-            "ligaAjustado": 0.9,
-            "tablaLocal": 0.9,
-            "tablaVisita": 0.9,
-            "h2hLocal": 1.0,
-            "h2hVisita": 1.0,
-            "tendenciaLocal": 0.97,
-            "tendenciaVisita": 1.0,
-            "descansoLocal": 1.01,
-            "descansoVisita": 1.01,
-            "tablaDesviacionLocal": -0.3962,
-            "tablaDesviacionVisita": -0.2387
-          },
-          "tendenciaDireccionLocal": "bajando",
-          "tendenciaDireccionVisita": "neutral",
-          "sinNadaEnJuego": false,
-          "pocaData": false
-        }
-      },
-      "generadoEn": "2026-10-04T14:01:47.289308+00:00"
-    },
     "555025": {
       "partido": {
         "id": "555025",
@@ -466,7 +236,237 @@
           "pocaData": false
         }
       },
-      "generadoEn": "2026-10-04T14:01:47.289697+00:00"
+      "generadoEn": "2026-10-05T17:10:25.580037+00:00"
+    },
+    "555027": {
+      "partido": {
+        "id": "555027",
+        "homeTeam": {
+          "id": 4287,
+          "name": "Clube do Remo"
+        },
+        "awayTeam": {
+          "id": 1767,
+          "name": "Grêmio FBPA"
+        },
+        "competition": {
+          "name": "Campeonato Brasileiro Série A",
+          "code": "BSA"
+        },
+        "utcDate": "2026-10-07T22:30:00Z",
+        "status": "TIMED"
+      },
+      "pronosticos": {
+        "seleccionados": [
+          {
+            "categoria": "doble",
+            "parametros": {
+              "lado": "1X"
+            },
+            "seleccion": "Clube do Remo o Empate (1X)",
+            "probabilidad": 67,
+            "sinApuesta": false,
+            "confianza": "Media",
+            "contexto": "Clube do Remo promedia 1.2 goles de local · Mejor tabla",
+            "explicacion": "El modelo estadístico apunta a una ventaja clara para Clube do Remo respaldada por su rendimiento reciente."
+          },
+          {
+            "categoria": "totalgoles",
+            "parametros": {
+              "linea": 2.5,
+              "direccion": "menos"
+            },
+            "seleccion": "Menos de 2.5 goles",
+            "probabilidad": 52,
+            "sinApuesta": false,
+            "confianza": "Media",
+            "contexto": "Encuentro disputado · Grêmio FBPA mejor ubicado",
+            "explicacion": "Los promedios ofensivos de ambos clubes sugieren un desarrollo abierto con opciones claras de gol."
+          },
+          {
+            "categoria": "equipomarca",
+            "parametros": {
+              "lado": "local"
+            },
+            "seleccion": "Clube do Remo marca",
+            "probabilidad": 69,
+            "sinApuesta": false,
+            "confianza": "Media",
+            "contexto": "Clube do Remo promedia 1.2 goles de local · Mejor tabla",
+            "explicacion": "Los promedios ofensivos de ambos clubes sugieren un desarrollo abierto con opciones claras de gol."
+          },
+          {
+            "categoria": "marcador",
+            "parametros": {
+              "gl": 1,
+              "gv": 1
+            },
+            "seleccion": "1-1",
+            "probabilidad": 13,
+            "sinApuesta": true,
+            "confianza": "Media",
+            "contexto": "Encuentro disputado · Grêmio FBPA mejor ubicado",
+            "explicacion": "Predicción calculada mediante Poisson y Dixon-Coles en base al historial reciente."
+          }
+        ],
+        "marcadorProbable": "1-1",
+        "probMarcador": 13,
+        "top3Marcadores": [
+          {
+            "marcador": "1-1",
+            "probabilidad": 13
+          },
+          {
+            "marcador": "1-0",
+            "probabilidad": 12
+          },
+          {
+            "marcador": "0-0",
+            "probabilidad": 9
+          }
+        ],
+        "catalogoCompleto": [
+          {
+            "seleccion": "Menos de 3.5 goles",
+            "probabilidad": 78
+          },
+          {
+            "seleccion": "Clube do Remo o Grêmio FBPA (12)",
+            "probabilidad": 72
+          },
+          {
+            "seleccion": "Más de 1.5 goles",
+            "probabilidad": 70
+          },
+          {
+            "seleccion": "Clube do Remo marca",
+            "probabilidad": 69
+          },
+          {
+            "seleccion": "Clube do Remo o Empate (1X)",
+            "probabilidad": 67
+          },
+          {
+            "seleccion": "Grêmio FBPA marca",
+            "probabilidad": 64
+          },
+          {
+            "seleccion": "Grêmio FBPA o Empate (X2)",
+            "probabilidad": 56
+          },
+          {
+            "seleccion": "Menos de 2.5 goles",
+            "probabilidad": 52
+          },
+          {
+            "seleccion": "Ambos anotan: No",
+            "probabilidad": 51
+          },
+          {
+            "seleccion": "Ambos anotan: Sí",
+            "probabilidad": 49
+          },
+          {
+            "seleccion": "Gana Clube do Remo",
+            "probabilidad": 44
+          },
+          {
+            "seleccion": "Más de 2.5 goles",
+            "probabilidad": 43
+          },
+          {
+            "seleccion": "Menos de 1.5 goles",
+            "probabilidad": 30
+          },
+          {
+            "seleccion": "Empate",
+            "probabilidad": 28
+          },
+          {
+            "seleccion": "Gana Grêmio FBPA",
+            "probabilidad": 27
+          },
+          {
+            "seleccion": "Más de 3.5 goles",
+            "probabilidad": 22
+          },
+          {
+            "seleccion": "Clube do Remo -1 (gana por 2+)",
+            "probabilidad": 21
+          },
+          {
+            "seleccion": "1-1",
+            "probabilidad": 13
+          },
+          {
+            "seleccion": "Clube do Remo -2 (gana por 3+)",
+            "probabilidad": 8
+          }
+        ],
+        "combosPartido": [
+          {
+            "titulo": "Combinada segura",
+            "tipos": [
+              "doble",
+              "equipomarca"
+            ],
+            "partes": [
+              "Clube do Remo o Empate (1X)",
+              "Clube do Remo marca"
+            ],
+            "probabilidad": 63
+          },
+          {
+            "titulo": "Combinada extra",
+            "tipos": [
+              "doble",
+              "totalgoles"
+            ],
+            "partes": [
+              "Clube do Remo o Empate (1X)",
+              "Menos de 2.5 goles"
+            ],
+            "probabilidad": 43
+          }
+        ],
+        "partidosMin": 18,
+        "pocaData": false,
+        "favoritoLocal": true,
+        "nombreFavorito": "Clube do Remo",
+        "sinNadaEnJuego": false,
+        "parametrosModelo": {
+          "lambdaLocal": 1.385,
+          "lambdaVisita": 1.031,
+          "rhoDixonColes": -0.04,
+          "factorLocalia": 1.08,
+          "factorLiga": 0.9,
+          "tablaInfo": {
+            "fLocal": 0.9,
+            "fVisita": 0.9
+          },
+          "perfilLigaGoles": 0.9,
+          "factores": {
+            "localia": 1.08,
+            "ligaBase": 1.0,
+            "ligaAjustado": 0.9,
+            "tablaLocal": 0.9,
+            "tablaVisita": 0.9,
+            "h2hLocal": 1.0,
+            "h2hVisita": 1.0,
+            "tendenciaLocal": 0.97,
+            "tendenciaVisita": 1.0,
+            "descansoLocal": 1.01,
+            "descansoVisita": 1.01,
+            "tablaDesviacionLocal": -0.3962,
+            "tablaDesviacionVisita": -0.2387
+          },
+          "tendenciaDireccionLocal": "bajando",
+          "tendenciaDireccionVisita": "neutral",
+          "sinNadaEnJuego": false,
+          "pocaData": false
+        }
+      },
+      "generadoEn": "2026-10-05T17:10:25.580662+00:00"
     },
     "555022": {
       "partido": {
@@ -696,7 +696,7 @@
           "pocaData": false
         }
       },
-      "generadoEn": "2026-10-04T14:01:47.290073+00:00"
+      "generadoEn": "2026-10-05T17:10:25.581304+00:00"
     },
     "555029": {
       "partido": {
@@ -926,7 +926,7 @@
           "pocaData": false
         }
       },
-      "generadoEn": "2026-10-04T14:01:47.290425+00:00"
+      "generadoEn": "2026-10-05T17:10:25.581911+00:00"
     },
     "555021": {
       "partido": {
@@ -1156,7 +1156,7 @@
           "pocaData": false
         }
       },
-      "generadoEn": "2026-10-04T14:01:47.290766+00:00"
+      "generadoEn": "2026-10-05T17:10:25.582486+00:00"
     },
     "555023": {
       "partido": {
@@ -1387,7 +1387,7 @@
           "pocaData": false
         }
       },
-      "generadoEn": "2026-10-04T14:01:47.291098+00:00"
+      "generadoEn": "2026-10-05T17:10:25.583074+00:00"
     },
     "555028": {
       "partido": {
@@ -1618,7 +1618,7 @@
           "pocaData": false
         }
       },
-      "generadoEn": "2026-10-04T14:01:47.291453+00:00"
+      "generadoEn": "2026-10-05T17:10:25.583691+00:00"
     },
     "555020": {
       "partido": {
@@ -1848,237 +1848,7 @@
           "pocaData": false
         }
       },
-      "generadoEn": "2026-10-04T14:01:47.291791+00:00"
-    },
-    "555026": {
-      "partido": {
-        "id": "555026",
-        "homeTeam": {
-          "id": 1769,
-          "name": "SE Palmeiras"
-        },
-        "awayTeam": {
-          "id": 1777,
-          "name": "EC Bahia"
-        },
-        "competition": {
-          "name": "Campeonato Brasileiro Série A",
-          "code": "BSA"
-        },
-        "utcDate": "2026-10-09T00:30:00Z",
-        "status": "TIMED"
-      },
-      "pronosticos": {
-        "seleccionados": [
-          {
-            "categoria": "resultado",
-            "parametros": {
-              "lado": "local"
-            },
-            "seleccion": "Gana SE Palmeiras",
-            "probabilidad": 47,
-            "sinApuesta": true,
-            "confianza": "Media",
-            "contexto": "Encuentro disputado · EC Bahia mejor ubicado",
-            "explicacion": "Ambos equipos muestran paridad estadística, por lo que el resultado se perfila ajustado."
-          },
-          {
-            "categoria": "totalgoles",
-            "parametros": {
-              "linea": 1.5,
-              "direccion": "mas"
-            },
-            "seleccion": "Más de 1.5 goles",
-            "probabilidad": 70,
-            "sinApuesta": false,
-            "confianza": "Media",
-            "contexto": "Encuentro disputado · EC Bahia mejor ubicado",
-            "explicacion": "Los promedios ofensivos de ambos clubes sugieren un desarrollo abierto con opciones claras de gol."
-          },
-          {
-            "categoria": "equipomarca",
-            "parametros": {
-              "lado": "local"
-            },
-            "seleccion": "SE Palmeiras marca",
-            "probabilidad": 74,
-            "sinApuesta": false,
-            "confianza": "Media",
-            "contexto": "SE Palmeiras promedia 1.6 goles de local · Mejor tabla",
-            "explicacion": "Los promedios ofensivos de ambos clubes sugieren un desarrollo abierto con opciones claras de gol."
-          },
-          {
-            "categoria": "marcador",
-            "parametros": {
-              "gl": 1,
-              "gv": 1
-            },
-            "seleccion": "1-1",
-            "probabilidad": 12,
-            "sinApuesta": true,
-            "confianza": "Media",
-            "contexto": "Encuentro disputado · EC Bahia mejor ubicado",
-            "explicacion": "Predicción calculada mediante Poisson y Dixon-Coles en base al historial reciente."
-          }
-        ],
-        "marcadorProbable": "1-1",
-        "probMarcador": 12,
-        "top3Marcadores": [
-          {
-            "marcador": "1-1",
-            "probabilidad": 12
-          },
-          {
-            "marcador": "1-0",
-            "probabilidad": 10
-          },
-          {
-            "marcador": "2-1",
-            "probabilidad": 10
-          }
-        ],
-        "catalogoCompleto": [
-          {
-            "seleccion": "SE Palmeiras o Empate (1X)",
-            "probabilidad": 75
-          },
-          {
-            "seleccion": "SE Palmeiras o EC Bahia (12)",
-            "probabilidad": 74
-          },
-          {
-            "seleccion": "SE Palmeiras marca",
-            "probabilidad": 74
-          },
-          {
-            "seleccion": "Menos de 3.5 goles",
-            "probabilidad": 71
-          },
-          {
-            "seleccion": "Más de 1.5 goles",
-            "probabilidad": 70
-          },
-          {
-            "seleccion": "EC Bahia marca",
-            "probabilidad": 67
-          },
-          {
-            "seleccion": "Ambos anotan: Sí",
-            "probabilidad": 54
-          },
-          {
-            "seleccion": "Más de 2.5 goles",
-            "probabilidad": 52
-          },
-          {
-            "seleccion": "EC Bahia o Empate (X2)",
-            "probabilidad": 51
-          },
-          {
-            "seleccion": "Menos de 2.5 goles",
-            "probabilidad": 48
-          },
-          {
-            "seleccion": "Gana SE Palmeiras",
-            "probabilidad": 47
-          },
-          {
-            "seleccion": "Ambos anotan: No",
-            "probabilidad": 46
-          },
-          {
-            "seleccion": "Más de 3.5 goles",
-            "probabilidad": 29
-          },
-          {
-            "seleccion": "Empate",
-            "probabilidad": 26
-          },
-          {
-            "seleccion": "SE Palmeiras -1 (gana por 2+)",
-            "probabilidad": 26
-          },
-          {
-            "seleccion": "Gana EC Bahia",
-            "probabilidad": 25
-          },
-          {
-            "seleccion": "Menos de 1.5 goles",
-            "probabilidad": 24
-          },
-          {
-            "seleccion": "1-1",
-            "probabilidad": 12
-          },
-          {
-            "seleccion": "SE Palmeiras -2 (gana por 3+)",
-            "probabilidad": 11
-          }
-        ],
-        "combosPartido": [
-          {
-            "titulo": "Combinada segura",
-            "tipos": [
-              "totalgoles",
-              "equipomarca"
-            ],
-            "partes": [
-              "Más de 1.5 goles",
-              "SE Palmeiras marca"
-            ],
-            "probabilidad": 70
-          },
-          {
-            "titulo": "Combinada extra",
-            "tipos": [
-              "resultado",
-              "equipomarca"
-            ],
-            "partes": [
-              "Gana SE Palmeiras",
-              "SE Palmeiras marca"
-            ],
-            "probabilidad": 49
-          }
-        ],
-        "partidosMin": 18,
-        "pocaData": false,
-        "favoritoLocal": true,
-        "nombreFavorito": "SE Palmeiras",
-        "sinNadaEnJuego": false,
-        "parametrosModelo": {
-          "lambdaLocal": 1.63,
-          "lambdaVisita": 1.11,
-          "rhoDixonColes": -0.04,
-          "factorLocalia": 1.08,
-          "factorLiga": 0.9,
-          "tablaInfo": {
-            "fLocal": 1.1,
-            "fVisita": 1.1
-          },
-          "perfilLigaGoles": 0.9,
-          "factores": {
-            "localia": 1.08,
-            "ligaBase": 1.0,
-            "ligaAjustado": 0.9,
-            "tablaLocal": 1.1,
-            "tablaVisita": 1.1,
-            "h2hLocal": 1.0,
-            "h2hVisita": 1.0,
-            "tendenciaLocal": 1.0,
-            "tendenciaVisita": 1.03,
-            "descansoLocal": 1.01,
-            "descansoVisita": 1.01,
-            "tablaDesviacionLocal": 0.4964,
-            "tablaDesviacionVisita": 0.2076
-          },
-          "tendenciaDireccionLocal": "neutral",
-          "tendenciaDireccionVisita": "subiendo",
-          "sinNadaEnJuego": false,
-          "pocaData": false
-        }
-      },
-      "generadoEn": "2026-10-04T14:01:47.292135+00:00"
+      "generadoEn": "2026-10-05T17:10:25.584276+00:00"
     },
     "555024": {
       "partido": {
@@ -2309,7 +2079,237 @@
           "pocaData": false
         }
       },
-      "generadoEn": "2026-10-04T14:01:47.292486+00:00"
+      "generadoEn": "2026-10-05T17:10:25.584869+00:00"
+    },
+    "555026": {
+      "partido": {
+        "id": "555026",
+        "homeTeam": {
+          "id": 1769,
+          "name": "SE Palmeiras"
+        },
+        "awayTeam": {
+          "id": 1777,
+          "name": "EC Bahia"
+        },
+        "competition": {
+          "name": "Campeonato Brasileiro Série A",
+          "code": "BSA"
+        },
+        "utcDate": "2026-10-09T00:30:00Z",
+        "status": "TIMED"
+      },
+      "pronosticos": {
+        "seleccionados": [
+          {
+            "categoria": "resultado",
+            "parametros": {
+              "lado": "local"
+            },
+            "seleccion": "Gana SE Palmeiras",
+            "probabilidad": 47,
+            "sinApuesta": true,
+            "confianza": "Media",
+            "contexto": "Encuentro disputado · EC Bahia mejor ubicado",
+            "explicacion": "Ambos equipos muestran paridad estadística, por lo que el resultado se perfila ajustado."
+          },
+          {
+            "categoria": "totalgoles",
+            "parametros": {
+              "linea": 1.5,
+              "direccion": "mas"
+            },
+            "seleccion": "Más de 1.5 goles",
+            "probabilidad": 70,
+            "sinApuesta": false,
+            "confianza": "Media",
+            "contexto": "Encuentro disputado · EC Bahia mejor ubicado",
+            "explicacion": "Los promedios ofensivos de ambos clubes sugieren un desarrollo abierto con opciones claras de gol."
+          },
+          {
+            "categoria": "equipomarca",
+            "parametros": {
+              "lado": "local"
+            },
+            "seleccion": "SE Palmeiras marca",
+            "probabilidad": 74,
+            "sinApuesta": false,
+            "confianza": "Media",
+            "contexto": "SE Palmeiras promedia 1.6 goles de local · Mejor tabla",
+            "explicacion": "Los promedios ofensivos de ambos clubes sugieren un desarrollo abierto con opciones claras de gol."
+          },
+          {
+            "categoria": "marcador",
+            "parametros": {
+              "gl": 1,
+              "gv": 1
+            },
+            "seleccion": "1-1",
+            "probabilidad": 12,
+            "sinApuesta": true,
+            "confianza": "Media",
+            "contexto": "Encuentro disputado · EC Bahia mejor ubicado",
+            "explicacion": "Predicción calculada mediante Poisson y Dixon-Coles en base al historial reciente."
+          }
+        ],
+        "marcadorProbable": "1-1",
+        "probMarcador": 12,
+        "top3Marcadores": [
+          {
+            "marcador": "1-1",
+            "probabilidad": 12
+          },
+          {
+            "marcador": "1-0",
+            "probabilidad": 10
+          },
+          {
+            "marcador": "2-1",
+            "probabilidad": 10
+          }
+        ],
+        "catalogoCompleto": [
+          {
+            "seleccion": "SE Palmeiras o Empate (1X)",
+            "probabilidad": 75
+          },
+          {
+            "seleccion": "SE Palmeiras o EC Bahia (12)",
+            "probabilidad": 74
+          },
+          {
+            "seleccion": "SE Palmeiras marca",
+            "probabilidad": 74
+          },
+          {
+            "seleccion": "Menos de 3.5 goles",
+            "probabilidad": 71
+          },
+          {
+            "seleccion": "Más de 1.5 goles",
+            "probabilidad": 70
+          },
+          {
+            "seleccion": "EC Bahia marca",
+            "probabilidad": 67
+          },
+          {
+            "seleccion": "Ambos anotan: Sí",
+            "probabilidad": 54
+          },
+          {
+            "seleccion": "Más de 2.5 goles",
+            "probabilidad": 52
+          },
+          {
+            "seleccion": "EC Bahia o Empate (X2)",
+            "probabilidad": 51
+          },
+          {
+            "seleccion": "Menos de 2.5 goles",
+            "probabilidad": 48
+          },
+          {
+            "seleccion": "Gana SE Palmeiras",
+            "probabilidad": 47
+          },
+          {
+            "seleccion": "Ambos anotan: No",
+            "probabilidad": 46
+          },
+          {
+            "seleccion": "Más de 3.5 goles",
+            "probabilidad": 29
+          },
+          {
+            "seleccion": "Empate",
+            "probabilidad": 26
+          },
+          {
+            "seleccion": "SE Palmeiras -1 (gana por 2+)",
+            "probabilidad": 26
+          },
+          {
+            "seleccion": "Gana EC Bahia",
+            "probabilidad": 25
+          },
+          {
+            "seleccion": "Menos de 1.5 goles",
+            "probabilidad": 24
+          },
+          {
+            "seleccion": "1-1",
+            "probabilidad": 12
+          },
+          {
+            "seleccion": "SE Palmeiras -2 (gana por 3+)",
+            "probabilidad": 11
+          }
+        ],
+        "combosPartido": [
+          {
+            "titulo": "Combinada segura",
+            "tipos": [
+              "totalgoles",
+              "equipomarca"
+            ],
+            "partes": [
+              "Más de 1.5 goles",
+              "SE Palmeiras marca"
+            ],
+            "probabilidad": 70
+          },
+          {
+            "titulo": "Combinada extra",
+            "tipos": [
+              "resultado",
+              "equipomarca"
+            ],
+            "partes": [
+              "Gana SE Palmeiras",
+              "SE Palmeiras marca"
+            ],
+            "probabilidad": 49
+          }
+        ],
+        "partidosMin": 18,
+        "pocaData": false,
+        "favoritoLocal": true,
+        "nombreFavorito": "SE Palmeiras",
+        "sinNadaEnJuego": false,
+        "parametrosModelo": {
+          "lambdaLocal": 1.63,
+          "lambdaVisita": 1.11,
+          "rhoDixonColes": -0.04,
+          "factorLocalia": 1.08,
+          "factorLiga": 0.9,
+          "tablaInfo": {
+            "fLocal": 1.1,
+            "fVisita": 1.1
+          },
+          "perfilLigaGoles": 0.9,
+          "factores": {
+            "localia": 1.08,
+            "ligaBase": 1.0,
+            "ligaAjustado": 0.9,
+            "tablaLocal": 1.1,
+            "tablaVisita": 1.1,
+            "h2hLocal": 1.0,
+            "h2hVisita": 1.0,
+            "tendenciaLocal": 1.0,
+            "tendenciaVisita": 1.03,
+            "descansoLocal": 1.01,
+            "descansoVisita": 1.01,
+            "tablaDesviacionLocal": 0.4964,
+            "tablaDesviacionVisita": 0.2076
+          },
+          "tendenciaDireccionLocal": "neutral",
+          "tendenciaDireccionVisita": "subiendo",
+          "sinNadaEnJuego": false,
+          "pocaData": false
+        }
+      },
+      "generadoEn": "2026-10-05T17:10:25.585481+00:00"
     },
     "567327": {
       "partido": {
@@ -2539,7 +2539,7 @@
           "pocaData": false
         }
       },
-      "generadoEn": "2026-10-04T14:01:47.292856+00:00"
+      "generadoEn": "2026-10-05T17:10:25.586128+00:00"
     },
     "558881": {
       "partido": {
@@ -2769,7 +2769,7 @@
           "pocaData": false
         }
       },
-      "generadoEn": "2026-10-04T14:01:47.293199+00:00"
+      "generadoEn": "2026-10-05T17:10:25.586722+00:00"
     },
     "565820": {
       "partido": {
@@ -2999,7 +2999,7 @@
           "pocaData": true
         }
       },
-      "generadoEn": "2026-10-04T14:01:47.293542+00:00"
+      "generadoEn": "2026-10-05T17:10:25.587326+00:00"
     },
     "559669": {
       "partido": {
@@ -3229,7 +3229,7 @@
           "pocaData": false
         }
       },
-      "generadoEn": "2026-10-04T14:01:47.293897+00:00"
+      "generadoEn": "2026-10-05T17:10:25.587940+00:00"
     },
     "561862": {
       "partido": {
@@ -3459,7 +3459,7 @@
           "pocaData": false
         }
       },
-      "generadoEn": "2026-10-04T14:01:47.294239+00:00"
+      "generadoEn": "2026-10-05T17:10:25.588522+00:00"
     },
     "564706": {
       "partido": {
@@ -3689,7 +3689,7 @@
           "pocaData": false
         }
       },
-      "generadoEn": "2026-10-04T14:01:47.294576+00:00"
+      "generadoEn": "2026-10-05T17:10:25.589113+00:00"
     },
     "567326": {
       "partido": {
@@ -3919,40 +3919,499 @@
           "pocaData": false
         }
       },
-      "generadoEn": "2026-10-04T14:01:47.294987+00:00"
+      "generadoEn": "2026-10-05T17:10:25.589849+00:00"
     },
-    "555038": {
+    "561857": {
       "partido": {
-        "id": "555038",
+        "id": "561857",
         "homeTeam": {
-          "id": 1776,
-          "name": "São Paulo FC"
+          "id": 74,
+          "name": "West Bromwich Albion FC"
         },
         "awayTeam": {
-          "id": 1782,
-          "name": "EC Vitória"
+          "id": 332,
+          "name": "Birmingham City FC"
         },
         "competition": {
-          "name": "Campeonato Brasileiro Série A",
-          "code": "BSA"
+          "name": "Championship",
+          "code": "ELC"
         },
-        "utcDate": "2026-10-11T00:00:00Z",
+        "utcDate": "2026-10-10T11:30:00Z",
         "status": "TIMED"
       },
       "pronosticos": {
         "seleccionados": [
           {
-            "categoria": "handicap",
+            "categoria": "doble",
             "parametros": {
-              "lado": "local",
-              "valor": 2
+              "lado": "12"
             },
-            "seleccion": "São Paulo FC -1 (gana por 2+)",
-            "probabilidad": 26,
+            "seleccion": "West Bromwich Albion FC o Birmingham City FC (12)",
+            "probabilidad": 66,
+            "sinApuesta": false,
+            "confianza": "Media",
+            "contexto": "West Bromwich Albion FC promedia 1.4 goles de local · Mejor tabla",
+            "explicacion": "El modelo estadístico apunta a una ventaja clara para West Bromwich Albion FC respaldada por su rendimiento reciente."
+          },
+          {
+            "categoria": "totalgoles",
+            "parametros": {
+              "linea": 2.5,
+              "direccion": "menos"
+            },
+            "seleccion": "Menos de 2.5 goles",
+            "probabilidad": 52,
+            "sinApuesta": false,
+            "confianza": "Media",
+            "contexto": "Encuentro disputado · West Bromwich Albion FC mejor ubicado",
+            "explicacion": "Los promedios ofensivos de ambos clubes sugieren un desarrollo abierto con opciones claras de gol."
+          },
+          {
+            "categoria": "equipomarca",
+            "parametros": {
+              "lado": "local"
+            },
+            "seleccion": "West Bromwich Albion FC marca",
+            "probabilidad": 66,
+            "sinApuesta": false,
+            "confianza": "Media",
+            "contexto": "West Bromwich Albion FC promedia 1.4 goles de local · Mejor tabla",
+            "explicacion": "Los promedios ofensivos de ambos clubes sugieren un desarrollo abierto con opciones claras de gol."
+          },
+          {
+            "categoria": "marcador",
+            "parametros": {
+              "gl": 1,
+              "gv": 1
+            },
+            "seleccion": "1-1",
+            "probabilidad": 13,
             "sinApuesta": true,
             "confianza": "Media",
-            "contexto": "São Paulo FC promedia 1.3 goles de local · Mejor tabla",
-            "explicacion": "La superioridad en la tabla y los duelos previos indican que São Paulo FC podría imponerse con margen."
+            "contexto": "Encuentro disputado · West Bromwich Albion FC mejor ubicado",
+            "explicacion": "Predicción calculada mediante Poisson y Dixon-Coles en base al historial reciente."
+          }
+        ],
+        "marcadorProbable": "1-1",
+        "probMarcador": 14,
+        "top3Marcadores": [
+          {
+            "marcador": "1-1",
+            "probabilidad": 14
+          },
+          {
+            "marcador": "1-0",
+            "probabilidad": 11
+          },
+          {
+            "marcador": "0-1",
+            "probabilidad": 10
+          }
+        ],
+        "catalogoCompleto": [
+          {
+            "seleccion": "Menos de 3.5 goles",
+            "probabilidad": 78
+          },
+          {
+            "seleccion": "Más de 1.5 goles",
+            "probabilidad": 70
+          },
+          {
+            "seleccion": "Birmingham City FC marca",
+            "probabilidad": 68
+          },
+          {
+            "seleccion": "West Bromwich Albion FC o Empate (1X)",
+            "probabilidad": 67
+          },
+          {
+            "seleccion": "West Bromwich Albion FC o Birmingham City FC (12)",
+            "probabilidad": 66
+          },
+          {
+            "seleccion": "West Bromwich Albion FC marca",
+            "probabilidad": 66
+          },
+          {
+            "seleccion": "Birmingham City FC o Empate (X2)",
+            "probabilidad": 61
+          },
+          {
+            "seleccion": "Menos de 2.5 goles",
+            "probabilidad": 52
+          },
+          {
+            "seleccion": "Ambos anotan: Sí",
+            "probabilidad": 50
+          },
+          {
+            "seleccion": "Ambos anotan: No",
+            "probabilidad": 50
+          },
+          {
+            "seleccion": "Más de 2.5 goles",
+            "probabilidad": 43
+          },
+          {
+            "seleccion": "Gana West Bromwich Albion FC",
+            "probabilidad": 39
+          },
+          {
+            "seleccion": "Gana Birmingham City FC",
+            "probabilidad": 33
+          },
+          {
+            "seleccion": "Menos de 1.5 goles",
+            "probabilidad": 30
+          },
+          {
+            "seleccion": "Empate",
+            "probabilidad": 29
+          },
+          {
+            "seleccion": "Más de 3.5 goles",
+            "probabilidad": 22
+          },
+          {
+            "seleccion": "West Bromwich Albion FC -1 (gana por 2+)",
+            "probabilidad": 17
+          },
+          {
+            "seleccion": "1-1",
+            "probabilidad": 13
+          },
+          {
+            "seleccion": "West Bromwich Albion FC -2 (gana por 3+)",
+            "probabilidad": 6
+          }
+        ],
+        "combosPartido": [
+          {
+            "titulo": "Combinada segura",
+            "tipos": [
+              "doble",
+              "equipomarca"
+            ],
+            "partes": [
+              "West Bromwich Albion FC o Birmingham City FC (12)",
+              "West Bromwich Albion FC marca"
+            ],
+            "probabilidad": 53
+          },
+          {
+            "titulo": "Combinada extra",
+            "tipos": [
+              "doble",
+              "totalgoles"
+            ],
+            "partes": [
+              "West Bromwich Albion FC o Birmingham City FC (12)",
+              "Menos de 2.5 goles"
+            ],
+            "probabilidad": 34
+          }
+        ],
+        "partidosMin": 8,
+        "pocaData": false,
+        "favoritoLocal": true,
+        "nombreFavorito": "West Bromwich Albion FC",
+        "sinNadaEnJuego": false,
+        "parametrosModelo": {
+          "lambdaLocal": 1.268,
+          "lambdaVisita": 1.148,
+          "rhoDixonColes": -0.04,
+          "factorLocalia": 1.08,
+          "factorLiga": 0.92,
+          "tablaInfo": {
+            "fLocal": 1.1,
+            "fVisita": 1.035
+          },
+          "perfilLigaGoles": 0.92,
+          "factores": {
+            "localia": 1.08,
+            "ligaBase": 1.0,
+            "ligaAjustado": 0.92,
+            "tablaLocal": 1.1,
+            "tablaVisita": 1.035,
+            "h2hLocal": 1.0,
+            "h2hVisita": 1.0,
+            "tendenciaLocal": 1.0,
+            "tendenciaVisita": 1.0,
+            "descansoLocal": 1.01,
+            "descansoVisita": 1.01,
+            "tablaDesviacionLocal": 0.3169,
+            "tablaDesviacionVisita": 0.0347
+          },
+          "tendenciaDireccionLocal": "neutral",
+          "tendenciaDireccionVisita": "neutral",
+          "sinNadaEnJuego": false,
+          "pocaData": false
+        }
+      },
+      "generadoEn": "2026-10-05T17:10:25.590435+00:00"
+    },
+    "561860": {
+      "partido": {
+        "id": "561860",
+        "homeTeam": {
+          "id": 72,
+          "name": "Swansea City AFC"
+        },
+        "awayTeam": {
+          "id": 68,
+          "name": "Norwich City FC"
+        },
+        "competition": {
+          "name": "Championship",
+          "code": "ELC"
+        },
+        "utcDate": "2026-10-10T11:30:00Z",
+        "status": "TIMED"
+      },
+      "pronosticos": {
+        "seleccionados": [
+          {
+            "categoria": "resultado",
+            "parametros": {
+              "lado": "local"
+            },
+            "seleccion": "Gana Swansea City AFC",
+            "probabilidad": 45,
+            "sinApuesta": true,
+            "confianza": "Media",
+            "contexto": "Encuentro disputado · Swansea City AFC mejor ubicado",
+            "explicacion": "Ambos equipos muestran paridad estadística, por lo que el resultado se perfila ajustado."
+          },
+          {
+            "categoria": "totalgoles",
+            "parametros": {
+              "linea": 1.5,
+              "direccion": "mas"
+            },
+            "seleccion": "Más de 1.5 goles",
+            "probabilidad": 69,
+            "sinApuesta": false,
+            "confianza": "Media",
+            "contexto": "Encuentro disputado · Swansea City AFC mejor ubicado",
+            "explicacion": "Los promedios ofensivos de ambos clubes sugieren un desarrollo abierto con opciones claras de gol."
+          },
+          {
+            "categoria": "equipomarca",
+            "parametros": {
+              "lado": "local"
+            },
+            "seleccion": "Swansea City AFC marca",
+            "probabilidad": 72,
+            "sinApuesta": false,
+            "confianza": "Media",
+            "contexto": "Swansea City AFC promedia 1.3 goles de local · Mejor tabla",
+            "explicacion": "Los promedios ofensivos de ambos clubes sugieren un desarrollo abierto con opciones claras de gol."
+          },
+          {
+            "categoria": "marcador",
+            "parametros": {
+              "gl": 1,
+              "gv": 1
+            },
+            "seleccion": "1-1",
+            "probabilidad": 12,
+            "sinApuesta": true,
+            "confianza": "Media",
+            "contexto": "Encuentro disputado · Swansea City AFC mejor ubicado",
+            "explicacion": "Predicción calculada mediante Poisson y Dixon-Coles en base al historial reciente."
+          }
+        ],
+        "marcadorProbable": "1-1",
+        "probMarcador": 13,
+        "top3Marcadores": [
+          {
+            "marcador": "1-1",
+            "probabilidad": 13
+          },
+          {
+            "marcador": "1-0",
+            "probabilidad": 10
+          },
+          {
+            "marcador": "2-1",
+            "probabilidad": 9
+          }
+        ],
+        "catalogoCompleto": [
+          {
+            "seleccion": "Swansea City AFC o Norwich City FC (12)",
+            "probabilidad": 74
+          },
+          {
+            "seleccion": "Swansea City AFC o Empate (1X)",
+            "probabilidad": 73
+          },
+          {
+            "seleccion": "Menos de 3.5 goles",
+            "probabilidad": 73
+          },
+          {
+            "seleccion": "Swansea City AFC marca",
+            "probabilidad": 72
+          },
+          {
+            "seleccion": "Más de 1.5 goles",
+            "probabilidad": 69
+          },
+          {
+            "seleccion": "Norwich City FC marca",
+            "probabilidad": 67
+          },
+          {
+            "seleccion": "Norwich City FC o Empate (X2)",
+            "probabilidad": 53
+          },
+          {
+            "seleccion": "Ambos anotan: Sí",
+            "probabilidad": 53
+          },
+          {
+            "seleccion": "Menos de 2.5 goles",
+            "probabilidad": 51
+          },
+          {
+            "seleccion": "Más de 2.5 goles",
+            "probabilidad": 49
+          },
+          {
+            "seleccion": "Ambos anotan: No",
+            "probabilidad": 47
+          },
+          {
+            "seleccion": "Gana Swansea City AFC",
+            "probabilidad": 45
+          },
+          {
+            "seleccion": "Gana Norwich City FC",
+            "probabilidad": 27
+          },
+          {
+            "seleccion": "Más de 3.5 goles",
+            "probabilidad": 27
+          },
+          {
+            "seleccion": "Empate",
+            "probabilidad": 26
+          },
+          {
+            "seleccion": "Menos de 1.5 goles",
+            "probabilidad": 25
+          },
+          {
+            "seleccion": "Swansea City AFC -1 (gana por 2+)",
+            "probabilidad": 24
+          },
+          {
+            "seleccion": "1-1",
+            "probabilidad": 12
+          },
+          {
+            "seleccion": "Swansea City AFC -2 (gana por 3+)",
+            "probabilidad": 10
+          }
+        ],
+        "combosPartido": [
+          {
+            "titulo": "Combinada segura",
+            "tipos": [
+              "totalgoles",
+              "equipomarca"
+            ],
+            "partes": [
+              "Más de 1.5 goles",
+              "Swansea City AFC marca"
+            ],
+            "probabilidad": 68
+          },
+          {
+            "titulo": "Combinada extra",
+            "tipos": [
+              "resultado",
+              "equipomarca"
+            ],
+            "partes": [
+              "Gana Swansea City AFC",
+              "Swansea City AFC marca"
+            ],
+            "probabilidad": 47
+          }
+        ],
+        "partidosMin": 8,
+        "pocaData": false,
+        "favoritoLocal": true,
+        "nombreFavorito": "Swansea City AFC",
+        "sinNadaEnJuego": false,
+        "parametrosModelo": {
+          "lambdaLocal": 1.548,
+          "lambdaVisita": 1.102,
+          "rhoDixonColes": -0.04,
+          "factorLocalia": 1.08,
+          "factorLiga": 0.92,
+          "tablaInfo": {
+            "fLocal": 1.1,
+            "fVisita": 0.9
+          },
+          "perfilLigaGoles": 0.92,
+          "factores": {
+            "localia": 1.08,
+            "ligaBase": 1.0,
+            "ligaAjustado": 0.92,
+            "tablaLocal": 1.1,
+            "tablaVisita": 0.9,
+            "h2hLocal": 1.0,
+            "h2hVisita": 1.0,
+            "tendenciaLocal": 0.97,
+            "tendenciaVisita": 1.03,
+            "descansoLocal": 1.01,
+            "descansoVisita": 1.01,
+            "tablaDesviacionLocal": 0.5991,
+            "tablaDesviacionVisita": -0.1534
+          },
+          "tendenciaDireccionLocal": "bajando",
+          "tendenciaDireccionVisita": "subiendo",
+          "sinNadaEnJuego": false,
+          "pocaData": false
+        }
+      },
+      "generadoEn": "2026-10-05T17:10:25.591021+00:00"
+    },
+    "561863": {
+      "partido": {
+        "id": "561863",
+        "homeTeam": {
+          "id": 348,
+          "name": "Charlton Athletic FC"
+        },
+        "awayTeam": {
+          "id": 387,
+          "name": "Bristol City FC"
+        },
+        "competition": {
+          "name": "Championship",
+          "code": "ELC"
+        },
+        "utcDate": "2026-10-10T11:30:00Z",
+        "status": "TIMED"
+      },
+      "pronosticos": {
+        "seleccionados": [
+          {
+            "categoria": "doble",
+            "parametros": {
+              "lado": "12"
+            },
+            "seleccion": "Charlton Athletic FC o Bristol City FC (12)",
+            "probabilidad": 65,
+            "sinApuesta": false,
+            "confianza": "Media",
+            "contexto": "Charlton Athletic FC promedia 1.0 goles de local · Mejor tabla",
+            "explicacion": "El modelo estadístico apunta a una ventaja clara para Charlton Athletic FC respaldada por su rendimiento reciente."
           },
           {
             "categoria": "totalgoles",
@@ -3964,7 +4423,7 @@
             "probabilidad": 53,
             "sinApuesta": false,
             "confianza": "Media",
-            "contexto": "Encuentro disputado · São Paulo FC mejor ubicado",
+            "contexto": "Encuentro disputado · Bristol City FC mejor ubicado",
             "explicacion": "Los promedios ofensivos de ambos clubes sugieren un desarrollo abierto con opciones claras de gol."
           },
           {
@@ -3972,242 +4431,12 @@
             "parametros": {
               "lado": "local"
             },
-            "seleccion": "São Paulo FC marca",
-            "probabilidad": 72,
+            "seleccion": "Charlton Athletic FC marca",
+            "probabilidad": 64,
             "sinApuesta": false,
             "confianza": "Media",
-            "contexto": "São Paulo FC promedia 1.3 goles de local · Mejor tabla",
+            "contexto": "Charlton Athletic FC promedia 1.0 goles de local · Mejor tabla",
             "explicacion": "Los promedios ofensivos de ambos clubes sugieren un desarrollo abierto con opciones claras de gol."
-          },
-          {
-            "categoria": "marcador",
-            "parametros": {
-              "gl": 1,
-              "gv": 0
-            },
-            "seleccion": "1-0",
-            "probabilidad": 13,
-            "sinApuesta": true,
-            "confianza": "Media",
-            "contexto": "Encuentro disputado · São Paulo FC mejor ubicado",
-            "explicacion": "Predicción calculada mediante Poisson y Dixon-Coles en base al historial reciente."
-          }
-        ],
-        "marcadorProbable": "1-0",
-        "probMarcador": 14,
-        "top3Marcadores": [
-          {
-            "marcador": "1-0",
-            "probabilidad": 14
-          },
-          {
-            "marcador": "1-1",
-            "probabilidad": 13
-          },
-          {
-            "marcador": "2-0",
-            "probabilidad": 11
-          }
-        ],
-        "catalogoCompleto": [
-          {
-            "seleccion": "São Paulo FC o Empate (1X)",
-            "probabilidad": 79
-          },
-          {
-            "seleccion": "Menos de 3.5 goles",
-            "probabilidad": 79
-          },
-          {
-            "seleccion": "São Paulo FC o EC Vitória (12)",
-            "probabilidad": 73
-          },
-          {
-            "seleccion": "São Paulo FC marca",
-            "probabilidad": 72
-          },
-          {
-            "seleccion": "Más de 1.5 goles",
-            "probabilidad": 69
-          },
-          {
-            "seleccion": "EC Vitória marca",
-            "probabilidad": 58
-          },
-          {
-            "seleccion": "Ambos anotan: No",
-            "probabilidad": 55
-          },
-          {
-            "seleccion": "Menos de 2.5 goles",
-            "probabilidad": 53
-          },
-          {
-            "seleccion": "Gana São Paulo FC",
-            "probabilidad": 52
-          },
-          {
-            "seleccion": "EC Vitória o Empate (X2)",
-            "probabilidad": 48
-          },
-          {
-            "seleccion": "Ambos anotan: Sí",
-            "probabilidad": 45
-          },
-          {
-            "seleccion": "Más de 2.5 goles",
-            "probabilidad": 42
-          },
-          {
-            "seleccion": "Menos de 1.5 goles",
-            "probabilidad": 31
-          },
-          {
-            "seleccion": "Empate",
-            "probabilidad": 27
-          },
-          {
-            "seleccion": "São Paulo FC -1 (gana por 2+)",
-            "probabilidad": 26
-          },
-          {
-            "seleccion": "Gana EC Vitória",
-            "probabilidad": 21
-          },
-          {
-            "seleccion": "Más de 3.5 goles",
-            "probabilidad": 21
-          },
-          {
-            "seleccion": "1-0",
-            "probabilidad": 13
-          },
-          {
-            "seleccion": "São Paulo FC -2 (gana por 3+)",
-            "probabilidad": 11
-          }
-        ],
-        "combosPartido": [
-          {
-            "titulo": "Combinada segura",
-            "tipos": [
-              "totalgoles",
-              "equipomarca"
-            ],
-            "partes": [
-              "Menos de 2.5 goles",
-              "São Paulo FC marca"
-            ],
-            "probabilidad": 37
-          },
-          {
-            "titulo": "Combinada extra",
-            "tipos": [
-              "handicap",
-              "equipomarca"
-            ],
-            "partes": [
-              "São Paulo FC -1 (gana por 2+)",
-              "São Paulo FC marca"
-            ],
-            "probabilidad": 27
-          }
-        ],
-        "partidosMin": 18,
-        "pocaData": false,
-        "favoritoLocal": true,
-        "nombreFavorito": "São Paulo FC",
-        "sinNadaEnJuego": false,
-        "parametrosModelo": {
-          "lambdaLocal": 1.514,
-          "lambdaVisita": 0.856,
-          "rhoDixonColes": -0.04,
-          "factorLocalia": 1.08,
-          "factorLiga": 0.9,
-          "tablaInfo": {
-            "fLocal": 0.945,
-            "fVisita": 0.9
-          },
-          "perfilLigaGoles": 0.9,
-          "factores": {
-            "localia": 1.08,
-            "ligaBase": 1.0,
-            "ligaAjustado": 0.9,
-            "tablaLocal": 0.945,
-            "tablaVisita": 0.9,
-            "h2hLocal": 1.0,
-            "h2hVisita": 1.0,
-            "tendenciaLocal": 1.03,
-            "tendenciaVisita": 0.97,
-            "descansoLocal": 0.99,
-            "descansoVisita": 1.01,
-            "tablaDesviacionLocal": -0.0549,
-            "tablaDesviacionVisita": -0.1336
-          },
-          "tendenciaDireccionLocal": "subiendo",
-          "tendenciaDireccionVisita": "bajando",
-          "sinNadaEnJuego": false,
-          "pocaData": false
-        }
-      },
-      "generadoEn": "2026-10-04T14:01:47.295322+00:00"
-    },
-    "558876": {
-      "partido": {
-        "id": "558876",
-        "homeTeam": {
-          "id": 676,
-          "name": "FC Utrecht"
-        },
-        "awayTeam": {
-          "id": 672,
-          "name": "Willem II Tilburg"
-        },
-        "competition": {
-          "name": "Eredivisie",
-          "code": "DED"
-        },
-        "utcDate": "2026-10-11T10:15:00Z",
-        "status": "TIMED"
-      },
-      "pronosticos": {
-        "seleccionados": [
-          {
-            "categoria": "resultado",
-            "parametros": {
-              "lado": "local"
-            },
-            "seleccion": "Gana FC Utrecht",
-            "probabilidad": 38,
-            "sinApuesta": true,
-            "confianza": "Media",
-            "contexto": "Encuentro disputado · Willem II Tilburg mejor ubicado",
-            "explicacion": "Ambos equipos muestran paridad estadística, por lo que el resultado se perfila ajustado."
-          },
-          {
-            "categoria": "totalgoles",
-            "parametros": {
-              "linea": 3.5,
-              "direccion": "mas"
-            },
-            "seleccion": "Más de 3.5 goles",
-            "probabilidad": 50,
-            "sinApuesta": true,
-            "confianza": "Media",
-            "contexto": "Encuentro disputado · Willem II Tilburg mejor ubicado",
-            "explicacion": "Los promedios ofensivos de ambos clubes sugieren un desarrollo abierto con opciones claras de gol."
-          },
-          {
-            "categoria": "btts",
-            "parametros": {
-              "si": true
-            },
-            "seleccion": "Ambos anotan: Sí",
-            "probabilidad": 68,
-            "sinApuesta": false,
-            "confianza": "Media",
-            "contexto": "Encuentro disputado · Willem II Tilburg mejor ubicado",
-            "explicacion": "Predicción calculada mediante Poisson y Dixon-Coles en base al historial reciente."
           },
           {
             "categoria": "marcador",
@@ -4216,188 +4445,188 @@
               "gv": 1
             },
             "seleccion": "1-1",
-            "probabilidad": 8,
+            "probabilidad": 13,
             "sinApuesta": true,
             "confianza": "Media",
-            "contexto": "Encuentro disputado · Willem II Tilburg mejor ubicado",
+            "contexto": "Encuentro disputado · Bristol City FC mejor ubicado",
             "explicacion": "Predicción calculada mediante Poisson y Dixon-Coles en base al historial reciente."
           }
         ],
         "marcadorProbable": "1-1",
-        "probMarcador": 8,
+        "probMarcador": 14,
         "top3Marcadores": [
           {
             "marcador": "1-1",
-            "probabilidad": 8
+            "probabilidad": 14
           },
           {
-            "marcador": "2-1",
-            "probabilidad": 8
+            "marcador": "1-0",
+            "probabilidad": 11
           },
           {
-            "marcador": "1-2",
-            "probabilidad": 7
+            "marcador": "0-1",
+            "probabilidad": 10
           }
         ],
         "catalogoCompleto": [
           {
-            "seleccion": "Más de 1.5 goles",
-            "probabilidad": 90
-          },
-          {
-            "seleccion": "FC Utrecht marca",
-            "probabilidad": 86
-          },
-          {
-            "seleccion": "Willem II Tilburg marca",
-            "probabilidad": 86
-          },
-          {
-            "seleccion": "FC Utrecht o Willem II Tilburg (12)",
+            "seleccion": "Menos de 3.5 goles",
             "probabilidad": 78
           },
           {
-            "seleccion": "Más de 2.5 goles",
-            "probabilidad": 75
+            "seleccion": "Más de 1.5 goles",
+            "probabilidad": 69
           },
           {
-            "seleccion": "Ambos anotan: Sí",
-            "probabilidad": 68
+            "seleccion": "Bristol City FC marca",
+            "probabilidad": 69
           },
           {
-            "seleccion": "FC Utrecht o Empate (1X)",
-            "probabilidad": 61
+            "seleccion": "Charlton Athletic FC o Empate (1X)",
+            "probabilidad": 65
           },
           {
-            "seleccion": "Willem II Tilburg o Empate (X2)",
-            "probabilidad": 60
+            "seleccion": "Charlton Athletic FC o Bristol City FC (12)",
+            "probabilidad": 65
           },
           {
-            "seleccion": "Más de 3.5 goles",
-            "probabilidad": 50
+            "seleccion": "Bristol City FC o Empate (X2)",
+            "probabilidad": 64
           },
           {
-            "seleccion": "Menos de 3.5 goles",
-            "probabilidad": 45
-          },
-          {
-            "seleccion": "Gana Willem II Tilburg",
-            "probabilidad": 39
-          },
-          {
-            "seleccion": "Gana FC Utrecht",
-            "probabilidad": 38
-          },
-          {
-            "seleccion": "Ambos anotan: No",
-            "probabilidad": 26
+            "seleccion": "Charlton Athletic FC marca",
+            "probabilidad": 64
           },
           {
             "seleccion": "Menos de 2.5 goles",
-            "probabilidad": 25
+            "probabilidad": 53
           },
           {
-            "seleccion": "Empate",
-            "probabilidad": 22
+            "seleccion": "Ambos anotan: No",
+            "probabilidad": 51
           },
           {
-            "seleccion": "FC Utrecht -1 (gana por 2+)",
-            "probabilidad": 22
+            "seleccion": "Ambos anotan: Sí",
+            "probabilidad": 49
+          },
+          {
+            "seleccion": "Más de 2.5 goles",
+            "probabilidad": 42
+          },
+          {
+            "seleccion": "Gana Charlton Athletic FC",
+            "probabilidad": 36
+          },
+          {
+            "seleccion": "Gana Bristol City FC",
+            "probabilidad": 35
           },
           {
             "seleccion": "Menos de 1.5 goles",
-            "probabilidad": 10
+            "probabilidad": 31
           },
           {
-            "seleccion": "FC Utrecht -2 (gana por 3+)",
-            "probabilidad": 10
+            "seleccion": "Empate",
+            "probabilidad": 29
+          },
+          {
+            "seleccion": "Más de 3.5 goles",
+            "probabilidad": 22
+          },
+          {
+            "seleccion": "Charlton Athletic FC -1 (gana por 2+)",
+            "probabilidad": 16
           },
           {
             "seleccion": "1-1",
-            "probabilidad": 8
+            "probabilidad": 13
+          },
+          {
+            "seleccion": "Charlton Athletic FC -2 (gana por 3+)",
+            "probabilidad": 5
           }
         ],
         "combosPartido": [
           {
             "titulo": "Combinada segura",
             "tipos": [
-              "totalgoles",
-              "btts"
+              "doble",
+              "equipomarca"
             ],
             "partes": [
-              "Más de 3.5 goles",
-              "Ambos anotan: Sí"
+              "Charlton Athletic FC o Bristol City FC (12)",
+              "Charlton Athletic FC marca"
             ],
             "probabilidad": 51
           },
           {
             "titulo": "Combinada extra",
             "tipos": [
-              "resultado",
-              "btts"
+              "doble",
+              "totalgoles"
             ],
             "partes": [
-              "Gana FC Utrecht",
-              "Ambos anotan: Sí"
+              "Charlton Athletic FC o Bristol City FC (12)",
+              "Menos de 2.5 goles"
             ],
-            "probabilidad": 28
+            "probabilidad": 34
           }
         ],
-        "partidosMin": 7,
+        "partidosMin": 8,
         "pocaData": false,
         "favoritoLocal": true,
-        "nombreFavorito": "FC Utrecht",
+        "nombreFavorito": "Charlton Athletic FC",
         "sinNadaEnJuego": false,
         "parametrosModelo": {
-          "lambdaLocal": 1.964,
-          "lambdaVisita": 1.94,
+          "lambdaLocal": 1.206,
+          "lambdaVisita": 1.171,
           "rhoDixonColes": -0.04,
           "factorLocalia": 1.08,
-          "factorLiga": 1.1,
+          "factorLiga": 0.92,
           "tablaInfo": {
-            "fLocal": 0.9,
-            "fVisita": 0.9
+            "fLocal": 1.1,
+            "fVisita": 1.1
           },
-          "perfilLigaGoles": 1.12,
+          "perfilLigaGoles": 0.92,
           "factores": {
             "localia": 1.08,
             "ligaBase": 1.0,
-            "ligaAjustado": 1.1,
-            "tablaLocal": 0.9,
-            "tablaVisita": 0.9,
+            "ligaAjustado": 0.92,
+            "tablaLocal": 1.1,
+            "tablaVisita": 1.1,
             "h2hLocal": 1.0,
             "h2hVisita": 1.0,
-            "tendenciaLocal": 1.03,
+            "tendenciaLocal": 0.97,
             "tendenciaVisita": 1.0,
             "descansoLocal": 1.01,
             "descansoVisita": 1.01,
-            "tablaDesviacionLocal": -0.4767,
-            "tablaDesviacionVisita": -0.7907
+            "tablaDesviacionLocal": 0.1288,
+            "tablaDesviacionVisita": 0.2228
           },
-          "tendenciaDireccionLocal": "subiendo",
+          "tendenciaDireccionLocal": "bajando",
           "tendenciaDireccionVisita": "neutral",
           "sinNadaEnJuego": false,
           "pocaData": false
         }
       },
-      "generadoEn": "2026-10-04T14:01:47.295665+00:00"
+      "generadoEn": "2026-10-05T17:10:25.591587+00:00"
     },
-    "558585": {
+    "560593": {
       "partido": {
-        "id": "558585",
+        "id": "560593",
         "homeTeam": {
-          "id": 7397,
-          "name": "Como 1907"
+          "id": 57,
+          "name": "Arsenal FC"
         },
         "awayTeam": {
-          "id": 100,
-          "name": "AS Roma"
+          "id": 341,
+          "name": "Leeds United FC"
         },
         "competition": {
-          "name": "Serie A",
-          "code": "SA"
+          "name": "Premier League",
+          "code": "PL"
         },
-        "utcDate": "2026-10-11T10:30:00Z",
+        "utcDate": "2026-10-10T11:30:00Z",
         "status": "TIMED"
       },
       "pronosticos": {
@@ -4407,12 +4636,12 @@
             "parametros": {
               "lado": "1X"
             },
-            "seleccion": "Como 1907 o Empate (1X)",
-            "probabilidad": 55,
+            "seleccion": "Arsenal FC o Empate (1X)",
+            "probabilidad": 59,
             "sinApuesta": false,
             "confianza": "Media",
-            "contexto": "Como 1907 promedia 1.6 goles de local · Mejor tabla",
-            "explicacion": "El modelo estadístico apunta a una ventaja clara para Como 1907 respaldada por su rendimiento reciente."
+            "contexto": "Arsenal FC promedia 1.6 goles de local · Mejor tabla",
+            "explicacion": "El modelo estadístico apunta a una ventaja clara para Arsenal FC respaldada por su rendimiento reciente."
           },
           {
             "categoria": "totalgoles",
@@ -4421,10 +4650,10 @@
               "direccion": "mas"
             },
             "seleccion": "Más de 2.5 goles",
-            "probabilidad": 49,
+            "probabilidad": 50,
             "sinApuesta": true,
             "confianza": "Media",
-            "contexto": "Encuentro disputado · AS Roma mejor ubicado",
+            "contexto": "Encuentro disputado · Leeds United FC mejor ubicado",
             "explicacion": "Los promedios ofensivos de ambos clubes sugieren un desarrollo abierto con opciones claras de gol."
           },
           {
@@ -4433,10 +4662,10 @@
               "si": true
             },
             "seleccion": "Ambos anotan: Sí",
-            "probabilidad": 53,
+            "probabilidad": 54,
             "sinApuesta": false,
             "confianza": "Media",
-            "contexto": "Encuentro disputado · AS Roma mejor ubicado",
+            "contexto": "Encuentro disputado · Leeds United FC mejor ubicado",
             "explicacion": "Predicción calculada mediante Poisson y Dixon-Coles en base al historial reciente."
           },
           {
@@ -4449,7 +4678,467 @@
             "probabilidad": 12,
             "sinApuesta": true,
             "confianza": "Media",
-            "contexto": "Encuentro disputado · AS Roma mejor ubicado",
+            "contexto": "Encuentro disputado · Leeds United FC mejor ubicado",
+            "explicacion": "Predicción calculada mediante Poisson y Dixon-Coles en base al historial reciente."
+          }
+        ],
+        "marcadorProbable": "1-1",
+        "probMarcador": 12,
+        "top3Marcadores": [
+          {
+            "marcador": "1-1",
+            "probabilidad": 12
+          },
+          {
+            "marcador": "2-1",
+            "probabilidad": 9
+          },
+          {
+            "marcador": "1-2",
+            "probabilidad": 8
+          }
+        ],
+        "catalogoCompleto": [
+          {
+            "seleccion": "Más de 1.5 goles",
+            "probabilidad": 79
+          },
+          {
+            "seleccion": "Arsenal FC marca",
+            "probabilidad": 77
+          },
+          {
+            "seleccion": "Leeds United FC marca",
+            "probabilidad": 75
+          },
+          {
+            "seleccion": "Arsenal FC o Leeds United FC (12)",
+            "probabilidad": 74
+          },
+          {
+            "seleccion": "Menos de 3.5 goles",
+            "probabilidad": 67
+          },
+          {
+            "seleccion": "Leeds United FC o Empate (X2)",
+            "probabilidad": 61
+          },
+          {
+            "seleccion": "Arsenal FC o Empate (1X)",
+            "probabilidad": 59
+          },
+          {
+            "seleccion": "Ambos anotan: Sí",
+            "probabilidad": 54
+          },
+          {
+            "seleccion": "Más de 2.5 goles",
+            "probabilidad": 50
+          },
+          {
+            "seleccion": "Menos de 2.5 goles",
+            "probabilidad": 45
+          },
+          {
+            "seleccion": "Ambos anotan: No",
+            "probabilidad": 41
+          },
+          {
+            "seleccion": "Gana Arsenal FC",
+            "probabilidad": 39
+          },
+          {
+            "seleccion": "Gana Leeds United FC",
+            "probabilidad": 36
+          },
+          {
+            "seleccion": "Más de 3.5 goles",
+            "probabilidad": 33
+          },
+          {
+            "seleccion": "Empate",
+            "probabilidad": 26
+          },
+          {
+            "seleccion": "Menos de 1.5 goles",
+            "probabilidad": 21
+          },
+          {
+            "seleccion": "Arsenal FC -1 (gana por 2+)",
+            "probabilidad": 19
+          },
+          {
+            "seleccion": "1-1",
+            "probabilidad": 12
+          },
+          {
+            "seleccion": "Arsenal FC -2 (gana por 3+)",
+            "probabilidad": 7
+          }
+        ],
+        "combosPartido": [
+          {
+            "titulo": "Combinada segura",
+            "tipos": [
+              "totalgoles",
+              "btts"
+            ],
+            "partes": [
+              "Más de 2.5 goles",
+              "Ambos anotan: Sí"
+            ],
+            "probabilidad": 47
+          },
+          {
+            "titulo": "Combinada extra",
+            "tipos": [
+              "doble",
+              "btts"
+            ],
+            "partes": [
+              "Arsenal FC o Empate (1X)",
+              "Ambos anotan: Sí"
+            ],
+            "probabilidad": 40
+          }
+        ],
+        "partidosMin": 5,
+        "pocaData": false,
+        "favoritoLocal": true,
+        "nombreFavorito": "Arsenal FC",
+        "sinNadaEnJuego": false,
+        "parametrosModelo": {
+          "lambdaLocal": 1.473,
+          "lambdaVisita": 1.405,
+          "rhoDixonColes": -0.04,
+          "factorLocalia": 1.08,
+          "factorLiga": 1.04,
+          "tablaInfo": {
+            "fLocal": 1.1,
+            "fVisita": 1.1
+          },
+          "perfilLigaGoles": 1.04,
+          "factores": {
+            "localia": 1.08,
+            "ligaBase": 1.0,
+            "ligaAjustado": 1.04,
+            "tablaLocal": 1.1,
+            "tablaVisita": 1.1,
+            "h2hLocal": 1.0,
+            "h2hVisita": 1.0,
+            "tendenciaLocal": 0.97,
+            "tendenciaVisita": 1.0,
+            "descansoLocal": 1.01,
+            "descansoVisita": 1.01,
+            "tablaDesviacionLocal": 0.791,
+            "tablaDesviacionVisita": 0.3433
+          },
+          "tendenciaDireccionLocal": "bajando",
+          "tendenciaDireccionVisita": "neutral",
+          "sinNadaEnJuego": false,
+          "pocaData": false
+        }
+      },
+      "generadoEn": "2026-10-05T17:10:25.592176+00:00"
+    },
+    "564698": {
+      "partido": {
+        "id": "564698",
+        "homeTeam": {
+          "id": 87,
+          "name": "Rayo Vallecano de Madrid"
+        },
+        "awayTeam": {
+          "id": 77,
+          "name": "Athletic Club"
+        },
+        "competition": {
+          "name": "Primera Division",
+          "code": "PD"
+        },
+        "utcDate": "2026-10-10T12:00:00Z",
+        "status": "TIMED"
+      },
+      "pronosticos": {
+        "seleccionados": [
+          {
+            "categoria": "doble",
+            "parametros": {
+              "lado": "1X"
+            },
+            "seleccion": "Rayo Vallecano de Madrid o Empate (1X)",
+            "probabilidad": 58,
+            "sinApuesta": false,
+            "confianza": "Media",
+            "contexto": "Rayo Vallecano de Madrid promedia 1.5 goles de local · Mejor tabla",
+            "explicacion": "El modelo estadístico apunta a una ventaja clara para Rayo Vallecano de Madrid respaldada por su rendimiento reciente."
+          },
+          {
+            "categoria": "totalgoles",
+            "parametros": {
+              "linea": 1.5,
+              "direccion": "mas"
+            },
+            "seleccion": "Más de 1.5 goles",
+            "probabilidad": 70,
+            "sinApuesta": false,
+            "confianza": "Media",
+            "contexto": "Encuentro disputado · Athletic Club mejor ubicado",
+            "explicacion": "Los promedios ofensivos de ambos clubes sugieren un desarrollo abierto con opciones claras de gol."
+          },
+          {
+            "categoria": "btts",
+            "parametros": {
+              "si": true
+            },
+            "seleccion": "Ambos anotan: Sí",
+            "probabilidad": 51,
+            "sinApuesta": false,
+            "confianza": "Media",
+            "contexto": "Encuentro disputado · Athletic Club mejor ubicado",
+            "explicacion": "Predicción calculada mediante Poisson y Dixon-Coles en base al historial reciente."
+          },
+          {
+            "categoria": "marcador",
+            "parametros": {
+              "gl": 1,
+              "gv": 1
+            },
+            "seleccion": "1-1",
+            "probabilidad": 12,
+            "sinApuesta": true,
+            "confianza": "Media",
+            "contexto": "Encuentro disputado · Athletic Club mejor ubicado",
+            "explicacion": "Predicción calculada mediante Poisson y Dixon-Coles en base al historial reciente."
+          }
+        ],
+        "marcadorProbable": "1-1",
+        "probMarcador": 13,
+        "top3Marcadores": [
+          {
+            "marcador": "1-1",
+            "probabilidad": 13
+          },
+          {
+            "marcador": "0-1",
+            "probabilidad": 9
+          },
+          {
+            "marcador": "1-0",
+            "probabilidad": 8
+          }
+        ],
+        "catalogoCompleto": [
+          {
+            "seleccion": "Rayo Vallecano de Madrid marca",
+            "probabilidad": 74
+          },
+          {
+            "seleccion": "Athletic Club marca",
+            "probabilidad": 74
+          },
+          {
+            "seleccion": "Rayo Vallecano de Madrid o Athletic Club (12)",
+            "probabilidad": 73
+          },
+          {
+            "seleccion": "Menos de 3.5 goles",
+            "probabilidad": 71
+          },
+          {
+            "seleccion": "Más de 1.5 goles",
+            "probabilidad": 70
+          },
+          {
+            "seleccion": "Athletic Club o Empate (X2)",
+            "probabilidad": 64
+          },
+          {
+            "seleccion": "Rayo Vallecano de Madrid o Empate (1X)",
+            "probabilidad": 58
+          },
+          {
+            "seleccion": "Más de 2.5 goles",
+            "probabilidad": 51
+          },
+          {
+            "seleccion": "Ambos anotan: Sí",
+            "probabilidad": 51
+          },
+          {
+            "seleccion": "Menos de 2.5 goles",
+            "probabilidad": 49
+          },
+          {
+            "seleccion": "Ambos anotan: No",
+            "probabilidad": 45
+          },
+          {
+            "seleccion": "Gana Athletic Club",
+            "probabilidad": 37
+          },
+          {
+            "seleccion": "Gana Rayo Vallecano de Madrid",
+            "probabilidad": 36
+          },
+          {
+            "seleccion": "Más de 3.5 goles",
+            "probabilidad": 29
+          },
+          {
+            "seleccion": "Empate",
+            "probabilidad": 27
+          },
+          {
+            "seleccion": "Menos de 1.5 goles",
+            "probabilidad": 24
+          },
+          {
+            "seleccion": "Athletic Club -1 (gana por 2+)",
+            "probabilidad": 17
+          },
+          {
+            "seleccion": "1-1",
+            "probabilidad": 12
+          },
+          {
+            "seleccion": "Athletic Club -2 (gana por 3+)",
+            "probabilidad": 6
+          }
+        ],
+        "combosPartido": [
+          {
+            "titulo": "Combinada segura",
+            "tipos": [
+              "totalgoles",
+              "btts"
+            ],
+            "partes": [
+              "Más de 1.5 goles",
+              "Ambos anotan: Sí"
+            ],
+            "probabilidad": 55
+          },
+          {
+            "titulo": "Combinada extra",
+            "tipos": [
+              "doble",
+              "totalgoles"
+            ],
+            "partes": [
+              "Rayo Vallecano de Madrid o Empate (1X)",
+              "Más de 1.5 goles"
+            ],
+            "probabilidad": 47
+          }
+        ],
+        "partidosMin": 6,
+        "pocaData": false,
+        "favoritoLocal": false,
+        "nombreFavorito": "Athletic Club",
+        "sinNadaEnJuego": false,
+        "parametrosModelo": {
+          "lambdaLocal": 1.34,
+          "lambdaVisita": 1.365,
+          "rhoDixonColes": -0.04,
+          "factorLocalia": 1.08,
+          "factorLiga": 0.96,
+          "tablaInfo": {
+            "fLocal": 0.9,
+            "fVisita": 0.971
+          },
+          "perfilLigaGoles": 0.96,
+          "factores": {
+            "localia": 1.08,
+            "ligaBase": 1.0,
+            "ligaAjustado": 0.96,
+            "tablaLocal": 0.9,
+            "tablaVisita": 0.971,
+            "h2hLocal": 1.0,
+            "h2hVisita": 1.0,
+            "tendenciaLocal": 1.0,
+            "tendenciaVisita": 1.03,
+            "descansoLocal": 1.01,
+            "descansoVisita": 1.01,
+            "tablaDesviacionLocal": -0.1674,
+            "tablaDesviacionVisita": -0.0286
+          },
+          "tendenciaDireccionLocal": "neutral",
+          "tendenciaDireccionVisita": "subiendo",
+          "sinNadaEnJuego": false,
+          "pocaData": false
+        }
+      },
+      "generadoEn": "2026-10-05T17:10:25.592764+00:00"
+    },
+    "558588": {
+      "partido": {
+        "id": "558588",
+        "homeTeam": {
+          "id": 107,
+          "name": "Genoa CFC"
+        },
+        "awayTeam": {
+          "id": 99,
+          "name": "ACF Fiorentina"
+        },
+        "competition": {
+          "name": "Serie A",
+          "code": "SA"
+        },
+        "utcDate": "2026-10-10T13:00:00Z",
+        "status": "TIMED"
+      },
+      "pronosticos": {
+        "seleccionados": [
+          {
+            "categoria": "doble",
+            "parametros": {
+              "lado": "1X"
+            },
+            "seleccion": "Genoa CFC o Empate (1X)",
+            "probabilidad": 56,
+            "sinApuesta": false,
+            "confianza": "Media",
+            "contexto": "Genoa CFC promedia 1.2 goles de local · Mejor tabla",
+            "explicacion": "El modelo estadístico apunta a una ventaja clara para Genoa CFC respaldada por su rendimiento reciente."
+          },
+          {
+            "categoria": "totalgoles",
+            "parametros": {
+              "linea": 2.5,
+              "direccion": "mas"
+            },
+            "seleccion": "Más de 2.5 goles",
+            "probabilidad": 48,
+            "sinApuesta": true,
+            "confianza": "Media",
+            "contexto": "Encuentro disputado · ACF Fiorentina mejor ubicado",
+            "explicacion": "Los promedios ofensivos de ambos clubes sugieren un desarrollo abierto con opciones claras de gol."
+          },
+          {
+            "categoria": "btts",
+            "parametros": {
+              "si": true
+            },
+            "seleccion": "Ambos anotan: Sí",
+            "probabilidad": 52,
+            "sinApuesta": false,
+            "confianza": "Media",
+            "contexto": "Encuentro disputado · ACF Fiorentina mejor ubicado",
+            "explicacion": "Predicción calculada mediante Poisson y Dixon-Coles en base al historial reciente."
+          },
+          {
+            "categoria": "marcador",
+            "parametros": {
+              "gl": 1,
+              "gv": 1
+            },
+            "seleccion": "1-1",
+            "probabilidad": 12,
+            "sinApuesta": true,
+            "confianza": "Media",
+            "contexto": "Encuentro disputado · ACF Fiorentina mejor ubicado",
             "explicacion": "Predicción calculada mediante Poisson y Dixon-Coles en base al historial reciente."
           }
         ],
@@ -4466,45 +5155,45 @@
           },
           {
             "marcador": "0-1",
-            "probabilidad": 8
+            "probabilidad": 9
           }
         ],
         "catalogoCompleto": [
           {
             "seleccion": "Más de 1.5 goles",
-            "probabilidad": 78
-          },
-          {
-            "seleccion": "AS Roma marca",
             "probabilidad": 77
           },
           {
-            "seleccion": "Como 1907 o AS Roma (12)",
+            "seleccion": "ACF Fiorentina marca",
+            "probabilidad": 77
+          },
+          {
+            "seleccion": "Genoa CFC o ACF Fiorentina (12)",
             "probabilidad": 74
           },
           {
-            "seleccion": "Como 1907 marca",
+            "seleccion": "Genoa CFC marca",
             "probabilidad": 74
           },
           {
             "seleccion": "Menos de 3.5 goles",
-            "probabilidad": 69
+            "probabilidad": 70
           },
           {
-            "seleccion": "AS Roma o Empate (X2)",
-            "probabilidad": 67
+            "seleccion": "ACF Fiorentina o Empate (X2)",
+            "probabilidad": 66
           },
           {
-            "seleccion": "Como 1907 o Empate (1X)",
-            "probabilidad": 55
+            "seleccion": "Genoa CFC o Empate (1X)",
+            "probabilidad": 56
           },
           {
             "seleccion": "Ambos anotan: Sí",
-            "probabilidad": 53
+            "probabilidad": 52
           },
           {
             "seleccion": "Más de 2.5 goles",
-            "probabilidad": 49
+            "probabilidad": 48
           },
           {
             "seleccion": "Menos de 2.5 goles",
@@ -4515,16 +5204,16 @@
             "probabilidad": 43
           },
           {
-            "seleccion": "Gana AS Roma",
-            "probabilidad": 41
+            "seleccion": "Gana ACF Fiorentina",
+            "probabilidad": 40
           },
           {
-            "seleccion": "Gana Como 1907",
-            "probabilidad": 33
+            "seleccion": "Gana Genoa CFC",
+            "probabilidad": 34
           },
           {
             "seleccion": "Más de 3.5 goles",
-            "probabilidad": 31
+            "probabilidad": 30
           },
           {
             "seleccion": "Empate",
@@ -4532,19 +5221,19 @@
           },
           {
             "seleccion": "Menos de 1.5 goles",
-            "probabilidad": 22
+            "probabilidad": 23
           },
           {
-            "seleccion": "AS Roma -1 (gana por 2+)",
-            "probabilidad": 20
+            "seleccion": "ACF Fiorentina -1 (gana por 2+)",
+            "probabilidad": 19
           },
           {
             "seleccion": "1-1",
             "probabilidad": 12
           },
           {
-            "seleccion": "AS Roma -2 (gana por 3+)",
-            "probabilidad": 8
+            "seleccion": "ACF Fiorentina -2 (gana por 3+)",
+            "probabilidad": 7
           }
         ],
         "combosPartido": [
@@ -4558,7 +5247,7 @@
               "Más de 2.5 goles",
               "Ambos anotan: Sí"
             ],
-            "probabilidad": 45
+            "probabilidad": 44
           },
           {
             "titulo": "Combinada extra",
@@ -4567,95 +5256,94 @@
               "btts"
             ],
             "partes": [
-              "Como 1907 o Empate (1X)",
+              "Genoa CFC o Empate (1X)",
               "Ambos anotan: Sí"
             ],
             "probabilidad": 37
           }
         ],
-        "partidosMin": 6,
+        "partidosMin": 5,
         "pocaData": false,
         "favoritoLocal": false,
-        "nombreFavorito": "AS Roma",
+        "nombreFavorito": "ACF Fiorentina",
         "sinNadaEnJuego": false,
         "parametrosModelo": {
-          "lambdaLocal": 1.331,
-          "lambdaVisita": 1.487,
+          "lambdaLocal": 1.332,
+          "lambdaVisita": 1.45,
           "rhoDixonColes": -0.04,
           "factorLocalia": 1.08,
           "factorLiga": 0.94,
           "tablaInfo": {
-            "fLocal": 1.1,
-            "fVisita": 1.1
+            "fLocal": 0.9,
+            "fVisita": 0.9
           },
           "perfilLigaGoles": 0.94,
           "factores": {
             "localia": 1.08,
             "ligaBase": 1.0,
             "ligaAjustado": 0.94,
-            "tablaLocal": 1.1,
-            "tablaVisita": 1.1,
+            "tablaLocal": 0.9,
+            "tablaVisita": 0.9,
             "h2hLocal": 1.0,
             "h2hVisita": 1.0,
-            "tendenciaLocal": 1.0,
-            "tendenciaVisita": 0.97,
+            "tendenciaLocal": 1.03,
+            "tendenciaVisita": 1.03,
             "descansoLocal": 1.01,
             "descansoVisita": 1.01,
-            "tablaDesviacionLocal": 0.4184,
-            "tablaDesviacionVisita": 0.844
+            "tablaDesviacionLocal": -0.8582,
+            "tablaDesviacionVisita": -0.4326
           },
-          "tendenciaDireccionLocal": "neutral",
-          "tendenciaDireccionVisita": "bajando",
+          "tendenciaDireccionLocal": "subiendo",
+          "tendenciaDireccionVisita": "subiendo",
           "sinNadaEnJuego": false,
           "pocaData": false
         }
       },
-      "generadoEn": "2026-10-04T14:01:47.296017+00:00"
+      "generadoEn": "2026-10-05T17:10:25.593363+00:00"
     },
-    "561859": {
+    "565819": {
       "partido": {
-        "id": "561859",
+        "id": "565819",
         "homeTeam": {
-          "id": 340,
-          "name": "Southampton FC"
+          "id": 16,
+          "name": "FC Augsburg"
         },
         "awayTeam": {
-          "id": 325,
-          "name": "Portsmouth FC"
+          "id": 5,
+          "name": "FC Bayern München"
         },
         "competition": {
-          "name": "Championship",
-          "code": "ELC"
+          "name": "Bundesliga",
+          "code": "BL1"
         },
-        "utcDate": "2026-10-11T11:00:00Z",
+        "utcDate": "2026-10-10T13:30:00Z",
         "status": "TIMED"
       },
       "pronosticos": {
         "seleccionados": [
           {
-            "categoria": "handicap",
+            "categoria": "resultado",
             "parametros": {
-              "lado": "local",
-              "valor": 2
+              "lado": "local"
             },
-            "seleccion": "Southampton FC -1 (gana por 2+)",
-            "probabilidad": 28,
+            "seleccion": "Gana FC Augsburg",
+            "probabilidad": 40,
             "sinApuesta": true,
             "confianza": "Media",
-            "contexto": "Southampton FC promedia 2.3 goles de local · Mejor tabla",
-            "explicacion": "La superioridad en la tabla y los duelos previos indican que Southampton FC podría imponerse con margen."
+            "contexto": "Encuentro disputado · FC Bayern München mejor ubicado",
+            "explicacion": "Ambos equipos muestran paridad estadística, por lo que el resultado se perfila ajustado."
           },
           {
             "categoria": "totalgoles",
             "parametros": {
-              "linea": 2.5,
+              "linea": 3.5,
               "direccion": "mas"
             },
-            "seleccion": "Más de 2.5 goles",
-            "probabilidad": 53,
-            "sinApuesta": false,
+            "seleccion": "Más de 3.5 goles",
+            "probabilidad": 43,
+            "sinApuesta": true,
             "confianza": "Media",
-            "contexto": "Encuentro disputado · Southampton FC mejor ubicado",
+            "contexto": "Encuentro disputado · FC Bayern München mejor ubicado",
             "explicacion": "Los promedios ofensivos de ambos clubes sugieren un desarrollo abierto con opciones claras de gol."
           },
           {
@@ -4664,10 +5352,10 @@
               "si": true
             },
             "seleccion": "Ambos anotan: Sí",
-            "probabilidad": 53,
+            "probabilidad": 62,
             "sinApuesta": false,
             "confianza": "Media",
-            "contexto": "Encuentro disputado · Southampton FC mejor ubicado",
+            "contexto": "Encuentro disputado · FC Bayern München mejor ubicado",
             "explicacion": "Predicción calculada mediante Poisson y Dixon-Coles en base al historial reciente."
           },
           {
@@ -4677,10 +5365,240 @@
               "gv": 1
             },
             "seleccion": "1-1",
-            "probabilidad": 11,
+            "probabilidad": 10,
             "sinApuesta": true,
             "confianza": "Media",
-            "contexto": "Encuentro disputado · Southampton FC mejor ubicado",
+            "contexto": "Encuentro disputado · FC Bayern München mejor ubicado",
+            "explicacion": "Predicción calculada mediante Poisson y Dixon-Coles en base al historial reciente."
+          }
+        ],
+        "marcadorProbable": "1-1",
+        "probMarcador": 10,
+        "top3Marcadores": [
+          {
+            "marcador": "1-1",
+            "probabilidad": 10
+          },
+          {
+            "marcador": "2-1",
+            "probabilidad": 9
+          },
+          {
+            "marcador": "1-2",
+            "probabilidad": 8
+          }
+        ],
+        "catalogoCompleto": [
+          {
+            "seleccion": "Más de 1.5 goles",
+            "probabilidad": 86
+          },
+          {
+            "seleccion": "FC Augsburg marca",
+            "probabilidad": 83
+          },
+          {
+            "seleccion": "FC Bayern München marca",
+            "probabilidad": 80
+          },
+          {
+            "seleccion": "FC Augsburg o FC Bayern München (12)",
+            "probabilidad": 77
+          },
+          {
+            "seleccion": "Más de 2.5 goles",
+            "probabilidad": 66
+          },
+          {
+            "seleccion": "FC Augsburg o Empate (1X)",
+            "probabilidad": 65
+          },
+          {
+            "seleccion": "Ambos anotan: Sí",
+            "probabilidad": 62
+          },
+          {
+            "seleccion": "FC Bayern München o Empate (X2)",
+            "probabilidad": 59
+          },
+          {
+            "seleccion": "Menos de 3.5 goles",
+            "probabilidad": 56
+          },
+          {
+            "seleccion": "Más de 3.5 goles",
+            "probabilidad": 43
+          },
+          {
+            "seleccion": "Gana FC Augsburg",
+            "probabilidad": 40
+          },
+          {
+            "seleccion": "Gana FC Bayern München",
+            "probabilidad": 35
+          },
+          {
+            "seleccion": "Menos de 2.5 goles",
+            "probabilidad": 34
+          },
+          {
+            "seleccion": "Ambos anotan: No",
+            "probabilidad": 33
+          },
+          {
+            "seleccion": "Empate",
+            "probabilidad": 23
+          },
+          {
+            "seleccion": "FC Augsburg -1 (gana por 2+)",
+            "probabilidad": 22
+          },
+          {
+            "seleccion": "Menos de 1.5 goles",
+            "probabilidad": 14
+          },
+          {
+            "seleccion": "FC Augsburg -2 (gana por 3+)",
+            "probabilidad": 10
+          },
+          {
+            "seleccion": "1-1",
+            "probabilidad": 10
+          }
+        ],
+        "combosPartido": [
+          {
+            "titulo": "Combinada segura",
+            "tipos": [
+              "totalgoles",
+              "btts"
+            ],
+            "partes": [
+              "Más de 3.5 goles",
+              "Ambos anotan: Sí"
+            ],
+            "probabilidad": 41
+          },
+          {
+            "titulo": "Combinada extra",
+            "tipos": [
+              "resultado",
+              "btts"
+            ],
+            "partes": [
+              "Gana FC Augsburg",
+              "Ambos anotan: Sí"
+            ],
+            "probabilidad": 26
+          }
+        ],
+        "partidosMin": 4,
+        "pocaData": true,
+        "favoritoLocal": true,
+        "nombreFavorito": "FC Augsburg",
+        "sinNadaEnJuego": false,
+        "parametrosModelo": {
+          "lambdaLocal": 1.782,
+          "lambdaVisita": 1.63,
+          "rhoDixonColes": -0.04,
+          "factorLocalia": 1.08,
+          "factorLiga": 1.07,
+          "tablaInfo": {
+            "fLocal": 1.1,
+            "fVisita": 1.1
+          },
+          "perfilLigaGoles": 1.07,
+          "factores": {
+            "localia": 1.08,
+            "ligaBase": 1.0,
+            "ligaAjustado": 1.07,
+            "tablaLocal": 1.1,
+            "tablaVisita": 1.1,
+            "h2hLocal": 1.0,
+            "h2hVisita": 1.0,
+            "tendenciaLocal": 0.97,
+            "tendenciaVisita": 1.03,
+            "descansoLocal": 1.01,
+            "descansoVisita": 1.01,
+            "tablaDesviacionLocal": 0.2475,
+            "tablaDesviacionVisita": 0.7822
+          },
+          "tendenciaDireccionLocal": "bajando",
+          "tendenciaDireccionVisita": "subiendo",
+          "sinNadaEnJuego": false,
+          "pocaData": true
+        }
+      },
+      "generadoEn": "2026-10-05T17:10:25.593948+00:00"
+    },
+    "565813": {
+      "partido": {
+        "id": "565813",
+        "homeTeam": {
+          "id": 29,
+          "name": "SC Paderborn 07"
+        },
+        "awayTeam": {
+          "id": 10,
+          "name": "VfB Stuttgart"
+        },
+        "competition": {
+          "name": "Bundesliga",
+          "code": "BL1"
+        },
+        "utcDate": "2026-10-10T13:30:00Z",
+        "status": "TIMED"
+      },
+      "pronosticos": {
+        "seleccionados": [
+          {
+            "categoria": "resultado",
+            "parametros": {
+              "lado": "local"
+            },
+            "seleccion": "Gana SC Paderborn 07",
+            "probabilidad": 42,
+            "sinApuesta": true,
+            "confianza": "Media",
+            "contexto": "Encuentro disputado · VfB Stuttgart mejor ubicado",
+            "explicacion": "Ambos equipos muestran paridad estadística, por lo que el resultado se perfila ajustado."
+          },
+          {
+            "categoria": "totalgoles",
+            "parametros": {
+              "linea": 2.5,
+              "direccion": "mas"
+            },
+            "seleccion": "Más de 2.5 goles",
+            "probabilidad": 56,
+            "sinApuesta": false,
+            "confianza": "Media",
+            "contexto": "Encuentro disputado · VfB Stuttgart mejor ubicado",
+            "explicacion": "Los promedios ofensivos de ambos clubes sugieren un desarrollo abierto con opciones claras de gol."
+          },
+          {
+            "categoria": "btts",
+            "parametros": {
+              "si": true
+            },
+            "seleccion": "Ambos anotan: Sí",
+            "probabilidad": 58,
+            "sinApuesta": false,
+            "confianza": "Media",
+            "contexto": "Encuentro disputado · VfB Stuttgart mejor ubicado",
+            "explicacion": "Predicción calculada mediante Poisson y Dixon-Coles en base al historial reciente."
+          },
+          {
+            "categoria": "marcador",
+            "parametros": {
+              "gl": 1,
+              "gv": 1
+            },
+            "seleccion": "1-1",
+            "probabilidad": 10,
+            "sinApuesta": true,
+            "confianza": "Media",
+            "contexto": "Encuentro disputado · VfB Stuttgart mejor ubicado",
             "explicacion": "Predicción calculada mediante Poisson y Dixon-Coles en base al historial reciente."
           }
         ],
@@ -4693,89 +5611,89 @@
           },
           {
             "marcador": "2-1",
-            "probabilidad": 10
+            "probabilidad": 9
           },
           {
-            "marcador": "1-0",
-            "probabilidad": 9
+            "marcador": "1-2",
+            "probabilidad": 8
           }
         ],
         "catalogoCompleto": [
           {
-            "seleccion": "Southampton FC marca",
-            "probabilidad": 84
-          },
-          {
             "seleccion": "Más de 1.5 goles",
-            "probabilidad": 80
+            "probabilidad": 83
           },
           {
-            "seleccion": "Southampton FC o Empate (1X)",
+            "seleccion": "SC Paderborn 07 marca",
+            "probabilidad": 82
+          },
+          {
+            "seleccion": "SC Paderborn 07 o VfB Stuttgart (12)",
             "probabilidad": 76
           },
           {
-            "seleccion": "Southampton FC o Portsmouth FC (12)",
+            "seleccion": "VfB Stuttgart marca",
             "probabilidad": 76
           },
           {
-            "seleccion": "Portsmouth FC marca",
-            "probabilidad": 69
+            "seleccion": "SC Paderborn 07 o Empate (1X)",
+            "probabilidad": 68
           },
           {
             "seleccion": "Menos de 3.5 goles",
-            "probabilidad": 65
-          },
-          {
-            "seleccion": "Más de 2.5 goles",
-            "probabilidad": 53
+            "probabilidad": 61
           },
           {
             "seleccion": "Ambos anotan: Sí",
-            "probabilidad": 53
+            "probabilidad": 58
           },
           {
-            "seleccion": "Gana Southampton FC",
-            "probabilidad": 52
+            "seleccion": "VfB Stuttgart o Empate (X2)",
+            "probabilidad": 56
           },
           {
-            "seleccion": "Portsmouth FC o Empate (X2)",
-            "probabilidad": 48
+            "seleccion": "Más de 2.5 goles",
+            "probabilidad": 56
           },
           {
-            "seleccion": "Menos de 2.5 goles",
-            "probabilidad": 43
-          },
-          {
-            "seleccion": "Ambos anotan: No",
+            "seleccion": "Gana SC Paderborn 07",
             "probabilidad": 42
           },
           {
-            "seleccion": "Más de 3.5 goles",
-            "probabilidad": 35
+            "seleccion": "Menos de 2.5 goles",
+            "probabilidad": 39
           },
           {
-            "seleccion": "Southampton FC -1 (gana por 2+)",
-            "probabilidad": 28
+            "seleccion": "Más de 3.5 goles",
+            "probabilidad": 39
+          },
+          {
+            "seleccion": "Ambos anotan: No",
+            "probabilidad": 37
+          },
+          {
+            "seleccion": "Gana VfB Stuttgart",
+            "probabilidad": 32
           },
           {
             "seleccion": "Empate",
             "probabilidad": 24
           },
           {
-            "seleccion": "Gana Portsmouth FC",
+            "seleccion": "SC Paderborn 07 -1 (gana por 2+)",
             "probabilidad": 24
           },
           {
             "seleccion": "Menos de 1.5 goles",
-            "probabilidad": 20
+            "probabilidad": 17
           },
           {
-            "seleccion": "Southampton FC -2 (gana por 3+)",
-            "probabilidad": 13
+            "seleccion": "SC Paderborn 07 -2 (gana por 3+)",
+            "probabilidad": 10
           },
           {
             "seleccion": "1-1",
-            "probabilidad": 11
+            "probabilidad": 10
           }
         ],
         "combosPartido": [
@@ -4789,306 +5707,76 @@
               "Más de 2.5 goles",
               "Ambos anotan: Sí"
             ],
-            "probabilidad": 47
-          },
-          {
-            "titulo": "Combinada extra",
-            "tipos": [
-              "handicap",
-              "totalgoles"
-            ],
-            "partes": [
-              "Southampton FC -1 (gana por 2+)",
-              "Más de 2.5 goles"
-            ],
-            "probabilidad": 21
-          }
-        ],
-        "partidosMin": 7,
-        "pocaData": false,
-        "favoritoLocal": true,
-        "nombreFavorito": "Southampton FC",
-        "sinNadaEnJuego": false,
-        "parametrosModelo": {
-          "lambdaLocal": 1.815,
-          "lambdaVisita": 1.168,
-          "rhoDixonColes": -0.04,
-          "factorLocalia": 1.08,
-          "factorLiga": 0.92,
-          "tablaInfo": {
-            "fLocal": 0.941,
-            "fVisita": 0.9
-          },
-          "perfilLigaGoles": 0.92,
-          "factores": {
-            "localia": 1.08,
-            "ligaBase": 1.0,
-            "ligaAjustado": 0.92,
-            "tablaLocal": 0.941,
-            "tablaVisita": 0.9,
-            "h2hLocal": 1.0,
-            "h2hVisita": 1.0,
-            "tendenciaLocal": 1.0,
-            "tendenciaVisita": 1.03,
-            "descansoLocal": 1.01,
-            "descansoVisita": 1.01,
-            "tablaDesviacionLocal": -0.0594,
-            "tablaDesviacionVisita": -0.14
-          },
-          "tendenciaDireccionLocal": "neutral",
-          "tendenciaDireccionVisita": "subiendo",
-          "sinNadaEnJuego": false,
-          "pocaData": false
-        }
-      },
-      "generadoEn": "2026-10-04T14:01:47.296363+00:00"
-    },
-    "564703": {
-      "partido": {
-        "id": "564703",
-        "homeTeam": {
-          "id": 285,
-          "name": "Elche CF"
-        },
-        "awayTeam": {
-          "id": 558,
-          "name": "RC Celta de Vigo"
-        },
-        "competition": {
-          "name": "Primera Division",
-          "code": "PD"
-        },
-        "utcDate": "2026-10-11T12:00:00Z",
-        "status": "TIMED"
-      },
-      "pronosticos": {
-        "seleccionados": [
-          {
-            "categoria": "doble",
-            "parametros": {
-              "lado": "1X"
-            },
-            "seleccion": "Elche CF o Empate (1X)",
-            "probabilidad": 52,
-            "sinApuesta": false,
-            "confianza": "Media",
-            "contexto": "Elche CF promedia 1.4 goles de local · Mejor tabla",
-            "explicacion": "El modelo estadístico apunta a una ventaja clara para Elche CF respaldada por su rendimiento reciente."
-          },
-          {
-            "categoria": "totalgoles",
-            "parametros": {
-              "linea": 1.5,
-              "direccion": "mas"
-            },
-            "seleccion": "Más de 1.5 goles",
-            "probabilidad": 69,
-            "sinApuesta": false,
-            "confianza": "Media",
-            "contexto": "Encuentro disputado · RC Celta de Vigo mejor ubicado",
-            "explicacion": "Los promedios ofensivos de ambos clubes sugieren un desarrollo abierto con opciones claras de gol."
-          },
-          {
-            "categoria": "equipomarca",
-            "parametros": {
-              "lado": "local"
-            },
-            "seleccion": "Elche CF marca",
-            "probabilidad": 64,
-            "sinApuesta": false,
-            "confianza": "Media",
-            "contexto": "Elche CF promedia 1.4 goles de local · Mejor tabla",
-            "explicacion": "Los promedios ofensivos de ambos clubes sugieren un desarrollo abierto con opciones claras de gol."
-          },
-          {
-            "categoria": "marcador",
-            "parametros": {
-              "gl": 1,
-              "gv": 1
-            },
-            "seleccion": "1-1",
-            "probabilidad": 12,
-            "sinApuesta": true,
-            "confianza": "Media",
-            "contexto": "Encuentro disputado · RC Celta de Vigo mejor ubicado",
-            "explicacion": "Predicción calculada mediante Poisson y Dixon-Coles en base al historial reciente."
-          }
-        ],
-        "marcadorProbable": "1-1",
-        "probMarcador": 13,
-        "top3Marcadores": [
-          {
-            "marcador": "1-1",
-            "probabilidad": 13
-          },
-          {
-            "marcador": "0-1",
-            "probabilidad": 10
-          },
-          {
-            "marcador": "1-2",
-            "probabilidad": 9
-          }
-        ],
-        "catalogoCompleto": [
-          {
-            "seleccion": "RC Celta de Vigo marca",
-            "probabilidad": 77
-          },
-          {
-            "seleccion": "Elche CF o RC Celta de Vigo (12)",
-            "probabilidad": 73
-          },
-          {
-            "seleccion": "Menos de 3.5 goles",
-            "probabilidad": 72
-          },
-          {
-            "seleccion": "RC Celta de Vigo o Empate (X2)",
-            "probabilidad": 70
-          },
-          {
-            "seleccion": "Más de 1.5 goles",
-            "probabilidad": 69
-          },
-          {
-            "seleccion": "Elche CF marca",
-            "probabilidad": 64
-          },
-          {
-            "seleccion": "Ambos anotan: Sí",
-            "probabilidad": 54
-          },
-          {
-            "seleccion": "Elche CF o Empate (1X)",
             "probabilidad": 52
           },
           {
-            "seleccion": "Menos de 2.5 goles",
-            "probabilidad": 50
-          },
-          {
-            "seleccion": "Más de 2.5 goles",
-            "probabilidad": 50
-          },
-          {
-            "seleccion": "Ambos anotan: No",
-            "probabilidad": 46
-          },
-          {
-            "seleccion": "Gana RC Celta de Vigo",
-            "probabilidad": 43
-          },
-          {
-            "seleccion": "Gana Elche CF",
-            "probabilidad": 30
-          },
-          {
-            "seleccion": "Más de 3.5 goles",
-            "probabilidad": 28
-          },
-          {
-            "seleccion": "Empate",
-            "probabilidad": 27
-          },
-          {
-            "seleccion": "Menos de 1.5 goles",
-            "probabilidad": 25
-          },
-          {
-            "seleccion": "RC Celta de Vigo -1 (gana por 2+)",
-            "probabilidad": 22
-          },
-          {
-            "seleccion": "1-1",
-            "probabilidad": 12
-          },
-          {
-            "seleccion": "RC Celta de Vigo -2 (gana por 3+)",
-            "probabilidad": 8
-          }
-        ],
-        "combosPartido": [
-          {
-            "titulo": "Combinada segura",
-            "tipos": [
-              "totalgoles",
-              "equipomarca"
-            ],
-            "partes": [
-              "Más de 1.5 goles",
-              "Elche CF marca"
-            ],
-            "probabilidad": 62
-          },
-          {
             "titulo": "Combinada extra",
             "tipos": [
-              "doble",
-              "equipomarca"
+              "resultado",
+              "totalgoles"
             ],
             "partes": [
-              "Elche CF o Empate (1X)",
-              "Elche CF marca"
+              "Gana SC Paderborn 07",
+              "Más de 2.5 goles"
             ],
-            "probabilidad": 49
+            "probabilidad": 31
           }
         ],
-        "partidosMin": 7,
-        "pocaData": false,
-        "favoritoLocal": false,
-        "nombreFavorito": "RC Celta de Vigo",
+        "partidosMin": 4,
+        "pocaData": true,
+        "favoritoLocal": true,
+        "nombreFavorito": "SC Paderborn 07",
         "sinNadaEnJuego": false,
         "parametrosModelo": {
-          "lambdaLocal": 1.195,
-          "lambdaVisita": 1.488,
+          "lambdaLocal": 1.732,
+          "lambdaVisita": 1.439,
           "rhoDixonColes": -0.04,
           "factorLocalia": 1.08,
-          "factorLiga": 0.96,
+          "factorLiga": 1.07,
           "tablaInfo": {
             "fLocal": 0.9,
             "fVisita": 0.9
           },
-          "perfilLigaGoles": 0.96,
+          "perfilLigaGoles": 1.07,
           "factores": {
             "localia": 1.08,
             "ligaBase": 1.0,
-            "ligaAjustado": 0.96,
+            "ligaAjustado": 1.07,
             "tablaLocal": 0.9,
             "tablaVisita": 0.9,
             "h2hLocal": 1.0,
             "h2hVisita": 1.0,
             "tendenciaLocal": 1.03,
-            "tendenciaVisita": 1.03,
+            "tendenciaVisita": 0.97,
             "descansoLocal": 1.01,
             "descansoVisita": 1.01,
-            "tablaDesviacionLocal": -0.4796,
-            "tablaDesviacionVisita": -0.2715
+            "tablaDesviacionLocal": -0.2871,
+            "tablaDesviacionVisita": -0.4653
           },
           "tendenciaDireccionLocal": "subiendo",
-          "tendenciaDireccionVisita": "subiendo",
+          "tendenciaDireccionVisita": "bajando",
           "sinNadaEnJuego": false,
-          "pocaData": false
+          "pocaData": true
         }
       },
-      "generadoEn": "2026-10-04T14:01:47.296710+00:00"
+      "generadoEn": "2026-10-05T17:10:25.594523+00:00"
     },
-    "558874": {
+    "565817": {
       "partido": {
-        "id": "558874",
+        "id": "565817",
         "homeTeam": {
-          "id": 684,
-          "name": "PEC Zwolle"
+          "id": 28,
+          "name": "1. FC Union Berlin"
         },
         "awayTeam": {
-          "id": 1909,
-          "name": "SC Cambuur-Leeuwarden"
+          "id": 719,
+          "name": "SV 07 Elversberg"
         },
         "competition": {
-          "name": "Eredivisie",
-          "code": "DED"
+          "name": "Bundesliga",
+          "code": "BL1"
         },
-        "utcDate": "2026-10-11T12:30:00Z",
+        "utcDate": "2026-10-10T13:30:00Z",
         "status": "TIMED"
       },
       "pronosticos": {
@@ -5098,12 +5786,12 @@
             "parametros": {
               "lado": "1X"
             },
-            "seleccion": "PEC Zwolle o Empate (1X)",
-            "probabilidad": 46,
+            "seleccion": "1. FC Union Berlin o Empate (1X)",
+            "probabilidad": 49,
             "sinApuesta": true,
             "confianza": "Media",
-            "contexto": "PEC Zwolle promedia 1.2 goles de local · Mejor tabla",
-            "explicacion": "El modelo estadístico apunta a una ventaja clara para PEC Zwolle respaldada por su rendimiento reciente."
+            "contexto": "1. FC Union Berlin promedia 1.6 goles de local · Mejor tabla",
+            "explicacion": "El modelo estadístico apunta a una ventaja clara para 1. FC Union Berlin respaldada por su rendimiento reciente."
           },
           {
             "categoria": "totalgoles",
@@ -5112,10 +5800,10 @@
               "direccion": "mas"
             },
             "seleccion": "Más de 3.5 goles",
-            "probabilidad": 46,
+            "probabilidad": 44,
             "sinApuesta": true,
             "confianza": "Media",
-            "contexto": "Encuentro disputado · SC Cambuur-Leeuwarden mejor ubicado",
+            "contexto": "Encuentro disputado · SV 07 Elversberg mejor ubicado",
             "explicacion": "Los promedios ofensivos de ambos clubes sugieren un desarrollo abierto con opciones claras de gol."
           },
           {
@@ -5124,10 +5812,10 @@
               "si": true
             },
             "seleccion": "Ambos anotan: Sí",
-            "probabilidad": 63,
+            "probabilidad": 62,
             "sinApuesta": false,
             "confianza": "Media",
-            "contexto": "Encuentro disputado · SC Cambuur-Leeuwarden mejor ubicado",
+            "contexto": "Encuentro disputado · SV 07 Elversberg mejor ubicado",
             "explicacion": "Predicción calculada mediante Poisson y Dixon-Coles en base al historial reciente."
           },
           {
@@ -5140,97 +5828,97 @@
             "probabilidad": 9,
             "sinApuesta": true,
             "confianza": "Media",
-            "contexto": "Encuentro disputado · SC Cambuur-Leeuwarden mejor ubicado",
+            "contexto": "Encuentro disputado · SV 07 Elversberg mejor ubicado",
             "explicacion": "Predicción calculada mediante Poisson y Dixon-Coles en base al historial reciente."
           }
         ],
         "marcadorProbable": "1-1",
-        "probMarcador": 9,
+        "probMarcador": 10,
         "top3Marcadores": [
           {
             "marcador": "1-1",
-            "probabilidad": 9
+            "probabilidad": 10
           },
           {
             "marcador": "1-2",
             "probabilidad": 9
           },
           {
-            "marcador": "2-2",
+            "marcador": "2-1",
             "probabilidad": 7
           }
         ],
         "catalogoCompleto": [
           {
             "seleccion": "Más de 1.5 goles",
-            "probabilidad": 88
+            "probabilidad": 86
           },
           {
-            "seleccion": "SC Cambuur-Leeuwarden marca",
-            "probabilidad": 87
+            "seleccion": "SV 07 Elversberg marca",
+            "probabilidad": 86
           },
           {
-            "seleccion": "PEC Zwolle o SC Cambuur-Leeuwarden (12)",
+            "seleccion": "1. FC Union Berlin marca",
             "probabilidad": 78
           },
           {
-            "seleccion": "PEC Zwolle marca",
-            "probabilidad": 78
+            "seleccion": "1. FC Union Berlin o SV 07 Elversberg (12)",
+            "probabilidad": 77
           },
           {
-            "seleccion": "SC Cambuur-Leeuwarden o Empate (X2)",
-            "probabilidad": 72
+            "seleccion": "SV 07 Elversberg o Empate (X2)",
+            "probabilidad": 70
           },
           {
             "seleccion": "Más de 2.5 goles",
-            "probabilidad": 69
+            "probabilidad": 67
           },
           {
             "seleccion": "Ambos anotan: Sí",
-            "probabilidad": 63
+            "probabilidad": 62
           },
           {
             "seleccion": "Menos de 3.5 goles",
-            "probabilidad": 52
+            "probabilidad": 55
           },
           {
-            "seleccion": "Gana SC Cambuur-Leeuwarden",
-            "probabilidad": 50
+            "seleccion": "1. FC Union Berlin o Empate (1X)",
+            "probabilidad": 49
           },
           {
-            "seleccion": "PEC Zwolle o Empate (1X)",
-            "probabilidad": 46
+            "seleccion": "Gana SV 07 Elversberg",
+            "probabilidad": 47
           },
           {
             "seleccion": "Más de 3.5 goles",
-            "probabilidad": 46
+            "probabilidad": 44
           },
           {
             "seleccion": "Menos de 2.5 goles",
-            "probabilidad": 31
+            "probabilidad": 33
           },
           {
             "seleccion": "Ambos anotan: No",
-            "probabilidad": 31
+            "probabilidad": 33
           },
           {
-            "seleccion": "SC Cambuur-Leeuwarden -1 (gana por 2+)",
-            "probabilidad": 29
+            "seleccion": "Gana 1. FC Union Berlin",
+            "probabilidad": 30
           },
           {
-            "seleccion": "Gana PEC Zwolle",
-            "probabilidad": 28
+            "seleccion": "SV 07 Elversberg -1 (gana por 2+)",
+            "probabilidad": 27
           },
           {
             "seleccion": "Empate",
-            "probabilidad": 22
-          },
-          {
-            "seleccion": "SC Cambuur-Leeuwarden -2 (gana por 3+)",
-            "probabilidad": 14
+            "probabilidad": 23
           },
           {
             "seleccion": "Menos de 1.5 goles",
+            "probabilidad": 14
+          },
+          {
+            "seleccion": "SV 07 Elversberg -2 (gana por 3+)",
             "probabilidad": 12
           },
           {
@@ -5249,7 +5937,7 @@
               "Más de 3.5 goles",
               "Ambos anotan: Sí"
             ],
-            "probabilidad": 44
+            "probabilidad": 42
           },
           {
             "titulo": "Combinada extra",
@@ -5258,1447 +5946,297 @@
               "btts"
             ],
             "partes": [
-              "PEC Zwolle o Empate (1X)",
+              "1. FC Union Berlin o Empate (1X)",
               "Ambos anotan: Sí"
             ],
-            "probabilidad": 38
-          }
-        ],
-        "partidosMin": 7,
-        "pocaData": false,
-        "favoritoLocal": false,
-        "nombreFavorito": "SC Cambuur-Leeuwarden",
-        "sinNadaEnJuego": false,
-        "parametrosModelo": {
-          "lambdaLocal": 1.527,
-          "lambdaVisita": 2.052,
-          "rhoDixonColes": -0.04,
-          "factorLocalia": 1.08,
-          "factorLiga": 1.1,
-          "tablaInfo": {
-            "fLocal": 0.9,
-            "fVisita": 0.9
-          },
-          "perfilLigaGoles": 1.12,
-          "factores": {
-            "localia": 1.08,
-            "ligaBase": 1.0,
-            "ligaAjustado": 1.1,
-            "tablaLocal": 0.9,
-            "tablaVisita": 0.9,
-            "h2hLocal": 1.0,
-            "h2hVisita": 1.0,
-            "tendenciaLocal": 1.0,
-            "tendenciaVisita": 1.03,
-            "descansoLocal": 1.01,
-            "descansoVisita": 1.01,
-            "tablaDesviacionLocal": -0.5814,
-            "tablaDesviacionVisita": -0.4767
-          },
-          "tendenciaDireccionLocal": "neutral",
-          "tendenciaDireccionVisita": "subiendo",
-          "sinNadaEnJuego": false,
-          "pocaData": false
-        }
-      },
-      "generadoEn": "2026-10-04T14:01:47.297056+00:00"
-    },
-    "558875": {
-      "partido": {
-        "id": "558875",
-        "homeTeam": {
-          "id": 1912,
-          "name": "Telstar 1963"
-        },
-        "awayTeam": {
-          "id": 680,
-          "name": "ADO Den Haag"
-        },
-        "competition": {
-          "name": "Eredivisie",
-          "code": "DED"
-        },
-        "utcDate": "2026-10-11T12:30:00Z",
-        "status": "TIMED"
-      },
-      "pronosticos": {
-        "seleccionados": [
-          {
-            "categoria": "doble",
-            "parametros": {
-              "lado": "1X"
-            },
-            "seleccion": "Telstar 1963 o Empate (1X)",
-            "probabilidad": 55,
-            "sinApuesta": false,
-            "confianza": "Media",
-            "contexto": "Telstar 1963 promedia 1.4 goles de local · Mejor tabla",
-            "explicacion": "El modelo estadístico apunta a una ventaja clara para Telstar 1963 respaldada por su rendimiento reciente."
-          },
-          {
-            "categoria": "totalgoles",
-            "parametros": {
-              "linea": 2.5,
-              "direccion": "mas"
-            },
-            "seleccion": "Más de 2.5 goles",
-            "probabilidad": 57,
-            "sinApuesta": false,
-            "confianza": "Media",
-            "contexto": "Encuentro disputado · ADO Den Haag mejor ubicado",
-            "explicacion": "Los promedios ofensivos de ambos clubes sugieren un desarrollo abierto con opciones claras de gol."
-          },
-          {
-            "categoria": "btts",
-            "parametros": {
-              "si": true
-            },
-            "seleccion": "Ambos anotan: Sí",
-            "probabilidad": 59,
-            "sinApuesta": false,
-            "confianza": "Media",
-            "contexto": "Encuentro disputado · ADO Den Haag mejor ubicado",
-            "explicacion": "Predicción calculada mediante Poisson y Dixon-Coles en base al historial reciente."
-          },
-          {
-            "categoria": "marcador",
-            "parametros": {
-              "gl": 1,
-              "gv": 1
-            },
-            "seleccion": "1-1",
-            "probabilidad": 10,
-            "sinApuesta": true,
-            "confianza": "Media",
-            "contexto": "Encuentro disputado · ADO Den Haag mejor ubicado",
-            "explicacion": "Predicción calculada mediante Poisson y Dixon-Coles en base al historial reciente."
-          }
-        ],
-        "marcadorProbable": "1-1",
-        "probMarcador": 11,
-        "top3Marcadores": [
-          {
-            "marcador": "1-1",
-            "probabilidad": 11
-          },
-          {
-            "marcador": "1-2",
-            "probabilidad": 9
-          },
-          {
-            "marcador": "2-1",
-            "probabilidad": 8
-          }
-        ],
-        "catalogoCompleto": [
-          {
-            "seleccion": "Más de 1.5 goles",
-            "probabilidad": 84
-          },
-          {
-            "seleccion": "ADO Den Haag marca",
-            "probabilidad": 81
-          },
-          {
-            "seleccion": "Telstar 1963 marca",
-            "probabilidad": 79
-          },
-          {
-            "seleccion": "Telstar 1963 o ADO Den Haag (12)",
-            "probabilidad": 76
-          },
-          {
-            "seleccion": "ADO Den Haag o Empate (X2)",
-            "probabilidad": 64
-          },
-          {
-            "seleccion": "Menos de 3.5 goles",
-            "probabilidad": 60
-          },
-          {
-            "seleccion": "Ambos anotan: Sí",
-            "probabilidad": 59
-          },
-          {
-            "seleccion": "Más de 2.5 goles",
-            "probabilidad": 57
-          },
-          {
-            "seleccion": "Telstar 1963 o Empate (1X)",
-            "probabilidad": 55
-          },
-          {
-            "seleccion": "Gana ADO Den Haag",
-            "probabilidad": 40
-          },
-          {
-            "seleccion": "Más de 3.5 goles",
-            "probabilidad": 40
-          },
-          {
-            "seleccion": "Menos de 2.5 goles",
-            "probabilidad": 38
-          },
-          {
-            "seleccion": "Gana Telstar 1963",
-            "probabilidad": 36
-          },
-          {
-            "seleccion": "Ambos anotan: No",
-            "probabilidad": 36
-          },
-          {
-            "seleccion": "Empate",
-            "probabilidad": 24
-          },
-          {
-            "seleccion": "ADO Den Haag -1 (gana por 2+)",
-            "probabilidad": 21
-          },
-          {
-            "seleccion": "Menos de 1.5 goles",
-            "probabilidad": 16
-          },
-          {
-            "seleccion": "1-1",
-            "probabilidad": 10
-          },
-          {
-            "seleccion": "ADO Den Haag -2 (gana por 3+)",
-            "probabilidad": 9
-          }
-        ],
-        "combosPartido": [
-          {
-            "titulo": "Combinada segura",
-            "tipos": [
-              "totalgoles",
-              "btts"
-            ],
-            "partes": [
-              "Más de 2.5 goles",
-              "Ambos anotan: Sí"
-            ],
-            "probabilidad": 54
-          },
-          {
-            "titulo": "Combinada extra",
-            "tipos": [
-              "doble",
-              "btts"
-            ],
-            "partes": [
-              "Telstar 1963 o Empate (1X)",
-              "Ambos anotan: Sí"
-            ],
-            "probabilidad": 41
-          }
-        ],
-        "partidosMin": 7,
-        "pocaData": false,
-        "favoritoLocal": false,
-        "nombreFavorito": "ADO Den Haag",
-        "sinNadaEnJuego": false,
-        "parametrosModelo": {
-          "lambdaLocal": 1.556,
-          "lambdaVisita": 1.661,
-          "rhoDixonColes": -0.04,
-          "factorLocalia": 1.08,
-          "factorLiga": 1.1,
-          "tablaInfo": {
-            "fLocal": 0.9,
-            "fVisita": 0.9
-          },
-          "perfilLigaGoles": 1.12,
-          "factores": {
-            "localia": 1.08,
-            "ligaBase": 1.0,
-            "ligaAjustado": 1.1,
-            "tablaLocal": 0.9,
-            "tablaVisita": 0.9,
-            "h2hLocal": 1.0,
-            "h2hVisita": 1.0,
-            "tendenciaLocal": 0.97,
-            "tendenciaVisita": 1.0,
-            "descansoLocal": 1.01,
-            "descansoVisita": 1.01,
-            "tablaDesviacionLocal": -0.4767,
-            "tablaDesviacionVisita": -0.7907
-          },
-          "tendenciaDireccionLocal": "bajando",
-          "tendenciaDireccionVisita": "neutral",
-          "sinNadaEnJuego": false,
-          "pocaData": false
-        }
-      },
-      "generadoEn": "2026-10-04T14:01:47.297396+00:00"
-    },
-    "559670": {
-      "partido": {
-        "id": "559670",
-        "homeTeam": {
-          "id": 522,
-          "name": "OGC Nice"
-        },
-        "awayTeam": {
-          "id": 576,
-          "name": "RC Strasbourg Alsace"
-        },
-        "competition": {
-          "name": "Ligue 1",
-          "code": "FL1"
-        },
-        "utcDate": "2026-10-11T13:00:00Z",
-        "status": "TIMED"
-      },
-      "pronosticos": {
-        "seleccionados": [
-          {
-            "categoria": "doble",
-            "parametros": {
-              "lado": "1X"
-            },
-            "seleccion": "OGC Nice o Empate (1X)",
-            "probabilidad": 59,
-            "sinApuesta": false,
-            "confianza": "Media",
-            "contexto": "OGC Nice promedia 1.4 goles de local · Mejor tabla",
-            "explicacion": "El modelo estadístico apunta a una ventaja clara para OGC Nice respaldada por su rendimiento reciente."
-          },
-          {
-            "categoria": "totalgoles",
-            "parametros": {
-              "linea": 2.5,
-              "direccion": "mas"
-            },
-            "seleccion": "Más de 2.5 goles",
-            "probabilidad": 53,
-            "sinApuesta": false,
-            "confianza": "Media",
-            "contexto": "Encuentro disputado · RC Strasbourg Alsace mejor ubicado",
-            "explicacion": "Los promedios ofensivos de ambos clubes sugieren un desarrollo abierto con opciones claras de gol."
-          },
-          {
-            "categoria": "btts",
-            "parametros": {
-              "si": true
-            },
-            "seleccion": "Ambos anotan: Sí",
-            "probabilidad": 56,
-            "sinApuesta": false,
-            "confianza": "Media",
-            "contexto": "Encuentro disputado · RC Strasbourg Alsace mejor ubicado",
-            "explicacion": "Predicción calculada mediante Poisson y Dixon-Coles en base al historial reciente."
-          },
-          {
-            "categoria": "marcador",
-            "parametros": {
-              "gl": 1,
-              "gv": 1
-            },
-            "seleccion": "1-1",
-            "probabilidad": 11,
-            "sinApuesta": true,
-            "confianza": "Media",
-            "contexto": "Encuentro disputado · RC Strasbourg Alsace mejor ubicado",
-            "explicacion": "Predicción calculada mediante Poisson y Dixon-Coles en base al historial reciente."
-          }
-        ],
-        "marcadorProbable": "1-1",
-        "probMarcador": 12,
-        "top3Marcadores": [
-          {
-            "marcador": "1-1",
-            "probabilidad": 12
-          },
-          {
-            "marcador": "2-1",
-            "probabilidad": 9
-          },
-          {
-            "marcador": "1-2",
-            "probabilidad": 8
-          }
-        ],
-        "catalogoCompleto": [
-          {
-            "seleccion": "Más de 1.5 goles",
-            "probabilidad": 80
-          },
-          {
-            "seleccion": "OGC Nice marca",
-            "probabilidad": 78
-          },
-          {
-            "seleccion": "RC Strasbourg Alsace marca",
-            "probabilidad": 77
-          },
-          {
-            "seleccion": "OGC Nice o RC Strasbourg Alsace (12)",
-            "probabilidad": 75
-          },
-          {
-            "seleccion": "Menos de 3.5 goles",
-            "probabilidad": 65
-          },
-          {
-            "seleccion": "RC Strasbourg Alsace o Empate (X2)",
-            "probabilidad": 61
-          },
-          {
-            "seleccion": "OGC Nice o Empate (1X)",
-            "probabilidad": 59
-          },
-          {
-            "seleccion": "Ambos anotan: Sí",
-            "probabilidad": 56
-          },
-          {
-            "seleccion": "Más de 2.5 goles",
-            "probabilidad": 53
-          },
-          {
-            "seleccion": "Menos de 2.5 goles",
-            "probabilidad": 43
-          },
-          {
-            "seleccion": "Ambos anotan: No",
-            "probabilidad": 40
-          },
-          {
-            "seleccion": "Gana OGC Nice",
             "probabilidad": 39
-          },
-          {
-            "seleccion": "Gana RC Strasbourg Alsace",
-            "probabilidad": 36
-          },
-          {
-            "seleccion": "Más de 3.5 goles",
-            "probabilidad": 35
-          },
-          {
-            "seleccion": "Empate",
-            "probabilidad": 25
-          },
-          {
-            "seleccion": "Menos de 1.5 goles",
-            "probabilidad": 20
-          },
-          {
-            "seleccion": "OGC Nice -1 (gana por 2+)",
-            "probabilidad": 19
-          },
-          {
-            "seleccion": "1-1",
-            "probabilidad": 11
-          },
-          {
-            "seleccion": "OGC Nice -2 (gana por 3+)",
-            "probabilidad": 8
           }
         ],
-        "combosPartido": [
-          {
-            "titulo": "Combinada segura",
-            "tipos": [
-              "totalgoles",
-              "btts"
-            ],
-            "partes": [
-              "Más de 2.5 goles",
-              "Ambos anotan: Sí"
-            ],
-            "probabilidad": 49
-          },
-          {
-            "titulo": "Combinada extra",
-            "tipos": [
-              "doble",
-              "btts"
-            ],
-            "partes": [
-              "OGC Nice o Empate (1X)",
-              "Ambos anotan: Sí"
-            ],
-            "probabilidad": 41
-          }
-        ],
-        "partidosMin": 5,
-        "pocaData": false,
-        "favoritoLocal": true,
-        "nombreFavorito": "OGC Nice",
-        "sinNadaEnJuego": false,
-        "parametrosModelo": {
-          "lambdaLocal": 1.526,
-          "lambdaVisita": 1.455,
-          "rhoDixonColes": -0.04,
-          "factorLocalia": 1.08,
-          "factorLiga": 0.98,
-          "tablaInfo": {
-            "fLocal": 0.9,
-            "fVisita": 1.033
-          },
-          "perfilLigaGoles": 0.98,
-          "factores": {
-            "localia": 1.08,
-            "ligaBase": 1.0,
-            "ligaAjustado": 0.98,
-            "tablaLocal": 0.9,
-            "tablaVisita": 1.033,
-            "h2hLocal": 1.0,
-            "h2hVisita": 1.0,
-            "tendenciaLocal": 1.03,
-            "tendenciaVisita": 0.97,
-            "descansoLocal": 1.01,
-            "descansoVisita": 1.01,
-            "tablaDesviacionLocal": -0.2623,
-            "tablaDesviacionVisita": 0.0328
-          },
-          "tendenciaDireccionLocal": "subiendo",
-          "tendenciaDireccionVisita": "bajando",
-          "sinNadaEnJuego": false,
-          "pocaData": false
-        }
-      },
-      "generadoEn": "2026-10-04T14:01:47.297736+00:00"
-    },
-    "558583": {
-      "partido": {
-        "id": "558583",
-        "homeTeam": {
-          "id": 110,
-          "name": "SS Lazio"
-        },
-        "awayTeam": {
-          "id": 5911,
-          "name": "AC Monza"
-        },
-        "competition": {
-          "name": "Serie A",
-          "code": "SA"
-        },
-        "utcDate": "2026-10-11T13:00:00Z",
-        "status": "TIMED"
-      },
-      "pronosticos": {
-        "seleccionados": [
-          {
-            "categoria": "resultado",
-            "parametros": {
-              "lado": "local"
-            },
-            "seleccion": "Gana SS Lazio",
-            "probabilidad": 47,
-            "sinApuesta": true,
-            "confianza": "Media",
-            "contexto": "Encuentro disputado · SS Lazio mejor ubicado",
-            "explicacion": "Ambos equipos muestran paridad estadística, por lo que el resultado se perfila ajustado."
-          },
-          {
-            "categoria": "totalgoles",
-            "parametros": {
-              "linea": 2.5,
-              "direccion": "mas"
-            },
-            "seleccion": "Más de 2.5 goles",
-            "probabilidad": 50,
-            "sinApuesta": true,
-            "confianza": "Media",
-            "contexto": "Encuentro disputado · SS Lazio mejor ubicado",
-            "explicacion": "Los promedios ofensivos de ambos clubes sugieren un desarrollo abierto con opciones claras de gol."
-          },
-          {
-            "categoria": "btts",
-            "parametros": {
-              "si": true
-            },
-            "seleccion": "Ambos anotan: Sí",
-            "probabilidad": 52,
-            "sinApuesta": false,
-            "confianza": "Media",
-            "contexto": "Encuentro disputado · SS Lazio mejor ubicado",
-            "explicacion": "Predicción calculada mediante Poisson y Dixon-Coles en base al historial reciente."
-          },
-          {
-            "categoria": "marcador",
-            "parametros": {
-              "gl": 1,
-              "gv": 1
-            },
-            "seleccion": "1-1",
-            "probabilidad": 11,
-            "sinApuesta": true,
-            "confianza": "Media",
-            "contexto": "Encuentro disputado · SS Lazio mejor ubicado",
-            "explicacion": "Predicción calculada mediante Poisson y Dixon-Coles en base al historial reciente."
-          }
-        ],
-        "marcadorProbable": "1-1",
-        "probMarcador": 12,
-        "top3Marcadores": [
-          {
-            "marcador": "1-1",
-            "probabilidad": 12
-          },
-          {
-            "marcador": "2-1",
-            "probabilidad": 10
-          },
-          {
-            "marcador": "1-0",
-            "probabilidad": 9
-          }
-        ],
-        "catalogoCompleto": [
-          {
-            "seleccion": "SS Lazio marca",
-            "probabilidad": 81
-          },
-          {
-            "seleccion": "Más de 1.5 goles",
-            "probabilidad": 78
-          },
-          {
-            "seleccion": "SS Lazio o AC Monza (12)",
-            "probabilidad": 75
-          },
-          {
-            "seleccion": "SS Lazio o Empate (1X)",
-            "probabilidad": 74
-          },
-          {
-            "seleccion": "AC Monza marca",
-            "probabilidad": 69
-          },
-          {
-            "seleccion": "Menos de 3.5 goles",
-            "probabilidad": 68
-          },
-          {
-            "seleccion": "Ambos anotan: Sí",
-            "probabilidad": 52
-          },
-          {
-            "seleccion": "AC Monza o Empate (X2)",
-            "probabilidad": 51
-          },
-          {
-            "seleccion": "Más de 2.5 goles",
-            "probabilidad": 50
-          },
-          {
-            "seleccion": "Gana SS Lazio",
-            "probabilidad": 47
-          },
-          {
-            "seleccion": "Menos de 2.5 goles",
-            "probabilidad": 45
-          },
-          {
-            "seleccion": "Ambos anotan: No",
-            "probabilidad": 43
-          },
-          {
-            "seleccion": "Más de 3.5 goles",
-            "probabilidad": 32
-          },
-          {
-            "seleccion": "Gana AC Monza",
-            "probabilidad": 26
-          },
-          {
-            "seleccion": "SS Lazio -1 (gana por 2+)",
-            "probabilidad": 26
-          },
-          {
-            "seleccion": "Empate",
-            "probabilidad": 25
-          },
-          {
-            "seleccion": "Menos de 1.5 goles",
-            "probabilidad": 22
-          },
-          {
-            "seleccion": "SS Lazio -2 (gana por 3+)",
-            "probabilidad": 11
-          },
-          {
-            "seleccion": "1-1",
-            "probabilidad": 11
-          }
-        ],
-        "combosPartido": [
-          {
-            "titulo": "Combinada segura",
-            "tipos": [
-              "totalgoles",
-              "btts"
-            ],
-            "partes": [
-              "Más de 2.5 goles",
-              "Ambos anotan: Sí"
-            ],
-            "probabilidad": 45
-          },
-          {
-            "titulo": "Combinada extra",
-            "tipos": [
-              "resultado",
-              "totalgoles"
-            ],
-            "partes": [
-              "Gana SS Lazio",
-              "Más de 2.5 goles"
-            ],
-            "probabilidad": 31
-          }
-        ],
-        "partidosMin": 5,
-        "pocaData": false,
-        "favoritoLocal": true,
-        "nombreFavorito": "SS Lazio",
-        "sinNadaEnJuego": false,
-        "parametrosModelo": {
-          "lambdaLocal": 1.684,
-          "lambdaVisita": 1.182,
-          "rhoDixonColes": -0.04,
-          "factorLocalia": 1.08,
-          "factorLiga": 0.94,
-          "tablaInfo": {
-            "fLocal": 1.1,
-            "fVisita": 0.9
-          },
-          "perfilLigaGoles": 0.94,
-          "factores": {
-            "localia": 1.08,
-            "ligaBase": 1.0,
-            "ligaAjustado": 0.94,
-            "tablaLocal": 1.1,
-            "tablaVisita": 0.9,
-            "h2hLocal": 1.0,
-            "h2hVisita": 1.0,
-            "tendenciaLocal": 0.97,
-            "tendenciaVisita": 1.03,
-            "descansoLocal": 1.01,
-            "descansoVisita": 1.01,
-            "tablaDesviacionLocal": 0.844,
-            "tablaDesviacionVisita": -0.4326
-          },
-          "tendenciaDireccionLocal": "bajando",
-          "tendenciaDireccionVisita": "subiendo",
-          "sinNadaEnJuego": false,
-          "pocaData": false
-        }
-      },
-      "generadoEn": "2026-10-04T14:01:47.298081+00:00"
-    },
-    "560596": {
-      "partido": {
-        "id": "560596",
-        "homeTeam": {
-          "id": 354,
-          "name": "Crystal Palace FC"
-        },
-        "awayTeam": {
-          "id": 351,
-          "name": "Nottingham Forest FC"
-        },
-        "competition": {
-          "name": "Premier League",
-          "code": "PL"
-        },
-        "utcDate": "2026-10-11T13:00:00Z",
-        "status": "TIMED"
-      },
-      "pronosticos": {
-        "seleccionados": [
-          {
-            "categoria": "doble",
-            "parametros": {
-              "lado": "1X"
-            },
-            "seleccion": "Crystal Palace FC o Empate (1X)",
-            "probabilidad": 52,
-            "sinApuesta": false,
-            "confianza": "Media",
-            "contexto": "Crystal Palace FC promedia 1.5 goles de local · Mejor tabla",
-            "explicacion": "El modelo estadístico apunta a una ventaja clara para Crystal Palace FC respaldada por su rendimiento reciente."
-          },
-          {
-            "categoria": "totalgoles",
-            "parametros": {
-              "linea": 2.5,
-              "direccion": "mas"
-            },
-            "seleccion": "Más de 2.5 goles",
-            "probabilidad": 56,
-            "sinApuesta": false,
-            "confianza": "Media",
-            "contexto": "Encuentro disputado · Nottingham Forest FC mejor ubicado",
-            "explicacion": "Los promedios ofensivos de ambos clubes sugieren un desarrollo abierto con opciones claras de gol."
-          },
-          {
-            "categoria": "btts",
-            "parametros": {
-              "si": true
-            },
-            "seleccion": "Ambos anotan: Sí",
-            "probabilidad": 58,
-            "sinApuesta": false,
-            "confianza": "Media",
-            "contexto": "Encuentro disputado · Nottingham Forest FC mejor ubicado",
-            "explicacion": "Predicción calculada mediante Poisson y Dixon-Coles en base al historial reciente."
-          },
-          {
-            "categoria": "marcador",
-            "parametros": {
-              "gl": 1,
-              "gv": 1
-            },
-            "seleccion": "1-1",
-            "probabilidad": 10,
-            "sinApuesta": true,
-            "confianza": "Media",
-            "contexto": "Encuentro disputado · Nottingham Forest FC mejor ubicado",
-            "explicacion": "Predicción calculada mediante Poisson y Dixon-Coles en base al historial reciente."
-          }
-        ],
-        "marcadorProbable": "1-1",
-        "probMarcador": 11,
-        "top3Marcadores": [
-          {
-            "marcador": "1-1",
-            "probabilidad": 11
-          },
-          {
-            "marcador": "1-2",
-            "probabilidad": 9
-          },
-          {
-            "marcador": "2-1",
-            "probabilidad": 8
-          }
-        ],
-        "catalogoCompleto": [
-          {
-            "seleccion": "Más de 1.5 goles",
-            "probabilidad": 83
-          },
-          {
-            "seleccion": "Nottingham Forest FC marca",
-            "probabilidad": 82
-          },
-          {
-            "seleccion": "Crystal Palace FC o Nottingham Forest FC (12)",
-            "probabilidad": 76
-          },
-          {
-            "seleccion": "Crystal Palace FC marca",
-            "probabilidad": 76
-          },
-          {
-            "seleccion": "Nottingham Forest FC o Empate (X2)",
-            "probabilidad": 68
-          },
-          {
-            "seleccion": "Menos de 3.5 goles",
-            "probabilidad": 61
-          },
-          {
-            "seleccion": "Ambos anotan: Sí",
-            "probabilidad": 58
-          },
-          {
-            "seleccion": "Más de 2.5 goles",
-            "probabilidad": 56
-          },
-          {
-            "seleccion": "Crystal Palace FC o Empate (1X)",
-            "probabilidad": 52
-          },
-          {
-            "seleccion": "Gana Nottingham Forest FC",
-            "probabilidad": 44
-          },
-          {
-            "seleccion": "Menos de 2.5 goles",
-            "probabilidad": 39
-          },
-          {
-            "seleccion": "Más de 3.5 goles",
-            "probabilidad": 39
-          },
-          {
-            "seleccion": "Ambos anotan: No",
-            "probabilidad": 37
-          },
-          {
-            "seleccion": "Gana Crystal Palace FC",
-            "probabilidad": 32
-          },
-          {
-            "seleccion": "Empate",
-            "probabilidad": 24
-          },
-          {
-            "seleccion": "Nottingham Forest FC -1 (gana por 2+)",
-            "probabilidad": 23
-          },
-          {
-            "seleccion": "Menos de 1.5 goles",
-            "probabilidad": 17
-          },
-          {
-            "seleccion": "Nottingham Forest FC -2 (gana por 3+)",
-            "probabilidad": 10
-          },
-          {
-            "seleccion": "1-1",
-            "probabilidad": 10
-          }
-        ],
-        "combosPartido": [
-          {
-            "titulo": "Combinada segura",
-            "tipos": [
-              "totalgoles",
-              "btts"
-            ],
-            "partes": [
-              "Más de 2.5 goles",
-              "Ambos anotan: Sí"
-            ],
-            "probabilidad": 52
-          },
-          {
-            "titulo": "Combinada extra",
-            "tipos": [
-              "doble",
-              "btts"
-            ],
-            "partes": [
-              "Crystal Palace FC o Empate (1X)",
-              "Ambos anotan: Sí"
-            ],
-            "probabilidad": 38
-          }
-        ],
-        "partidosMin": 5,
-        "pocaData": false,
+        "partidosMin": 4,
+        "pocaData": true,
         "favoritoLocal": false,
-        "nombreFavorito": "Nottingham Forest FC",
+        "nombreFavorito": "SV 07 Elversberg",
         "sinNadaEnJuego": false,
         "parametrosModelo": {
-          "lambdaLocal": 1.44,
-          "lambdaVisita": 1.723,
+          "lambdaLocal": 1.525,
+          "lambdaVisita": 1.933,
           "rhoDixonColes": -0.04,
           "factorLocalia": 1.08,
-          "factorLiga": 1.04,
+          "factorLiga": 1.07,
           "tablaInfo": {
             "fLocal": 0.9,
-            "fVisita": 0.9
-          },
-          "perfilLigaGoles": 1.04,
-          "factores": {
-            "localia": 1.08,
-            "ligaBase": 1.0,
-            "ligaAjustado": 1.04,
-            "tablaLocal": 0.9,
-            "tablaVisita": 0.9,
-            "h2hLocal": 1.0,
-            "h2hVisita": 1.0,
-            "tendenciaLocal": 0.97,
-            "tendenciaVisita": 1.03,
-            "descansoLocal": 1.01,
-            "descansoVisita": 1.01,
-            "tablaDesviacionLocal": -0.403,
-            "tablaDesviacionVisita": -0.2537
-          },
-          "tendenciaDireccionLocal": "bajando",
-          "tendenciaDireccionVisita": "subiendo",
-          "sinNadaEnJuego": false,
-          "pocaData": false
-        }
-      },
-      "generadoEn": "2026-10-04T14:01:47.298425+00:00"
-    },
-    "558581": {
-      "partido": {
-        "id": "558581",
-        "homeTeam": {
-          "id": 5890,
-          "name": "US Lecce"
-        },
-        "awayTeam": {
-          "id": 103,
-          "name": "Bologna FC 1909"
-        },
-        "competition": {
-          "name": "Serie A",
-          "code": "SA"
-        },
-        "utcDate": "2026-10-11T13:00:00Z",
-        "status": "TIMED"
-      },
-      "pronosticos": {
-        "seleccionados": [
-          {
-            "categoria": "doble",
-            "parametros": {
-              "lado": "12"
-            },
-            "seleccion": "US Lecce o Bologna FC 1909 (12)",
-            "probabilidad": 66,
-            "sinApuesta": false,
-            "confianza": "Media",
-            "contexto": "US Lecce promedia 1.3 goles de local · Mejor tabla",
-            "explicacion": "El modelo estadístico apunta a una ventaja clara para US Lecce respaldada por su rendimiento reciente."
-          },
-          {
-            "categoria": "totalgoles",
-            "parametros": {
-              "linea": 2.5,
-              "direccion": "menos"
-            },
-            "seleccion": "Menos de 2.5 goles",
-            "probabilidad": 52,
-            "sinApuesta": false,
-            "confianza": "Media",
-            "contexto": "Encuentro disputado · Bologna FC 1909 mejor ubicado",
-            "explicacion": "Los promedios ofensivos de ambos clubes sugieren un desarrollo abierto con opciones claras de gol."
-          },
-          {
-            "categoria": "equipomarca",
-            "parametros": {
-              "lado": "local"
-            },
-            "seleccion": "US Lecce marca",
-            "probabilidad": 65,
-            "sinApuesta": false,
-            "confianza": "Media",
-            "contexto": "US Lecce promedia 1.3 goles de local · Mejor tabla",
-            "explicacion": "Los promedios ofensivos de ambos clubes sugieren un desarrollo abierto con opciones claras de gol."
-          },
-          {
-            "categoria": "marcador",
-            "parametros": {
-              "gl": 1,
-              "gv": 1
-            },
-            "seleccion": "1-1",
-            "probabilidad": 13,
-            "sinApuesta": true,
-            "confianza": "Media",
-            "contexto": "Encuentro disputado · Bologna FC 1909 mejor ubicado",
-            "explicacion": "Predicción calculada mediante Poisson y Dixon-Coles en base al historial reciente."
-          }
-        ],
-        "marcadorProbable": "1-1",
-        "probMarcador": 14,
-        "top3Marcadores": [
-          {
-            "marcador": "1-1",
-            "probabilidad": 14
-          },
-          {
-            "marcador": "1-0",
-            "probabilidad": 10
-          },
-          {
-            "marcador": "0-1",
-            "probabilidad": 10
-          }
-        ],
-        "catalogoCompleto": [
-          {
-            "seleccion": "Menos de 3.5 goles",
-            "probabilidad": 77
-          },
-          {
-            "seleccion": "Más de 1.5 goles",
-            "probabilidad": 70
-          },
-          {
-            "seleccion": "Bologna FC 1909 marca",
-            "probabilidad": 70
-          },
-          {
-            "seleccion": "US Lecce o Bologna FC 1909 (12)",
-            "probabilidad": 66
-          },
-          {
-            "seleccion": "US Lecce o Empate (1X)",
-            "probabilidad": 65
-          },
-          {
-            "seleccion": "US Lecce marca",
-            "probabilidad": 65
-          },
-          {
-            "seleccion": "Bologna FC 1909 o Empate (X2)",
-            "probabilidad": 64
-          },
-          {
-            "seleccion": "Menos de 2.5 goles",
-            "probabilidad": 52
-          },
-          {
-            "seleccion": "Ambos anotan: Sí",
-            "probabilidad": 50
-          },
-          {
-            "seleccion": "Ambos anotan: No",
-            "probabilidad": 50
-          },
-          {
-            "seleccion": "Más de 2.5 goles",
-            "probabilidad": 44
-          },
-          {
-            "seleccion": "Gana US Lecce",
-            "probabilidad": 36
-          },
-          {
-            "seleccion": "Gana Bologna FC 1909",
-            "probabilidad": 35
-          },
-          {
-            "seleccion": "Menos de 1.5 goles",
-            "probabilidad": 30
-          },
-          {
-            "seleccion": "Empate",
-            "probabilidad": 28
-          },
-          {
-            "seleccion": "Más de 3.5 goles",
-            "probabilidad": 23
-          },
-          {
-            "seleccion": "US Lecce -1 (gana por 2+)",
-            "probabilidad": 16
-          },
-          {
-            "seleccion": "1-1",
-            "probabilidad": 13
-          },
-          {
-            "seleccion": "US Lecce -2 (gana por 3+)",
-            "probabilidad": 5
-          }
-        ],
-        "combosPartido": [
-          {
-            "titulo": "Combinada segura",
-            "tipos": [
-              "doble",
-              "equipomarca"
-            ],
-            "partes": [
-              "US Lecce o Bologna FC 1909 (12)",
-              "US Lecce marca"
-            ],
-            "probabilidad": 51
-          },
-          {
-            "titulo": "Combinada extra",
-            "tipos": [
-              "doble",
-              "totalgoles"
-            ],
-            "partes": [
-              "US Lecce o Bologna FC 1909 (12)",
-              "Menos de 2.5 goles"
-            ],
-            "probabilidad": 33
-          }
-        ],
-        "partidosMin": 5,
-        "pocaData": false,
-        "favoritoLocal": true,
-        "nombreFavorito": "US Lecce",
-        "sinNadaEnJuego": false,
-        "parametrosModelo": {
-          "lambdaLocal": 1.225,
-          "lambdaVisita": 1.206,
-          "rhoDixonColes": -0.04,
-          "factorLocalia": 1.08,
-          "factorLiga": 0.94,
-          "tablaInfo": {
-            "fLocal": 0.9,
-            "fVisita": 0.9
-          },
-          "perfilLigaGoles": 0.94,
-          "factores": {
-            "localia": 1.08,
-            "ligaBase": 1.0,
-            "ligaAjustado": 0.94,
-            "tablaLocal": 0.9,
-            "tablaVisita": 0.9,
-            "h2hLocal": 1.0,
-            "h2hVisita": 1.0,
-            "tendenciaLocal": 1.03,
-            "tendenciaVisita": 1.0,
-            "descansoLocal": 1.01,
-            "descansoVisita": 1.01,
-            "tablaDesviacionLocal": -0.1489,
-            "tablaDesviacionVisita": -0.7163
-          },
-          "tendenciaDireccionLocal": "subiendo",
-          "tendenciaDireccionVisita": "neutral",
-          "sinNadaEnJuego": false,
-          "pocaData": false
-        }
-      },
-      "generadoEn": "2026-10-04T14:01:47.298765+00:00"
-    },
-    "560594": {
-      "partido": {
-        "id": "560594",
-        "homeTeam": {
-          "id": 322,
-          "name": "Hull City AFC"
-        },
-        "awayTeam": {
-          "id": 62,
-          "name": "Everton FC"
-        },
-        "competition": {
-          "name": "Premier League",
-          "code": "PL"
-        },
-        "utcDate": "2026-10-11T13:00:00Z",
-        "status": "TIMED"
-      },
-      "pronosticos": {
-        "seleccionados": [
-          {
-            "categoria": "doble",
-            "parametros": {
-              "lado": "12"
-            },
-            "seleccion": "Hull City AFC o Everton FC (12)",
-            "probabilidad": 67,
-            "sinApuesta": false,
-            "confianza": "Media",
-            "contexto": "Hull City AFC promedia 1.3 goles de local · Mejor tabla",
-            "explicacion": "El modelo estadístico apunta a una ventaja clara para Hull City AFC respaldada por su rendimiento reciente."
-          },
-          {
-            "categoria": "totalgoles",
-            "parametros": {
-              "linea": 2.5,
-              "direccion": "menos"
-            },
-            "seleccion": "Menos de 2.5 goles",
-            "probabilidad": 49,
-            "sinApuesta": true,
-            "confianza": "Media",
-            "contexto": "Encuentro disputado · Everton FC mejor ubicado",
-            "explicacion": "Los promedios ofensivos de ambos clubes sugieren un desarrollo abierto con opciones claras de gol."
-          },
-          {
-            "categoria": "equipomarca",
-            "parametros": {
-              "lado": "local"
-            },
-            "seleccion": "Hull City AFC marca",
-            "probabilidad": 67,
-            "sinApuesta": false,
-            "confianza": "Media",
-            "contexto": "Hull City AFC promedia 1.3 goles de local · Mejor tabla",
-            "explicacion": "Los promedios ofensivos de ambos clubes sugieren un desarrollo abierto con opciones claras de gol."
-          },
-          {
-            "categoria": "marcador",
-            "parametros": {
-              "gl": 1,
-              "gv": 1
-            },
-            "seleccion": "1-1",
-            "probabilidad": 13,
-            "sinApuesta": true,
-            "confianza": "Media",
-            "contexto": "Encuentro disputado · Everton FC mejor ubicado",
-            "explicacion": "Predicción calculada mediante Poisson y Dixon-Coles en base al historial reciente."
-          }
-        ],
-        "marcadorProbable": "1-1",
-        "probMarcador": 13,
-        "top3Marcadores": [
-          {
-            "marcador": "1-1",
-            "probabilidad": 13
-          },
-          {
-            "marcador": "1-0",
-            "probabilidad": 10
-          },
-          {
-            "marcador": "0-1",
-            "probabilidad": 9
-          }
-        ],
-        "catalogoCompleto": [
-          {
-            "seleccion": "Menos de 3.5 goles",
-            "probabilidad": 74
-          },
-          {
-            "seleccion": "Más de 1.5 goles",
-            "probabilidad": 73
-          },
-          {
-            "seleccion": "Everton FC marca",
-            "probabilidad": 71
-          },
-          {
-            "seleccion": "Hull City AFC o Everton FC (12)",
-            "probabilidad": 67
-          },
-          {
-            "seleccion": "Hull City AFC marca",
-            "probabilidad": 67
-          },
-          {
-            "seleccion": "Hull City AFC o Empate (1X)",
-            "probabilidad": 65
-          },
-          {
-            "seleccion": "Everton FC o Empate (X2)",
-            "probabilidad": 62
-          },
-          {
-            "seleccion": "Ambos anotan: Sí",
-            "probabilidad": 53
-          },
-          {
-            "seleccion": "Menos de 2.5 goles",
-            "probabilidad": 49
-          },
-          {
-            "seleccion": "Más de 2.5 goles",
-            "probabilidad": 47
-          },
-          {
-            "seleccion": "Ambos anotan: No",
-            "probabilidad": 47
-          },
-          {
-            "seleccion": "Gana Hull City AFC",
-            "probabilidad": 38
-          },
-          {
-            "seleccion": "Gana Everton FC",
-            "probabilidad": 35
-          },
-          {
-            "seleccion": "Empate",
-            "probabilidad": 28
-          },
-          {
-            "seleccion": "Menos de 1.5 goles",
-            "probabilidad": 27
-          },
-          {
-            "seleccion": "Más de 3.5 goles",
-            "probabilidad": 26
-          },
-          {
-            "seleccion": "Hull City AFC -1 (gana por 2+)",
-            "probabilidad": 17
-          },
-          {
-            "seleccion": "1-1",
-            "probabilidad": 13
-          },
-          {
-            "seleccion": "Hull City AFC -2 (gana por 3+)",
-            "probabilidad": 6
-          }
-        ],
-        "combosPartido": [
-          {
-            "titulo": "Combinada segura",
-            "tipos": [
-              "doble",
-              "equipomarca"
-            ],
-            "partes": [
-              "Hull City AFC o Everton FC (12)",
-              "Hull City AFC marca"
-            ],
-            "probabilidad": 54
-          },
-          {
-            "titulo": "Combinada extra",
-            "tipos": [
-              "doble",
-              "totalgoles"
-            ],
-            "partes": [
-              "Hull City AFC o Everton FC (12)",
-              "Menos de 2.5 goles"
-            ],
-            "probabilidad": 31
-          }
-        ],
-        "partidosMin": 5,
-        "pocaData": false,
-        "favoritoLocal": true,
-        "nombreFavorito": "Hull City AFC",
-        "sinNadaEnJuego": false,
-        "parametrosModelo": {
-          "lambdaLocal": 1.311,
-          "lambdaVisita": 1.252,
-          "rhoDixonColes": -0.04,
-          "factorLocalia": 1.08,
-          "factorLiga": 1.04,
-          "tablaInfo": {
-            "fLocal": 1.1,
             "fVisita": 1.1
           },
-          "perfilLigaGoles": 1.04,
+          "perfilLigaGoles": 1.07,
           "factores": {
             "localia": 1.08,
             "ligaBase": 1.0,
-            "ligaAjustado": 1.04,
-            "tablaLocal": 1.1,
+            "ligaAjustado": 1.07,
+            "tablaLocal": 0.9,
             "tablaVisita": 1.1,
             "h2hLocal": 1.0,
             "h2hVisita": 1.0,
             "tendenciaLocal": 0.97,
-            "tendenciaVisita": 1.0,
+            "tendenciaVisita": 0.97,
             "descansoLocal": 1.01,
             "descansoVisita": 1.01,
-            "tablaDesviacionLocal": 0.194,
-            "tablaDesviacionVisita": 0.3433
+            "tablaDesviacionLocal": -0.8218,
+            "tablaDesviacionVisita": 0.2475
           },
           "tendenciaDireccionLocal": "bajando",
-          "tendenciaDireccionVisita": "neutral",
+          "tendenciaDireccionVisita": "bajando",
           "sinNadaEnJuego": false,
-          "pocaData": false
+          "pocaData": true
         }
       },
-      "generadoEn": "2026-10-04T14:01:47.299094+00:00"
+      "generadoEn": "2026-10-05T17:10:25.595124+00:00"
     },
-    "565814": {
+    "565812": {
       "partido": {
-        "id": "565814",
+        "id": "565812",
         "homeTeam": {
-          "id": 1,
-          "name": "1. FC Köln"
+          "id": 15,
+          "name": "1. FSV Mainz 05"
         },
         "awayTeam": {
-          "id": 18,
-          "name": "Borussia Mönchengladbach"
+          "id": 3,
+          "name": "Bayer 04 Leverkusen"
         },
         "competition": {
           "name": "Bundesliga",
           "code": "BL1"
         },
-        "utcDate": "2026-10-11T13:30:00Z",
+        "utcDate": "2026-10-10T13:30:00Z",
+        "status": "TIMED"
+      },
+      "pronosticos": {
+        "seleccionados": [
+          {
+            "categoria": "doble",
+            "parametros": {
+              "lado": "1X"
+            },
+            "seleccion": "1. FSV Mainz 05 o Empate (1X)",
+            "probabilidad": 54,
+            "sinApuesta": false,
+            "confianza": "Media",
+            "contexto": "1. FSV Mainz 05 promedia 1.3 goles de local · Mejor tabla",
+            "explicacion": "El modelo estadístico apunta a una ventaja clara para 1. FSV Mainz 05 respaldada por su rendimiento reciente."
+          },
+          {
+            "categoria": "totalgoles",
+            "parametros": {
+              "linea": 3.5,
+              "direccion": "mas"
+            },
+            "seleccion": "Más de 3.5 goles",
+            "probabilidad": 45,
+            "sinApuesta": true,
+            "confianza": "Media",
+            "contexto": "Encuentro disputado · Bayer 04 Leverkusen mejor ubicado",
+            "explicacion": "Los promedios ofensivos de ambos clubes sugieren un desarrollo abierto con opciones claras de gol."
+          },
+          {
+            "categoria": "btts",
+            "parametros": {
+              "si": true
+            },
+            "seleccion": "Ambos anotan: Sí",
+            "probabilidad": 63,
+            "sinApuesta": false,
+            "confianza": "Media",
+            "contexto": "Encuentro disputado · Bayer 04 Leverkusen mejor ubicado",
+            "explicacion": "Predicción calculada mediante Poisson y Dixon-Coles en base al historial reciente."
+          },
+          {
+            "categoria": "marcador",
+            "parametros": {
+              "gl": 1,
+              "gv": 1
+            },
+            "seleccion": "1-1",
+            "probabilidad": 9,
+            "sinApuesta": true,
+            "confianza": "Media",
+            "contexto": "Encuentro disputado · Bayer 04 Leverkusen mejor ubicado",
+            "explicacion": "Predicción calculada mediante Poisson y Dixon-Coles en base al historial reciente."
+          }
+        ],
+        "marcadorProbable": "1-1",
+        "probMarcador": 10,
+        "top3Marcadores": [
+          {
+            "marcador": "1-1",
+            "probabilidad": 10
+          },
+          {
+            "marcador": "1-2",
+            "probabilidad": 8
+          },
+          {
+            "marcador": "2-1",
+            "probabilidad": 8
+          }
+        ],
+        "catalogoCompleto": [
+          {
+            "seleccion": "Más de 1.5 goles",
+            "probabilidad": 87
+          },
+          {
+            "seleccion": "Bayer 04 Leverkusen marca",
+            "probabilidad": 84
+          },
+          {
+            "seleccion": "1. FSV Mainz 05 marca",
+            "probabilidad": 82
+          },
+          {
+            "seleccion": "1. FSV Mainz 05 o Bayer 04 Leverkusen (12)",
+            "probabilidad": 77
+          },
+          {
+            "seleccion": "Más de 2.5 goles",
+            "probabilidad": 68
+          },
+          {
+            "seleccion": "Bayer 04 Leverkusen o Empate (X2)",
+            "probabilidad": 64
+          },
+          {
+            "seleccion": "Ambos anotan: Sí",
+            "probabilidad": 63
+          },
+          {
+            "seleccion": "1. FSV Mainz 05 o Empate (1X)",
+            "probabilidad": 54
+          },
+          {
+            "seleccion": "Menos de 3.5 goles",
+            "probabilidad": 53
+          },
+          {
+            "seleccion": "Más de 3.5 goles",
+            "probabilidad": 45
+          },
+          {
+            "seleccion": "Gana Bayer 04 Leverkusen",
+            "probabilidad": 41
+          },
+          {
+            "seleccion": "Gana 1. FSV Mainz 05",
+            "probabilidad": 36
+          },
+          {
+            "seleccion": "Menos de 2.5 goles",
+            "probabilidad": 32
+          },
+          {
+            "seleccion": "Ambos anotan: No",
+            "probabilidad": 31
+          },
+          {
+            "seleccion": "Empate",
+            "probabilidad": 23
+          },
+          {
+            "seleccion": "Bayer 04 Leverkusen -1 (gana por 2+)",
+            "probabilidad": 22
+          },
+          {
+            "seleccion": "Menos de 1.5 goles",
+            "probabilidad": 13
+          },
+          {
+            "seleccion": "Bayer 04 Leverkusen -2 (gana por 3+)",
+            "probabilidad": 10
+          },
+          {
+            "seleccion": "1-1",
+            "probabilidad": 9
+          }
+        ],
+        "combosPartido": [
+          {
+            "titulo": "Combinada segura",
+            "tipos": [
+              "doble",
+              "btts"
+            ],
+            "partes": [
+              "1. FSV Mainz 05 o Empate (1X)",
+              "Ambos anotan: Sí"
+            ],
+            "probabilidad": 43
+          },
+          {
+            "titulo": "Combinada extra",
+            "tipos": [
+              "totalgoles",
+              "btts"
+            ],
+            "partes": [
+              "Más de 3.5 goles",
+              "Ambos anotan: Sí"
+            ],
+            "probabilidad": 43
+          }
+        ],
+        "partidosMin": 4,
+        "pocaData": true,
+        "favoritoLocal": false,
+        "nombreFavorito": "Bayer 04 Leverkusen",
+        "sinNadaEnJuego": false,
+        "parametrosModelo": {
+          "lambdaLocal": 1.704,
+          "lambdaVisita": 1.815,
+          "rhoDixonColes": -0.04,
+          "factorLocalia": 1.08,
+          "factorLiga": 1.07,
+          "tablaInfo": {
+            "fLocal": 1.1,
+            "fVisita": 1.1
+          },
+          "perfilLigaGoles": 1.07,
+          "factores": {
+            "localia": 1.08,
+            "ligaBase": 1.0,
+            "ligaAjustado": 1.07,
+            "tablaLocal": 1.1,
+            "tablaVisita": 1.1,
+            "h2hLocal": 1.0,
+            "h2hVisita": 1.0,
+            "tendenciaLocal": 0.97,
+            "tendenciaVisita": 1.03,
+            "descansoLocal": 1.01,
+            "descansoVisita": 1.01,
+            "tablaDesviacionLocal": 0.2475,
+            "tablaDesviacionVisita": 0.2475
+          },
+          "tendenciaDireccionLocal": "bajando",
+          "tendenciaDireccionVisita": "subiendo",
+          "sinNadaEnJuego": false,
+          "pocaData": true
+        }
+      },
+      "generadoEn": "2026-10-05T17:10:25.595704+00:00"
+    },
+    "565818": {
+      "partido": {
+        "id": "565818",
+        "homeTeam": {
+          "id": 2,
+          "name": "TSG 1899 Hoffenheim"
+        },
+        "awayTeam": {
+          "id": 7,
+          "name": "Hamburger SV"
+        },
+        "competition": {
+          "name": "Bundesliga",
+          "code": "BL1"
+        },
+        "utcDate": "2026-10-10T13:30:00Z",
         "status": "TIMED"
       },
       "pronosticos": {
@@ -6708,11 +6246,11 @@
             "parametros": {
               "lado": "local"
             },
-            "seleccion": "Gana 1. FC Köln",
-            "probabilidad": 45,
+            "seleccion": "Gana TSG 1899 Hoffenheim",
+            "probabilidad": 47,
             "sinApuesta": true,
             "confianza": "Media",
-            "contexto": "Encuentro disputado · Borussia Mönchengladbach mejor ubicado",
+            "contexto": "Encuentro disputado · Hamburger SV mejor ubicado",
             "explicacion": "Ambos equipos muestran paridad estadística, por lo que el resultado se perfila ajustado."
           },
           {
@@ -6722,10 +6260,10 @@
               "direccion": "mas"
             },
             "seleccion": "Más de 3.5 goles",
-            "probabilidad": 41,
+            "probabilidad": 44,
             "sinApuesta": true,
             "confianza": "Media",
-            "contexto": "Encuentro disputado · Borussia Mönchengladbach mejor ubicado",
+            "contexto": "Encuentro disputado · Hamburger SV mejor ubicado",
             "explicacion": "Los promedios ofensivos de ambos clubes sugieren un desarrollo abierto con opciones claras de gol."
           },
           {
@@ -6734,10 +6272,10 @@
               "si": true
             },
             "seleccion": "Ambos anotan: Sí",
-            "probabilidad": 60,
+            "probabilidad": 61,
             "sinApuesta": false,
             "confianza": "Media",
-            "contexto": "Encuentro disputado · Borussia Mönchengladbach mejor ubicado",
+            "contexto": "Encuentro disputado · Hamburger SV mejor ubicado",
             "explicacion": "Predicción calculada mediante Poisson y Dixon-Coles en base al historial reciente."
           },
           {
@@ -6747,10 +6285,10 @@
               "gv": 1
             },
             "seleccion": "1-1",
-            "probabilidad": 10,
+            "probabilidad": 9,
             "sinApuesta": true,
             "confianza": "Media",
-            "contexto": "Encuentro disputado · Borussia Mönchengladbach mejor ubicado",
+            "contexto": "Encuentro disputado · Hamburger SV mejor ubicado",
             "explicacion": "Predicción calculada mediante Poisson y Dixon-Coles en base al historial reciente."
           }
         ],
@@ -6773,79 +6311,79 @@
         "catalogoCompleto": [
           {
             "seleccion": "Más de 1.5 goles",
-            "probabilidad": 85
+            "probabilidad": 86
           },
           {
-            "seleccion": "1. FC Köln marca",
-            "probabilidad": 85
+            "seleccion": "TSG 1899 Hoffenheim marca",
+            "probabilidad": 86
           },
           {
-            "seleccion": "1. FC Köln o Borussia Mönchengladbach (12)",
+            "seleccion": "TSG 1899 Hoffenheim o Hamburger SV (12)",
+            "probabilidad": 78
+          },
+          {
+            "seleccion": "Hamburger SV marca",
             "probabilidad": 77
           },
           {
-            "seleccion": "Borussia Mönchengladbach marca",
-            "probabilidad": 77
-          },
-          {
-            "seleccion": "1. FC Köln o Empate (1X)",
-            "probabilidad": 70
+            "seleccion": "TSG 1899 Hoffenheim o Empate (1X)",
+            "probabilidad": 72
           },
           {
             "seleccion": "Más de 2.5 goles",
-            "probabilidad": 65
+            "probabilidad": 67
           },
           {
             "seleccion": "Ambos anotan: Sí",
-            "probabilidad": 60
+            "probabilidad": 61
           },
           {
             "seleccion": "Menos de 3.5 goles",
-            "probabilidad": 57
+            "probabilidad": 55
           },
           {
-            "seleccion": "Borussia Mönchengladbach o Empate (X2)",
-            "probabilidad": 53
+            "seleccion": "Hamburger SV o Empate (X2)",
+            "probabilidad": 51
           },
           {
-            "seleccion": "Gana 1. FC Köln",
-            "probabilidad": 45
+            "seleccion": "Gana TSG 1899 Hoffenheim",
+            "probabilidad": 47
           },
           {
             "seleccion": "Más de 3.5 goles",
-            "probabilidad": 41
+            "probabilidad": 44
           },
           {
             "seleccion": "Menos de 2.5 goles",
-            "probabilidad": 35
+            "probabilidad": 33
           },
           {
             "seleccion": "Ambos anotan: No",
-            "probabilidad": 35
+            "probabilidad": 33
           },
           {
-            "seleccion": "Gana Borussia Mönchengladbach",
-            "probabilidad": 30
+            "seleccion": "TSG 1899 Hoffenheim -1 (gana por 2+)",
+            "probabilidad": 29
           },
           {
-            "seleccion": "1. FC Köln -1 (gana por 2+)",
-            "probabilidad": 26
+            "seleccion": "Gana Hamburger SV",
+            "probabilidad": 28
           },
           {
             "seleccion": "Empate",
-            "probabilidad": 23
+            "probabilidad": 22
           },
           {
             "seleccion": "Menos de 1.5 goles",
-            "probabilidad": 15
+            "probabilidad": 14
           },
           {
-            "seleccion": "1. FC Köln -2 (gana por 3+)",
-            "probabilidad": 12
+            "seleccion": "TSG 1899 Hoffenheim -2 (gana por 3+)",
+            "probabilidad": 14
           },
           {
             "seleccion": "1-1",
-            "probabilidad": 10
+            "probabilidad": 9
           }
         ],
         "combosPartido": [
@@ -6859,7 +6397,7 @@
               "Más de 3.5 goles",
               "Ambos anotan: Sí"
             ],
-            "probabilidad": 39
+            "probabilidad": 41
           },
           {
             "titulo": "Combinada extra",
@@ -6868,20 +6406,20 @@
               "btts"
             ],
             "partes": [
-              "Gana 1. FC Köln",
+              "Gana TSG 1899 Hoffenheim",
               "Ambos anotan: Sí"
             ],
-            "probabilidad": 28
+            "probabilidad": 30
           }
         ],
         "partidosMin": 4,
         "pocaData": true,
         "favoritoLocal": true,
-        "nombreFavorito": "1. FC Köln",
+        "nombreFavorito": "TSG 1899 Hoffenheim",
         "sinNadaEnJuego": false,
         "parametrosModelo": {
-          "lambdaLocal": 1.875,
-          "lambdaVisita": 1.46,
+          "lambdaLocal": 1.989,
+          "lambdaVisita": 1.466,
           "rhoDixonColes": -0.04,
           "factorLocalia": 1.08,
           "factorLiga": 1.07,
@@ -6898,20 +6436,480 @@
             "tablaVisita": 0.9,
             "h2hLocal": 1.0,
             "h2hVisita": 1.0,
-            "tendenciaLocal": 0.97,
-            "tendenciaVisita": 1.0,
+            "tendenciaLocal": 1.03,
+            "tendenciaVisita": 1.03,
             "descansoLocal": 1.01,
             "descansoVisita": 1.01,
-            "tablaDesviacionLocal": -0.2871,
-            "tablaDesviacionVisita": -1.0
+            "tablaDesviacionLocal": -0.4653,
+            "tablaDesviacionVisita": -0.4653
           },
-          "tendenciaDireccionLocal": "bajando",
-          "tendenciaDireccionVisita": "neutral",
+          "tendenciaDireccionLocal": "subiendo",
+          "tendenciaDireccionVisita": "subiendo",
           "sinNadaEnJuego": false,
           "pocaData": true
         }
       },
-      "generadoEn": "2026-10-04T14:01:47.299428+00:00"
+      "generadoEn": "2026-10-05T17:10:25.596287+00:00"
+    },
+    "561868": {
+      "partido": {
+        "id": "561868",
+        "homeTeam": {
+          "id": 343,
+          "name": "Middlesbrough FC"
+        },
+        "awayTeam": {
+          "id": 76,
+          "name": "Wolverhampton Wanderers FC"
+        },
+        "competition": {
+          "name": "Championship",
+          "code": "ELC"
+        },
+        "utcDate": "2026-10-10T14:00:00Z",
+        "status": "TIMED"
+      },
+      "pronosticos": {
+        "seleccionados": [
+          {
+            "categoria": "resultado",
+            "parametros": {
+              "lado": "local"
+            },
+            "seleccion": "Gana Middlesbrough FC",
+            "probabilidad": 39,
+            "sinApuesta": true,
+            "confianza": "Media",
+            "contexto": "Encuentro disputado · Wolverhampton Wanderers FC mejor ubicado",
+            "explicacion": "Ambos equipos muestran paridad estadística, por lo que el resultado se perfila ajustado."
+          },
+          {
+            "categoria": "totalgoles",
+            "parametros": {
+              "linea": 3.5,
+              "direccion": "mas"
+            },
+            "seleccion": "Más de 3.5 goles",
+            "probabilidad": 42,
+            "sinApuesta": true,
+            "confianza": "Media",
+            "contexto": "Encuentro disputado · Wolverhampton Wanderers FC mejor ubicado",
+            "explicacion": "Los promedios ofensivos de ambos clubes sugieren un desarrollo abierto con opciones claras de gol."
+          },
+          {
+            "categoria": "btts",
+            "parametros": {
+              "si": true
+            },
+            "seleccion": "Ambos anotan: Sí",
+            "probabilidad": 61,
+            "sinApuesta": false,
+            "confianza": "Media",
+            "contexto": "Encuentro disputado · Wolverhampton Wanderers FC mejor ubicado",
+            "explicacion": "Predicción calculada mediante Poisson y Dixon-Coles en base al historial reciente."
+          },
+          {
+            "categoria": "marcador",
+            "parametros": {
+              "gl": 1,
+              "gv": 1
+            },
+            "seleccion": "1-1",
+            "probabilidad": 10,
+            "sinApuesta": true,
+            "confianza": "Media",
+            "contexto": "Encuentro disputado · Wolverhampton Wanderers FC mejor ubicado",
+            "explicacion": "Predicción calculada mediante Poisson y Dixon-Coles en base al historial reciente."
+          }
+        ],
+        "marcadorProbable": "1-1",
+        "probMarcador": 10,
+        "top3Marcadores": [
+          {
+            "marcador": "1-1",
+            "probabilidad": 10
+          },
+          {
+            "marcador": "2-1",
+            "probabilidad": 9
+          },
+          {
+            "marcador": "1-2",
+            "probabilidad": 8
+          }
+        ],
+        "catalogoCompleto": [
+          {
+            "seleccion": "Más de 1.5 goles",
+            "probabilidad": 85
+          },
+          {
+            "seleccion": "Middlesbrough FC marca",
+            "probabilidad": 83
+          },
+          {
+            "seleccion": "Wolverhampton Wanderers FC marca",
+            "probabilidad": 80
+          },
+          {
+            "seleccion": "Middlesbrough FC o Wolverhampton Wanderers FC (12)",
+            "probabilidad": 77
+          },
+          {
+            "seleccion": "Más de 2.5 goles",
+            "probabilidad": 65
+          },
+          {
+            "seleccion": "Middlesbrough FC o Empate (1X)",
+            "probabilidad": 64
+          },
+          {
+            "seleccion": "Ambos anotan: Sí",
+            "probabilidad": 61
+          },
+          {
+            "seleccion": "Wolverhampton Wanderers FC o Empate (X2)",
+            "probabilidad": 59
+          },
+          {
+            "seleccion": "Menos de 3.5 goles",
+            "probabilidad": 56
+          },
+          {
+            "seleccion": "Más de 3.5 goles",
+            "probabilidad": 42
+          },
+          {
+            "seleccion": "Gana Middlesbrough FC",
+            "probabilidad": 39
+          },
+          {
+            "seleccion": "Gana Wolverhampton Wanderers FC",
+            "probabilidad": 36
+          },
+          {
+            "seleccion": "Menos de 2.5 goles",
+            "probabilidad": 35
+          },
+          {
+            "seleccion": "Ambos anotan: No",
+            "probabilidad": 33
+          },
+          {
+            "seleccion": "Empate",
+            "probabilidad": 23
+          },
+          {
+            "seleccion": "Middlesbrough FC -1 (gana por 2+)",
+            "probabilidad": 22
+          },
+          {
+            "seleccion": "Menos de 1.5 goles",
+            "probabilidad": 15
+          },
+          {
+            "seleccion": "1-1",
+            "probabilidad": 10
+          },
+          {
+            "seleccion": "Middlesbrough FC -2 (gana por 3+)",
+            "probabilidad": 9
+          }
+        ],
+        "combosPartido": [
+          {
+            "titulo": "Combinada segura",
+            "tipos": [
+              "totalgoles",
+              "btts"
+            ],
+            "partes": [
+              "Más de 3.5 goles",
+              "Ambos anotan: Sí"
+            ],
+            "probabilidad": 40
+          },
+          {
+            "titulo": "Combinada extra",
+            "tipos": [
+              "resultado",
+              "btts"
+            ],
+            "partes": [
+              "Gana Middlesbrough FC",
+              "Ambos anotan: Sí"
+            ],
+            "probabilidad": 25
+          }
+        ],
+        "partidosMin": 7,
+        "pocaData": false,
+        "favoritoLocal": true,
+        "nombreFavorito": "Middlesbrough FC",
+        "sinNadaEnJuego": false,
+        "parametrosModelo": {
+          "lambdaLocal": 1.746,
+          "lambdaVisita": 1.626,
+          "rhoDixonColes": -0.04,
+          "factorLocalia": 1.08,
+          "factorLiga": 0.92,
+          "tablaInfo": {
+            "fLocal": 1.1,
+            "fVisita": 1.1
+          },
+          "perfilLigaGoles": 0.92,
+          "factores": {
+            "localia": 1.08,
+            "ligaBase": 1.0,
+            "ligaAjustado": 0.92,
+            "tablaLocal": 1.1,
+            "tablaVisita": 1.1,
+            "h2hLocal": 1.0,
+            "h2hVisita": 1.0,
+            "tendenciaLocal": 1.0,
+            "tendenciaVisita": 1.03,
+            "descansoLocal": 1.01,
+            "descansoVisita": 1.01,
+            "tablaDesviacionLocal": 0.411,
+            "tablaDesviacionVisita": 0.505
+          },
+          "tendenciaDireccionLocal": "neutral",
+          "tendenciaDireccionVisita": "subiendo",
+          "sinNadaEnJuego": false,
+          "pocaData": false
+        }
+      },
+      "generadoEn": "2026-10-05T17:10:25.596852+00:00"
+    },
+    "561864": {
+      "partido": {
+        "id": "561864",
+        "homeTeam": {
+          "id": 342,
+          "name": "Derby County FC"
+        },
+        "awayTeam": {
+          "id": 404,
+          "name": "Wrexham AFC"
+        },
+        "competition": {
+          "name": "Championship",
+          "code": "ELC"
+        },
+        "utcDate": "2026-10-10T14:00:00Z",
+        "status": "TIMED"
+      },
+      "pronosticos": {
+        "seleccionados": [
+          {
+            "categoria": "doble",
+            "parametros": {
+              "lado": "12"
+            },
+            "seleccion": "Derby County FC o Wrexham AFC (12)",
+            "probabilidad": 66,
+            "sinApuesta": false,
+            "confianza": "Media",
+            "contexto": "Derby County FC promedia 1.1 goles de local · Mejor tabla",
+            "explicacion": "El modelo estadístico apunta a una ventaja clara para Derby County FC respaldada por su rendimiento reciente."
+          },
+          {
+            "categoria": "totalgoles",
+            "parametros": {
+              "linea": 2.5,
+              "direccion": "menos"
+            },
+            "seleccion": "Menos de 2.5 goles",
+            "probabilidad": 52,
+            "sinApuesta": false,
+            "confianza": "Media",
+            "contexto": "Encuentro disputado · Wrexham AFC mejor ubicado",
+            "explicacion": "Los promedios ofensivos de ambos clubes sugieren un desarrollo abierto con opciones claras de gol."
+          },
+          {
+            "categoria": "equipomarca",
+            "parametros": {
+              "lado": "local"
+            },
+            "seleccion": "Derby County FC marca",
+            "probabilidad": 63,
+            "sinApuesta": false,
+            "confianza": "Media",
+            "contexto": "Derby County FC promedia 1.1 goles de local · Mejor tabla",
+            "explicacion": "Los promedios ofensivos de ambos clubes sugieren un desarrollo abierto con opciones claras de gol."
+          },
+          {
+            "categoria": "marcador",
+            "parametros": {
+              "gl": 1,
+              "gv": 1
+            },
+            "seleccion": "1-1",
+            "probabilidad": 13,
+            "sinApuesta": true,
+            "confianza": "Media",
+            "contexto": "Encuentro disputado · Wrexham AFC mejor ubicado",
+            "explicacion": "Predicción calculada mediante Poisson y Dixon-Coles en base al historial reciente."
+          }
+        ],
+        "marcadorProbable": "1-1",
+        "probMarcador": 13,
+        "top3Marcadores": [
+          {
+            "marcador": "1-1",
+            "probabilidad": 13
+          },
+          {
+            "marcador": "0-1",
+            "probabilidad": 11
+          },
+          {
+            "marcador": "1-0",
+            "probabilidad": 10
+          }
+        ],
+        "catalogoCompleto": [
+          {
+            "seleccion": "Menos de 3.5 goles",
+            "probabilidad": 77
+          },
+          {
+            "seleccion": "Wrexham AFC marca",
+            "probabilidad": 72
+          },
+          {
+            "seleccion": "Más de 1.5 goles",
+            "probabilidad": 70
+          },
+          {
+            "seleccion": "Wrexham AFC o Empate (X2)",
+            "probabilidad": 67
+          },
+          {
+            "seleccion": "Derby County FC o Wrexham AFC (12)",
+            "probabilidad": 66
+          },
+          {
+            "seleccion": "Derby County FC marca",
+            "probabilidad": 63
+          },
+          {
+            "seleccion": "Derby County FC o Empate (1X)",
+            "probabilidad": 61
+          },
+          {
+            "seleccion": "Menos de 2.5 goles",
+            "probabilidad": 52
+          },
+          {
+            "seleccion": "Ambos anotan: Sí",
+            "probabilidad": 50
+          },
+          {
+            "seleccion": "Ambos anotan: No",
+            "probabilidad": 50
+          },
+          {
+            "seleccion": "Más de 2.5 goles",
+            "probabilidad": 44
+          },
+          {
+            "seleccion": "Gana Wrexham AFC",
+            "probabilidad": 39
+          },
+          {
+            "seleccion": "Gana Derby County FC",
+            "probabilidad": 33
+          },
+          {
+            "seleccion": "Menos de 1.5 goles",
+            "probabilidad": 30
+          },
+          {
+            "seleccion": "Empate",
+            "probabilidad": 28
+          },
+          {
+            "seleccion": "Más de 3.5 goles",
+            "probabilidad": 23
+          },
+          {
+            "seleccion": "Wrexham AFC -1 (gana por 2+)",
+            "probabilidad": 17
+          },
+          {
+            "seleccion": "1-1",
+            "probabilidad": 13
+          },
+          {
+            "seleccion": "Wrexham AFC -2 (gana por 3+)",
+            "probabilidad": 6
+          }
+        ],
+        "combosPartido": [
+          {
+            "titulo": "Combinada segura",
+            "tipos": [
+              "doble",
+              "equipomarca"
+            ],
+            "partes": [
+              "Derby County FC o Wrexham AFC (12)",
+              "Derby County FC marca"
+            ],
+            "probabilidad": 49
+          },
+          {
+            "titulo": "Combinada extra",
+            "tipos": [
+              "doble",
+              "totalgoles"
+            ],
+            "partes": [
+              "Derby County FC o Wrexham AFC (12)",
+              "Menos de 2.5 goles"
+            ],
+            "probabilidad": 33
+          }
+        ],
+        "partidosMin": 8,
+        "pocaData": false,
+        "favoritoLocal": false,
+        "nombreFavorito": "Wrexham AFC",
+        "sinNadaEnJuego": false,
+        "parametrosModelo": {
+          "lambdaLocal": 1.151,
+          "lambdaVisita": 1.273,
+          "rhoDixonColes": -0.04,
+          "factorLocalia": 1.08,
+          "factorLiga": 0.92,
+          "tablaInfo": {
+            "fLocal": 0.9,
+            "fVisita": 0.941
+          },
+          "perfilLigaGoles": 0.92,
+          "factores": {
+            "localia": 1.08,
+            "ligaBase": 1.0,
+            "ligaAjustado": 0.92,
+            "tablaLocal": 0.9,
+            "tablaVisita": 0.941,
+            "h2hLocal": 1.0,
+            "h2hVisita": 1.0,
+            "tendenciaLocal": 0.97,
+            "tendenciaVisita": 1.0,
+            "descansoLocal": 1.01,
+            "descansoVisita": 1.01,
+            "tablaDesviacionLocal": -0.5297,
+            "tablaDesviacionVisita": -0.0594
+          },
+          "tendenciaDireccionLocal": "bajando",
+          "tendenciaDireccionVisita": "neutral",
+          "sinNadaEnJuego": false,
+          "pocaData": false
+        }
+      },
+      "generadoEn": "2026-10-05T17:10:25.597426+00:00"
     }
   }
 }
