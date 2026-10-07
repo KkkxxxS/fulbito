@@ -1,34 +1,57 @@
 # Propuesta Arquitectura Server-Side (Historial y Verificación Automatizada)
 
+> Estado: documento vivo. Las secciones "Resuelto" reflejan lo ya implementado
+> (verificado 2026-10-06); "Pendiente" agrupa lo que queda por hacer.
+
 ## Estado Actual y Limitación
-Actualmente, el sistema de historial y pronósticos depende del cliente (`localStorage` y la interacción del usuario). Si el usuario no abre la aplicación en días específicos (ej. 14, 15, 16 de septiembre), los partidos de esos días nunca se registran localmente como pronosticados, por lo que no pueden aparecer en la pestaña "Finalizados" ni ser verificados automáticamente.
+Históricamente, el sistema de historial y pronósticos dependía del cliente
+(`localStorage` y la interacción del usuario). Si el usuario no abría la app en
+días específicos, esos partidos nunca se registraban como pronosticados y no
+podían verificarse automáticamente.
+
+### Resuelto
+- Generación diaria de pronósticos vía GitHub Actions (`actualizar_pronosticos.yml`,
+  08:00 UTC): corre `python pronosticos.py`, valida paridad Python<->JS
+  (`test_paridad.py`) y commitea el artefacto + telemetría.
+- Escrituras sobre `/api/historial` protegidas con `X-Api-Key`
+  (`server/server.js`, `requireHistorialWriteKey`). El frontend ya **no** escribe
+  en el pool global: `sincronizarHistorialRemoto` es un no-op y el historial
+  personal vive en `localStorage`.
+- `GET /api/historial/stats` expone el resumen sin transferir los picks completos.
+- El motor Python consume los overrides aprobados (`cargar_parametros_aprobados`,
+  `pronosticos.py:28`), cerrando el ciclo de recalibración supervisada (fase 4).
 
 ## Riesgos Conocidos (afectan la confiabilidad del track record)
 Advirtamos explícitamente por qué los números que hoy se muestran en el panel de "Métricas de Confianza" (PASO 1 de este ticket) **no deben presentarse como una métrica global infalible del motor**:
 
-### 2.1. Persistencia efímera en infraestructura bare-metal (Render free tier)
+### 2.1. Persistencia efímera en infraestructura bare-metal (Render free tier) — **Pendiente**
 - El historial global se persiste en `server/data/historial.json` dentro del filesystem del dyno (`server/server.js`, `HISTORIAL_PATH = path.join(__dirname, 'data', 'historial.json')`).
 - Render **free tier** (web service gratis) usa filesystem efímero: **se pierde en cada redeploy, restart o wake-up desde sleep por inactividad**.
 - El debounce de escritura (500ms) y el graceful shutdown (SIGTERM) reducen el riesgo, pero **no garantizan** persistencia. En cada ciclo de vida del dyno el archivo puede resetearse al snapshot del último deploy.
-- **Consecuencia:** el "Track record del motor" derivado de `GET /api/historial` puede estar *vacío* o *parcialmente perdido* sin que se note. Mientras tanto el localStorage del cliente actúa como fallback, pero aporta una muestra sesgada (solo lo que visitó el usuario).
-- **Mitigation necesaria (ticket aparte):** migrar a un storage persistente (PostgreSQL / base de datos gestionada o bucket S3) y exponer `GET /api/historial/stats` para evitar sincronizar 200 picks pesados al cliente.
+- **Consecuencia:** el "Track record del motor" derivado de `GET /api/historial` puede estar *vacío* o *parcialmente perdido* sin que se note. El localStorage del cliente actúa como fallback, pero aporta una muestra sesgada (solo lo que visitó el usuario).
+- **Mitigation necesaria:** migrar a storage persistente (PostgreSQL gestionado o SQLite con volumen / bucket S3). `GET /api/historial/stats` ya existe y evita sincronizar los picks completos al cliente.
 
-### 2.2. Sin autenticación ni autoridad sobre `/api/historial` (vulnerabilidad de integridad)
-- Las rutas `GET/POST/PUT /api/historial` (`server/server.js`) **no piden autenticación de ningún tipo**: sin cookies, JWT, headers de usuario, ni siquiera distingue origen/IP.
-- Cualquiera con la URL puede hacer `PUT /api/historial` con un array manipulado y **contaminar el pool global** (p.ej. picks falsos marcados como acertados, inflando la tasa).
-- El merge del cliente prioriza el remoto (`fusionado = [...remoto, ...soloLocal]`), así que un remoto comprometido propaga el engaño a todos los visitantes.
-- **Mitigation necesaria (ticket aparte):** exigir un token de servicio o una clave de API con `X-Api-Key` para escrituras (`/POST /PUT /api/historial`), y/o migrar a autenticación de usuario (Supabase/Firebase). Para lecturas (`GET`) podría quedar público si se filtran los picks marcados `verificado`... pero el pool sigue vulnerable a escrituras maliciosas.
+### 2.2. Autenticación y autoridad sobre `/api/historial` — **Resuelto (parcial)**
+- Las escrituras `POST/PUT /api/historial` exigen `X-Api-Key` (`requireHistorialWriteKey`) y el frontend ya no escribe en el pool global (no-op); el historial personal vive en `localStorage`.
+- **Pendiente:** no hay identidad de usuario (cookies/JWT/Supabase), por lo que el track record sigue siendo un pool anónimo que solo puebla backend/CI. Las lecturas (`GET /api/historial`) son públicas y los sanity-checks de `recalibracion.py` mitigan, no eliminan, el riesgo de un pool contaminado vía la propia CI.
 
 ## Plan de Arquitectura a Mediano/Largo Plazo
 
-### 1. Generación Diaria de Pronósticos en el Servidor (Backend / Cron)
-- Automatizar la ejecución de `pronosticos.py` (o un script equivalente en Node.js/Python en el servidor) diariamente mediante un cron job o GitHub Actions.
-- Guardar los pronósticos generados de cada jornada en una estructura persistente en el servidor (ej. base de datos SQLite/PostgreSQL o un archivo JSON histórico persistente `pronosticos_historicos.json`).
+### 1. Generación Diaria de Pronósticos — **Resuelto**
+- GitHub Actions (`actualizar_pronosticos.yml`, 08:00 UTC) ejecuta `pronosticos.py` con paridad verificada y commitea `pronosticos.json` + telemetría.
+- **Pendiente:** guardar cada jornada en una estructura persistente y versionada (DB) en vez de `git add -f pronosticos.json` diario sobre el repo.
 
-### 2. Verificación Autónoma de Resultados
-- El servidor debe consultar periódicamente la API de fútbol (`football-data.org`) para las fechas pasadas recientes.
-- Cruzar los resultados finalizados (`status === 'FINISHED'`) contra los pronósticos almacenados en el servidor, calculando aciertos y marcadores finales sin depender de la interacción del usuario.
+### 2. Verificación Autónoma de Resultados — **Parcial**
+- El frontend liquida el historial personal consultando partidos `FINISHED` (`actualizarHistorialConResultados` en `app-ui.js`).
+- **Pendiente:** un proceso server-side (cron) que cruce resultados contra los pronósticos del pool sin depender de que el usuario abra la app.
 
-### 3. Sincronización Transparente con el Cliente
-- El cliente (frontend) deja de ser responsable de trackear y calcular los pronósticos desde cero basándose únicamente en lo que visitó.
-- Al abrir la app, el frontend simplemente realiza un `GET /api/historial` consolidado desde el servidor, reflejando de inmediato todos los partidos finalizados y verificados de la semana.
+### 3. Sincronización Transparente con el Cliente — **Pendiente**
+- `GET /api/historial` y `/api/historial/stats` existen, pero el cliente sigue
+  local-first (el remoto es solo respaldo), así que los partidos que el usuario no
+  visitó siguen fuera del track record visible.
+- **Pendiente:** frontend por defecto en `GET /api/historial` consolidado.
+
+### 4. Deuda técnica restante (no cubierta por este documento)
+- **Motor duplicado**: el cálculo vive en JS (`app-model.js`, lo que ve el usuario) y en Python (`pronosticos.py`, telemetría/recalibración), con `test_paridad.py` como único garante. Considerar un solo motor server-side.
+- **CI incompleta**: el workflow no corre `test_recalibracion.py`, `npm check` ni hay CI en push; `server.js` no tiene tests.
+- **Frontend monolítico**: 4 archivos JS globals + `style.css` de 256KB, sin build ni tests por módulo.

@@ -1,10 +1,9 @@
 # Sistema de Recalibración Supervisada — Guía de operación
 
 > Diseño aprobado el 20/09/2026. Este documento explica cómo operar el sistema
-> implementado en `recalibracion.py`. La especificación completa está en el
-> historial de conversación del diseño (fases 1-3 implementadas; fase 4 —
-> consumo de overrides en `pronosticos.py`— queda pendiente de la primera
-> aprobación real).
+> implementado en `recalibracion.py`. Estado verificado el 2026-10-06: el fix del
+> motor y la fase 4 (consumo de overrides en `pronosticos.py`) ya están
+> implementados y cubiertos por tests (escenarios 10 y 12 de `test_recalibracion.py`).
 
 ## Qué hace
 
@@ -68,7 +67,7 @@ corridas. La ruta por categorías es la que detecta sesgos finos.
 
 ### Guardia de integridad del motor
 
-El último check existe porque se encontró un bug en el motor de cálculo**
+El último check existe porque se encontró un bug en el motor de cálculo
 (`pronosticos.py`, `sumaMatriz`): `matriz.get(i, j)` sobre un `dict` **no** llama
 a la lambda `'get'` guardada en el diccionario, sino al método nativo del dict
 (busca la clave `i`, con default `j`). El resultado es que las "probabilidades"
@@ -89,9 +88,9 @@ Evidencia del bug en los datos publicados:
   con Node: `{ get(i, j) {...} }.get(1, 2)` devuelve el valor esperado. El bug es
   exclusivo de Python, donde `matriz` es un `dict` y `dict.get` es un método
   nativo que gana sobre la clave `'get'`.
-- `pronosticos.json` **no lo consume la web** (no hay `fetch` de ese archivo en
-  `index.html`/`app-model.js`): el sitio calcula todo client-side, así que las
-  probabilidades que ve el usuario vienen del motor JS (correcto). El bug degrada
+- La web solo consume `pronosticos.json` como *fallback* del motor client-side
+  en el armado de combinadas (`app-init.js`, `obtenerPronosticosDePartidoSeguro`);
+  el resto se calcula en el navegador con el motor JS (correcto). El bug degradaba
   el artefacto Python publicado y la telemetría.
 
 ### Efecto colateral en este sistema
@@ -104,10 +103,11 @@ que explica que ninguna perturbación de pesos superara nunca el gate de mejora
 `suma_matriz` (misma semántica que el motor **pretende**, aplicada correcta) y hay
 una prueba de regresión que detecta si el motor cambia.
 
-**El fix del motor no está aplicado** (fuera del alcance del diseño aprobado):
-requiere tu aprobación explícita porque toca `pronosticos.py`. Es un cambio de
-una línea (`matriz.get(i, j)` → `matriz['get'](i, j)`), pero mueve todas las
-probabilidades publicadas, así que va en un PR aparte.
+**El fix del motor está aplicado** (commits `9830c64`/`d1f2e15`): `sumaMatriz`
+hace `getter = matriz['get']` y llama `getter(i, j)` (pronosticos.py:214), por lo
+que devuelve probabilidades reales y no sumas de índices. El escenario 10 de
+`test_recalibracion.py` fija la equivalencia motor <-> recalibrador y `test_paridad.py`
+valida la paridad Python<->JS.
 
 El cruce contra la telemetría oficial es la defensa principal: la probabilidad
 que entra al cálculo siempre es la que publicó el motor, no la que reporta el
@@ -134,9 +134,10 @@ los mercados quedan idénticos. Recalibrar sobre eso produciría propuestas
 lambda `'get'` de la matriz. El modo `diagnostico` no aborta: advierte con
 `ADVERTENCIA: ...` y sigue informando.
 
-**Estado:** la corrección en `pronosticos.py` NO está aplicada (requiere
-aprobación explícita, ver "Pendiente"). Hasta entonces, la telemetría del motor
-seguirá marcándose como degenerada y el sistema no propondrá cambios.
+**Estado:** el bug del motor está corregido (ver la sección "Efecto colateral"),
+así que la telemetría oficial volvió a ser utilizable y el sistema puede proponer
+cuando hay evidencia real. La guardia sigue activa como red de seguridad: si el
+motor volviera a degenerarse, la corrida aborta en vez de recalibrar sobre ruido.
 
 ## Sobre el instrumento `factorLocalia`
 
@@ -175,10 +176,13 @@ python recalibracion.py --rechazar prop-2026-09-21-ab12cd34 --motivo "muestra mu
 - **Manual (local):** con la propuesta en tu copia del repo, usa `--aprobar` /
   `--rechazar` y commitea los archivos resultantes.
 
-Al aprobar, se escribe `parametros_aprobados.json` con los overrides. **Ese
-archivo todavía no es consumido por `pronosticos.py`** (fase 4 pendiente):
-queda como contrato auditado; el consumo se implementará en un PR separado
-solo después de tu primera aprobación.
+Al aprobar, se escribe `parametros_aprobados.json` con los overrides.
+**`pronosticos.py` ya los consume** (`cargar_parametros_aprobados`,
+`pronosticos.py:28`, aplicado en `ModeloEstadistico`): si el archivo existe con
+`estado == 'aprobada'`, el motor corre con los valores aprobados desde la
+siguiente corrida diaria. El escenario 12 de `test_recalibracion.py` verifica que
+factorLocalia, rho, limiteTabla, porLiga, porCategoria, EWMA, H2H y Platt llegan
+al motor.
 
 ## Archivos
 
@@ -188,22 +192,21 @@ solo después de tu primera aprobación.
 | `pronosticos_historicos.jsonl` | Telemetría oficial del motor (append por corrida) |
 | `propuesta_recalibracion.json` | Propuesta activa (estado: propuesta / aprobada / rechazada) |
 | `bitacora_recalibracion.jsonl` | Registro histórico (corridas, propuestas, resoluciones) para Transparencia |
-| `parametros_aprobados.json` | Overrides aprobados (contrato de fase 4, aún no consumido) |
-| `test_recalibracion.py` | Pruebas end-to-end con dataset sintético determinista (9 escenarios) |
+| `parametros_aprobados.json` | Overrides aprobados, **consumidos por el motor** (fase 4) |
+| `test_recalibracion.py` | Pruebas end-to-end con dataset sintético determinista (12 escenarios) |
 
-## Pendiente de aprobación (NO aplicar sin visto bueno)
+## Historial: bug de suma en `pronosticos.py` (RESUELTO)
 
-**Corrección del bug de suma en `pronosticos.py`** — evidencia:
+El 18/09/2026 `sumaMatriz` usaba `matriz.get(i, j)` sobre un `dict`, así que
+`dict.get` ganaba sobre la lambda `'get'` de la matriz y todas las probabilidades
+publicadas quedaban pegadas al techo del clamp (0.92). Evidencia original:
 
-- `sumaMatriz` (línea 132) usa `matriz.get(i, j)` sobre el dict que devuelve
-  `matrizMarcadores` (línea 126-130); `dict.get` devuelve el índice `j`.
-- Efecto medido en el artefacto publicado: **los 4 mercados de `pronosticos.json`
-  tienen `probabilidad = 92`** (el techo del clamp), uno por categoría
-  (handicap, totalgoles, btts, marcador).
-- `matriz` es local a `generarPronosticos`, así que el fix es acotado: invocar la
-  lambda `'get'` en vez de `dict.get` (idéntico a `sumar_matriz` de
-  `recalibracion.py`).
+- `pronosticos.json` (18/09/2026): los 4 mercados con `probabilidad: 92`.
+- Reproducción aislada: `sumaMatriz(matrizMarcadores(0.98, 1.099, 8, -0.04), 8, lambda i, j: i > j)`
+  devolvía **84.0** en vez de ~0.33.
 
-No se tocó nada de esto: el sistema de recalibración está diseñado para *detectar*
-el problema y abstenerse, no para arreglar el motor.
+Estado actual: **corregido**. `sumaMatriz` extrae `matriz['get']` y lo invoca como
+función (`pronosticos.py:214`). Sin la corrección, la telemetría oficial se
+marcaba como degenerada y el sistema se negaba a proponer (`abortado_probabilidades_degeneradas`);
+con el fix aplicado esa guardia dejó de bloquear y quedó como red de seguridad.
 

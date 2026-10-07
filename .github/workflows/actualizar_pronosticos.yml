@@ -52,7 +52,7 @@ jobs:
             --title "Recalibración $ID — requiere tu aprobación o rechazo" \
             --body "Propuesta generada automáticamente por el sistema de recalibración (diseño aprobado). Revisá \`propuesta_recalibracion.json\` en este PR.
 
-          - **Aprobar:** haz merge del PR. Los overrides quedan como contrato (fase 4: \`pronosticos.py\` todavía no los consume; se habilitará en un PR separado tras esta aprobación).
+          - **Aprobar:** haz merge del PR. Los overrides quedan en \`parametros_aprobados.json\`, que \`pronosticos.py\` ya consume: se aplican en la siguiente corrida diaria.
           - **Rechazar:** cierra el PR y registra el motivo con: \`python recalibracion.py --rechazar $ID --motivo \"...\"\` (queda en la bitácora para Transparencia)." \
             --head "$RAMA" --base main; then
             # Fallback: si no se pudo crear el PR, la propuesta se publica en main
