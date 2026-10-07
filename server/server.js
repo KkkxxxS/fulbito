@@ -6,11 +6,14 @@ const compression = require('compression');
 const app = express();
 
 // Carga de .env (raíz del repo primero, luego server/) para desarrollo local.
-// En producción (Render/Heroku) las env vars del dashboard tienen prioridad.
-require('dotenv').config({
-  path: [path.join(__dirname, '..', '.env'), path.join(__dirname, '.env')],
-  quiet: true
-});
+// En producción (Render/Heroku) se usan las env vars del dashboard.
+// dotenv es opcional en deploys mínimos (rootDir/server sin dependencias propias).
+try {
+  require('dotenv').config({
+    path: [path.join(__dirname, '..', '.env'), path.join(__dirname, '.env')],
+    quiet: true
+  });
+} catch (e) { /* dotenv no instalado: ignora y usa process.env */ }
 
 const ORIGENES_PERMITIDOS = new Set([
   'https://kkkxxxs.github.io',
