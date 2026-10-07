@@ -5,6 +5,13 @@ const path = require('path');
 const compression = require('compression');
 const app = express();
 
+// Carga de .env (raíz del repo primero, luego server/) para desarrollo local.
+// En producción (Render/Heroku) las env vars del dashboard tienen prioridad.
+require('dotenv').config({
+  path: [path.join(__dirname, '..', '.env'), path.join(__dirname, '.env')],
+  quiet: true
+});
+
 const ORIGENES_PERMITIDOS = new Set([
   'https://kkkxxxs.github.io',
   'https://fulbito-flame.vercel.app',

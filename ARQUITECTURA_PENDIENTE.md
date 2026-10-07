@@ -35,6 +35,14 @@ Advirtamos explícitamente por qué los números que hoy se muestran en el panel
   ya evita sincronizar los picks completos al cliente.
 - **Nota:** `pronosticos.json` y `pronosticos_historicos.jsonl` siguen commiteándose al repo con
   `git add -f` diario; persistirlos en la DB/objeto sería el siguiente paso de esta línea.
+- **Cómo activar (1 min, requiere cuenta en un proveedor de Postgres):**
+  1. Crear un Postgres free en Neon (`neon.tech`) o Supabase, o en Render
+     (`New +` → `PostgreSQL`). Obtener la connection string.
+  2. En Render → tu servicio web → `Environment` → `Add Environment Variable`:
+     `DATABASE_URL` = esa connection string (con `?sslmode=require` si la trae).
+  3. Re-deploy (o se aplica solo). El log de arranque debe mostrar
+     `Historial cargado desde postgres (N entradas).`
+  4. Verificar: `GET /api/historial/stats` — el `total` sobrevive a restarts del dyno.
 
 ### 2.2. Autenticación y autoridad sobre `/api/historial` — **Resuelto (parcial)**
 - Las escrituras `POST/PUT /api/historial` exigen `X-Api-Key` (`requireHistorialWriteKey`) y el frontend ya no escribe en el pool global (no-op); el historial personal vive en `localStorage`.
