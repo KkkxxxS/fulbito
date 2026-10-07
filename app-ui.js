@@ -1388,10 +1388,9 @@
         obtenerStatsEquipo(partido.awayTeam.id, codigoLiga, tabla)
       ]);
 
-      const pronosticos = generarPronosticos(
-        statsLocal, statsVisita, partido.homeTeam.name, partido.awayTeam.name,
-        h2h, tabla, partido.homeTeam.id, partido.awayTeam.id, codigoLiga
-      );
+      const pronosticos = await obtenerPronosticosDePartido(partido, {
+        statsLocal, statsVisita, h2h, tabla, codigoLiga
+      });
 
       // Reordenar mercados segÃºn filtro rÃ¡pido activo para destacar la opciÃ³n elegida
       if (filtroRapidoActual === 'alta_confianza') {
@@ -1734,10 +1733,9 @@
         obtenerStatsEquipo(partido.awayTeam.id, codigoLiga, tabla)
       ]);
 
-      const pronosticos = generarPronosticos(
-        statsLocal, statsVisita, partido.homeTeam.name, partido.awayTeam.name,
-        h2h, tabla, partido.homeTeam.id, partido.awayTeam.id, codigoLiga
-      );
+      const pronosticos = await obtenerPronosticosDePartido(partido, {
+        statsLocal, statsVisita, h2h, tabla, codigoLiga
+      });
 
       htmlFinal += crearTarjetaHTML(partido, pronosticos, statsLocal, statsVisita, h2h, tabla);
       registrarPronostico(partido, pronosticos);

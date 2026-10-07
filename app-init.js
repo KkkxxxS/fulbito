@@ -65,12 +65,12 @@
   async function obtenerPronosticosDePartidoSeguro(partido) {
     const codigoLiga = partido.competition ? partido.competition.code : 'PL';
     try {
-      const respPron = await fetch('pronosticos.json');
-      if (respPron.ok) {
-        const datos = await respPron.json();
-        if (datos && datos.pronosticos && datos.pronosticos[partido.id]) {
-          return datos.pronosticos[partido.id].pronosticos;
-        }
+      const datos = await cargarPronosticosOficiales();
+      const oficial = datos && datos.pronosticos ? datos.pronosticos[String(partido.id)] : null;
+      if (oficial && oficial.pronosticos && Array.isArray(oficial.pronosticos.seleccionados) && oficial.pronosticos.seleccionados.length > 0) {
+        const pronosticos = normalizarPronosticosOficial(oficial.pronosticos);
+        pronosticos.fuente = 'oficial';
+        return pronosticos;
       }
     } catch(e) {}
 
@@ -83,10 +83,12 @@
         obtenerStatsEquipo(partido.homeTeam.id, codigoLiga, tabla),
         obtenerStatsEquipo(partido.awayTeam.id, codigoLiga, tabla)
       ]);
-      return generarPronosticos(
+      const pronosticos = generarPronosticos(
         statsLocal, statsVisita, partido.homeTeam.name, partido.awayTeam.name,
         h2h, tabla, partido.homeTeam.id, partido.awayTeam.id, codigoLiga
       );
+      pronosticos.fuente = 'js';
+      return pronosticos;
     } catch (e) {
       return null;
     }

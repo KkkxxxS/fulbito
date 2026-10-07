@@ -155,6 +155,39 @@ const res2 = correr();
 check('el motor es determinista',
   JSON.stringify(res.seleccionados) === JSON.stringify(res2.seleccionados));
 
+// ===== Normalizador del motor canónico (pronosticos.json oficial -> shape de la UI) =====
+if (typeof sandbox.normalizarPronosticosOficial === 'function') {
+  const oficial = {
+    seleccionados: [
+      { categoria: 'resultado', parametros: { lado: 'local' }, seleccion: 'Gana Local',
+        probabilidad: 55, sinApuesta: false, confianza: 'Media',
+        contexto: 'contexto de prueba', explicacion: 'explicacion de prueba' }
+    ],
+    marcadorProbable: '2-1', probMarcador: 22,
+    top3Marcadores: [{ marcador: '2-1', probabilidad: 22 }],
+    catalogoCompleto: [{ seleccion: 'Gana Local', probabilidad: 55 }],
+    combosPartido: [{ titulo: 'Combinada segura', tipos: ['resultado'], partes: ['Gana Local'], probabilidad: 55 }],
+    partidosMin: 8, pocaData: true, sinNadaEnJuego: false,
+    favoritoLocal: true, nombreFavorito: 'Local',
+    parametrosModelo: { lambdaLocal: 1.4, lambdaVisita: 1.1 }
+  };
+  const n = sandbox.normalizarPronosticosOficial(oficial);
+  check('normalizador: mercado gana tipo/titulo/mercado',
+    n.seleccionados[0].tipo === 'resultado' && !!n.seleccionados[0].titulo && !!n.seleccionados[0].mercado,
+    JSON.stringify(n.seleccionados[0]));
+  check('normalizador: razones derivadas de la explicacion',
+    Array.isArray(n.seleccionados[0].razones) && n.seleccionados[0].razones.length === 1);
+  check('normalizador: expone el shape completo que usa la tarjeta',
+    ['seleccionados', 'marcadorProbable', 'top3Marcadores', 'catalogoCompleto',
+      'combosPartido', 'partidosMin', 'pocaData', 'sinNadaEnJuego',
+      'favoritoLocal', 'nombreFavorito', 'parametrosModelo'].every((k) => k in n));
+  check('normalizador: respeta la probabilidad oficial del artefacto',
+    n.seleccionados[0].probabilidad === 55);
+} else {
+  check('el motor expone el normalizador del artefacto oficial', false,
+    'normalizarPronosticosOficial no está definido');
+}
+
 console.log('\n  mercados:', res.seleccionados.map((m) => `${m.categoria}=${m.probabilidad}`).join(' '));
 console.log('  MARCADOR', res.marcadorProbable, res.probMarcador);
 

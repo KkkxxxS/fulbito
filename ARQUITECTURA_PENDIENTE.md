@@ -52,6 +52,10 @@ Advirtamos explícitamente por qué los números que hoy se muestran en el panel
 - **Pendiente:** frontend por defecto en `GET /api/historial` consolidado.
 
 ### 4. Deuda técnica restante (no cubierta por este documento)
-- **Motor duplicado**: el cálculo vive en JS (`app-model.js`, lo que ve el usuario) y en Python (`pronosticos.py`, telemetría/recalibración), con `test_paridad.py` como único garante. Considerar un solo motor server-side.
+- **Motor canónico**: el frontend consume `pronosticos.json` (Python) por defecto
+  (`obtenerPronosticosDePartido` en `app-model.js`, con normalizador al shape de la
+  tarjeta); el cálculo JS (`app-model.js`) queda como *offline fallback* y sigue
+  validado por `test_paridad.py`. Pendiente: deprecar gradualmente el motor JS si
+  la cobertura del artefacto alcanza el 100% de los partidos.
 - **CI incompleta**: el workflow no corre `test_recalibracion.py`, `npm check` ni hay CI en push; `server.js` no tiene tests.
 - **Frontend monolítico**: 4 archivos JS globals + `style.css` de 256KB, sin build ni tests por módulo.

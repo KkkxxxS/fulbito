@@ -1625,6 +1625,87 @@
     };
   }
 
+  // ============ MOTOR CANÓNICO (pronosticos.json oficial, con fallback JS) ============
+  // El artefacto `pronosticos.json` se publica diariamente por el pipeline Python
+  // (08:00 UTC) y es exactamente lo que la recalibración mide. Consumirlo primero
+  // alinea lo que ve el usuario con lo que se evalúa; el cálculo client-side queda
+  // solo como fallback offline o cuando el partido no está en el artefacto.
+  let pronosticosOficialesCache = null;
+  let pronosticosOficialesPromesa = null;
+  let pronosticosOficialesCargadosEn = 0;
+  const TTL_PRONOSTICOS_OFICIALES = 60 * 60 * 1000;
+
+  function cargarPronosticosOficiales() {
+    const ahora = Date.now();
+    if (pronosticosOficialesCache && ahora - pronosticosOficialesCargadosEn < TTL_PRONOSTICOS_OFICIALES) {
+      return Promise.resolve(pronosticosOficialesCache);
+    }
+    if (pronosticosOficialesPromesa) return pronosticosOficialesPromesa;
+    pronosticosOficialesPromesa = fetch('pronosticos.json', { cache: 'no-store' })
+      .then(r => r.ok ? r.json() : null)
+      .then(datos => {
+        pronosticosOficialesCache = datos;
+        pronosticosOficialesCargadosEn = Date.now();
+        return datos;
+      })
+      .catch(() => {
+        pronosticosOficialesCache = null;
+        pronosticosOficialesCargadosEn = 0;
+        return null;
+      })
+      .finally(() => { pronosticosOficialesPromesa = null; });
+    return pronosticosOficialesPromesa;
+  }
+
+  function normalizarPronosticosOficial(oficial) {
+    const seleccionados = (oficial.seleccionados || []).map(m => ({
+      ...m,
+      tipo: m.categoria,
+      titulo: (CATEGORIAS_MERCADO[m.categoria] || {}).titulo || m.seleccion,
+      mercado: (CATEGORIAS_MERCADO[m.categoria] || {}).mercado || m.seleccion,
+      razones: m.explicacion ? [m.explicacion] : []
+    }));
+    return {
+      seleccionados,
+      marcadorProbable: oficial.marcadorProbable || '—',
+      probMarcador: oficial.probMarcador || 0,
+      top3Marcadores: oficial.top3Marcadores || [],
+      catalogoCompleto: oficial.catalogoCompleto || [],
+      combosPartido: oficial.combosPartido || [],
+      partidosMin: oficial.partidosMin ?? 0,
+      pocaData: !!oficial.pocaData,
+      sinNadaEnJuego: !!oficial.sinNadaEnJuego,
+      favoritoLocal: !!oficial.favoritoLocal,
+      nombreFavorito: oficial.nombreFavorito || null,
+      parametrosModelo: oficial.parametrosModelo || null
+    };
+  }
+
+  // Devuelve los pronósticos de un partido: oficial (Python) si existe en el
+  // artefacto, o calculados client-side (JS) en caso contrario. `ctx` trae el
+  // insumo ya cargado (stats/h2h/tabla) por si hace falta el fallback.
+  async function obtenerPronosticosDePartido(partido, ctx) {
+    try {
+      const datos = await cargarPronosticosOficiales();
+      const oficial = datos && datos.pronosticos
+        ? datos.pronosticos[String(partido.id)]
+        : null;
+      if (oficial && oficial.pronosticos && Array.isArray(oficial.pronosticos.seleccionados) && oficial.pronosticos.seleccionados.length > 0) {
+        const pronosticos = normalizarPronosticosOficial(oficial.pronosticos);
+        pronosticos.fuente = 'oficial';
+        return pronosticos;
+      }
+    } catch (e) {
+      // Si el artefacto no se puede leer, caemos al motor client-side.
+    }
+    const pronosticos = generarPronosticos(
+      ctx.statsLocal, ctx.statsVisita, partido.homeTeam.name, partido.awayTeam.name,
+      ctx.h2h, ctx.tabla, partido.homeTeam.id, partido.awayTeam.id, ctx.codigoLiga
+    );
+    pronosticos.fuente = 'js';
+    return pronosticos;
+  }
+
   // ============ ICONOS POR MERCADO ============
   const ICONOS_MERCADO = {
     resultado: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="0.6" fill="currentColor"/></svg>',
