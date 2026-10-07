@@ -24,12 +24,17 @@ podían verificarse automáticamente.
 ## Riesgos Conocidos (afectan la confiabilidad del track record)
 Advirtamos explícitamente por qué los números que hoy se muestran en el panel de "Métricas de Confianza" (PASO 1 de este ticket) **no deben presentarse como una métrica global infalible del motor**:
 
-### 2.1. Persistencia efímera en infraestructura bare-metal (Render free tier) — **Pendiente**
-- El historial global se persiste en `server/data/historial.json` dentro del filesystem del dyno (`server/server.js`, `HISTORIAL_PATH = path.join(__dirname, 'data', 'historial.json')`).
-- Render **free tier** (web service gratis) usa filesystem efímero: **se pierde en cada redeploy, restart o wake-up desde sleep por inactividad**.
-- El debounce de escritura (500ms) y el graceful shutdown (SIGTERM) reducen el riesgo, pero **no garantizan** persistencia. En cada ciclo de vida del dyno el archivo puede resetearse al snapshot del último deploy.
-- **Consecuencia:** el "Track record del motor" derivado de `GET /api/historial` puede estar *vacío* o *parcialmente perdido* sin que se note. El localStorage del cliente actúa como fallback, pero aporta una muestra sesgada (solo lo que visitó el usuario).
-- **Mitigation necesaria:** migrar a storage persistente (PostgreSQL gestionado o SQLite con volumen / bucket S3). `GET /api/historial/stats` ya existe y evita sincronizar los picks completos al cliente.
+### 2.1. Persistencia efímera en infraestructura bare-metal (Render free tier) — **Resuelto (requiere activar DB en prod)**
+- **Implementado:** el servidor persiste el historial en una DB en vez de solo el filesystem:
+  Postgres gestionado si existe `DATABASE_URL` (recomendado) o SQLite local por defecto
+  (`server/data/historial.db`). El cache en memoria + debounce de 500ms se mantienen y el
+  shutdown fuerza flush del pendiente. `server/data/historial.json` queda como espejo legacy
+  legible. Cubierto por `npm run test:server` (`server/test-persistence.js`).
+- **Acción pendiente:** en Render configurar `DATABASE_URL` (Postgres free: Neon/Supabase/Render)
+  para que el dyno deje de resetear el pool en cada redeploy/restart. `GET /api/historial/stats`
+  ya evita sincronizar los picks completos al cliente.
+- **Nota:** `pronosticos.json` y `pronosticos_historicos.jsonl` siguen commiteándose al repo con
+  `git add -f` diario; persistirlos en la DB/objeto sería el siguiente paso de esta línea.
 
 ### 2.2. Autenticación y autoridad sobre `/api/historial` — **Resuelto (parcial)**
 - Las escrituras `POST/PUT /api/historial` exigen `X-Api-Key` (`requireHistorialWriteKey`) y el frontend ya no escribe en el pool global (no-op); el historial personal vive en `localStorage`.

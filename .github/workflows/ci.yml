@@ -26,6 +26,8 @@ jobs:
         run: npm run test:parity
       - name: Suite de recalibración (12 escenarios)
         run: npm test
+      - name: Persistencia del historial del servidor (SQLite)
+        run: npm run test:server
       - name: Verificación del modelo JS
         run: npm run verify
       - name: Smoke test del frontend

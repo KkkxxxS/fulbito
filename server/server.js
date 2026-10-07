@@ -47,8 +47,84 @@ const HISTORIAL_API_KEY = process.env.HISTORIAL_API_KEY;
 if (!HISTORIAL_API_KEY && process.env.NODE_ENV === 'production') { console.warn('ADVERTENCIA: falta HISTORIAL_API_KEY para escrituras de /api/historial'); }
 function requireHistorialWriteKey(req, res, next){ const k=req.headers['x-api-key']; if(!k||k!==HISTORIAL_API_KEY) return res.status(401).json({error:'unauthorized',message:'X-Api-Key requerido para escrituras'}); next(); }
 
-// ============ HISTORIAL COMPARTIDO GLOBAL ============
+// ============ HISTORIAL COMPARTIDO GLOBAL (DB primero, archivo legacy) ============
+// El filesystem de Render free es efímero (se pierde en cada redeploy/restart),
+// así que la persistencia primaria va a una base de datos:
+//   - Postgres gestionada si existe la env DATABASE_URL (recomendado en producción)
+//   - SQLite local por defecto (server/data/historial.db)
+// server/data/historial.json se mantiene como espejo legacy legible para humanos.
 const HISTORIAL_PATH = path.join(__dirname, 'data', 'historial.json');
+
+let storageHistorial = null;
+let storageHistorialFallo = null;
+
+function cargarStorageHistorial() {
+  if (storageHistorial) return storageHistorial;
+  const url = process.env.DATABASE_URL;
+  if (url) {
+    const { Pool } = require('pg');
+    const pool = new Pool({
+      connectionString: url,
+      connectionTimeoutMillis: 5000,
+      max: 3,
+      ssl: process.env.DATABASE_SSL === 'false' ? false : { rejectUnauthorized: false }
+    });
+    storageHistorial = {
+      tipo: 'postgres',
+      async inicializar() {
+        await pool.query(
+          "CREATE TABLE IF NOT EXISTS kv (clave TEXT PRIMARY KEY, valor JSONB NOT NULL)"
+        );
+      },
+      async leer() {
+        const r = await pool.query("SELECT valor FROM kv WHERE clave = 'historial'");
+        return r.rows.length ? r.rows[0].valor : null;
+      },
+      async guardar(valor) {
+        await pool.query(
+          "INSERT INTO kv (clave, valor) VALUES ('historial', $1) ON CONFLICT (clave) DO UPDATE SET valor = EXCLUDED.valor",
+          [JSON.stringify(valor)]
+        );
+      },
+      cerrar: () => pool.end()
+    };
+  } else {
+    const dir = path.dirname(HISTORIAL_PATH);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    const Database = require('better-sqlite3');
+    const db = new Database(path.join(dir, 'historial.db'));
+    db.pragma('journal_mode = WAL');
+    db.exec('CREATE TABLE IF NOT EXISTS kv (clave TEXT PRIMARY KEY, valor TEXT NOT NULL)');
+    storageHistorial = {
+      tipo: 'sqlite',
+      leer() {
+        const fila = db.prepare("SELECT valor FROM kv WHERE clave = 'historial'").get();
+        return fila ? JSON.parse(fila.valor) : null;
+      },
+      guardar(valor) {
+        db.prepare(
+          "INSERT INTO kv (clave, valor) VALUES ('historial', ?) ON CONFLICT (clave) DO UPDATE SET valor = excluded.valor"
+        ).run(JSON.stringify(valor));
+      },
+      cerrar: () => db.close()
+    };
+  }
+  return storageHistorial;
+}
+
+async function guardarHistorialEnStorage(historial) {
+  try {
+    const storage = cargarStorageHistorial();
+    await storage.guardar(historial);
+    storageHistorialFallo = null;
+  } catch (error) {
+    // Log una sola vez por fallo sostenido para no spamear, y seguimos con el archivo.
+    if (!storageHistorialFallo) {
+      storageHistorialFallo = error.message;
+      console.warn(`No se pudo escribir el historial en ${storageHistorial ? storageHistorial.tipo : 'storage'} (queda el archivo legacy):`, error.message);
+    }
+  }
+}
 
 function asegurarHistorialGlobal() {
   const dir = path.dirname(HISTORIAL_PATH);
@@ -59,45 +135,53 @@ function asegurarHistorialGlobal() {
 }
 
 let historialCacheMemoria = null;
-let historialCacheExpira = 0;
-const TTL_HISTORIAL_MEMORIA = 30 * 1000;
 
 function leerHistorialGlobal() {
-  const ahora = Date.now();
-  if (historialCacheMemoria && ahora < historialCacheExpira) {
-    return historialCacheMemoria;
-  }
+  // El cache se llena en el boot desde la DB (inicializarHistorial) y se mantiene
+  // al día en cada escritura. Si no arrancó todavía, cae al archivo legacy.
+  if (historialCacheMemoria) return historialCacheMemoria;
   try {
     asegurarHistorialGlobal();
     const contenido = fs.readFileSync(HISTORIAL_PATH, 'utf8');
     const datos = JSON.parse(contenido);
     historialCacheMemoria = Array.isArray(datos) ? datos : [];
-    historialCacheExpira = ahora + TTL_HISTORIAL_MEMORIA;
     return historialCacheMemoria;
   } catch (error) {
-    console.warn('No se pudo leer el historial global:', error.message);
     return [];
   }
 }
 
 let escrituraPendiente = null;
 function guardarHistorialGlobal(historial) {
-  try {
+  const recortado = Array.isArray(historial) ? historial.slice(-200) : [];
+  historialCacheMemoria = recortado;
+  // Debounce: si llegan varias escrituras seguidas, esperamos la última.
+  if (escrituraPendiente) clearTimeout(escrituraPendiente);
+  escrituraPendiente = setTimeout(async () => {
+    await guardarHistorialEnStorage(recortado);
     asegurarHistorialGlobal();
-    const recortado = Array.isArray(historial) ? historial.slice(-200) : [];
-    historialCacheMemoria = recortado;
-    historialCacheExpira = Date.now() + TTL_HISTORIAL_MEMORIA;
-    // Debounce: si llegan varias escrituras seguidas, esperamos la última.
-    if (escrituraPendiente) clearTimeout(escrituraPendiente);
-    escrituraPendiente = setTimeout(() => {
-      fs.promises.writeFile(HISTORIAL_PATH, JSON.stringify(recortado, null, 2), 'utf8')
-        .catch(err => console.warn('No se pudo guardar el historial global:', err.message));
-      escrituraPendiente = null;
-    }, 500);
-    return recortado;
+    fs.promises.writeFile(HISTORIAL_PATH, JSON.stringify(recortado, null, 2), 'utf8')
+      .catch(err => console.warn('No se pudo guardar el historial en archivo:', err.message));
+    escrituraPendiente = null;
+  }, 500);
+  return recortado;
+}
+
+async function inicializarHistorial() {
+  try {
+    const storage = cargarStorageHistorial();
+    if (storage.inicializar) await storage.inicializar();
+    const previo = await storage.leer();
+    if (Array.isArray(previo) && previo.length > 0) {
+      historialCacheMemoria = previo.slice(-200);
+      // Rehidrata el archivo legacy para que sirva de espejo legible.
+      asegurarHistorialGlobal();
+      fs.promises.writeFile(HISTORIAL_PATH, JSON.stringify(historialCacheMemoria, null, 2), 'utf8').catch(() => {});
+    }
+    console.log(`Historial cargado desde ${storage.tipo} (${(historialCacheMemoria || []).length} entradas).`);
   } catch (error) {
-    console.warn('No se pudo guardar el historial global:', error.message);
-    return [];
+    storageHistorialFallo = error.message;
+    console.warn('No se pudo inicializar el storage de historial (se usará el archivo legacy):', error.message);
   }
 }
 
@@ -378,19 +462,45 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 3000;
-const servidor = app.listen(PORT, () => {
-  console.log(`Servidor de fulbito corriendo en el puerto ${PORT}`);
+let servidor = null;
+
+inicializarHistorial().finally(() => {
+  servidor = app.listen(PORT, () => {
+    console.log(`Servidor de fulbito corriendo en el puerto ${PORT}`);
+  });
 });
 
 // Graceful shutdown: cerrar limpiamente ante SIGTERM/SIGINT (importante en Render/Railway)
 function cerrarServidor(senial) {
   console.log(`\nRecibida señal ${senial}, cerrando servidor limpiamente...`);
-  servidor.close(() => {
-    console.log('Servidor cerrado.');
-    if (escrituraPendiente) {
-      clearTimeout(escrituraPendiente);
+  // Flush: si hay una escritura pendiente por el debounce, forzarla antes de salir.
+  const flushPendiente = () => {
+    if (!escrituraPendiente) return Promise.resolve();
+    clearTimeout(escrituraPendiente);
+    escrituraPendiente = null;
+    if (historialCacheMemoria) {
+      return guardarHistorialEnStorage(historialCacheMemoria).catch(() => {});
     }
-    process.exit(0);
+    return Promise.resolve();
+  };
+  const cerrarStorage = () => {
+    if (storageHistorial && storageHistorial.cerrar) {
+      try {
+        const r = storageHistorial.cerrar();
+        if (r && typeof r.catch === 'function') r.catch(() => {});
+      } catch (e) { /* el storage ya puede estar cerrado */ }
+    }
+  };
+  if (!servidor) {
+    flushPendiente().then(() => { cerrarStorage(); process.exit(0); });
+    return;
+  }
+  servidor.close(() => {
+    flushPendiente().then(() => {
+      console.log('Servidor cerrado.');
+      cerrarStorage();
+      process.exit(0);
+    });
   });
   // Forzar cierre tras 10s si las conexiones no se cierran
   setTimeout(() => {
