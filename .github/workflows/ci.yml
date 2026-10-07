@@ -1,0 +1,32 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Instalar dependencias Python
+        run: pip install -r requirements.txt
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - name: Instalar dependencias Node
+        run: npm ci
+      - name: Sintaxis y paridad del frontend (npm check)
+        run: npm run check
+      - name: Paridad numérica Python <-> JS
+        run: npm run test:parity
+      - name: Suite de recalibración (12 escenarios)
+        run: npm test
+      - name: Verificación del modelo JS
+        run: npm run verify
+      - name: Smoke test del frontend
+        run: npm run smoke

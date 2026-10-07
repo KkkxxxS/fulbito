@@ -20,6 +20,8 @@ jobs:
           node-version: '20'
       - name: Validar paridad del modelo (Python vs JS)
         run: python test_paridad.py
+      - name: Suite de recalibración (12 escenarios)
+        run: python test_recalibracion.py
       - run: python pronosticos.py
       - name: Recalibración supervisada (diagnóstico + propuesta)
         id: recalibracion
