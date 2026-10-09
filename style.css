@@ -2871,6 +2871,19 @@ main {
   font-weight: 600;
 }
 
+.pie-pagina .pie-pagina-enlaces {
+  font-size: 0.75rem;
+}
+
+.pie-pagina .pie-pagina-enlaces a {
+  color: var(--brand, #7be1c8);
+  text-decoration: none;
+}
+
+.pie-pagina .pie-pagina-enlaces a:hover {
+  text-decoration: underline;
+}
+
 /* Branding mejorado en el footer */
 .pie-pagina .marca-footer {
   display: inline-flex;
@@ -4110,7 +4123,8 @@ input {
   margin-bottom: 28px;
 }
 
-.dashboard-titulo h2 {
+.dashboard-titulo h2,
+.dashboard-titulo h3 {
   margin: 0 0 8px;
   font-family: var(--font-display);
   font-size: var(--fs-xl);
@@ -4226,7 +4240,8 @@ input {
   margin-bottom: 28px;
 }
 
-.motor-health-header h2 {
+.motor-health-header h2,
+.motor-health-header h3 {
   margin: 0 0 8px;
   font-family: var(--font-display);
   font-size: var(--fs-xl);
@@ -6632,6 +6647,7 @@ body.home-mode #vista-inicio .dash-plegable > summary {
   font-size: 0.9rem;
   font-weight: 700;
   color: var(--text);
+  margin: 0;
 }
 
 .dash-plegable-hint {

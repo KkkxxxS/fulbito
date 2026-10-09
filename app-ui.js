@@ -41,9 +41,9 @@
               <span class="badge-nobet-tag">NO BET</span>
             </div>
           </div>
-          <span class="fila-titulo">${datos.titulo}</span>
+          <span class="fila-titulo">${escaparHTML(datos.titulo)}</span>
           <div class="fila-mercado-cuerpo">
-            <p class="fila-mercado-nombre">${datos.mercado}</p>
+            <p class="fila-mercado-nombre">${escaparHTML(datos.mercado)}</p>
             <p class="fila-seleccion">Sin apuesta disponible</p>
           </div>
           <div class="fila-nobet-detalle">
@@ -55,8 +55,8 @@
     }
     const conf = obtenerConfianza(datos);
     const cuota = cuotaImplicita(datos.probabilidad);
-    const contextoTxt = datos.contexto ? `<div class="fila-contexto-block"><span class="contexto-label">Contexto:</span> ${datos.contexto}</div>` : '';
-    const explicacionTxt = datos.explicacion ? `<div class="fila-explicacion-block"><span class="explicacion-label">ExplicaciÃ³n:</span> ${datos.explicacion}</div>` : '';
+    const contextoTxt = datos.contexto ? `<div class="fila-contexto-block"><span class="contexto-label">Contexto:</span> ${escaparHTML(datos.contexto)}</div>` : '';
+    const explicacionTxt = datos.explicacion ? `<div class="fila-explicacion-block"><span class="explicacion-label">ExplicaciÃ³n:</span> ${escaparHTML(datos.explicacion)}</div>` : '';
 
     return `
       <div class="fila-mercado motion-card mercado-${datos.tipo} ${esPrincipal ? 'mercado-principal motion-pop' : ''}">
@@ -72,16 +72,16 @@
             ${botonMiPrediccion(partidoId, datos.categoria)}
           </div>
         </div>
-        <span class="fila-titulo">${datos.titulo}</span>
+        <span class="fila-titulo">${escaparHTML(datos.titulo)}</span>
         <div class="barra-probabilidad">
           <div class="barra-relleno conf-${conf.clase}" style="width:${datos.probabilidad}%"></div>
         </div>
         <div class="fila-mercado-cuerpo">
-          <p class="fila-mercado-nombre">${datos.mercado}</p>
-          <p class="fila-seleccion">${datos.seleccion}</p>
+          <p class="fila-mercado-nombre">${escaparHTML(datos.mercado)}</p>
+          <p class="fila-seleccion">${escaparHTML(datos.seleccion)}</p>
         </div>
         ${explicacionTxt}
-        <div class="fila-razones">${(datos.razones || []).map(r => `<p class="fila-razon">+ ${r}</p>`).join('')}</div>
+        <div class="fila-razones">${(datos.razones || []).map(r => `<p class="fila-razon">+ ${escaparHTML(r)}</p>`).join('')}</div>
         <div class="fila-mercado-footer">
           <span class="cuota-implicita-tag" title="Cuota justa segÃºn probabilidad real estimada">Cuota justa: <strong>@${cuota}</strong></span>
         </div>
@@ -94,10 +94,10 @@
     return `
       <div class="combo-partido">
         <div class="combo-partido-header">
-          <span>${puntos}${combo.titulo}</span>
+          <span>${puntos}${escaparHTML(combo.titulo)}</span>
           <span class="combo-partido-pct">${combo.probabilidad}%</span>
         </div>
-        <p class="combo-partido-partes">${combo.partes.join(' + ')}</p>
+        <p class="combo-partido-partes">${escaparHTML(combo.partes.join(' + '))}</p>
       </div>
     `;
   }
@@ -124,7 +124,7 @@
       <div class="tarjeta-partido" data-partido-id="${partido.id}">
         <div class="tarjeta-partido-topbar">
           <div class="partido-topbar-izq">
-            <span class="partido-liga-tag">${liga}</span>
+            <span class="partido-liga-tag">${escaparHTML(liga)}</span>
             <span class="partido-fecha-tag">${fechaTexto} Â· ${horaTexto}</span>
           </div>
           <div class="partido-topbar-der">
@@ -138,7 +138,7 @@
             <span class="vs-circulo">VS</span>
             <div class="marcador-estimado-badge" title="Marcador mÃ¡s probable estimado por el modelo">
               <span class="marcador-estimado-label">Estimado</span>
-              <strong class="marcador-estimado-val">${pronosticos.marcadorProbable}</strong>
+              <strong class="marcador-estimado-val">${escaparHTML(pronosticos.marcadorProbable)}</strong>
             </div>
           </div>
           ${bloqueEquipoHTML(visita, statsVisita, 'alineacion-der', partido.awayTeam.crest, tabla, partido.awayTeam.id)}
@@ -165,7 +165,7 @@
 
         <button class="boton-expandir" onclick="toggleCatalogo(${partido.id})">Ver los ${pronosticos.catalogoCompleto.length} mercados evaluados</button>
         <div class="catalogo-completo" id="catalogo-${partido.id}" style="display:none;">
-        ${(pronosticos.catalogoCompleto || []).map(c => `<div class="catalogo-fila"><span>${c.seleccion}</span></div>`).join('')}
+        ${(pronosticos.catalogoCompleto || []).map(c => `<div class="catalogo-fila"><span>${escaparHTML(c.seleccion)}</span></div>`).join('')}
       </div>
     </div>`;
 }
@@ -284,7 +284,7 @@
       <div class="pierna-combinada">
         <span class="num">${idx + 1}</span>
         ${puntoMercado(p.tipo)}
-        <span class="detalle"><strong>${p.equipos}</strong><br>${p.mercado}: ${p.seleccion}</span>
+        <span class="detalle"><strong>${escaparHTML(p.equipos)}</strong><br>${escaparHTML(p.mercado)}: ${escaparHTML(p.seleccion)}</span>
         <span class="pct">${p.probabilidad}%</span>
       </div>
     `).join('');
@@ -1023,15 +1023,15 @@
       const itemsMercados = mercadosAMostrar.map(m => `
         <span class="historial-mercado-item ${m.acierto ? 'acierto' : 'fallo'}">
           <span class="historial-mercado-check">${m.acierto ? 'âœ“' : 'âœ•'}</span>
-          ${m.seleccion}
+          ${escaparHTML(m.seleccion)}
         </span>
       `).join('');
 
       return `
         <div class="historial-partido">
           <div class="historial-partido-header">
-            <span class="historial-partido-equipos"><strong>${h.local} vs ${h.visita}</strong></span>
-            <span class="historial-partido-marcador">${h.marcadorFinal}</span>
+            <span class="historial-partido-equipos"><strong>${escaparHTML(h.local)} vs ${escaparHTML(h.visita)}</strong></span>
+            <span class="historial-partido-marcador">${escaparHTML(h.marcadorFinal)}</span>
             <span class="historial-partido-badge ${claseBadge}">${aciertos}/${total}</span>
           </div>
           <div class="historial-partido-mercados">${itemsMercados}</div>
@@ -1046,7 +1046,7 @@
 
     const filasCategorias = categoriasAMostrar.map(c => `
       <div class="fila-mercado mercado-${c.categoria}">
-        <span class="fila-titulo">${c.titulo}</span>
+        <span class="fila-titulo">${escaparHTML(c.titulo)}</span>
         <span class="fila-porcentaje">${c.porcentaje}%</span>
         <p class="fila-mercado-nombre">acierto real verificado</p>
       </div>
@@ -1161,16 +1161,16 @@
     return `
       <div class="eval-historial-fila">
         <div class="eval-historial-liga">
-          <span>${ev.liga}</span>
+          <span>${escaparHTML(ev.liga)}</span>
           <span class="badge-final">FINAL</span>
         </div>
         <div class="eval-historial-cuerpo">
           <div class="eval-historial-partido">
-            <strong>${ev.local}</strong>
-            <span class="eval-marcador">${ev.marcadorFinal || 'â€”'}</span>
-            <strong>${ev.visita}</strong>
+            <strong>${escaparHTML(ev.local)}</strong>
+            <span class="eval-marcador">${escaparHTML(ev.marcadorFinal) || '&#8212;'}</span>
+            <strong>${escaparHTML(ev.visita)}</strong>
           </div>
-          <p class="eval-mercado-titulo">${CATEGORIAS_MERCADO[ev.categoria]?.titulo || ev.categoria} Â· <em>${ev.seleccion}</em></p>
+          <p class="eval-mercado-titulo">${CATEGORIAS_MERCADO[ev.categoria]?.titulo || ev.categoria} Â· <em>${escaparHTML(ev.seleccion)}</em></p>
         </div>
         <div class="eval-historial-resultado">
           <span class="eval-icono ${gano ? 'ok' : 'no'}">${gano ? 'âœ“' : 'âœ•'}</span>
@@ -1197,7 +1197,7 @@
             <div class="historial-pendientes-lista">
               ${pendientes.slice(0, 8).map(p => `
                 <div class="historial-pendiente">
-                  <span class="historial-pendiente-equipos">${p.local} vs ${p.visita}</span>
+                  <span class="historial-pendiente-equipos">${escaparHTML(p.local)} vs ${escaparHTML(p.visita)}</span>
                   <span class="historial-pendiente-fecha">${new Date(p.fecha).toLocaleDateString('es-PE', { day: '2-digit', month: 'short' })}</span>
                 </div>
               `).join('')}
@@ -1246,7 +1246,7 @@
           <button class="boton-reiniciar" onclick="reiniciarHistorial()">Reiniciar historial</button>
         </div>
       </div>
-      <p class="historial-conteo-resultados">${evaluaciones.length} picks encontrados${terminoBusqueda ? ` para "${terminoBusqueda}"` : ''}</p>
+      <p class="historial-conteo-resultados">${evaluaciones.length} picks encontrados${terminoBusqueda ? ` para "${escaparHTML(terminoBusqueda)}"` : ''}</p>
       <div class="lista-eval-historial">
         ${mostrar.length > 0 ? mostrar.map(filaEvaluacionHistorialHTML).join('') : `<p style="text-align:center; color:var(--text-dim); padding:20px 0;">NingÃºn pick coincide con este filtro.</p>`}
       </div>
@@ -1361,7 +1361,7 @@
       const accionFecha = (!terminoBusqueda && filtroRapidoActual !== 'favoritos' && (esHoy || esManana))
         ? `<div style="margin-top:12px;"><button class="boton-reintentar" onclick="document.querySelectorAll('.pestaÃ±a')[${esHoy ? 1 : 2}]?.click()">Ver ${esHoy ? 'MaÃ±ana' : 'Esta semana'}</button></div>`
         : '';
-      contenedor.innerHTML = `${partidosModoDemo ? avisoDatosDemoHTML() : ''}<div class="estado-vacio" style="text-align:center; color:#8fa896;"><p style="margin:0;">${mensaje}</p>${accionFecha}</div>`;
+      contenedor.innerHTML = `${partidosModoDemo ? avisoDatosDemoHTML() : ''}<div class="estado-vacio" style="text-align:center; color:#8fa896;"><p style="margin:0;">${escaparHTML(mensaje)}</p>${accionFecha}</div>`;
       requestAnimationFrame(() => contenedor.classList.add('visible'));
       document.getElementById('bloque-combinadas').innerHTML = '';
       return;
@@ -1436,18 +1436,18 @@
     const itemsMercados = h.mercados.map(m => `
       <span class="historial-mercado-item ${m.acierto ? 'acierto' : 'fallo'}">
         <span class="historial-mercado-check">${m.acierto ? 'âœ“' : 'âœ•'}</span>
-        ${m.seleccion}
+        ${escaparHTML(m.seleccion)}
       </span>
     `).join('');
 
     return `
       <div class="historial-partido">
         <div class="historial-partido-header">
-          <span class="historial-partido-equipos"><strong>${h.local} vs ${h.visita}</strong></span>
-          <span class="historial-partido-marcador">${h.marcadorFinal}</span>
+          <span class="historial-partido-equipos"><strong>${escaparHTML(h.local)} vs ${escaparHTML(h.visita)}</strong></span>
+          <span class="historial-partido-marcador">${escaparHTML(h.marcadorFinal)}</span>
           <span class="historial-partido-badge ${claseBadge}">${aciertos}/${total}</span>
         </div>
-        <p class="info-partido" style="margin:0 0 8px;">${h.liga}</p>
+        <p class="info-partido" style="margin:0 0 8px;">${escaparHTML(h.liga)}</p>
         <div class="historial-partido-mercados">${itemsMercados}</div>
       </div>
     `;
@@ -1468,7 +1468,7 @@
 
     const partidos = await obtenerPartidosFinalizados(formatearFecha(hace7dias), formatearFecha(hoy));
     if (partidos.error) {
-      contenedor.innerHTML = `<p style="text-align:center; color:#ff6b6b;">Error: ${partidos.mensaje}</p>`;
+      contenedor.innerHTML = `<p style="text-align:center; color:#ff6b6b;">Error: ${escaparHTML(partidos.mensaje)}</p>`;
       requestAnimationFrame(() => contenedor.classList.add('visible'));
       return;
     }
@@ -1498,7 +1498,7 @@
       const mensaje = terminoBusqueda
         ? `No encontramos partidos finalizados que coincidan con "${terminoBusqueda}".`
         : 'TodavÃ­a no hay partidos finalizados y verificados en los Ãºltimos 7 dÃ­as. A medida que veas partidos en "Hoy"/"MaÃ±ana" y esos terminen, van a aparecer acÃ¡ con su resultado real.';
-      contenedor.innerHTML = `<p style="text-align:center; color:#8fa896;">${mensaje}</p>`;
+      contenedor.innerHTML = `<p style="text-align:center; color:#8fa896;">${escaparHTML(mensaje)}</p>`;
       requestAnimationFrame(() => contenedor.classList.add('visible'));
       return;
     }
@@ -1633,7 +1633,7 @@
       partidos = PARTIDOS_FALLBACK;
     }
     if (partidos.error) {
-      contenedor.innerHTML = `<p style="text-align:center; color:#ff6b6b;">Error: ${partidos.mensaje}</p>`;
+      contenedor.innerHTML = `<p style="text-align:center; color:#ff6b6b;">Error: ${escaparHTML(partidos.mensaje)}</p>`;
       requestAnimationFrame(() => contenedor.classList.add('visible'));
       return;
     }
@@ -1682,7 +1682,7 @@
 
     const partidos = await obtenerPartidos(formatearFecha(hoy), formatearFecha(fin));
     if (partidos.error) {
-      contenedor.innerHTML = `<p style="text-align:center; color:#ff6b6b;">Error: ${partidos.mensaje}</p>`;
+      contenedor.innerHTML = `<p style="text-align:center; color:#ff6b6b;">Error: ${escaparHTML(partidos.mensaje)}</p>`;
       return;
     }
     // Backend caÃ­do: los partidos son demo y la lista tiene que avisarlo.
@@ -1712,7 +1712,7 @@
         : partidosModoDemo
         ? 'Sin conexiÃ³n con el servidor no podemos confirmar si tus equipos favoritos juegan en los prÃ³ximos 7 dÃ­as.'
         : 'Tus equipos favoritos no juegan en los prÃ³ximos 7 dÃ­as.';
-      contenedor.innerHTML = `${partidosModoDemo ? avisoDatosDemoHTML() : ''}<p style="text-align:center; color:#8fa896;">${mensaje}</p>`;
+      contenedor.innerHTML = `${partidosModoDemo ? avisoDatosDemoHTML() : ''}<p style="text-align:center; color:#8fa896;">${escaparHTML(mensaje)}</p>`;
       return;
     }
 

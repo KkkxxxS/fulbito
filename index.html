@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es-PERU">
+<html lang="es-PE">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,15 +9,24 @@
     <meta property="og:title" content="Fulbito - Pronósticos de fútbol">
     <meta property="og:description" content="Pronósticos de fútbol basados en un modelo estadístico real, con historial de aciertos verificado.">
     <meta property="og:type" content="website">
+    <meta property="og:url" content="https://kkkxxxs.github.io/fulbito/">
     <meta property="og:image" content="https://kkkxxxs.github.io/fulbito/icon-512.png">
+    <meta property="og:site_name" content="Fulbito">
+    <meta property="og:locale" content="es_PE">
 
     <meta name="twitter:card" content="summary">
     <meta name="twitter:title" content="Fulbito - Pronósticos de fútbol">
     <meta name="twitter:description" content="Pronósticos de fútbol basados en un modelo estadístico real, con historial de aciertos verificado.">
+    <meta name="twitter:image" content="https://kkkxxxs.github.io/fulbito/icon-512.png">
 
     <meta name="theme-color" content="#0a0f1c">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://fulbito-forh.onrender.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Fulbito">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="dns-prefetch" href="https://fulbito-forh.onrender.com">
@@ -42,11 +51,47 @@
       "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
     }
     </script>
+    <script>
+      // Red de seguridad: si un script crítico falla, mostramos un aviso visible
+      // en vez de dejar la interfaz a medias o en blanco.
+      (function () {
+        window.__fulbitoErrorMostrado = false;
+        window.__fulbitoMostrarError = function (detalle) {
+          if (window.__fulbitoErrorMostrado) return;
+          window.__fulbitoErrorMostrado = true;
+          var pintar = function () {
+            var el = document.createElement('div');
+            el.setAttribute('role', 'alert');
+            el.style.cssText = 'position:fixed;left:12px;right:12px;bottom:12px;z-index:99999;background:#3a1416;border:1px solid #ff6b6b;color:#ffd7d7;padding:12px 14px;border-radius:12px;font:14px/1.4 system-ui,sans-serif;display:flex;gap:12px;align-items:center;justify-content:space-between;box-shadow:0 10px 30px rgba(0,0,0,0.5);';
+            el.innerHTML = '<span>Algo falló al cargar Fulbito.' + (detalle ? ' Detalle: ' + detalle : '') + '</span><button onclick="location.reload()" style="background:#ff6b6b;color:#170708;border:0;padding:8px 12px;border-radius:8px;font-weight:700;cursor:pointer;">Recargar</button>';
+            (document.body || document.documentElement).appendChild(el);
+          };
+          if (document.body) pintar();
+          else document.addEventListener('DOMContentLoaded', pintar);
+        };
+        window.addEventListener('error', function (e) {
+          if (e && typeof e.message === 'string' && e.message) window.__fulbitoMostrarError(e.message);
+        });
+        window.addEventListener('unhandledrejection', function (e) {
+          var r = e && e.reason;
+          if (r && r.name === 'AbortError') return;
+          window.__fulbitoMostrarError((r && r.message) || '');
+        });
+      })();
+    </script>
     <script src="menu-toggle.js" defer></script>
+    <script src="i18n.js" defer></script>
+    <script src="auth.js" defer></script>
     <script src="app-animaciones.js?v=1" defer></script>
     <!-- ... existing head content ... -->
 </head>
 <body data-tema="oscuro" data-idioma="es">
+
+<noscript>
+  <div style="position:fixed;left:12px;right:12px;top:12px;z-index:99999;background:#3a1416;border:1px solid #ff6b6b;color:#ffd7d7;padding:12px 14px;border-radius:12px;font:14px/1.4 system-ui,sans-serif;text-align:center;">
+    Fulbito necesita JavaScript para funcionar. Activá JavaScript en tu navegador y recargá la página.
+  </div>
+</noscript>
 
 <!-- ============ SIDEBAR PRINCIPAL (estilo dashboard ChocoBets) ============ -->
 <aside class="app-nav dash-sidebar" id="app-nav">
@@ -60,7 +105,7 @@
 
     <div class="app-nav-buscador dash-buscador">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-        <input type="search" id="input-busqueda" placeholder="Buscar equipo o liga…" oninput="onBuscar(this.value)">
+        <input type="search" id="input-busqueda" placeholder="Buscar equipo o liga…" data-i18n-placeholder="buscarPlaceholder" oninput="onBuscar(this.value)">
     </div>
 
     <button class="app-nav-hamburguesa" id="boton-menu-movil" onclick="toggleMenuMovil()" aria-label="Abrir menú">
@@ -161,7 +206,7 @@
         <div class="dash-header-acciones">
             <div class="dash-buscador">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-                <input type="search" id="input-busqueda-dash" placeholder="Buscar equipo o liga…" oninput="sincronizarBusquedaDashboard(this.value)">
+                <input type="search" id="input-busqueda-dash" placeholder="Buscar equipo o liga…" data-i18n-placeholder="buscarPlaceholder" oninput="sincronizarBusquedaDashboard(this.value)">
             </div>
             <div class="dash-perfil-wrap">
                 <button class="dash-perfil" id="btn-perfil" type="button" onclick="alternarPerfil(event)" aria-expanded="false" title="Perfil y ajustes" aria-haspopup="true" aria-label="Perfil de usuario">
@@ -176,6 +221,10 @@
                     <button class="dash-perfil-item" type="button" role="menuitem" onclick="cambiarVista('favoritos')">Equipos favoritos</button>
                     <button class="dash-perfil-item" type="button" role="menuitem" onclick="cambiarVista('historial')">Historial público</button>
                     <button class="dash-perfil-item" type="button" role="menuitem" onclick="exportarDatos()">Exportar mis datos</button>
+                    <button class="dash-perfil-item" type="button" role="menuitem" onclick="alternarIdioma()">Idioma / Language: <strong id="idioma-actual">ES</strong></button>
+                </div>
+                <div id="perfil-auth-panel" style="border-top:1px solid var(--line); margin-top:8px; padding-top:8px;">
+                    <div id="auth-info-sesion"></div>
                 </div>
             </div>
         </div>
@@ -193,7 +242,7 @@
                     <span class="dash-kpi-chip neutral" id="kpi-aciertos-chip">Sin datos</span>
                 </div>
                 <span class="dash-kpi-label" data-i18n="kpiAciertos">Aciertos <span class="dash-tip" data-tip="% de mercados acertados sobre picks ya liquidados contra el resultado real.">?</span></span>
-                <strong class="dash-kpi-valor" id="kpi-aciertos">—</strong>
+                <strong class="dash-kpi-valor" id="kpi-aciertos" aria-live="polite">—</strong>
                 <span class="dash-kpi-pie" id="kpi-verificados">Sin datos todavía</span>
                 <div class="dash-kpi-barra"><span id="kpi-aciertos-barra" style="width:0%;"></span></div>
             </div>
@@ -216,7 +265,7 @@
 
         <!-- KPI Predicciones Hoy: Mediano / Acción -->
         <article class="bento-item kpi-card-accion">
-            <div class="dash-kpi dash-kpi-accion" role="button" tabindex="0" onclick="cambiarVista('pronosticos')" onkeypress="if(event.key==='Enter')cambiarVista('pronosticos')" title="Ir a las recomendaciones activas de hoy">
+            <div class="dash-kpi dash-kpi-accion" role="button" tabindex="0" onclick="cambiarVista('pronosticos')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();cambiarVista('pronosticos')}" title="Ir a las recomendaciones activas de hoy">
                 <div class="dash-kpi-top">
                     <span class="dash-kpi-icono rosa">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v4"/><path d="M12 17v4"/><path d="M3 12h4"/><path d="M17 12h4"/><path d="m6.3 6.3 2.8 2.8"/><path d="m14.9 14.9 2.8 2.8"/><path d="m17.7 6.3-2.8 2.8"/><path d="m9.1 14.9-2.8 2.8"/></svg>
@@ -224,7 +273,7 @@
                     <span class="dash-kpi-chip rosa" data-i18n="kpiHoyChip">Ver</span>
                 </div>
                 <span class="dash-kpi-label" data-i18n="kpiHoy">Predicciones hoy <span class="dash-tip" data-tip="Recomendaciones activas del motor para la jornada de hoy (9 mercados por partido).">?</span></span>
-                <strong class="dash-kpi-valor" id="kpi-hoy">…</strong>
+                <strong class="dash-kpi-valor" id="kpi-hoy" aria-live="polite">…</strong>
                 <span class="dash-kpi-pie" id="kpi-hoy-pie">Cargando la jornada de hoy…</span>
             </div>
         </article>
@@ -306,14 +355,14 @@
     <div class="dash-plegables">
     <details class="dash-plegable" id="plegable-desempeno">
         <summary>
-            <span class="dash-plegable-titulo">Tu desempeño</span>
+            <h2 class="dash-plegable-titulo">Tu desempeño</h2>
             <span class="dash-plegable-hint">Tus picks vs el modelo</span>
             <span class="dash-plegable-chevron" aria-hidden="true">⌄</span>
         </summary>
         <div class="dash-plegable-cuerpo">
         <div class="dashboard-personal">
         <div class="dashboard-titulo">
-            <h2>Tu desempeño</h2>
+            <h3>Tu desempeño</h3>
             <p>Cómo te fue con tus predicciones vs cómo le fue a Fulbito</p>
         </div>
         <div class="dashboard-grid">
@@ -345,14 +394,14 @@
     <!-- SALUD DEL MOTOR AVANZADA (plegable, abierta por defecto: su contenido existe aunque no haya verificados) -->
     <details class="dash-plegable" id="plegable-salud" open>
         <summary>
-            <span class="dash-plegable-titulo">Salud del motor Fulbito</span>
+            <h2 class="dash-plegable-titulo">Salud del motor Fulbito</h2>
             <span class="dash-plegable-hint">Calibración verificable · Brier Score</span>
             <span class="dash-plegable-chevron" aria-hidden="true">⌄</span>
         </summary>
         <div class="dash-plegable-cuerpo">
         <div class="motor-health-section">
         <div class="motor-health-header">
-            <h2>Salud del motor Fulbito</h2>
+            <h3>Salud del motor Fulbito</h3>
             <p>Calibración verificable de nuestro modelo</p>
         </div>
         <div class="motor-health-grid">
@@ -679,7 +728,7 @@
         <h2 data-i18n="liveTitulo">Qué se juega hoy, en orden cronológico</h2>
         <p class="subtitulo-vista" data-i18n="liveSub">Partidos en juego y próximos del día, con la confianza del motor. Se refresca automáticamente cada 3 minutos.</p>
     </div>
-    <div class="dash-mini-kpis" id="live-resumen"></div>
+    <div class="dash-mini-kpis" id="live-resumen" aria-live="polite"></div>
     <div id="contenedor-live" class="dash-live-lista"></div>
 </section>
 
@@ -737,13 +786,53 @@
 
 <footer class="pie-pagina">
     <p>Fulbito ofrece pronósticos basados en un modelo estadístico, no garantías de resultado. Ningún pronóstico asegura ganancias. Si apuestas, hazlo solo con dinero que puedas permitirte perder, y solo si eres mayor de 18 años.</p>
+    <p class="pie-pagina-enlaces"><a href="privacidad.html">Privacidad</a> · <a href="terminos.html">Términos de uso</a> · <a href="https://github.com/kkkxxxs/fulbito">Código</a></p>
 </footer>
 
 <input type="file" id="input-importar-datos" accept="application/json" style="display:none" onchange="importarDatos(event)">
 
+<!-- MODAL DE CUENTA (auth) -->
+<div id="modal-auth" class="modal-overlay" style="display:none; position:fixed; inset:0; background:rgba(3,7,11,0.92); z-index:9999; align-items:center; justify-content:center; padding:16px; overflow-y:auto;">
+    <div class="modal-container" style="background:#0f172a; border:1px solid var(--card-border); border-radius:var(--radius-lg); width:100%; max-width:420px; display:flex; flex-direction:column; box-shadow:0 25px 50px -12px rgba(0,0,0,0.9); overflow:hidden; margin:auto; position:relative;">
+        <div style="padding:20px 24px; border-bottom:1px solid var(--line); background:var(--bg-raised); display:flex; justify-content:space-between; align-items:center;">
+            <div>
+                <h3 style="margin:0; color:var(--text); font-size:1.1rem;">Tu cuenta</h3>
+                <p style="margin:6px 0 0; color:var(--text-muted); font-size:0.82rem;">Opcional: guardá tu historial personal en la nube para conservarlo entre dispositivos.</p>
+            </div>
+            <button onclick="cerrarModalAuth()" style="background:none; border:none; color:var(--text-muted); font-size:1.5rem; cursor:pointer; padding:4px 8px;">&times;</button>
+        </div>
+        <div style="padding:20px 24px; display:flex; flex-direction:column; gap:18px;">
+            <div style="display:flex; gap:8px;">
+                <button id="tab-login" type="button" data-modo-auth="login" style="flex:1; background:rgba(100,228,169,0.18); border:1px solid rgba(100,228,169,0.35); color:#64e4a9; padding:10px 14px; border-radius:var(--radius-sm); font-weight:700; cursor:pointer;">Entrar</button>
+                <button id="tab-register" type="button" data-modo-auth="register" style="flex:1; background:rgba(255,255,255,0.06); border:1px solid var(--line); color:var(--text); padding:10px 14px; border-radius:var(--radius-sm); font-weight:700; cursor:pointer;">Crear cuenta</button>
+            </div>
+            <form id="form-auth" onsubmit="enviarAuth(event, (this.dataset.modo || 'login'))">
+                <label style="display:block; font-size:0.85rem; color:var(--text-muted); margin-bottom:6px;">Usuario (3-32: letras, números, _ . -)</label>
+                <input type="text" name="usuario" inputmode="latin" autocomplete="username" required pattern="[a-zA-Z0-9_.-]{3,32}" style="width:100%; background:rgba(255,255,255,0.06); border:1px solid var(--line); color:var(--text); padding:10px 12px; border-radius:var(--radius-sm); font-size:0.95rem; margin-bottom:12px;" placeholder="ej. kkkxxxs">
+                <label style="display:block; font-size:0.85rem; color:var(--text-muted); margin-bottom:6px;">Contraseña (≥ 8)</label>
+                <input type="password" name="password" id="auth-password" autocomplete="current-password" required minlength="8" style="width:100%; background:rgba(255,255,255,0.06); border:1px solid var(--line); color:var(--text); padding:10px 12px; border-radius:var(--radius-sm); font-size:0.95rem;" placeholder="••••••••">
+                <p id="auth-mensaje" style="min-height:1.25rem; margin:10px 0 0; font-size:0.85rem; color:#ff8d8d;"></p>
+                <div style="display:flex; gap:8px; margin-top:12px;">
+                    <button id="btn-login" type="submit" style="flex:1; background:linear-gradient(135deg, #64e4a9, #7be1c8); color:#07120d; border:none; padding:10px 16px; border-radius:var(--radius-sm); font-weight:800; cursor:pointer;">Entrar</button>
+                    <button id="btn-register" type="button" onclick="document.getElementById('form-auth').dataset.modo='register'; document.getElementById('auth-password').autocomplete='new-password'; document.getElementById('form-auth').requestSubmit();" style="flex:1; background:rgba(255,255,255,0.06); border:1px solid var(--line); color:var(--text); padding:10px 16px; border-radius:var(--radius-sm); font-weight:600; cursor:pointer;">Crear cuenta</button>
+                </div>
+            </form>
+            <p style="margin:0; font-size:0.78rem; color:var(--text-muted); line-height:1.4;">Anónimo por defecto (localStorage). La cuenta solo activa el respaldo en la DB. Anónimo +18 siempre.</p>
+        </div>
+    </div>
+</div>
+
 <script src="app-model.js?v=8"></script>
 <script src="app-ui.js?v=8"></script>
 <script src="app-init.js?v=8"></script>
+
+<script>
+  if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js').catch(() => {});
+    });
+  }
+</script>
 
 <button class="btn-volver-arriba" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="Volver arriba">↑</button>
 </body>

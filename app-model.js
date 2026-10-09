@@ -2,6 +2,66 @@
   const BACKEND_URL = "https://fulbito-forh.onrender.com";
   const COMPETICIONES = "PL,PD,BL1,SA,FL1,CL,DED,ELC,BSA,PPL";
 
+  // Escapa texto que proviene de fuentes externas (API, localStorage) antes de
+  // insertarlo en HTML. Evita inyección de markup/XSS en los innerHTML.
+  function escaparHTML(valor) {
+    if (valor === null || valor === undefined) return '';
+    return String(valor)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  // Toda llamada de red del frontend lleva un límite de tiempo: así la UI nunca
+  // se queda en "Cargando..." para siempre si el backend (Render free) no responde.
+  (function () {
+    if (typeof window === 'undefined' || !window.fetch) return;
+    const TIMEOUT_MS = 15000;
+    const fetchOriginal = window.fetch.bind(window);
+    window.fetch = function (recurso, opciones) {
+      if (typeof AbortController === 'undefined') return fetchOriginal(recurso, opciones);
+      const opts = opciones ? Object.assign({}, opciones) : {};
+      if (opts.signal) return fetchOriginal(recurso, opts);
+      const controlador = new AbortController();
+      const temporizador = setTimeout(() => controlador.abort(), TIMEOUT_MS);
+      opts.signal = controlador.signal;
+      return fetchOriginal(recurso, opts).finally(() => clearTimeout(temporizador));
+    };
+  })();
+
+  // Reporte best-effort de errores no capturados al backend (telemetría simple,
+  // sin datos personales). Se limita a unos pocos por sesión para no hacer spam.
+  (function () {
+    if (typeof window === 'undefined' || !window.addEventListener) return;
+    let reportes = 0;
+    function reportarErrorCliente(detalle, origen) {
+      if (reportes >= 5) return;
+      reportes++;
+      try {
+        window.fetch(BACKEND_URL + '/api/log', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            mensaje: String(detalle || '').slice(0, 500),
+            origen: origen,
+            url: (window.location && window.location.href) || '',
+            agente: (typeof navigator !== 'undefined' && navigator.userAgent) || ''
+          })
+        }).catch(() => {});
+      } catch (e) { /* la telemetría nunca debe romper la app */ }
+    }
+    window.addEventListener('error', function (e) {
+      if (e && typeof e.message === 'string' && e.message) reportarErrorCliente(e.message, 'error');
+    });
+    window.addEventListener('unhandledrejection', function (e) {
+      const r = e && e.reason;
+      if (r && r.name === 'AbortError') return;
+      reportarErrorCliente((r && r.message) || 'promise', 'unhandledrejection');
+    });
+  })();
+
   /**
    * GlowCard Implementation
    * Updates CSS custom properties based on mouse position relative to the card.
@@ -1742,12 +1802,12 @@
   }
 
   function bloqueEquipoHTML(nombre, stats, alineacion, escudoUrl, tabla, teamId) {
-    const escudo = escudoUrl ? `<img class="escudo" src="${escudoUrl}" alt="" onerror="this.style.display='none'">` : '';
+    const escudo = escudoUrl ? `<img class="escudo" src="${escaparHTML(escudoUrl)}" alt="" onerror="this.style.display='none'">` : '';
     return `
       <div class="equipo-info ${alineacion}">
         ${escudo}
         <div class="equipo-nombre-tend">
-          <span class="equipo">${nombre}</span>
+          <span class="equipo">${escaparHTML(nombre)}</span>
           ${iconoTendencia(stats.tendencia.direccion)}
           ${badgePosicion(tabla, teamId)}
           ${estrellaFavorito(teamId)}

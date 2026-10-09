@@ -9,6 +9,8 @@
     "test": "python test_recalibracion.py",
     "test:parity": "python test_paridad.py",
     "test:server": "node server/test-persistence.js",
+    "test:auth": "node server/test-auth.js",
+    "test:utils": "node test-frontend-utils.js",
     "verify": "node verify-model.js",
     "smoke": "node smoke-frontend.js",
     "check": "node -c app-model.js && node -c app-ui.js && node -c app-init.js && node -c app-animaciones.js && node -c menu-toggle.js && node -c sw.js && node -c server/server.js && node -c verify-model.js"

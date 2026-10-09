@@ -49,6 +49,9 @@ app.use(cors({
 const API_KEY = process.env.FOOTBALL_DATA_API_KEY;
 const BASE_URL = "https://api.football-data.org/v4";
 
+const THE_ODDS_API_KEY = process.env.THE_ODDS_API_KEY;
+const THE_ODDS_BASE_URL = "https://api.the-odds-api.com/v4";
+
 if (!API_KEY) {
   console.warn("ADVERTENCIA: falta FOOTBALL_DATA_API_KEY. Configúrala en las variables de entorno del servicio.");
 }
@@ -96,6 +99,19 @@ function cargarStorageHistorial() {
           [JSON.stringify(valor)]
         );
       },
+      async leerClave(clave) {
+        const r = await pool.query("SELECT valor FROM kv WHERE clave = $1", [clave]);
+        return r.rows.length ? r.rows[0].valor : null;
+      },
+      async guardarClave(clave, valor) {
+        await pool.query(
+          "INSERT INTO kv (clave, valor) VALUES ($1, $2) ON CONFLICT (clave) DO UPDATE SET valor = EXCLUDED.valor",
+          [clave, JSON.stringify(valor)]
+        );
+      },
+      async borrarClave(clave) {
+        await pool.query("DELETE FROM kv WHERE clave = $1", [clave]);
+      },
       cerrar: () => pool.end()
     };
   } else {
@@ -116,10 +132,32 @@ function cargarStorageHistorial() {
           "INSERT INTO kv (clave, valor) VALUES ('historial', ?) ON CONFLICT (clave) DO UPDATE SET valor = excluded.valor"
         ).run(JSON.stringify(valor));
       },
+      leerClave(clave) {
+        const fila = db.prepare("SELECT valor FROM kv WHERE clave = ?").get(clave);
+        return fila ? JSON.parse(fila.valor) : null;
+      },
+      guardarClave(clave, valor) {
+        db.prepare(
+          "INSERT INTO kv (clave, valor) VALUES (?, ?) ON CONFLICT (clave) DO UPDATE SET valor = excluded.valor"
+        ).run(clave, JSON.stringify(valor));
+      },
+      borrarClave(clave) {
+        db.prepare("DELETE FROM kv WHERE clave = ?").run(clave);
+      },
       cerrar: () => db.close()
     };
   }
   return storageHistorial;
+}
+
+async function kvLeer(clave) {
+  try { return await cargarStorageHistorial().leerClave(clave); } catch (e) { return null; }
+}
+async function kvGuardar(clave, valor) {
+  return cargarStorageHistorial().guardarClave(clave, valor);
+}
+async function kvBorrar(clave) {
+  return cargarStorageHistorial().borrarClave(clave);
 }
 
 async function guardarHistorialEnStorage(historial) {
@@ -339,8 +377,124 @@ app.put('/api/historial', requireHistorialWriteKey, (req, res) => {
   const c=req.body||{}; const historial=Array.isArray(c.historial)?c.historial:[]; if(historial.length>500)return res.status(400).json({error:'payload_too_large',message:'Máximo 500 entradas'}); const guardado=guardarHistorialGlobal(historial); res.json({ok:true,historial:guardado,total:guardado.length});
 });
 
+// ============ TELEMETRÍA DE ERRORES DEL CLIENTE ============
+// Recibe reportes best-effort de errores no capturados del frontend. No persiste
+// en DB (solo se registran en el log del servicio) y recorta todo para evitar abuso.
+const REPORTES_CLIENTE_MAX = 200;
+const reportesCliente = [];
+app.post('/api/log', (req, res) => {
+  const c = req.body || {};
+  const recortar = (v, n) => String(v == null ? '' : v).slice(0, n);
+  const registro = {
+    mensaje: recortar(c.mensaje, 500),
+    origen: recortar(c.origen, 50),
+    url: recortar(c.url, 300),
+    agente: recortar(c.agente, 300),
+    en: new Date().toISOString()
+  };
+  reportesCliente.push(registro);
+  if (reportesCliente.length > REPORTES_CLIENTE_MAX) reportesCliente.shift();
+  console.warn('[cliente]', JSON.stringify(registro));
+  res.status(202).json({ ok: true });
+});
+
 // Helper: responde con ETag para ahorrar ancho de banda cuando el cliente ya tiene la misma versión
 const crypto = require('crypto');
+
+// ============ AUTH LIGERA POR SESIÓN (sin dependencias externas) ============
+// Usuarios persistentes en la misma kv-store, tokens opacos. El flujo anónimo
+// localStorage sigue funcionando; esto es un complemento opcional que permite
+// que el historial personal sobreviva al cambio de navegador/dispositivo.
+const SAL_LONGITUD = 16;
+const PROLONGACION_SESION_MS = 30 * 24 * 60 * 60 * 1000; // 30 días
+const USUARIO_RE = /^[a-z0-9_.-]{3,32}$/;
+function claveUsuario(u) { return `usuario:${normalizarUsuario(u)}`; }
+function claveSesion(hashToken) { return `sesion:${hashToken}`; }
+function normalizarUsuario(u) { return String(u || '').trim().toLowerCase(); }
+function hashToken(token) { return crypto.createHash('sha256').update(String(token)).digest('hex'); }
+function hashPassword(password, salt) { return crypto.scryptSync(String(password), salt, 64).toString('hex'); }
+function tokenAleatorio() { return crypto.randomBytes(32).toString('hex'); }
+function uuid() { return crypto.randomUUID ? crypto.randomUUID() : crypto.randomBytes(16).toString('hex'); }
+
+async function obtenerSesion(req) {
+  const auth = req.headers['authorization'] || '';
+  const m = /^Bearer\s+(.+)$/i.exec(auth);
+  if (!m) return null;
+  const ht = hashToken(m[1].trim());
+  const ses = await kvLeer(claveSesion(ht));
+  if (!ses || !ses.expira || ses.expira < Date.now()) {
+    if (ses) await kvBorrar(claveSesion(ht));
+    return null;
+  }
+  return ses;
+}
+function requerirSesion(handler) {
+  return async (req, res, next) => {
+    try {
+      const ses = await obtenerSesion(req);
+      if (!ses) return res.status(401).json({ error: 'unauthorized', message: 'Sesión requerida (Bearer <token>)' });
+      req.sesion = ses;
+      return handler(req, res, next);
+    } catch (e) { return res.status(500).json({ error: true, message: 'Error interno' }); }
+  };
+}
+
+const RESERVA_NOMBRES = new Set(['system', 'admin', 'root', 'fulbito', 'api']);
+
+app.post('/api/auth/register', async (req, res) => {
+  const usuario = normalizarUsuario(req.body && req.body.usuario);
+  const password = String(req.body && req.body.password || '');
+  if (!USUARIO_RE.test(usuario)) return res.status(400).json({ error: 'bad_usuario', message: 'El usuario debe tener 3-32 caracteres: letras, números, _ . - .' });
+  if (RESERVA_NOMBRES.has(usuario)) return res.status(400).json({ error: 'usuario_reservado', message: 'Nombre no disponible.' });
+  if (password.length < 8) return res.status(400).json({ error: 'bad_password', message: 'La contraseña debe tener al menos 8 caracteres.' });
+  const existente = await kvLeer(claveUsuario(usuario));
+  if (existente) return res.status(409).json({ error: 'ya_existe', message: 'Ese usuario ya está registrado. Iniciá sesión en su lugar.' });
+  const salt = crypto.randomBytes(SAL_LONGITUD).toString('hex');
+  const hash = hashPassword(password, salt);
+  const id = uuid();
+  const registro = { id, usuario, salt, hash, creado: new Date().toISOString() };
+  await kvGuardar(claveUsuario(usuario), registro);
+  await kvGuardar(`usuario_id:${id}`, { usuario, id });
+  const token = tokenAleatorio(); const ht = hashToken(token);
+  await kvGuardar(claveSesion(ht), { usuarioId: id, usuario, expira: Date.now() + PROLONGACION_SESION_MS });
+  res.json({ ok: true, usuario, token });
+});
+app.post('/api/auth/login', async (req, res) => {
+  const usuario = normalizarUsuario(req.body && req.body.usuario);
+  const password = String(req.body && req.body.password || '');
+  if (!usuario || !password) return res.status(400).json({ error: 'bad_request', message: 'Faltan usuario y contraseña.' });
+  const registro = await kvLeer(claveUsuario(usuario));
+  if (!registro) return res.status(401).json({ error: 'invalid_credentials', message: 'Credenciales incorrectas.' });
+  const hash = hashPassword(password, registro.salt);
+  if (hash !== registro.hash) return res.status(401).json({ error: 'invalid_credentials', message: 'Credenciales incorrectas.' });
+  const token = tokenAleatorio(); const ht = hashToken(token);
+  await kvGuardar(claveSesion(ht), { usuarioId: registro.id, usuario: registro.usuario, expira: Date.now() + PROLONGACION_SESION_MS });
+  res.json({ ok: true, usuario: registro.usuario, token });
+});
+app.post('/api/auth/logout', async (req, res) => {
+  const auth = req.headers['authorization'] || ''; const m = /^Bearer\s+(.+)$/i.exec(auth);
+  if (m) await kvBorrar(claveSesion(hashToken(m[1].trim())));
+  res.json({ ok: true });
+});
+app.get('/api/auth/me', async (req, res) => {
+  const ses = await obtenerSesion(req);
+  if (!ses) return res.status(401).json({ error: 'unauthorized', message: 'Sesión requerida' });
+  res.json({ ok: true, usuario: ses.usuario, usuarioId: ses.usuarioId, expira: ses.expira });
+});
+function claveHistorialUsuario(usuarioId) { return `historial:${usuarioId}`; }
+app.get('/api/mi-historial', requerirSesion(async (req, res) => {
+  const historial = await kvLeer(claveHistorialUsuario(req.sesion.usuarioId));
+  res.setHeader('Cache-Control', 'private, max-age=0, no-store');
+  res.json({ ok: true, historial: Array.isArray(historial) ? historial : [] });
+}));
+app.put('/api/mi-historial', requerirSesion(async (req, res) => {
+  const historial = Array.isArray(req.body && req.body.historial) ? req.body.historial : [];
+  if (historial.length > 500) return res.status(400).json({ error: 'payload_too_large', message: 'Máximo 500 entradas' });
+  const usuarioHistorial = historial.slice(-500);
+  await kvGuardar(claveHistorialUsuario(req.sesion.usuarioId), usuarioHistorial);
+  res.json({ ok: true, historial: usuarioHistorial, total: usuarioHistorial.length });
+}));
+
 function generarETag(datos) {
   return crypto.createHash('md5').update(JSON.stringify(datos)).digest('hex').slice(0, 16);
 }
@@ -462,6 +616,46 @@ app.get('/api/liga/:code/standings', async (req, res) => {
     responderConCache(req, res, datos, 1800);
   } catch (e) {
     enviarErrorFuente(res, e, '/api/liga/:code/standings');
+  }
+});
+
+// ============ MULTISPORT (The Odds API) ============
+
+app.get('/api/sports', async (req, res) => {
+  const claveCache = 'odds-sports';
+  const cacheado = obtenerDeCache(claveCache, 24 * 60 * 60 * 1000);
+  if (cacheado) return responderConCache(req, res, cacheado, 3600);
+
+  try {
+    const url = `${THE_ODDS_BASE_URL}/sports/?apiKey=${THE_ODDS_API_KEY}`;
+    const resp = await fetch(url);
+    const datos = await resp.json();
+    if (!resp.ok) throw new Error(datos.message || 'Error de The Odds API');
+    
+    guardarEnCache(claveCache, datos);
+    responderConCache(req, res, datos, 3600);
+  } catch (e) {
+    enviarErrorFuente(res, e, '/api/sports');
+  }
+});
+
+app.get('/api/odds/:sport', async (req, res) => {
+  const { sport } = req.params;
+  const { regions = 'us', markets = 'h2h' } = req.query;
+  const claveCache = `odds-${sport}-${regions}-${markets}`;
+  const cacheado = obtenerDeCache(claveCache, 15 * 60 * 1000);
+  if (cacheado) return responderConCache(req, res, cacheado, 300);
+
+  try {
+    const url = `${THE_ODDS_BASE_URL}/sports/${sport}/odds/?apiKey=${THE_ODDS_API_KEY}&regions=${regions}&markets=${markets}`;
+    const resp = await fetch(url);
+    const datos = await resp.json();
+    if (!resp.ok) throw new Error(datos.message || 'Error de The Odds API');
+
+    guardarEnCache(claveCache, datos);
+    responderConCache(req, res, datos, 300);
+  } catch (e) {
+    enviarErrorFuente(res, e, `/api/odds/${sport}`);
   }
 });
 

@@ -28,7 +28,11 @@ jobs:
         run: npm test
       - name: Persistencia del historial del servidor (SQLite)
         run: npm run test:server
+      - name: Auth e historial personal del servidor
+        run: npm run test:auth
       - name: Verificación del modelo JS
         run: npm run verify
       - name: Smoke test del frontend
         run: npm run smoke
+      - name: Utilidades del frontend (escape/i18n)
+        run: npm run test:utils

@@ -182,8 +182,8 @@
             html += `
               <label style="display:flex; align-items:center; justify-content:space-between; gap:6px; background:var(--bg-raised); border:1px solid var(--line); border-radius:var(--radius-sm); padding:6px 10px; font-size:0.8rem; cursor:pointer; user-select:none;">
                 <div style="display:flex; align-items:center; gap:8px;">
-                  <input type="checkbox" id="${pickId}" ${isChecked ? 'checked' : ''} onchange="togglePickCombinadaManual('${pickId}', ${partido.id}, '${local.replace(/'/g, "\\'")} vs ${visita.replace(/'/g, "\\'")}', '${ligaCode}', '${mercado.seleccion.replace(/'/g, "\\'")}', '${cat}', ${prob}, ${cuota})" style="cursor:pointer; accent-color:var(--green);">
-                  <span style="color:var(--text);">${mercado.seleccion}</span>
+                  <input type="checkbox" id="${pickId}" ${isChecked ? 'checked' : ''} onchange="togglePickCombinadaManual('${pickId}', ${partido.id}, '${escaparHTML(local.replace(/'/g, "\\'"))} vs ${escaparHTML(visita.replace(/'/g, "\\'"))}', '${ligaCode}', '${escaparHTML(mercado.seleccion.replace(/'/g, "\\'"))}', '${cat}', ${prob}, ${cuota})" style="cursor:pointer; accent-color:var(--green);">
+                  <span style="color:var(--text);">${escaparHTML(mercado.seleccion)}</span>
                 </div>
                 <div style="display:flex; gap:6px; font-size:0.75rem;">
                   <span style="color:var(--green); font-weight:600;">${prob}%</span>
@@ -337,8 +337,8 @@
     const itemsHTML = picks.map(p => `
       <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 14px; background:var(--bg-raised); border:1px solid var(--line); border-radius:var(--radius-sm);">
         <div>
-          <div style="font-weight:600; color:var(--text); font-size:0.88rem;">${p.partidoTxt}</div>
-          <div style="font-size:0.8rem; color:var(--text-muted);">${p.seleccion}</div>
+          <div style="font-weight:600; color:var(--text); font-size:0.88rem;">${escaparHTML(p.partidoTxt)}</div>
+          <div style="font-size:0.8rem; color:var(--text-muted);">${escaparHTML(p.seleccion)}</div>
         </div>
         <div style="display:flex; align-items:center; gap:12px;">
           <span style="color:var(--green); font-weight:700; font-size:0.85rem;">${p.probabilidad}%</span>
@@ -843,7 +843,7 @@
     if (sinMercado && sinMercado.length > 0) {
       avisoSinMercado = `
         <div style="background:rgba(234,179,8,0.12); border:1px solid rgba(234,179,8,0.28); color:#facc15; font-size:0.78rem; padding:8px 12px; border-radius:var(--radius-sm); line-height:1.4;">
-          ⚠️ ${sinMercado.length === 1 ? '1 partido quedó fuera' : sinMercado.length + ' partidos quedaron fuera'} porque no tienen mercados disponibles: ${sinMercado.map(p => `${p.homeTeam.name} vs ${p.awayTeam.name}`).join(' · ')}.
+          ⚠️ ${sinMercado.length === 1 ? '1 partido quedó fuera' : sinMercado.length + ' partidos quedaron fuera'} porque no tienen mercados disponibles: ${sinMercado.map(p => `${escaparHTML(p.homeTeam.name)} vs ${escaparHTML(p.awayTeam.name)}`).join(' · ')}.
         </div>
       `;
     }

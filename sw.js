@@ -3,7 +3,7 @@
 // (partidos, stats, tabla de posiciones) cambian todo el tiempo y mostrar una
 // version vieja en cache seria peor que no tener nada.
 
-const CACHE_NAME = 'fulbito-shell-v8';
+const CACHE_NAME = 'fulbito-shell-v9';
 const ARCHIVOS_SHELL = [
   './',
   './index.html',
@@ -12,11 +12,15 @@ const ARCHIVOS_SHELL = [
   './favicon.ico',
   './icon-192.png',
   './icon-512.png',
+  './privacidad.html',
+  './terminos.html',
   './app-model.js',
   './app-ui.js',
   './app-init.js',
   './app-animaciones.js',
-  './menu-toggle.js'
+  './menu-toggle.js',
+  './i18n.js',
+  './auth.js'
 ];
 
 self.addEventListener('install', (event) => {
@@ -54,7 +58,7 @@ self.addEventListener('fetch', (event) => {
   // devolvemos caché instantáneamente y actualizamos en segundo plano.
   event.respondWith(
     caches.open(CACHE_NAME).then(async (cache) => {
-      const respuestaCache = await cache.match(event.request);
+      const respuestaCache = await cache.match(event.request, { ignoreSearch: true });
       const promesaRed = fetch(event.request).then((respuestaRed) => {
         if (respuestaRed && respuestaRed.ok) {
           cache.put(event.request, respuestaRed.clone());

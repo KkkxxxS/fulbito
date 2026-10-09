@@ -31,14 +31,11 @@ jobs:
           id_prop=$(grep -oP 'RECALIBRACION_PROPUESTA_NUEVA=\K.*' <<< "$salida" | head -n1 || true)
           echo "id=$id_prop" >> "$GITHUB_OUTPUT"
           cat /tmp/recalibracion.log
-      - name: Commit diario (pronosticos.json + telemetría + bitácora)
+      - name: Subir artefactos diarios a GitHub Release (evita crecimiento del repo)
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          # -f: pronosticos.json esta en .gitignore (artefacto local), el bot lo publica a proposito
-          git add -f pronosticos.json pronosticos_historicos.jsonl bitacora_recalibracion.jsonl || true
-          git diff --cached --quiet || git commit -m "bot: actualización diaria (pronosticos.json + telemetría de recalibración)"
-          git push
+          node upload-artifacts-to-release.js
       - name: Crear PR de la propuesta (aprobación manual)
         if: steps.recalibracion.outputs.id != ''
         env:
