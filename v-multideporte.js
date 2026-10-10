@@ -7,9 +7,9 @@
   window.DEPORTE_ACTUAL = window.DEPORTE_ACTUAL || 'futbol';
   const OPTIONS = {
     futbol: { titulo: 'Fútbol' },
-    basquet: { sport: 'basketball_nba', regions: 'us', markets: 'h2h', titulo: 'Básquet NBA' },
+    basquet: { sport: 'basketball_nba', regions: 'us', markets: 'h2h,spreads,totals', titulo: 'Básquet NBA' },
     tenis:   { sport: 'tennis_atp_shanghai_masters', regions: 'us', markets: 'h2h', titulo: 'Tenis ATP' },
-    voley:   { sport: 'volleyball', regions: 'us', markets: 'h2h', titulo: 'Vóley' },
+    voley:   { sport: 'volleyball_cva', regions: 'us', markets: 'h2h', titulo: 'Vóley' },
   };
 
   function backendUrl() {
@@ -23,10 +23,10 @@
 
   function promedioCuota(bookmakers) {
     if (!bookmakers || !bookmakers.length) return null;
-    const outs = bookmakers.flatMap(b => b.markets?.[0]?.outcomes || []);
-    // promedio decimal por nombre es secundario; usamos primer bookie
-    return bookmakers[0].markets?.[0]?.outcomes || [];
+    const outs = bookmakers.flatMap(b => (b.markets || []));
+    return bookmakers[0].markets || [];
   }
+
 
   // ---------- API ----------
   async function cargarOdds(deporteKey) {
@@ -39,12 +39,29 @@
   }
 
   // ---------- Render ----------
+  function marketTag(key, label) {
+    const mapa = { h2h: 'Ganador', spreads: 'Hándicap', totals: 'Total (Over/Under)' };
+    return `<span style="font-size:0.72rem; background:var(--bg-raised); border:1px solid var(--line); color:var(--text-muted); padding:2px 8px; border-radius:999px;">${escaparHTML(label || mapa[key] || key)}</span>`;
+  }
+
   function tarjetaOddsHTML(partido) {
-    const outs = promedioCuota(partido.bookmakers);
     const local = escaparHTML(partido.home_team);
     const visita = escaparHTML(partido.away_team);
-    const cuotas = outs.map(o => `<span class="hist-odds">${escaparHTML(o.name)} @ ${o.price}</span>`).join(' ');
     const fecha = new Date(partido.commence_time).toLocaleString('es-PE', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+    const bookie = (partido.bookmakers && partido.bookmakers[0]) || null;
+    const markets = bookie ? bookie.markets : [];
+    let bloquesMarkets = '';
+    if (markets.length) {
+      bloquesMarkets = markets.map(m => {
+        const label = ({ h2h: 'Ganador', spreads: 'Hándicap', totals: 'Total' }[m.key] || m.key);
+        return `<div style="margin-top:8px; background:var(--bg-raised); border:1px solid var(--line); border-radius:var(--radius-sm); padding:8px 10px; display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">
+          ${marketTag(m.key, label)}
+          <div style="display:flex; flex-wrap:wrap; gap:6px;">${(m.outcomes || []).map(o => `<span style="background:rgba(100,228,169,0.12); border:1px solid rgba(100,228,169,0.25); color:#64e4a9; padding:3px 8px; border-radius:999px; font-size:0.8rem; font-weight:700;">${escaparHTML(o.name)}${o.point != null ? ` ${o.point > 0 ? '+' : ''}${o.point}` : ''} @ ${o.price}</span>`).join(' ')}</div>
+        </div>`;
+      }).join('');
+    } else {
+      bloquesMarkets = '<em style="font-size:0.82rem; color:var(--text-muted);">Sin cuotas para este mercado</em>';
+    }
     return `
       <div class="tarjeta-partido">
         <div class="tarjeta-partido-topbar">
@@ -56,8 +73,8 @@
           <span class="vs-circulo">VS</span>
           <span class="equipo">${visita}</span>
         </div>
-        <div style="margin-top:8px; display:flex; flex-wrap:wrap; gap:8px; font-size:0.82rem;">${cuotas || '<em>Sin cuotas</em>'}</div>
-        <div style="margin-top:8px; color:var(--text-muted); font-size:0.78rem;">${partido.bookmakers?.length || 0} bookies • Valor vs cuota justa (próximamente)</div>
+        ${bloquesMarkets}
+        <div style="margin-top:8px; color:var(--text-muted); font-size:0.78rem;">${partido.bookmakers?.length || 0} bookies • Valor vs cuota justa (próximamente motor NBA/tenis/vóley)</div>
       </div>
     `;
   }
