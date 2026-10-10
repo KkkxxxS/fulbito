@@ -1449,9 +1449,13 @@
     const mejorResultado = candidatos
       .filter(c => c.categoria === 'resultado')
       .sort((a, b) => b.probabilidad - a.probabilidad)[0];
-    const mejorDoble = candidatos
-      .filter(c => c.categoria === 'doble')
-      .sort((a, b) => b.probabilidad - a.probabilidad)[0];
+    // Doble oportunidad del lado del favorito (1X o X2): más
+    // informativa que el '12', que casi siempre es ~74%.
+    const pL = (candidatos.find(c => c.categoria === 'resultado' && c.parametros.lado === 'local') || {}).probabilidad ?? 0.33;
+    const pV = (candidatos.find(c => c.categoria === 'resultado' && c.parametros.lado === 'visita') || {}).probabilidad ?? 0.33;
+    const ladoDoble = pL >= pV ? '1X' : 'X2';
+    const mejorDoble = candidatos.find(c => c.categoria === 'doble' && c.parametros.lado === ladoDoble)
+      || candidatos.find(c => c.categoria === 'doble' && c.parametros.lado !== '12');
 
     if (mejorResultado && mejorDoble) {
       const relacionada = mejorResultado.parametros.lado === 'local' ? '1X'

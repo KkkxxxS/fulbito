@@ -916,13 +916,18 @@ class ModeloEstadistico:
             else:
                 agregar_candidato(mejor_resultado)
         elif es_muy_parejo:
-            mejor_doble = next((c for c in candidatos if c['categoria'] == 'doble' and c['parametros']['lado'] == '12'), None) or \
-                          next((c for c in candidatos if c['categoria'] == 'doble'), None)
+            # Doble oportunidad del lado del favorito (1X o X2):
+            # más informativa que el '12', que casi siempre es ~74%.
+            lado_doble = '1X' if p_local >= p_visita else 'X2'
+            mejor_doble = next((c for c in candidatos if c['categoria'] == 'doble' and c['parametros']['lado'] == lado_doble), None) or \
+                          next((c for c in candidatos if c['categoria'] == 'doble' and c['parametros']['lado'] != '12'), None)
             if not agregar_candidato(mejor_doble):
                 agregar_candidato(next((c for c in candidatos if c['categoria'] == 'resultado'), None))
         else:
             mejor_resultado = next((c for c in candidatos if c['categoria'] == 'resultado'), None)
-            mejor_doble = next((c for c in candidatos if c['categoria'] == 'doble'), None)
+            lado_doble = '1X' if p_local >= p_visita else 'X2'
+            mejor_doble = next((c for c in candidatos if c['categoria'] == 'doble' and c['parametros']['lado'] == lado_doble), None) or \
+                          next((c for c in candidatos if c['categoria'] == 'doble' and c['parametros']['lado'] != '12'), None)
             if mejor_resultado and mejor_doble:
                 relacionada = '1X' if mejor_resultado['parametros']['lado'] == 'local' else 'X2' if mejor_resultado['parametros']['lado'] == 'visita' else None
                 doble_relacionada = next((c for c in candidatos if c['categoria'] == 'doble' and c['parametros']['lado'] == relacionada), None)

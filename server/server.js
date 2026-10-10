@@ -619,6 +619,32 @@ app.get('/api/liga/:code/standings', async (req, res) => {
   }
 });
 
+// ============ NORMALIZADOR DE APIS (Factory) ============
+function normalizarPartidos(partidos, provider) {
+  if (provider === 'the-odds') {
+    return partidos.map(p => ({
+      id: p.id,
+      sport: p.sport_key,
+      fecha: p.commence_time,
+      local: p.home_team,
+      visita: p.away_team,
+      bookmakers: p.bookmakers.map(b => ({
+        titulo: b.title,
+        mercados: b.markets.map(m => ({
+          tipo: m.key,
+          titulo: m.key.toUpperCase(),
+          outcomes: m.outcomes.map(o => ({
+            nombre: o.name,
+            precio: o.price,
+            punto: o.point || null
+          }))
+        }))
+      }))
+    }));
+  }
+  return partidos;
+}
+
 // ============ MULTISPORT (The Odds API) ============
 
 app.get('/api/sports', async (req, res) => {
@@ -639,9 +665,63 @@ app.get('/api/sports', async (req, res) => {
   }
 });
 
+// The Odds API no cubre vóley: la fuente se conecta por RapidAPI con
+// env vars del entorno (RAPIDAPI_KEY + RAPIDAPI_VOLLEY_HOST + RAPIDAPI_VOLLEY_PATH).
+// Sin configuración responde 503 "sin_cobertura" para mostrar un estado
+// amigable en vez de un error crudo.
+async function cargarOddsVolley() {
+  const host = process.env.RAPIDAPI_VOLLEY_HOST;
+  if (!host) return null;
+  const apiHost = host.startsWith('http') ? host : `https://${host}`;
+  const ruta = process.env.RAPIDAPI_VOLLEY_PATH || '/matches/upcoming';
+  const resp = await fetch(`${apiHost}${ruta}`, {
+    headers: {
+      'x-rapidapi-key': process.env.RAPIDAPI_KEY || '',
+      'x-rapidapi-host': host
+    }
+  });
+  if (!resp.ok) throw new Error(`API de vóley respondió ${resp.status}`);
+  const datos = await resp.json();
+  // El formato depende del proveedor: buscamos un array de partidos con
+  // equipos local/visita en las claves más comunes.
+  const lista = Array.isArray(datos) ? datos : (datos.response || datos.data || datos.matches || []);
+  return lista.map(m => ({
+    id: String(m.id || m.fixture || m.match_id || Math.random()),
+    home_team: m.home_team || m.home || m.local || (m.teams && (m.teams.home || m.teams.local)) || 'Local',
+    away_team: m.away_team || m.away || m.visitante || m.visit || (m.teams && (m.teams.away || m.teams.visitante)) || 'Visita',
+    commence_time: m.commence_time || m.date || m.fecha || m.start_date || new Date().toISOString(),
+    sport_key: 'volleyball',
+    sport_title: 'Vóley',
+    bookmakers: m.bookmakers || []
+  }));
+}
+
 app.get('/api/odds/:sport', async (req, res) => {
   const { sport } = req.params;
   const { regions = 'us', markets = 'h2h' } = req.query;
+  if (sport === 'volleyball' || sport === 'voley') {
+    try {
+      const datos = await cargarOddsVolley();
+      if (datos === null) {
+        return res.status(503).json({
+          error: 'sin_cobertura',
+          mensaje: 'Cobertura de vóley en implementación',
+          detalle: 'La API de vóleibol se conecta por RapidAPI. Pide a tu administrador configurar RAPIDAPI_VOLLEY_HOST.'
+        });
+      }
+      return responderConCache(req, res, datos, 300);
+    } catch (e) {
+      return enviarErrorFuente(res, e, '/api/odds/volleyball');
+    }
+  }
+  if (sport === 'tenis') {
+    try {
+      const datos = await oddsTenisAgregadas();
+      return responderConCache(req, res, datos, 300);
+    } catch (e) {
+      return enviarErrorFuente(res, e, '/api/odds/tenis');
+    }
+  }
   const claveCache = `odds-${sport}-${regions}-${markets}`;
   const cacheado = obtenerDeCache(claveCache, 15 * 60 * 1000);
   if (cacheado) return responderConCache(req, res, cacheado, 300);
@@ -656,6 +736,361 @@ app.get('/api/odds/:sport', async (req, res) => {
     responderConCache(req, res, datos, 300);
   } catch (e) {
     enviarErrorFuente(res, e, `/api/odds/${sport}`);
+  }
+});
+
+// ============ MOTORES ELO MULTIDEPORTE ============
+// Ports a Node de backend_motores/motor_basquet.py y motor_tenis.py.
+// Se entrenan con resultados recientes de The Odds API (endpoint /scores)
+// y se combinan con el consenso de cuotas (probabilidad implícita sin margen).
+const ELO_STATE_PATH = path.join(__dirname, 'data', 'elo_state.json');
+const BASE_ELO = 1500;
+
+function erfAprox(x) {
+  // Abramowitz-Stegun 7.1.26 (suficiente para la curva de spread del motor)
+  const s = x < 0 ? -1 : 1;
+  x = Math.abs(x);
+  const t = 1 / (1 + 0.3275911 * x);
+  const y = 1 - (((((1.061405429 * t - 1.453152027) * t) + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t * Math.exp(-x * x);
+  return s * y;
+}
+
+function eloProbGanar(diff) {
+  return 1 / (1 + Math.pow(10, -diff / 400));
+}
+
+// --- Básquet: Elo con ventaja de localía y ritmo (motor_basquet.py) ---
+const BASQUET_CFG = { homeAdvantage: 3.5, k: 20 };
+function probGanarBasquet(eloL, eloV) {
+  return eloProbGanar(eloL - eloV + BASQUET_CFG.homeAdvantage * 25);
+}
+function probCubreSpread(diff, sd = 11.5) {
+  return diff >= 0
+    ? 1 - 0.5 * (1 + erfAprox(diff / (sd * Math.SQRT2)))
+    : 0.5 * (1 + erfAprox(Math.abs(diff) / (sd * Math.SQRT2)));
+}
+function puntosEsperadosBasquet(eqL, eqV) {
+  const ritmo = (eqL.ritmo + eqV.ritmo) / 2;
+  let effL = (eqL.effOff + eqV.effDef) / 2;
+  let effV = (eqV.effOff + eqL.effDef) / 2;
+  effL *= 1.025;
+  effV *= 0.975;
+  return [ritmo * effL, ritmo * effV];
+}
+function equipoBasquet(nombre) {
+  const e = estadoElo.basquet.equipos[nombre];
+  return e || { elo: BASE_ELO, partidos: 0, ritmo: 100, effOff: 1.1, effDef: 1.1 };
+}
+
+// --- Tenis: Elo (motor_tenis.py). Sin superficie en la fuente, se usa
+// el Elo general; el Elo por superficie se activa cuando haya datos de ella.
+const TENIS_CFG = { k: 32 };
+const MAPA_SUPERFICIE = { dura: 'dura', arcilla: 'arcilla', hierba: 'hierba', hard: 'dura', clay: 'arcilla', grass: 'hierba', indoor: 'dura' };
+function jugadorTenis(nombre) {
+  const j = estadoElo.tenis.jugadores[nombre];
+  return j || { eloGeneral: BASE_ELO, partidos: 0 };
+}
+
+// --- Estado persistente (el FS de Render es efímero, pero el Elo sobrevive
+// a reinicios del dyno y se reentrena con resultados recientes al arrancar) ---
+let estadoElo = { basquet: { equipos: {} }, tenis: { jugadores: {} }, entrenamientos: { basquet: 0, tenis: 0 } };
+function cargarEstadoElo() {
+  try {
+    const crudo = fs.readFileSync(ELO_STATE_PATH, 'utf8');
+    const datos = JSON.parse(crudo);
+    estadoElo = {
+      basquet: { equipos: (datos.basquet && datos.basquet.equipos) || {} },
+      tenis: { jugadores: (datos.tenis && datos.tenis.jugadores) || {} },
+      entrenamientos: { basquet: 0, tenis: 0, ...(datos.entrenamientos || {}) }
+    };
+  } catch (e) { /* sin estado previo: todos arrancan en Elo 1500 */ }
+}
+function guardarEstadoElo() {
+  try {
+    fs.mkdirSync(path.dirname(ELO_STATE_PATH), { recursive: true });
+    fs.writeFileSync(ELO_STATE_PATH, JSON.stringify(estadoElo));
+  } catch (e) { /* escritura best-effort */ }
+}
+cargarEstadoElo();
+
+function entrenarBasquet(local, visita, ptsL, ptsV) {
+  const l = estadoElo.basquet.equipos[local] || { elo: BASE_ELO, partidos: 0, ritmo: 100, effOff: 1.1, effDef: 1.1 };
+  const v = estadoElo.basquet.equipos[visita] || { elo: BASE_ELO, partidos: 0, ritmo: 100, effOff: 1.1, effDef: 1.1 };
+  const prob = probGanarBasquet(l.elo, v.elo);
+  const resultado = ptsL > ptsV ? 1 : 0;
+  const cambio = BASQUET_CFG.k * (resultado - prob);
+  l.elo += cambio;
+  v.elo -= cambio;
+  const alpha = 0.2;
+  l.partidos++; v.partidos++;
+  l.ritmo = (1 - alpha) * l.ritmo + alpha * 100;
+  v.ritmo = (1 - alpha) * v.ritmo + alpha * 100;
+  estadoElo.basquet.equipos[local] = l;
+  estadoElo.basquet.equipos[visita] = v;
+}
+
+function entrenarTenis(j1, j2, ganoJ1) {
+  const a = estadoElo.tenis.jugadores[j1] || { eloGeneral: BASE_ELO, partidos: 0 };
+  const b = estadoElo.tenis.jugadores[j2] || { eloGeneral: BASE_ELO, partidos: 0 };
+  const esperado = eloProbGanar(a.eloGeneral - b.eloGeneral);
+  const cambio = TENIS_CFG.k * ((ganoJ1 ? 1 : 0) - esperado);
+  a.eloGeneral += cambio;
+  b.eloGeneral -= cambio;
+  a.partidos++; b.partidos++;
+  estadoElo.tenis.jugadores[j1] = a;
+  estadoElo.tenis.jugadores[j2] = b;
+}
+
+// Resultados de The Odds API (endpoint /scores). Formato tolerante:
+// "scores" puede ser array [{name,value}] u objeto {home,away}.
+function puntosScores(ev) {
+  let l = null, v = null;
+  if (Array.isArray(ev.scores)) {
+    for (const s of ev.scores) {
+      const n = String(s.name || '').toLowerCase();
+      if (n.includes('home') || n === 'h') l = s.value;
+      else if (n.includes('away') || n === 'a') v = s.value;
+    }
+  } else if (ev.scores && typeof ev.scores === 'object') {
+    l = ev.scores.home != null ? ev.scores.home : ev.scores.home_team;
+    v = ev.scores.away != null ? ev.scores.away : ev.scores.away_team;
+  }
+  if (l == null && ev.home_score != null) l = ev.home_score;
+  if (v == null && ev.away_score != null) v = ev.away_score;
+  return { l, v };
+}
+
+async function entrenarEloDesdeScores(sportKey, deporte) {
+  if (!THE_ODDS_API_KEY) return 0;
+  try {
+    const url = `${THE_ODDS_BASE_URL}/sports/${sportKey}/scores/?apiKey=${THE_ODDS_API_KEY}`;
+    const resp = await fetch(url);
+    if (!resp.ok) return 0;
+    const datos = await resp.json();
+    let n = 0;
+    for (const ev of datos) {
+      if (!ev.completed) continue;
+      const { l, v } = puntosScores(ev);
+      if (l == null || v == null || l === v || !ev.home_team || !ev.away_team) continue;
+      if (deporte === 'basquet') entrenarBasquet(ev.home_team, ev.away_team, l, v);
+      else entrenarTenis(ev.home_team, ev.away_team, l > v ? 1 : 0);
+      n++;
+    }
+    if (n > 0) {
+      estadoElo.entrenamientos[deporte] = (estadoElo.entrenamientos[deporte] || 0) + n;
+      guardarEstadoElo();
+    }
+    return n;
+  } catch (e) {
+    return 0;
+  }
+}
+
+// Consenso de mercado: probabilidad implícita sin margen, promediada
+// entre todos los bookies del partido.
+function consensoH2H(bookmakers) {
+  let suma = [0, 0], n = 0;
+  for (const b of bookmakers || []) {
+    const m = (b.markets || []).find(mk => mk.key === 'h2h');
+    if (!m || (m.outcomes || []).length < 2) continue;
+    const [o1, o2] = m.outcomes;
+    if (!(o1.price > 1 && o2.price > 1)) continue;
+    const p1 = 1 / o1.price, p2 = 1 / o2.price;
+    const tot = p1 + p2;
+    suma[0] += p1 / tot;
+    suma[1] += p2 / tot;
+    n++;
+  }
+  if (!n) return null;
+  return [suma[0] / n, suma[1] / n];
+}
+
+function mejorPrecioH2H(bookmakers, idx) {
+  let mejor = null;
+  for (const b of bookmakers || []) {
+    const m = (b.markets || []).find(mk => mk.key === 'h2h');
+    if (!m || !(m.outcomes || [])[idx]) continue;
+    const o = m.outcomes[idx];
+    if (o.price > 1 && (!mejor || o.price > mejor.precio)) mejor = { precio: o.price, bookie: b.title };
+  }
+  return mejor;
+}
+
+function nivelConfianza(pMax, entrenamientos, cons) {
+  if (entrenamientos >= 50 && cons && pMax >= 0.65) return 'Alta';
+  if (entrenamientos >= 10 || (cons && pMax >= 0.58)) return 'Media';
+  return 'Baja';
+}
+
+function setsEstimadosTenis(pJ1) {
+  const p20 = Math.pow(pJ1, 1.6);
+  const p21 = Math.max(0, pJ1 - p20);
+  const p02 = Math.pow(1 - pJ1, 1.6);
+  const p12 = Math.max(0, (1 - pJ1) - p02);
+  const tot = p20 + p21 + p02 + p12 || 1;
+  return { '2-0': p20 / tot, '2-1': p21 / tot, '0-2': p02 / tot, '1-2': p12 / tot };
+}
+
+function prediccionPartido(partido, deporte) {
+  const cons = consensoH2H(partido.bookmakers);
+  const entrenamientos = estadoElo.entrenamientos[deporte] || 0;
+  // El Elo pesa hasta 50% y solo crece con partidos entrenados: con poca
+  // historia manda el consenso del mercado; con más, el modelo propio.
+  const wElo = Math.min(0.5, entrenamientos / 200);
+
+  let pEloL, extras = {};
+  if (deporte === 'basquet') {
+    const eqL = equipoBasquet(partido.home_team);
+    const eqV = equipoBasquet(partido.away_team);
+    pEloL = probGanarBasquet(eqL.elo, eqV.elo);
+    const [pl, pv] = puntosEsperadosBasquet(eqL, eqV);
+    const diff = pl - pv;
+    extras = {
+      spread: { linea: Math.round(diff * 2) / 2, probLocalCubre: Math.round(probCubreSpread(diff) * 100) },
+      total: { linea: Math.round(pl + pv), overProb: 50 },
+      elo: { local: Math.round(eqL.elo), visita: Math.round(eqV.elo) }
+    };
+  } else {
+    const j1 = jugadorTenis(partido.home_team);
+    const j2 = jugadorTenis(partido.away_team);
+    pEloL = eloProbGanar(j1.eloGeneral - j2.eloGeneral);
+    extras = { elo: { local: Math.round(j1.eloGeneral), visita: Math.round(j2.eloGeneral) } };
+  }
+
+  let pLocal;
+  if (cons) pLocal = wElo * pEloL + (1 - wElo) * cons[0];
+  else pLocal = pEloL;
+  pLocal = Math.min(0.97, Math.max(0.03, pLocal));
+  const pVisita = 1 - pLocal;
+
+  const modelo = {
+    local: { probabilidad: Math.round(pLocal * 100), cuotaJusta: Math.round((1 / pLocal) * 100) / 100 },
+    visita: { probabilidad: Math.round(pVisita * 100), cuotaJusta: Math.round((1 / pVisita) * 100) / 100 }
+  };
+
+  // Valor: la mejor cuota de mercado vs la cuota justa del modelo
+  const valorL = mejorPrecioH2H(partido.bookmakers, 0);
+  const valorV = mejorPrecioH2H(partido.bookmakers, 1);
+  let valor = null;
+  const cand = [];
+  if (valorL) cand.push({ seleccion: 'local', nombre: partido.home_team, precio: valorL.precio, bookie: valorL.bookie, ev: valorL.precio * pLocal - 1 });
+  if (valorV) cand.push({ seleccion: 'visita', nombre: partido.away_team, precio: valorV.precio, bookie: valorV.bookie, ev: valorV.precio * pVisita - 1 });
+  if (cand.length) {
+    cand.sort((a, b) => b.ev - a.ev);
+    const mejor = cand[0];
+    valor = {
+      seleccion: mejor.seleccion,
+      nombre: mejor.nombre,
+      cuota: mejor.precio,
+      bookie: mejor.bookie,
+      ev: Math.round(mejor.ev * 100),
+      esValor: mejor.ev >= 0.03
+    };
+  }
+
+  const pMax = Math.max(pLocal, pVisita);
+  const confianza = nivelConfianza(pMax, entrenamientos, !!cons);
+
+  if (deporte === 'tenis') {
+    const sets = setsEstimadosTenis(pLocal);
+    extras.sets = Object.fromEntries(Object.entries(sets).map(([k, v]) => [k, Math.round(v * 100)]));
+  }
+
+  return {
+    id: partido.id,
+    local: partido.home_team,
+    visita: partido.away_team,
+    fecha: partido.commence_time,
+    liga: partido.sport_title,
+    modelo,
+    confianza,
+    valor,
+    extras,
+    origen: cons ? 'elo+consenso' : 'elo'
+  };
+}
+
+// Tenis: The Odds API publica por torneo (tennis_atp_xxx). Agregamos los
+// torneos ATP/WTA activos para mostrar todo el tenis en una sola vista.
+async function listarTorneosTenis() {
+  const cacheado = obtenerDeCache('odds-tenis-torneos', 6 * 60 * 60 * 1000);
+  if (cacheado) return cacheado;
+  const url = `${THE_ODDS_BASE_URL}/sports/?apiKey=${THE_ODDS_API_KEY}`;
+  const resp = await fetch(url);
+  if (!resp.ok) throw new Error('No se pudo listar deportes');
+  const datos = await resp.json();
+  // La lista de /sports expone el identificador en "key".
+  const torneos = datos
+    .filter(s => s.key && s.key.startsWith('tennis_') && s.active)
+    .map(s => s.key)
+    .slice(0, 4);
+  guardarEnCache('odds-tenis-torneos', torneos);
+  return torneos;
+}
+
+const dormir = ms => new Promise(r => setTimeout(r, ms));
+
+async function oddsTenisAgregadas() {
+  const cacheado = obtenerDeCache('odds-tenis-all', 15 * 60 * 1000);
+  if (cacheado) return cacheado;
+  const torneos = await listarTorneosTenis();
+  const partidos = [];
+  for (const t of torneos) {
+    try {
+      const url = `${THE_ODDS_BASE_URL}/sports/${t}/odds/?apiKey=${THE_ODDS_API_KEY}&regions=us&markets=h2h`;
+      const resp = await fetch(url);
+      if (resp.ok) {
+        const datos = await resp.json();
+        partidos.push(...datos);
+      }
+      await entrenarEloDesdeScores(t, 'tenis');
+    } catch (e) { /* torneo fallido: seguimos con los demás */ }
+    await dormir(1050); // límite de 1 req/s de The Odds API
+  }
+  guardarEnCache('odds-tenis-all', partidos);
+  return partidos;
+}
+
+// ============ PREDICCIONES MULTIDEPORTE (Fulbito IA) ============
+// Devuelve, por partido: probabilidad del modelo, cuota justa, confianza,
+// valor vs el mejor precio de mercado y extras del deporte.
+app.get('/api/predicciones/:deporte', async (req, res) => {
+  const { deporte } = req.params;
+  const mapa = { basquet: 'basketball_nba', tenis: 'tenis' };
+  const sportKey = mapa[deporte];
+  if (!sportKey) {
+    return res.status(404).json({ error: 'deporte_no_soportado', mensaje: `Sin motor para "${deporte}". Soportados: basquet, tenis.` });
+  }
+  const claveCache = `predicciones-${deporte}`;
+  const cacheado = obtenerDeCache(claveCache, 5 * 60 * 1000);
+  if (cacheado) return responderConCache(req, res, cacheado, 300);
+
+  try {
+    let partidos;
+    if (deporte === 'tenis') {
+      partidos = await oddsTenisAgregadas();
+    } else {
+      const url = `${THE_ODDS_BASE_URL}/sports/${sportKey}/odds/?apiKey=${THE_ODDS_API_KEY}&regions=us&markets=h2h,spreads,totals`;
+      const resp = await fetch(url);
+      if (!resp.ok) {
+        const datos = await resp.json().catch(() => ({}));
+        throw new Error(datos.message || 'Error de The Odds API');
+      }
+      partidos = await resp.json();
+      await entrenarEloDesdeScores(sportKey, 'basquet');
+    }
+
+    const predicciones = (partidos || []).map(p => prediccionPartido(p, deporte));
+    const salida = {
+      deporte,
+      generadoEn: new Date().toISOString(),
+      partidosEntrenamiento: estadoElo.entrenamientos[deporte] || 0,
+      partidos: predicciones
+    };
+    guardarEnCache(claveCache, salida);
+    responderConCache(req, res, salida, 300);
+  } catch (e) {
+    enviarErrorFuente(res, e, `/api/predicciones/${deporte}`);
   }
 });
 
