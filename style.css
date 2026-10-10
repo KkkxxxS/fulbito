@@ -5718,7 +5718,7 @@ input {
 body.home-mode {
   display: grid !important;
   grid-template-columns: 240px 1fr !important;
-  width: 100vw !important;
+  width: 100% !important;
   max-width: 100% !important;
   min-height: 100vh !important;
   margin: 0 !important;
@@ -6867,6 +6867,11 @@ body.home-mode #vista-inicio .dash-seccion { padding: 12px 0; margin: 0; }
   }
 
   body.home-mode .dash-menu-flotante { display: flex; }
+
+  /* Estado colapsado en móvil / resize: oculta sidebar y muestra botón de reabrir */
+  body.home-mode.sidebar-oculto .app-nav.dash-sidebar { display: none !important; }
+  body.home-mode.sidebar-oculto .dash-sidebar-abrir { display: inline-flex; }
+  body.home-mode.sidebar-oculto main { padding-left: 0 !important; }
 }
 
 @media (min-width: 1025px) {
