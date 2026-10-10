@@ -20,7 +20,8 @@ const ARCHIVOS_SHELL = [
   './app-animaciones.js',
   './menu-toggle.js',
   './i18n.js',
-  './auth.js'
+  './auth.js',
+  './v-multideporte.js'
 ];
 
 self.addEventListener('install', (event) => {

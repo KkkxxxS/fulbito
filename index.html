@@ -82,6 +82,7 @@
     <script src="menu-toggle.js" defer></script>
     <script src="i18n.js" defer></script>
     <script src="auth.js" defer></script>
+    <script src="v-multideporte.js" defer></script>
     <script src="app-animaciones.js?v=1" defer></script>
     <!-- ... existing head content ... -->
 </head>
@@ -138,6 +139,21 @@
         </button>
 
         <p class="dash-nav-grupo" data-i18n="grupoExplorar">EXPLORAR</p>
+
+        <button class="nav-tab" data-vista="basquet" onclick="cambiarVista('basquet')" title="Básquet">
+            <span class="nav-tab-icono"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 6h12"/><path d="M12 18V6"/></svg></span>
+            <span>Básquet</span>
+        </button>
+
+        <button class="nav-tab" data-vista="tenis" onclick="cambiarVista('tenis')" title="Tenis">
+            <span class="nav-tab-icono"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="8"/><path d="M8 14a6 6 0 0 0 8-8"/></svg></span>
+            <span>Tenis</span>
+        </button>
+
+        <button class="nav-tab" data-vista="voley" onclick="cambiarVista('voley')" title="Vóley">
+            <span class="nav-tab-icono"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="8"/><path d="M12 4v16"/><path d="M4 12h16"/></svg></span>
+            <span>Vóley</span>
+        </button>
 
         <button class="nav-tab" data-vista="competiciones" onclick="cambiarVista('competiciones')" title="Ligas cubiertas por el motor">
             <span class="nav-tab-icono"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8"/><path d="M12 17v4"/><path d="M7 4h10v4a5 5 0 0 1-10 0z"/><path d="M7 6H4v2a3 3 0 0 0 3 3"/><path d="M17 6h3v2a3 3 0 0 1-3 3"/></svg></span>
@@ -493,7 +509,14 @@
     </div>
 </section>
 
-<section id="vista-pronosticos" class="vista">
+    <section id="vista-pronosticos" class="vista">
+    <div id="selector-deporte" role="tablist" aria-label="Selector de deporte" style="display:flex; gap:8px; margin:0 0 12px; overflow-x:auto; padding-bottom:4px;">
+        <button class="pestaña activa" role="tab" aria-selected="true" data-deporte="futbol" onclick="cambiarDeporte('futbol')">⚽ Fútbol</button>
+        <button class="pestaña" role="tab" aria-selected="false" data-deporte="basquet" onclick="cambiarDeporte('basquet')">🏀 Básquet</button>
+        <button class="pestaña" role="tab" aria-selected="false" data-deporte="tenis" onclick="cambiarDeporte('tenis')">🎾 Tenis</button>
+        <button class="pestaña" role="tab" aria-selected="false" data-deporte="voley" onclick="cambiarDeporte('voley')">🏐 Vóley</button>
+        <button class="pestaña" role="tab" aria-selected="false" data-deporte="todos" onclick="cambiarDeporte('todos')">Todos</button>
+    </div>
     <div class="pestañas-fecha">
         <button class="pestaña activa" onclick="cambiarFecha('hoy', event)">Hoy</button>
         <button class="pestaña" onclick="cambiarFecha('manana', event)">Mañana</button>
@@ -730,6 +753,37 @@
     </div>
     <div class="dash-mini-kpis" id="live-resumen" aria-live="polite"></div>
     <div id="contenedor-live" class="dash-live-lista"></div>
+</section>
+
+<!-- ============ BÁSQUET ============ -->
+<section id="vista-basquet" class="vista">
+    <div class="vista-cabecera">
+        <span class="vista-eyebrow">Básquet</span>
+        <h2>Básquet — moneyline, spread y totales</h2>
+        <p class="subtitulo-vista">Predicciones con modelo Elo + ritmo. Cuotas justas vs mercado (The Odds API).</p>
+    </div>
+    <div class="dash-mini-kpis" id="basquet-resumen" aria-live="polite"></div>
+    <div id="contenedor-basquet" class="dash-live-lista"></div>
+</section>
+
+<!-- ============ TENIS ============ -->
+<section id="vista-tenis" class="vista">
+    <div class="vista-cabecera">
+        <span class="vista-eyebrow">Tenis</span>
+        <h2>Tenis — ATP/WTA por superficie</h2>
+        <p class="subtitulo-vista">Modelo por punto al saque (Klaassen-Magnus simplificado) + Elo por superficie.</p>
+    </div>
+    <div id="contenedor-tenis" class="dash-live-lista"></div>
+</section>
+
+<!-- ============ VÓLEY ============ -->
+<section id="vista-voley" class="vista">
+    <div class="vista-cabecera">
+        <span class="vista-eyebrow">Vóley</span>
+        <h2>Vóley — distribución por sets</h2>
+        <p class="subtitulo-vista">Modelo por sets (best-of-3/5) con localía y ratio de puntos.</p>
+    </div>
+    <div id="contenedor-voley" class="dash-live-lista"></div>
 </section>
 
 <!-- ============ COMPETICIONES ============ -->
