@@ -221,6 +221,31 @@
     if (nav) nav.classList.remove('menu-abierto');
   }
 
+  // ============ SIDEBAR DE ESCRITORIO (colapsar / reabrir) ============
+  // En escritorio el sidebar es una columna fija; este toggle la oculta por
+  // completo (grid a 0) y deja un botón flotante para volver a mostrarla.
+  const CLAVE_SIDEBAR_OCULTO = 'fulbito_sidebar_oculto';
+
+  function aplicarEstadoSidebar() {
+    const oculto = document.body.classList.contains('sidebar-oculto');
+    const btn = document.getElementById('boton-colapsar-sidebar');
+    if (btn) btn.setAttribute('aria-pressed', oculto ? 'true' : 'false');
+  }
+
+  function toggleSidebarDesktop() {
+    const oculto = !document.body.classList.contains('sidebar-oculto');
+    document.body.classList.toggle('sidebar-oculto', oculto);
+    aplicarEstadoSidebar();
+    try { localStorage.setItem(CLAVE_SIDEBAR_OCULTO, oculto ? '1' : '0'); } catch (e) { /* localStorage bloqueado */ }
+  }
+
+  function restaurarSidebarDesktop() {
+    let oculto = false;
+    try { oculto = localStorage.getItem(CLAVE_SIDEBAR_OCULTO) === '1'; } catch (e) { /* localStorage bloqueado */ }
+    document.body.classList.toggle('sidebar-oculto', oculto);
+    aplicarEstadoSidebar();
+  }
+
 // ============ HEADER: notificaciones/tema/idioma ocultos a propósito ============
 // - Campana: requiere backend de alertas que no existe → se quitó del DOM.
 // - Luna (tema): no hay CSS de tema claro en el repo y rediseñar la paleta
@@ -413,6 +438,121 @@
     let nFav = 0;
     try { nFav = leerFavoritos().length; } catch (e) { nFav = 0; }
     setTxt('kpi-favoritos', String(nFav));
+
+    renderDashboardPaneles();
+  }
+
+  // ============ RESUMEN DEL MOTOR (paneles del inicio) ============
+  const DIAS_SEMANA = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+  const MESES_ANIO = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+  const CODIGOS_LIGA = COMPETICIONES.split(',').map(c => c.trim()).filter(Boolean);
+
+  function renderDashboardPaneles() {
+    const setTxt = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
+    const setHTML = (id, html) => { const el = document.getElementById(id); if (el) el.innerHTML = html; };
+
+    // Fecha del día en español
+    const hoy = new Date();
+    const fechaTexto = `${DIAS_SEMANA[hoy.getDay()]} ${hoy.getDate()} de ${MESES_ANIO[hoy.getMonth()]}`;
+    const fechaEl = document.getElementById('dash-hoy-fecha');
+    if (fechaEl) { fechaEl.textContent = fechaTexto; fechaEl.style.textTransform = 'capitalize'; }
+
+    // Lectura del motor (depende del estado real de la carga de hoy)
+    if (kpiHoyModoDemo) {
+      setTxt('dash-hoy-leido', 'El servidor está en modo demo.');
+      setTxt('dash-hoy-detalle', 'Los números reales de la jornada vuelven apenas responda el backend. Podés explorar igual las tarjetas de ejemplo.');
+    } else if (partidosDeHoy === null) {
+      setTxt('dash-hoy-leido', 'Cargando la jornada de hoy…');
+      setTxt('dash-hoy-detalle', 'El motor está analizando las ligas top europeas. Un momento.');
+    } else if (partidosDeHoy === 0) {
+      setTxt('dash-hoy-leido', 'Sin partidos hoy — el motor descansa.');
+      setTxt('dash-hoy-detalle', '¿Buscás acción? Pasá a la vista Predicciones y mirá la semana completa.');
+    } else {
+      setTxt('dash-hoy-leido', `${partidosDeHoy} partido${partidosDeHoy === 1 ? '' : 's'} en la jornada de hoy.`);
+      setTxt('dash-hoy-detalle', 'Cada partido sale con 9 mercados y su probabilidad calibrada contra lo ya verificado.');
+    }
+
+    const historial = leerHistorial();
+    const verificados = historial.filter(h => h.verificado);
+
+    // Última liquidación
+    setHTML('dash-liquidacion-cuerpo', renderUltimaLiquidacion(verificados));
+
+    // Forma reciente
+    const forma = renderFormaReciente(verificados);
+    const leyenda = document.getElementById('dash-forma-leyenda');
+    if (leyenda) {
+      leyenda.textContent = forma.vacio
+        ? 'Se activa con el primer partido liquidado. Cada barra es un partido: % de mercados acertados.'
+        : `Últimos ${forma.n} partidos liquidados · promedio ${forma.prom}% de acierto por partido.`;
+    }
+
+    // Cobertura
+    setHTML('dash-cobertura', renderCoberturaHTML());
+  }
+
+  function renderUltimaLiquidacion(verificados) {
+    if (verificados.length === 0) {
+      return `
+        <p class="dash-vacio-titulo">Todavía no hay picks liquidados.</p>
+        <p class="dash-vacio-sub">Marcá predicciones con el pin 📌 en cualquier partido de Predicciones y acá va a quedar registrado cómo le fue a cada mercado contra el resultado real.</p>
+      `;
+    }
+    const ultimo = verificados[verificados.length - 1];
+    const aciertos = ultimo.mercados.filter(m => m.acierto).length;
+    const total = ultimo.mercados.length || 1;
+    const pct = Math.round((aciertos / total) * 100);
+    const fechaCorta = String(ultimo.fecha || '').slice(0, 10);
+    return `
+      <div class="dash-liq-partido">
+        <span class="dash-liq-liga">${escaparHTML(ultimo.liga || 'Liga')}</span>
+        <strong class="dash-liq-equipos">${escaparHTML(ultimo.local)} <span class="dash-liq-vs">vs</span> ${escaparHTML(ultimo.visita)}</strong>
+        <span class="dash-liq-fecha">${fechaCorta}</span>
+      </div>
+      <div class="dash-liq-resultado">
+        <span class="dash-liq-marcador">${escaparHTML(ultimo.marcadorFinal || '—')}</span>
+        <span class="dash-liq-count">${aciertos}/${total} mercados ✓</span>
+        <div class="dash-liq-barra"><span style="width:${pct}%"></span></div>
+      </div>
+    `;
+  }
+
+  function renderFormaReciente(verificados) {
+    const cont = document.getElementById('dash-forma-spark');
+    const pctEl = document.getElementById('dash-forma-pct');
+    if (!cont) return { vacio: true };
+    const ultimos8 = verificados.slice(-8);
+    if (ultimos8.length === 0) {
+      cont.innerHTML = `<div class="dash-spark-vacio" aria-hidden="true">${Array.from({ length: 8 }, () => '<i class="dash-spark-fantasma"></i>').join('')}</div>`;
+      if (pctEl) pctEl.textContent = '—';
+      return { vacio: true };
+    }
+    const barras = ultimos8.map(h => {
+      const a = h.mercados.filter(m => m.acierto).length;
+      const t = h.mercados.length || 1;
+      return Math.round((a / t) * 100);
+    });
+    const prom = Math.round(barras.reduce((s, v) => s + v, 0) / barras.length);
+    cont.innerHTML = `<div class="dash-spark-barras" role="img" aria-label="Forma reciente">` +
+      barras.map(v => `<i class="dash-spark-bar ${v >= 70 ? 'ok' : v >= 50 ? 'med' : 'bajo'}" style="--h:${Math.max(4, v)}%" title="${v}%"></i>`).join('') +
+      `</div>`;
+    if (pctEl) pctEl.textContent = `${prom}%`;
+    return { prom, n: barras.length, vacio: false };
+  }
+
+  function renderCoberturaHTML() {
+    const ligas = CODIGOS_LIGA.map(c => {
+      const nombre = (NOMBRES_LIGA && NOMBRES_LIGA[c]) || c;
+      return `<span class="dash-cobertura-chip" title="${escaparHTML(nombre)}">${c}</span>`;
+    }).join('');
+    return `
+      <div class="dash-cobertura-ligas">${ligas}</div>
+      <div class="dash-cobertura-meta">
+        <span>9 mercados por partido</span><span>·</span>
+        <span>Fútbol · básquet · tenis · vóley</span><span>·</span>
+        <span>Poisson + Dixon-Coles</span>
+      </div>
+    `;
   }
 
   function toggleFavorito(teamId, event) {

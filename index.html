@@ -102,6 +102,9 @@
             <span class="dash-logo-texto">Fulbito<em>IA</em></span>
         </button>
         <button class="dash-sidebar-cerrar" onclick="cerrarMenuMovil()" aria-label="Cerrar menú"></button>
+        <button class="dash-sidebar-colapsar" id="boton-colapsar-sidebar" onclick="toggleSidebarDesktop()" aria-label="Ocultar panel lateral" aria-pressed="false" title="Ocultar panel lateral">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+        </button>
     </div>
 
     <div class="app-nav-buscador dash-buscador">
@@ -206,6 +209,11 @@
 
 <!-- ============ TOGGLE DEL SIDEBAR (solo pantallas pequeñas) ============ -->
 <button class="app-nav-toggle dash-menu-flotante" id="boton-menu-flotante" onclick="toggleMenuMovil()" aria-label="Abrir menú de navegación">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18"/><path d="M3 12h18"/><path d="M3 18h18"/></svg>
+</button>
+
+<!-- ============ REABRIR SIDEBAR COLAPSADO (solo escritorio) ============ -->
+<button class="dash-sidebar-abrir" id="boton-abrir-sidebar" onclick="toggleSidebarDesktop()" aria-label="Mostrar panel lateral" title="Mostrar panel lateral">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18"/><path d="M3 12h18"/><path d="M3 18h18"/></svg>
 </button>
 
@@ -364,6 +372,44 @@
             </button>
         </article>
     </div>
+
+    <!-- ============ RESUMEN DEL MOTOR (lectura + liquidación + forma + cobertura) ============ -->
+    <section class="dash-panel-grid" aria-label="Resumen del motor">
+        <article class="dash-panel dash-panel-lectura">
+            <div class="dash-panel-cabecera">
+                <p class="dash-label-mono" id="dash-hoy-fecha">—</p>
+                <span class="dash-punto-vivo" id="dash-hoy-punto" style="visibility:hidden;"></span>
+            </div>
+            <p class="dash-label-dimmer">Lectura del motor</p>
+            <h3 class="dash-panel-titulo" id="dash-hoy-leido">Cargando la jornada de hoy…</h3>
+            <p class="dash-panel-sub" id="dash-hoy-detalle"></p>
+            <button class="dash-btn-terciario" onclick="cambiarVista('pronosticos')">Ver predicciones de hoy →</button>
+        </article>
+
+        <article class="dash-panel" id="dash-ultima-liquidacion">
+            <div class="dash-panel-cabecera">
+                <p class="dash-label-mono">Última liquidación</p>
+            </div>
+            <div id="dash-liquidacion-cuerpo"></div>
+        </article>
+
+        <article class="dash-panel">
+            <div class="dash-panel-cabecera">
+                <p class="dash-label-mono">Forma reciente</p>
+                <span class="dash-chip-mini" id="dash-forma-pct">—</span>
+            </div>
+            <div id="dash-forma-spark"></div>
+            <p class="dash-panel-sub" id="dash-forma-leyenda"></p>
+        </article>
+
+        <article class="dash-panel dash-panel-cobertura">
+            <div class="dash-panel-cabecera">
+                <p class="dash-label-mono">Cobertura del motor</p>
+                <span class="dash-chip-mini">en vivo</span>
+            </div>
+            <div id="dash-cobertura"></div>
+        </article>
+    </section>
 
                 <!-- (KPIs migrados a las tarjetas superiores del dashboard) -->
 

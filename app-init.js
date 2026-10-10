@@ -11,6 +11,7 @@
   actualizarContadorFavoritos();
   actualizarContadorMisPredicciones();
   actualizarKPIsHome();
+  restaurarSidebarDesktop();
   cargarPartidos('hoy');
 
   const hashInicial = window.location.hash.replace('#', '');
