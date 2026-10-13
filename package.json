@@ -28,6 +28,7 @@
     "node": ">=18"
   },
   "dependencies": {
+    "animate.css": "^4.1.1",
     "better-sqlite3": "^13.0.3",
     "compression": "^1.8.1",
     "cors": "^2.8.6",

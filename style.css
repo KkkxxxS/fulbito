@@ -1,34 +1,128 @@
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=IBM+Plex+Mono:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap');
-
-
-@media (prefers-reduced-motion: reduce) {
-  *, ::before, ::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
-}
-
-/* ============ ANIMACIONES GLOBALES & LANDING ============ */
-.motion-card {
-  will-change: transform, opacity;
-}
-.motion-button {
-  transition: background 0.2s var(--ease), color 0.2s var(--ease);
-}
-.motion-pop {
-  will-change: transform, opacity;
-}
-.motion-count {
-  font-variant-numeric: tabular-nums;
-}
-
-@keyframes fulbitoFadeInUp {
-  0% { opacity: 0; transform: translateY(24px); }
-  100% { opacity: 1; transform: translateY(0); }
-}
-
+/* ============================================================
+   FOUNDATION - TOKEN SYSTEM GROUNDED IN SUBJECT MATTER
+   ============================================================
+   Proyecto: fulbito - Poisson + Dixon-Coles football predictions
+   Skills aplicadas: frontend-design - evitar defaults de IA
+   
+   Principios clave evitados (traits de IA generativa):
+   - No gradients púrpura-rosa aleatorios
+   - No cards idénticas con same border-radius en todo
+   - No ALL-CAPS eyebrows encima de cada heading
+   - No monospace para etiquetas de datos chiquitas
+   - No '→' appended a todo button text
+   - Type scale con φ (phi = 1.618) proportions
+   - Subject matter: fútbol estadística, no dashboard genérico
+   
+   --- TOKEN SYSTEM: 6 colores con significado ---
+   :root {
+     /* Base - negro carbón, no puro para reducir fatiga visual */
+     --bg-base: #0d1117;
+     --bg-subtle: #1e2130;
+     
+     /* Acordes de significado fútbol/estadística */
+     --accent-primary: #38bdf8;    /* Blue sky - estadio, no verde cliché */
+     --accent-secondary: #fbbf24;  /* Amber - odd/casas de apuestas */
+     --accent-muted: #64748b;      /* Slate gray - secundario */
+     
+     /* Texto - jerarquía clara */
+     --text-primary: #f8fafc;      /* Blanco cálido sobre oscuro */
+     --text-secondary: #94a3b8;    /* Muted, legible */
+     --text-dim: #64748b;          /* Dim, no puro gray */
+     
+     /* Bordes y separadores */
+     --border-primary: #334155;
+     --border-subtle: #1e293b;
+     
+     /* Sombras - consistentes, no aleatorias */
+     --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+     --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+     --shadow-elevated: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+     
+     /* Radii - consistentes, no random en cada card */
+     --radius-sm: 6px;
+     --radius-md: 12px;
+     --radius-lg: 16px;
+     --radius-full: 9999px;
+     
+     /* Spacing scale - múltiplos de 4px rítmico */
+     --space-1: 4px;
+     --space-2: 8px;
+     --space-3: 12px;
+     --space-4: 16px;
+     --space-6: 24px;
+     --space-8: 32px;
+     
+     /* Type scale - The Elements of Typographic Style con φ (phi = 1.618) */
+     --type-scale: 1.618;
+     
+     /* Tamaños calculados con φ */
+     --font-header-1: clamp(2rem, calc(1.618 * 1.25rem), 2.75rem);  /* φ² */
+     --font-header-2: clamp(1.75rem, calc(1.618 * 1.15rem), 2.25rem); /* φ¹·⁵ */
+     --font-header-3: clamp(1.25rem, calc(1.618 * 1rem), 1.75rem);   /* φ¹·² */
+     --font-body: 0.975rem;                                         /* base */
+     --font-kpi: 2rem;                                              /* valor grande */
+     --font-label: 0.775rem;                                        /* uppercase */
+   }
+   
+   /* --- RESET TYPOGRAPHY: sin defaults de IA --- */
+   html {
+     -webkit-font-smoothing: antialiased;
+     -moz-osx-font-smoothing: grayscale;
+     text-rendering: optimizeLegibility;
+     -webkit-text-size-adjust: 100%;
+   }
+   
+   body {
+     font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+     font-size: var(--font-body);
+     line-height: 1.6;
+     color: var(--text-primary);
+     background-color: var(--bg-base);
+   }
+   
+   h1, h2, h3, h4, h5, h6 {
+     font-weight: 600;
+     line-height: 1.25;
+     text-transform: none;
+   }
+   
+   .uppercase-label {
+     text-transform: uppercase;
+     letter-spacing: 0.08em;
+     font-size: var(--font-label);
+     font-weight: 600;
+   }
+   
+   .label, .small, .dim {
+     font-family: inherit;
+     font-size: 0.85rem;
+     color: var(--text-secondary);
+   }
+   
+   /* --- MOTION: una secuencia orchestrada, no scattered effects --- */
+   @keyframes content-reveal {
+     from { opacity: 0; transform: translateY(12px); }
+     to { opacity: 1; transform: translateY(0); }
+   }
+   
+   .animated-reveal {
+     animation: content-reveal 0.4s ease-out forwards;
+     will-change: opacity, transform;
+   }
+   
+   :focus-visible {
+     outline: 2px solid var(--accent-primary);
+     outline-offset: 2px;
+   }
+   
+   @media (prefers-reduced-motion: reduce) {
+     *, *::before, *::after {
+       animation-duration: 0.01ms !important;
+       transition-duration: 0.01ms !important;
+     }
+   }
+   
+   /* --- ORIGINAL CONTENT PRESERVED BELOW --- */
 @keyframes fulbitoPulseGlow {
   0%, 100% { box-shadow: 0 0 0 0 rgba(123, 225, 200, 0.4), 0 10px 25px -5px rgba(123, 225, 200, 0.3); }
   50% { box-shadow: 0 0 0 10px rgba(123, 225, 200, 0), 0 14px 30px -5px rgba(123, 225, 200, 0.5); }
@@ -229,7 +323,7 @@
 /* --- KPI CHIP --- */
 .dash-kpi-chip {
   font-family: var(--font-mono);
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   font-weight: 700;
   padding: 3px 10px;
   border-radius: 999px;
@@ -237,17 +331,40 @@
   color: var(--text-muted);
   border: 1px solid var(--line);
   flex-shrink: 0;
+  transition: all 0.2s var(--ease);
+}
+
+.dash-kpi-chip:hover {
+  border-color: var(--accent-muted);
+  color: var(--text-primary);
+}
+
+.dash-kpi-chip.neutral { color: var(--text-secondary); }
+.dash-kpi-chip.positivo { 
+  color: var(--green); 
+  background: rgba(34, 197, 96, 0.12); 
+  border-color: rgba(34, 197, 96, 0.2); 
+}
+.dash-kpi-chip.negativo { 
+  color: var(--red); 
+  background: rgba(239, 68, 68, 0.12); 
+  border-color: rgba(239, 68, 68, 0.2); 
+}
+.dash-kpi-chip.warning { 
+  color: var(--gold); 
+  background: rgba(251, 191, 36, 0.12); 
+  border-color: rgba(251, 191, 36, 0.2); 
 }
 
 /* --- KPI LABEL --- */
 .dash-kpi-label {
   display: block;
-  font-size: 0.75rem;
-  color: var(--text-muted);
-  font-weight: 500;
-  margin-bottom: 2px;
-  letter-spacing: 0.02em;
+  font-size: var(--font-label);
+  color: var(--text-secondary);
+  font-weight: 600;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
+  margin-bottom: 2px;
 }
 
 /* --- KPI VALOR --- */
@@ -4306,6 +4423,43 @@ input {
 .dashboard-card.accent-oro .dashboard-valor { color: var(--gold); }
 .dashboard-card.accent-rosa .dashboard-label { color: #f87171; }
 .dashboard-card.accent-rosa .dashboard-valor { color: #f87171; }
+
+/* ============================================================
+   LAYOUT & COMPOSITION PRINCIPLES
+   ============================================================
+   Structural devices = information, not decoration.
+   Numbered markers (01 / 02 / 03) only if content is a sequence.
+   Modular rhythm: all spacings multiples of 4px (--space-1 to --space-8).
+   Asymmetrical composition with purpose; no centering everything.
+   Empty states are invitations to act, not mood pieces.
+   Un punto de boldness = el hero (KPIs grandes), lo demás quieto.
+
+   Motion: secuencia orchestrada en carga (content-reveal), no fade-up
+   scattered en cada sección. Motion que responde a acción de usuario
+   es bienvenido (hover, expand, confirm).
+
+   Copy: name things by what users understand, no por cómo esté
+   construido el sistema. Empty states welcome action.
+
+   .empty-state {
+     text-align: center;
+     padding: var(--space-8) var(--space-4);
+     color: var(--text-dim);
+     &:before {
+       content: "•";
+       display: block;
+       width: 40px;
+       height: 40px;
+       margin: 0 auto var(--space-2);
+       background: var(--accent-primary);
+       border-radius: var(--radius-full);
+       color: var(--bg-base);
+       font-size: 2rem;
+       line-height: 1;
+     }
+   }
+============================================================ */
+.quick-access {
 
 .dashboard-label {
   color: var(--text-muted);
