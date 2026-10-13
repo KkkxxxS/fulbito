@@ -696,6 +696,36 @@ async function cargarOddsVolley() {
   }));
 }
 
+}
+
+// Predicciones simplificadas para vóley (motor placeholder).
+// Si no hay datos de The Odds API, devuelve un modelo básico que la UI
+// puede mostrar con el mensaje "Motor en desarrollo".
+async function oddsVolleyPredictions() {
+  const datos = await cargarOddsVolley();
+  if (datos && datos.length) {
+    return datos.map(p => ({
+      id: p.id,
+      home_team: p.home_team,
+      away_team: p.away_team,
+      commence_time: p.commence_time,
+      sport_key: p.sport_key,
+      sport_title: p.sport_title,
+      bookmakers: p.bookmakers || []
+    }));
+  }
+  // Datos mínimos para que el frontend renderice la tarjeta de predicción
+  return [{
+    id: 'voley-placeholder',
+    home_team: 'Local',
+    away_team: 'Visita',
+    commence_time: new Date().toISOString(),
+    sport_key: 'volleyball',
+    sport_title: 'Vóley',
+    bookmakers: []
+  }];
+}
+
 app.get('/api/odds/:sport', async (req, res) => {
   const { sport } = req.params;
   const { regions = 'us', markets = 'h2h' } = req.query;
@@ -1056,10 +1086,10 @@ async function oddsTenisAgregadas() {
 // valor vs el mejor precio de mercado y extras del deporte.
 app.get('/api/predicciones/:deporte', async (req, res) => {
   const { deporte } = req.params;
-  const mapa = { basquet: 'basketball_nba', tenis: 'tenis' };
+  const mapa = { basquet: 'basketball_nba', tenis: 'tenis', voley: 'volleyball' };
   const sportKey = mapa[deporte];
   if (!sportKey) {
-    return res.status(404).json({ error: 'deporte_no_soportado', mensaje: `Sin motor para "${deporte}". Soportados: basquet, tenis.` });
+    return res.status(404).json({ error: 'deporte_no_soportado', mensaje: `Sin motor para "${deporte}". Soportados: basquet, tenis, voley.` });
   }
   const claveCache = `predicciones-${deporte}`;
   const cacheado = obtenerDeCache(claveCache, 5 * 60 * 1000);
@@ -1069,6 +1099,8 @@ app.get('/api/predicciones/:deporte', async (req, res) => {
     let partidos;
     if (deporte === 'tenis') {
       partidos = await oddsTenisAgregadas();
+    } else if (deporte === 'voley') {
+      partidos = await oddsVolleyPredictions();
     } else {
       const url = `${THE_ODDS_BASE_URL}/sports/${sportKey}/odds/?apiKey=${THE_ODDS_API_KEY}&regions=us&markets=h2h,spreads,totals`;
       const resp = await fetch(url);

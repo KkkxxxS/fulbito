@@ -9,7 +9,7 @@
     futbol: { titulo: 'Fútbol' },
     basquet: { sport: 'basketball_nba', regions: 'us', markets: 'h2h,spreads,totals', titulo: 'Básquet NBA', prediccion: 'basquet' },
     tenis:   { sport: 'tenis', regions: 'us', markets: 'h2h', titulo: 'Tenis ATP / WTA', prediccion: 'tenis' },
-    voley:   { sport: 'volleyball', regions: 'us', markets: 'h2h', titulo: 'Vóley', prediccion: null },
+    voley:   { sport: 'volleyball', regions: 'us', markets: 'h2h', titulo: 'Vóley', prediccion: 'voley' },
   };
 
   function backendUrl() {
