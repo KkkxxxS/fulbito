@@ -34,35 +34,35 @@
   function filaMercado(datos, partidoId, esPrincipal) {
     if (datos.sinApuesta) {
       return `
-        <div class="fila-mercado mercado-${datos.tipo} fila-sin-apuesta">
-          <div class="fila-header">
+        <li class="fila-mercado animated-enter mercado-${datos.tipo} fila-sin-apuesta" role="listitem">
+          <header class="fila-header">
             <div class="fila-header-izq">
               ${iconoMercado(datos.tipo)}
               <span class="badge-nobet-tag">NO BET</span>
             </div>
-          </div>
-          <span class="fila-titulo">${escaparHTML(datos.titulo)}</span>
+          </header>
+          <h4 class="fila-titulo">${escaparHTML(datos.titulo)}</h4>
           <div class="fila-mercado-cuerpo">
             <p class="fila-mercado-nombre">${escaparHTML(datos.mercado)}</p>
             <p class="fila-seleccion">Sin apuesta disponible</p>
           </div>
-          <div class="fila-nobet-detalle">
-            <span class="icono-info-nobet">â„¹</span>
-            <p class="cuota-implicita">NingÃºn mercado de esta categorÃ­a supera el umbral mÃ­nimo de seguridad (${datos.probabilidad}% real).</p>
-          </div>
-        </div>
+          <footer class="fila-nobet-detalle">
+            <span class="icono-info-nobet" aria-hidden="true">ℹ</span>
+            <p class="cuota-implicita">Ningún mercado de esta categoría supera el umbral mínimo de seguridad (${datos.probabilidad}% real).</p>
+          </footer>
+        </li>
       `;
     }
     const conf = obtenerConfianza(datos);
     const cuota = cuotaImplicita(datos.probabilidad);
     const contextoTxt = datos.contexto ? `<div class="fila-contexto-block"><span class="contexto-label">Contexto:</span> ${escaparHTML(datos.contexto)}</div>` : '';
-    const explicacionTxt = datos.explicacion ? `<div class="fila-explicacion-block"><span class="explicacion-label">ExplicaciÃ³n:</span> ${escaparHTML(datos.explicacion)}</div>` : '';
+    const explicacionTxt = datos.explicacion ? `<div class="fila-explicacion-block"><span class="explicacion-label">Explicación:</span> ${escaparHTML(datos.explicacion)}</div>` : '';
 
     return `
-      <div class="fila-mercado motion-card mercado-${datos.tipo} ${esPrincipal ? 'mercado-principal motion-pop' : ''}">
-        ${esPrincipal ? `<span class="etiqueta-pick-principal">â˜… Pick del partido</span>` : ''}
+      <li class="fila-mercado animated-enter motion-card mercado-${datos.tipo} ${esPrincipal ? 'mercado-principal motion-pop' : ''}" role="listitem">
+        ${esPrincipal ? `<div class="etiqueta-pick-principal" aria-label="Pick principal del partido">⭐ Pick del partido</div>` : ''}
         ${contextoTxt}
-        <div class="fila-header">
+        <header class="fila-header">
           <div class="fila-header-izq">
             ${iconoMercado(datos.tipo)}
             <span class="fila-porcentaje motion-count">${datos.probabilidad}%</span>
@@ -71,9 +71,9 @@
             <span class="badge-confianza-lectura ${conf.clase}">Confianza: ${conf.etiqueta}</span>
             ${botonMiPrediccion(partidoId, datos.categoria)}
           </div>
-        </div>
-        <span class="fila-titulo">${escaparHTML(datos.titulo)}</span>
-        <div class="barra-probabilidad">
+        </header>
+        <h4 class="fila-titulo">${escaparHTML(datos.titulo)}</h4>
+        <div class="barra-probabilidad" role="progressbar" aria-valuenow="${datos.probabilidad}" aria-valuemin="0" aria-valuemax="100" aria-label="Probabilidad ${datos.probabilidad}%">
           <div class="barra-relleno conf-${conf.clase}" style="width:${datos.probabilidad}%"></div>
         </div>
         <div class="fila-mercado-cuerpo">
@@ -81,11 +81,11 @@
           <p class="fila-seleccion">${escaparHTML(datos.seleccion)}</p>
         </div>
         ${explicacionTxt}
-        <div class="fila-razones">${(datos.razones || []).map(r => `<p class="fila-razon">+ ${escaparHTML(r)}</p>`).join('')}</div>
-        <div class="fila-mercado-footer">
-          <span class="cuota-implicita-tag" title="Cuota justa segÃºn probabilidad real estimada">Cuota justa: <strong>@${cuota}</strong></span>
-        </div>
-      </div>
+        <ul class="fila-razones">${(datos.razones || []).map(r => `<li class="fila-razon">+ ${escaparHTML(r)}</li>`).join('')}</ul>
+        <footer class="fila-mercado-footer">
+          <span class="cuota-implicita-tag" title="Cuota justa según probabilidad real estimada">Cuota justa: <strong>@${cuota}</strong></span>
+        </footer>
+      </li>
     `;
   }
 
@@ -107,7 +107,7 @@
     return `<div class="info-h2h-pill"><span class="h2h-icono">âš–</span> Historial directo (${h2h.totalPartidos} PJ): <strong>${h2h.victoriasLocal}V</strong> local Â· <strong>${h2h.empates}E</strong> Â· <strong>${h2h.victoriasVisita}V</strong> visita</div>`;
   }
 
-  function crearTarjetaHTML(partido, pronosticos, statsLocal, statsVisita, h2h, tabla) {
+function crearTarjetaHTML(partido, pronosticos, statsLocal, statsVisita, h2h, tabla) {
     const local = partido.homeTeam.name;
     const visita = partido.awayTeam.name;
     const liga = partido.competition.name;
@@ -121,44 +121,44 @@
       : null;
 
     return `
-      <div class="tarjeta-partido" data-partido-id="${partido.id}">
-        <div class="tarjeta-partido-topbar">
+      <article class="tarjeta-partido animated-enter" data-partido-id="${partido.id}">
+        <header class="tarjeta-partido-topbar">
           <div class="partido-topbar-izq">
             <span class="partido-liga-tag">${escaparHTML(liga)}</span>
-            <span class="partido-fecha-tag">${fechaTexto} Â· ${horaTexto}</span>
+            <span class="partido-fecha-tag">${fechaTexto} · ${horaTexto}</span>
           </div>
           <div class="partido-topbar-der">
             ${chipCuentaRegresiva(partido.utcDate)}
           </div>
-        </div>
+        </header>
 
-        <div class="encabezado-partido">
+        <section class="encabezado-partido">
           ${bloqueEquipoHTML(local, statsLocal, 'alineacion-izq', partido.homeTeam.crest, tabla, partido.homeTeam.id)}
           <div class="centro-partido">
             <span class="vs-circulo">VS</span>
-            <div class="marcador-estimado-badge" title="Marcador mÃ¡s probable estimado por el modelo">
+            <div class="marcador-estimado-badge" title="Marcador más probable estimado por el modelo">
               <span class="marcador-estimado-label">Estimado</span>
               <strong class="marcador-estimado-val">${escaparHTML(pronosticos.marcadorProbable)}</strong>
             </div>
           </div>
           ${bloqueEquipoHTML(visita, statsVisita, 'alineacion-der', partido.awayTeam.crest, tabla, partido.awayTeam.id)}
-        </div>
+        </section>
 
         ${h2hHTML(h2h)}
-        ${pronosticos.pocaData ? `<p class="aviso-datos">âš  Datos limitados (${pronosticos.partidosMin} partidos analizados) Â· pronÃ³stico menos confiable</p>` : ''}
-        ${pronosticos.sinNadaEnJuego ? `<p class="aviso-datos">âš  Uno de los equipos ya no se juega nada en la tabla (tÃ­tulo o descenso resuelto)</p>` : ''}
+        ${pronosticos.pocaData ? `<div class="aviso-datos warning"><span class="aviso-icon">⚠</span> Datos limitados (${pronosticos.partidosMin} partidos analizados) · pronóstico menos confiable</div>` : ''}
+        ${pronosticos.sinNadaEnJuego ? `<div class="aviso-datos warning"><span class="aviso-icon">⚠</span> Uno de los equipos ya no se juega nada en la tabla (título o descenso resuelto)</div>` : ''}
 
-        <div class="lista-mercados" id="mercados-${partido.id}">
-          ${pronosticos.seleccionados.map(m => filaMercado(m, partido.id, mejor && m === mejor)).join('')}
-        </div>
-        <button class="boton-expandir" onclick="toggleMercados(${partido.id})">Ver mÃ¡s mercados</button>
+        <ul class="lista-mercados animated-enter" id="mercados-${partido.id}">
+          ${pronosticos.seleccionados.map(m => `<li>${filaMercado(m, partido.id, mejor && m === mejor)}</li>`).join('')}
+        </ul>
+        <button class="boton-expandir" onclick="toggleMercados(${partido.id})">Ver más mercados</button>
 
-        <div class="combos-partido">
-          <p class="combos-partido-titulo">Combina en este partido</p>
-          ${pronosticos.combosPartido.map(comboPartidoHTML).join('')}
-        </div>
+        <section class="combos-partido">
+          <h3 class="combos-partido-titulo">Combina en este partido</h3>
+          <ul>${pronosticos.combosPartido.map(comboPartidoHTML).join('')}</ul>
+        </section>
 
-        <p class="marcadores-probables-titulo">Marcadores mÃ¡s probables</p>
+        <p class="marcadores-probables-titulo">Marcadores más probables</p>
         <div class="marcadores-probables">
           ${pronosticos.top3Marcadores.map(m => `<span class="marcador-chip">${m.marcador} <em>${m.probabilidad}%</em></span>`).join('')}
         </div>
@@ -167,8 +167,8 @@
         <div class="catalogo-completo" id="catalogo-${partido.id}" style="display:none;">
         ${(pronosticos.catalogoCompleto || []).map(c => `<div class="catalogo-fila"><span>${escaparHTML(c.seleccion)}</span></div>`).join('')}
       </div>
-    </div>`;
-}
+    </article>`;
+  }
 
   function toggleMercados(partidoId) {
     const el = document.getElementById(`mercados-${partidoId}`);

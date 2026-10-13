@@ -556,7 +556,13 @@
 </section>
 
     <section id="vista-pronosticos" class="vista">
-    <div id="selector-deporte" role="tablist" aria-label="Selector de deporte" style="display:flex; gap:8px; margin:0 0 12px; overflow-x:auto; padding-bottom:4px;">
+    <div class="vista-cabecera animated-enter">
+        <span class="vista-eyebrow" data-i18n="pronosticosEyebrow">Pronósticos</span>
+        <h2 data-i18n="pronosticosTitulo">Partidos analizados por el motor</h2>
+        <p class="subtitulo-vista" data-i18n="pronosticosSub">Poisson + Dixon-Coles · 9 mercados por partido · probabilidad calibrada.</p>
+    </div>
+    <div id="live-region-pronosticos" class="sr-only" aria-live="polite"></div>
+    <div id="selector-deporte" role="tablist" aria-label="Selector de deporte" style="display:flex; gap:8px; margin:0 0 12px; overflow-x:auto; padding-bottom:4px;" class="animated-enter delay-1">
         <button class="pestaña activa" role="tab" aria-selected="true" data-deporte="futbol" onclick="cambiarDeporte('futbol')">⚽ Fútbol</button>
         <button class="pestaña" role="tab" aria-selected="false" data-deporte="basquet" onclick="cambiarDeporte('basquet')">🏀 Básquet</button>
         <button class="pestaña" role="tab" aria-selected="false" data-deporte="tenis" onclick="cambiarDeporte('tenis')">🎾 Tenis</button>
@@ -662,9 +668,12 @@
 
 </section>
 
-<section id="vista-favoritos" class="vista">
-    <h2>Tus favoritos</h2>
-    <p class="subtitulo-vista">Partidos de los próximos 7 días donde juega alguno de tus equipos marcados con ★.</p>
+    <section id="vista-favoritos" class="vista">
+    <div class="vista-cabecera animated-enter">
+        <span class="vista-eyebrow">Favoritos</span>
+        <h2>Tus favoritos</h2>
+        <p class="subtitulo-vista">Partidos de los próximos 7 días donde juega alguno de tus equipos marcados con ★.</p>
+    </div>
     <div id="contenedor-favoritos">
         <p style="text-align:center; color:#8fa896;">Cargando...</p>
     </div>
