@@ -756,6 +756,14 @@ app.get('/api/odds/:sport', async (req, res) => {
   const cacheado = obtenerDeCache(claveCache, 15 * 60 * 1000);
   if (cacheado) return responderConCache(req, res, cacheado, 300);
 
+  if (!THE_ODDS_API_KEY || THE_ODDS_API_KEY.trim() === '') {
+    return res.status(503).json({
+      error: 'sin_cobertura',
+      mensaje: 'Cobertura de datos en implementación',
+      detalle: 'La fuente de datos The Odds API no está configurada. Pide al administrador configurar THE_ODDS_API_KEY en las variables de entorno del servicio Render.'
+    });
+  }
+
   try {
     const url = `${THE_ODDS_BASE_URL}/sports/${sport}/odds/?apiKey=${THE_ODDS_API_KEY}&regions=${regions}&markets=${markets}`;
     const resp = await fetch(url);
