@@ -696,8 +696,6 @@ async function cargarOddsVolley() {
   }));
 }
 
-}
-
 // Predicciones simplificadas para vóley (motor placeholder).
 // Si no hay datos de The Odds API, devuelve un modelo básico que la UI
 // puede mostrar con el mensaje "Motor en desarrollo".

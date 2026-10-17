@@ -634,7 +634,7 @@
 
   function botonMiPrediccion(partidoId, categoria) {
     const activa = esMiPrediccion(partidoId, categoria);
-    return `<button class="boton-pick ${activa ? 'activa' : ''}" onclick="toggleMiPrediccion(${partidoId}, '${categoria}', event)" title="${activa ? 'Quitar de Mis Predicciones' : 'Marcar como mi predicción'}">📌</button>`;
+    return `<button class="boton-pick ${activa ? 'activa' : ''}" data-action="toggle-mi-prediccion" data-partido="${partidoId}" data-categoria="${categoria}" title="${activa ? 'Quitar de Mis Predicciones' : 'Marcar como mi predicción'}">📌</button>`;
   }
 
   function renderMisPredicciones() {
@@ -695,7 +695,7 @@
               ${CATEGORIAS_MERCADO[m.categoria]?.titulo || m.categoria}: <strong>${m.seleccion}</strong> (${m.probabilidad}%)
             </span>
           </div>
-          <button class="boton-reiniciar" style="margin-top:10px;" onclick="toggleMiPrediccion(${h.partidoId}, '${m.categoria}', event); renderMisPredicciones();">Quitar</button>
+          <button class="boton-reiniciar" style="margin-top:10px;" data-action="quitar-mi-prediccion" data-partido="${h.partidoId}" data-categoria="${m.categoria}">Quitar</button>
         </div>
       `;
     };
@@ -1942,11 +1942,11 @@
 
   function estrellaFavorito(teamId) {
     const activa = esFavorito(teamId);
-    return `<button class="estrella-favorito ${activa ? 'activa' : ''}" onclick="toggleFavorito(${teamId}, event)" title="${activa ? 'Quitar de favoritos' : 'Marcar como favorito'}">${activa ? '★' : '☆'}</button>`;
+    return `<button class="estrella-favorito ${activa ? 'activa' : ''}" data-action="toggle-favorito" data-team="${teamId}" title="${activa ? 'Quitar de favoritos' : 'Marcar como favorito'}">${activa ? '★' : '☆'}</button>`;
   }
 
   function bloqueEquipoHTML(nombre, stats, alineacion, escudoUrl, tabla, teamId) {
-    const escudo = escudoUrl ? `<img class="escudo" src="${escaparHTML(escudoUrl)}" alt="" onerror="this.style.display='none'">` : '';
+    const escudo = escudoUrl ? `<img class="escudo" src="${escaparHTML(escudoUrl)}" alt="" data-img-fallback>` : '';
     return `
       <div class="equipo-info ${alineacion}">
         ${escudo}

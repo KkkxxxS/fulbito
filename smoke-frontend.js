@@ -79,6 +79,7 @@ const sandbox = {
   Notification: function () { return { permission: 'default' }; },
   CustomEvent: function (t, o) { this.type = t; Object.assign(this, o); },
   Event: function (t) { this.type = t; },
+  addEventListener() {}, removeEventListener() {}, dispatchEvent() { return true; },
   Motion: undefined,
   alert: () => {}, confirm: () => true, prompt: () => null
 };
@@ -87,7 +88,7 @@ sandbox.globalThis = sandbox;
 sandbox.self = sandbox;
 vm.createContext(sandbox);
 
-const modulos = ['app-model.js', 'app-ui.js', 'app-init.js', 'app-animaciones.js', 'menu-toggle.js'];
+const modulos = ['bootstrap.js', 'app-model.js', 'app-ui.js', 'app-init.js', 'app-animaciones.js', 'menu-toggle.js', 'events.js'];
 let fallos = 0;
 for (const m of modulos) {
   const ruta = path.join(__dirname, m);

@@ -136,8 +136,8 @@
       const listaPartidos = partidosPorLiga[ligaCode];
 
       html += `
-        <div class="acordeon-liga" style="border:1px solid var(--card-border); border-radius:var(--radius-md); overflow:hidden; background:var(--card); box-shadow:var(--shadow-card); transition:all 0.2s ease;">
-          <div class="acordeon-liga-header" onclick="toggleAcordeonLiga('${ligaCode}')" style="padding:14px 18px; background:linear-gradient(135deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01)); cursor:pointer; display:flex; justify-content:space-between; align-items:center; user-select:none; font-weight:700; color:var(--text); border-bottom:1px solid var(--line);" onmouseover="this.style.background='rgba(123,225,200,0.06)'" onmouseout="this.style.background='linear-gradient(135deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01))'">
+        <div class="acordeon-liga" style="border:1px solid var(--card-border); border-radius:var(--radius); overflow:hidden; background:var(--card); box-shadow:var(--shadow-card); transition:all 0.2s ease;">
+          <div class="acordeon-liga-header" data-action="toggle-acordeon-liga" data-liga="${ligaCode}" style="padding:14px 18px; background:linear-gradient(135deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01)); cursor:pointer; display:flex; justify-content:space-between; align-items:center; user-select:none; font-weight:700; color:var(--text); border-bottom:1px solid var(--line);" >
             <div style="display:flex; align-items:center; gap:10px;">
               <span style="font-size:1.1rem;">🏆</span>
               <span style="font-size:0.95rem; letter-spacing:0.02em;">${nombreLiga}</span>
@@ -155,7 +155,7 @@
         const pronosticos = await obtenerPronosticosDePartidoSeguro(partido);
 
         html += `
-          <div class="partido-combinada-card" style="background:var(--card); border:1px solid var(--card-border); border-radius:var(--radius-md); padding:14px 16px; box-shadow:0 4px 16px -6px rgba(0,0,0,0.4); transition:all 0.18s ease;">
+          <div class="partido-combinada-card" style="background:var(--card); border:1px solid var(--card-border); border-radius:var(--radius); padding:14px 16px; box-shadow:0 4px 16px -6px rgba(0,0,0,0.4); transition:all 0.18s ease;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; padding-bottom:8px; border-bottom:1px solid var(--line);">
               <div style="display:flex; align-items:center; gap:8px;">
                 <span style="font-size:0.95rem;">⚽</span>
@@ -183,7 +183,7 @@
             html += `
               <label style="display:flex; align-items:center; justify-content:space-between; gap:6px; background:var(--bg-raised); border:1px solid var(--line); border-radius:var(--radius-sm); padding:6px 10px; font-size:0.8rem; cursor:pointer; user-select:none;">
                 <div style="display:flex; align-items:center; gap:8px;">
-                  <input type="checkbox" id="${pickId}" ${isChecked ? 'checked' : ''} onchange="togglePickCombinadaManual('${pickId}', ${partido.id}, '${escaparHTML(local.replace(/'/g, "\\'"))} vs ${escaparHTML(visita.replace(/'/g, "\\'"))}', '${ligaCode}', '${escaparHTML(mercado.seleccion.replace(/'/g, "\\'"))}', '${cat}', ${prob}, ${cuota})" style="cursor:pointer; accent-color:var(--green);">
+                  <input type="checkbox" id="${pickId}" ${isChecked ? 'checked' : ''} data-action="toggle-pick-combinada" data-pick-id="${pickId}" data-partido-id="${partido.id}" data-partido-txt="${escaparHTML(local)} vs ${escaparHTML(visita)}" data-liga="${ligaCode}" data-seleccion="${escaparHTML(mercado.seleccion)}" data-categoria="${cat}" data-prob="${prob}" data-cuota="${cuota}" style="cursor:pointer; accent-color:var(--green);">
                   <span style="color:var(--text);">${escaparHTML(mercado.seleccion)}</span>
                 </div>
                 <div style="display:flex; gap:6px; font-size:0.75rem;">
@@ -344,7 +344,7 @@
         <div style="display:flex; align-items:center; gap:12px;">
           <span style="color:var(--green); font-weight:700; font-size:0.85rem;">${p.probabilidad}%</span>
           <span style="color:var(--brand); font-weight:700; font-size:0.85rem;">x${p.cuota.toFixed(2)}</span>
-          ${opciones.permitirQuitar ? `<button onclick="quitarPickDeCombinada('${p.id}')" style="background:none; border:none; color:#ef4444; cursor:pointer; font-size:1.1rem; padding:0 4px;" title="Quitar">&times;</button>` : ''}
+          ${opciones.permitirQuitar ? `<button data-action="quitar-pick-combinada" data-pick-id="${p.id}" style="background:none; border:none; color:#ef4444; cursor:pointer; font-size:1.1rem; padding:0 4px;" title="Quitar">&times;</button>` : ''}
         </div>
       </div>
     `).join('');
@@ -354,7 +354,7 @@
         ${itemsHTML}
       </div>
 
-      <div style="background:var(--bg-raised); border:1px solid var(--card-border); border-radius:var(--radius-md); padding:16px; display:flex; justify-content:space-around; align-items:center; text-align:center;">
+      <div style="background:var(--bg-raised); border:1px solid var(--card-border); border-radius:var(--radius); padding:16px; display:flex; justify-content:space-around; align-items:center; text-align:center;">
         <div>
           <div style="font-size:0.8rem; color:var(--text-muted);">Picks Seleccionados</div>
           <div style="font-size:1.4rem; font-weight:700; color:var(--text);">${picks.length}</div>
@@ -388,7 +388,7 @@
       <div style="display:flex; flex-direction:column; gap:16px;">
         <div style="display:flex; justify-content:space-between; align-items:center;">
           <h4 style="margin:0; font-size:1.1rem; color:var(--text);">Resumen de tu Combinada</h4>
-          <button onclick="renderizarContenidoModalCombinada()" style="background:rgba(255,255,255,0.06); border:1px solid var(--line); color:var(--text); padding:6px 12px; border-radius:var(--radius-sm); font-size:0.8rem; cursor:pointer;">← Volver a editar</button>
+          <button data-action="render-modal-combinada" style="background:rgba(255,255,255,0.06); border:1px solid var(--line); color:var(--text); padding:6px 12px; border-radius:var(--radius-sm); font-size:0.8rem; cursor:pointer;">← Volver a editar</button>
         </div>
         ${renderResumenCombinadaHTML(combinadaManualPicks, { permitirQuitar: true })}
       </div>
@@ -586,8 +586,8 @@
         <div id="asistida-hint" style="display:block; font-size:0.75rem; color:var(--gold); margin-top:2px;">Elegí al menos 2 partidos para armar tu combinada.</div>
       </div>
       <div style="display:flex; gap:8px; align-items:center;">
-        <button onclick="cerrarCombinadaAsistida()" style="background:rgba(255,255,255,0.06); border:1px solid var(--line); color:var(--text); padding:8px 14px; border-radius:var(--radius-sm); font-weight:600; font-size:0.85rem; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.12)'" onmouseout="this.style.background='rgba(255,255,255,0.06)'">Cancelar</button>
-        <button id="btn-asistida-continuar" onclick="irAPasoPerfil()" disabled style="background:linear-gradient(135deg, var(--green), var(--brand)); color:#07120d; border:none; padding:10px 20px; border-radius:var(--radius-sm); font-weight:800; font-size:0.9rem; box-shadow:0 4px 16px -4px rgba(100,228,169,0.6); transition:all 0.2s; opacity:0.45; cursor:not-allowed;" onmouseover="if(!this.disabled) this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='translateY(0)'">Continuar →</button>
+        <button data-action="cerrar-combinada-asistida" style="background:rgba(255,255,255,0.06); border:1px solid var(--line); color:var(--text); padding:8px 14px; border-radius:var(--radius-sm); font-weight:600; font-size:0.85rem; cursor:pointer; transition:all 0.2s;"  class="btn-combinada-secundario">Cancelar</button>
+        <button id="btn-asistida-continuar" data-action="ir-a-paso-perfil" disabled style="background:linear-gradient(135deg, var(--green), var(--brand)); color:#07120d; border:none; padding:10px 20px; border-radius:var(--radius-sm); font-weight:800; font-size:0.9rem; box-shadow:0 4px 16px -4px rgba(100,228,169,0.6); transition:all 0.2s; opacity:0.45; cursor:not-allowed;"  class="btn-combinada-primario">Continuar →</button>
       </div>
     `;
   }
@@ -606,7 +606,7 @@
     if (partidos.length === 0) {
       body.innerHTML = `
         <p style="text-align:center; color:var(--text); padding:20px;">No hay partidos cargados en este momento. Espera a que carguen los partidos de la fecha activa (Hoy / Mañana / Esta semana) y vuelve a abrir el asistente.</p>
-        <button onclick="abrirModalManualDesdeAsistida()" style="align-self:center; background:rgba(255,255,255,0.06); border:1px solid var(--line); color:var(--text); padding:6px 12px; border-radius:var(--radius-sm); font-size:0.8rem; cursor:pointer;">Prefiero elegir los mercados a mano →</button>
+        <button data-action="abrir-modal-manual-desde-asistida" style="align-self:center; background:rgba(255,255,255,0.06); border:1px solid var(--line); color:var(--text); padding:6px 12px; border-radius:var(--radius-sm); font-size:0.8rem; cursor:pointer;">Prefiero elegir los mercados a mano →</button>
       `;
       return;
     }
@@ -628,7 +628,7 @@
 
     let html = `
       <div style="display:flex; justify-content:flex-end;">
-        <button onclick="abrirModalManualDesdeAsistida()" style="background:none; border:none; color:var(--text-muted); font-size:0.75rem; cursor:pointer; text-decoration:underline; padding:0;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--text-muted)'">Prefiero elegir los mercados a mano →</button>
+        <button data-action="abrir-modal-manual-desde-asistida" style="background:none; border:none; color:var(--text-muted); font-size:0.75rem; cursor:pointer; text-decoration:underline; padding:0;"  class="btn-link">Prefiero elegir los mercados a mano →</button>
       </div>
     `;
 
@@ -638,8 +638,8 @@
       const selLiga = contarSeleccionadosDeLiga(ligaCode);
 
       html += `
-        <div class="acordeon-liga" style="border:1px solid var(--card-border); border-radius:var(--radius-md); overflow:hidden; background:var(--card); box-shadow:var(--shadow-card); transition:all 0.2s ease;">
-          <div class="acordeon-liga-header" onclick="toggleAcordeonAsistida('${ligaCode}')" style="padding:14px 18px; background:linear-gradient(135deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01)); cursor:pointer; display:flex; justify-content:space-between; align-items:center; user-select:none; font-weight:700; color:var(--text); border-bottom:1px solid var(--line);" onmouseover="this.style.background='rgba(123,225,200,0.06)'" onmouseout="this.style.background='linear-gradient(135deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01))'">
+        <div class="acordeon-liga" style="border:1px solid var(--card-border); border-radius:var(--radius); overflow:hidden; background:var(--card); box-shadow:var(--shadow-card); transition:all 0.2s ease;">
+          <div class="acordeon-liga-header" data-action="toggle-acordeon-asistida" data-liga="${ligaCode}" style="padding:14px 18px; background:linear-gradient(135deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01)); cursor:pointer; display:flex; justify-content:space-between; align-items:center; user-select:none; font-weight:700; color:var(--text); border-bottom:1px solid var(--line);" >
             <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
               <span style="font-size:1.1rem;">🏆</span>
               <span style="font-size:0.95rem; letter-spacing:0.02em;">${nombreLiga}</span>
@@ -661,9 +661,9 @@
         const disabled = disponible ? '' : 'disabled';
 
         html += `
-          <label for="asistida-partido-${partido.id}" style="display:flex; align-items:center; justify-content:space-between; gap:10px; background:var(--card); border:1px solid var(--card-border); border-radius:var(--radius-md); padding:12px 16px; ${disponible ? '' : 'opacity:0.55;'} cursor:${disponible ? 'pointer' : 'not-allowed'}; transition:all 0.18s ease;">
+          <label for="asistida-partido-${partido.id}" style="display:flex; align-items:center; justify-content:space-between; gap:10px; background:var(--card); border:1px solid var(--card-border); border-radius:var(--radius); padding:12px 16px; ${disponible ? '' : 'opacity:0.55;'} cursor:${disponible ? 'pointer' : 'not-allowed'}; transition:all 0.18s ease;">
             <div style="display:flex; align-items:center; gap:10px;">
-              <input type="checkbox" id="asistida-partido-${partido.id}" ${checked} ${disabled} onchange="togglePartidoAsistida('${partido.id}', '${ligaCode}')" style="width:18px; height:18px; flex-shrink:0; cursor:${disponible ? 'pointer' : 'not-allowed'}; accent-color:var(--green);">
+              <input type="checkbox" id="asistida-partido-${partido.id}" ${checked} ${disabled} data-action="toggle-partido-asistida" data-partido="${partido.id}" data-liga="${ligaCode}" style="width:18px; height:18px; flex-shrink:0; cursor:${disponible ? 'pointer' : 'not-allowed'}; accent-color:var(--green);">
               <div>
                 <div style="font-weight:600; color:var(--text); font-size:0.92rem; font-family:var(--font-display);">${local} <span style="color:var(--text-muted); font-weight:400; font-size:0.85rem;">vs</span> ${visita}</div>
                 ${disponible ? '' : '<div style="font-size:0.75rem; color:#facc15; margin-top:2px;">Pronósticos no disponibles para este partido</div>'}
@@ -725,7 +725,7 @@
       const badge = perfil.badge ? `<span style="font-size:0.68rem; padding:2px 8px; border-radius:999px; background:rgba(148,163,184,0.15); color:var(--text-muted); border:1px dashed rgba(148,163,184,0.35);">${perfil.badge}</span>` : '';
       const click = perfil.seleccionable ? `onclick="elegirPerfilAsistida('${perfil.id}')"` : '';
       return `
-        <div data-perfil="${perfil.id}" ${click} style="display:flex; align-items:flex-start; gap:12px; padding:14px 16px; border-radius:var(--radius-md); ${estiloCard} ${cursor} transition:all 0.18s ease; user-select:none;">
+        <div data-perfil="${perfil.id}" ${click} style="display:flex; align-items:flex-start; gap:12px; padding:14px 16px; border-radius:var(--radius); ${estiloCard} ${cursor} transition:all 0.18s ease; user-select:none;">
           <span style="font-size:1.3rem; line-height:1;">${perfil.icono}</span>
           <div style="flex:1;">
             <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
@@ -745,14 +745,14 @@
         ${perfilElegido ? `Perfil elegido: <strong style="color:var(--text);">${perfilElegido.nombre}</strong>` : 'Elegí un perfil para continuar.'}
       </div>
       <div style="display:flex; gap:8px; align-items:center;">
-        <button onclick="volverAPasoPartidos()" style="background:rgba(255,255,255,0.06); border:1px solid var(--line); color:var(--text); padding:8px 14px; border-radius:var(--radius-sm); font-weight:600; font-size:0.85rem; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.12)'" onmouseout="this.style.background='rgba(255,255,255,0.06)'">← Volver</button>
-        <button id="btn-asistida-armar" onclick="armarCombinadaAsistida()" ${perfilElegido ? '' : 'disabled'} style="background:linear-gradient(135deg, var(--green), var(--brand)); color:#07120d; border:none; padding:10px 20px; border-radius:var(--radius-sm); font-weight:800; font-size:0.9rem; box-shadow:0 4px 16px -4px rgba(100,228,169,0.6); transition:all 0.2s; ${perfilElegido ? '' : 'opacity:0.45; cursor:not-allowed;'}" onmouseover="if(!this.disabled) this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='translateY(0)'">Armar combinada ✨</button>
+        <button data-action="volver-a-paso-partidos" style="background:rgba(255,255,255,0.06); border:1px solid var(--line); color:var(--text); padding:8px 14px; border-radius:var(--radius-sm); font-weight:600; font-size:0.85rem; cursor:pointer; transition:all 0.2s;"  class="btn-combinada-secundario">← Volver</button>
+        <button id="btn-asistida-armar" data-action="armar-combinada-asistida" ${perfilElegido ? '' : 'disabled'} style="background:linear-gradient(135deg, var(--green), var(--brand)); color:#07120d; border:none; padding:10px 20px; border-radius:var(--radius-sm); font-weight:800; font-size:0.9rem; box-shadow:0 4px 16px -4px rgba(100,228,169,0.6); transition:all 0.2s; ${perfilElegido ? '' : 'opacity:0.45; cursor:not-allowed;'}"  class="btn-combinada-primario">Armar combinada ✨</button>
       </div>
     `;
 
     body.innerHTML = `
-      <button onclick="volverAPasoPartidos()" style="align-self:flex-start; background:none; border:none; color:var(--text-muted); font-size:0.8rem; cursor:pointer; padding:0;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--text-muted)'">← Cambiar partidos</button>
-      <div style="background:var(--bg-raised); border:1px solid var(--line); border-radius:var(--radius-md); padding:12px 16px; font-size:0.85rem; color:var(--text); line-height:1.5;">
+      <button data-action="volver-a-paso-partidos" style="align-self:flex-start; background:none; border:none; color:var(--text-muted); font-size:0.8rem; cursor:pointer; padding:0;"  class="btn-link">← Cambiar partidos</button>
+      <div style="background:var(--bg-raised); border:1px solid var(--line); border-radius:var(--radius); padding:12px 16px; font-size:0.85rem; color:var(--text); line-height:1.5;">
         <strong style="color:var(--text);">Tus ${elegidos.length} partidos:</strong>
         <span style="color:var(--text-muted);">${nombres}</span>
       </div>
@@ -836,7 +836,7 @@
       .filter(p => p.seleccionable)
       .map(p => {
         const activo = combinadaAsistidaPerfil === p.id;
-        return `<button onclick="cambiarPerfilResumenAsistida('${p.id}')" style="background:${activo ? 'rgba(123,225,200,0.18)' : 'rgba(255,255,255,0.06)'}; border:1px solid ${activo ? 'var(--brand)' : 'var(--line)'}; color:${activo ? 'var(--brand)' : 'var(--text-muted)'}; padding:5px 12px; border-radius:999px; font-size:0.75rem; font-weight:700; cursor:pointer; transition:all 0.2s;">${p.icono} ${p.nombre}</button>`;
+        return `<button data-action="cambiar-perfil-asistida" data-perfil="${p.id}" style="background:${activo ? 'rgba(123,225,200,0.18)' : 'rgba(255,255,255,0.06)'}; border:1px solid ${activo ? 'var(--brand)' : 'var(--line)'}; color:${activo ? 'var(--brand)' : 'var(--text-muted)'}; padding:5px 12px; border-radius:999px; font-size:0.75rem; font-weight:700; cursor:pointer; transition:all 0.2s;">${p.icono} ${p.nombre}</button>`;
       })
       .join('');
 
@@ -858,8 +858,8 @@
         </div>
       </div>
       <div style="display:flex; gap:14px; flex-wrap:wrap;">
-        <button onclick="volverAPasoPartidos()" style="background:none; border:none; color:var(--text-muted); font-size:0.8rem; cursor:pointer; padding:0; text-decoration:underline;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--text-muted)'">← Cambiar partidos</button>
-        <button onclick="renderAsistidaPaso2()" style="background:none; border:none; color:var(--text-muted); font-size:0.8rem; cursor:pointer; padding:0; text-decoration:underline;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--text-muted)'">← Cambiar perfil</button>
+        <button data-action="volver-a-paso-partidos" style="background:none; border:none; color:var(--text-muted); font-size:0.8rem; cursor:pointer; padding:0; text-decoration:underline;"  class="btn-link">← Cambiar partidos</button>
+        <button data-action="render-asistida-paso2" style="background:none; border:none; color:var(--text-muted); font-size:0.8rem; cursor:pointer; padding:0; text-decoration:underline;"  class="btn-link">← Cambiar perfil</button>
       </div>
       ${avisoSinMercado}
     `;
@@ -872,7 +872,7 @@
       footer.innerHTML = `
         <div></div>
         <div style="display:flex; gap:8px;">
-          <button onclick="volverAPasoPartidos()" style="background:rgba(255,255,255,0.06); border:1px solid var(--line); color:var(--text); padding:8px 14px; border-radius:var(--radius-sm); font-weight:600; font-size:0.85rem; cursor:pointer;">← Volver</button>
+          <button data-action="volver-a-paso-partidos" style="background:rgba(255,255,255,0.06); border:1px solid var(--line); color:var(--text); padding:8px 14px; border-radius:var(--radius-sm); font-weight:600; font-size:0.85rem; cursor:pointer;">← Volver</button>
         </div>
       `;
       return;
@@ -892,15 +892,23 @@
         <strong style="color:var(--text);">Cuota:</strong> x${cuotaFoot}
       </div>
       <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-        <button onclick="compartirCombinadaDePicks(combinadaAsistidaPicks)" style="background:rgba(123,225,200,0.15); color:var(--brand); border:1px solid rgba(123,225,200,0.3); padding:8px 14px; border-radius:var(--radius-sm); font-weight:600; font-size:0.85rem; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background='rgba(123,225,200,0.25)'" onmouseout="this.style.background='rgba(123,225,200,0.15)'">Compartir</button>
-        <button onclick="guardarCombinadaAsistida()" style="background:rgba(242,196,116,0.15); color:var(--gold); border:1px solid rgba(242,196,116,0.3); padding:8px 14px; border-radius:var(--radius-sm); font-weight:600; font-size:0.85rem; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background='rgba(242,196,116,0.25)'" onmouseout="this.style.background='rgba(242,196,116,0.15)'">Guardar</button>
-        <button onclick="cerrarCombinadaAsistida()" style="background:rgba(255,255,255,0.06); border:1px solid var(--line); color:var(--text); padding:8px 14px; border-radius:var(--radius-sm); font-weight:600; font-size:0.85rem; cursor:pointer; transition:all 0.2s;">Cerrar</button>
+        <button data-action="compartir-picks-asistida" style="background:rgba(123,225,200,0.15); color:var(--brand); border:1px solid rgba(123,225,200,0.3); padding:8px 14px; border-radius:var(--radius-sm); font-weight:600; font-size:0.85rem; cursor:pointer; transition:all 0.2s;"  class="btn-combinada-accion-verde">Compartir</button>
+        <button data-action="guardar-combinada-asistida" style="background:rgba(242,196,116,0.15); color:var(--gold); border:1px solid rgba(242,196,116,0.3); padding:8px 14px; border-radius:var(--radius-sm); font-weight:600; font-size:0.85rem; cursor:pointer; transition:all 0.2s;"  class="btn-combinada-accion-oro">Guardar</button>
+        <button data-action="cerrar-combinada-asistida" style="background:rgba(255,255,255,0.06); border:1px solid var(--line); color:var(--text); padding:8px 14px; border-radius:var(--radius-sm); font-weight:600; font-size:0.85rem; cursor:pointer; transition:all 0.2s;">Cerrar</button>
       </div>
     `;
   }
 
   window.guardarCombinadaAsistida = function() {
     if (guardarCombinadaDePicks(combinadaAsistidaPicks)) cerrarCombinadaAsistida();
+  };
+
+  // Puentes para el despachador de eventos (events.js): funciones que antes
+  // se invocaban desde handlers inline y viven en el ámbito de este script.
+  window.renderizarContenidoModalCombinada = renderizarContenidoModalCombinada;
+  window.renderAsistidaPaso2 = renderAsistidaPaso2;
+  window.compartirCombinadaAsistida = function() {
+    compartirCombinadaDePicks(combinadaAsistidaPicks);
   };
 
 

@@ -20,7 +20,7 @@
     <meta name="twitter:image" content="https://kkkxxxs.github.io/fulbito/icon-512.png">
 
     <meta name="theme-color" content="#0a0f1c">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://fulbito-forh.onrender.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://fulbito-forh.onrender.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/x-icon" href="favicon.ico">
     <link rel="apple-touch-icon" href="icon-192.png">
@@ -51,40 +51,12 @@
       "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
     }
     </script>
-    <script>
-      // Red de seguridad: si un script crítico falla, mostramos un aviso visible
-      // en vez de dejar la interfaz a medias o en blanco.
-      (function () {
-        window.__fulbitoErrorMostrado = false;
-        window.__fulbitoMostrarError = function (detalle) {
-          if (window.__fulbitoErrorMostrado) return;
-          window.__fulbitoErrorMostrado = true;
-          var pintar = function () {
-            var el = document.createElement('div');
-            el.setAttribute('role', 'alert');
-            el.style.cssText = 'position:fixed;left:12px;right:12px;bottom:12px;z-index:99999;background:#3a1416;border:1px solid #ff6b6b;color:#ffd7d7;padding:12px 14px;border-radius:12px;font:14px/1.4 system-ui,sans-serif;display:flex;gap:12px;align-items:center;justify-content:space-between;box-shadow:0 10px 30px rgba(0,0,0,0.5);';
-            el.innerHTML = '<span>Algo falló al cargar Fulbito.' + (detalle ? ' Detalle: ' + detalle : '') + '</span><button onclick="location.reload()" style="background:#ff6b6b;color:#170708;border:0;padding:8px 12px;border-radius:8px;font-weight:700;cursor:pointer;">Recargar</button>';
-            (document.body || document.documentElement).appendChild(el);
-          };
-          if (document.body) pintar();
-          else document.addEventListener('DOMContentLoaded', pintar);
-        };
-        window.addEventListener('error', function (e) {
-          if (e && typeof e.message === 'string' && e.message) window.__fulbitoMostrarError(e.message);
-        });
-        window.addEventListener('unhandledrejection', function (e) {
-          var r = e && e.reason;
-          if (r && r.name === 'AbortError') return;
-          window.__fulbitoMostrarError((r && r.message) || '');
-        });
-      })();
-    </script>
+    <script src="bootstrap.js"></script>
     <script src="menu-toggle.js" defer></script>
     <script src="i18n.js" defer></script>
     <script src="auth.js" defer></script>
     <script src="v-multideporte.js" defer></script>
     <script src="app-animaciones.js?v=1" defer></script>
-    <!-- ... existing head content ... -->
 </head>
 <body data-tema="oscuro" data-idioma="es">
 
@@ -97,93 +69,93 @@
 <!-- ============ SIDEBAR PRINCIPAL (estilo dashboard ChocoBets) ============ -->
 <aside class="app-nav dash-sidebar" id="app-nav">
     <div class="dash-sidebar-cabecera">
-        <button class="dash-logo" onclick="cambiarVista('inicio')" aria-label="Ir al inicio">
+        <button class="dash-logo" data-action="cambiar-vista" data-vista="inicio" aria-label="Ir al inicio">
             <span class="dash-logo-mark">F</span>
             <span class="dash-logo-texto">Fulbito<em>IA</em></span>
         </button>
-        <button class="dash-sidebar-cerrar" onclick="cerrarMenuMovil()" aria-label="Cerrar menú"></button>
-        <button class="dash-sidebar-colapsar" id="boton-colapsar-sidebar" onclick="toggleSidebarDesktop()" aria-label="Ocultar panel lateral" aria-pressed="false" title="Ocultar panel lateral">
+        <button class="dash-sidebar-cerrar" data-action="cerrar-menu-movil" aria-label="Cerrar menú"></button>
+        <button class="dash-sidebar-colapsar" id="boton-colapsar-sidebar" data-action="toggle-sidebar-desktop" aria-label="Ocultar panel lateral" aria-pressed="false" title="Ocultar panel lateral">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
         </button>
     </div>
 
     <div class="app-nav-buscador dash-buscador">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-        <input type="search" id="input-busqueda" placeholder="Buscar equipo o liga…" data-i18n-placeholder="buscarPlaceholder" oninput="onBuscar(this.value)">
+        <input type="search" id="input-busqueda" placeholder="Buscar equipo o liga…" data-i18n-placeholder="buscarPlaceholder" data-action="buscar" data-origen="sidebar">
     </div>
 
-    <button class="app-nav-hamburguesa" id="boton-menu-movil" onclick="toggleMenuMovil()" aria-label="Abrir menú">
+    <button class="app-nav-hamburguesa" id="boton-menu-movil" data-action="toggle-menu-movil" aria-label="Abrir menú">
         <span></span><span></span><span></span>
     </button>
 
     <nav class="app-nav-tabs dash-nav" id="app-nav-tabs">
         <p class="dash-nav-grupo" data-i18n="grupoPrincipal">PRINCIPAL</p>
 
-        <button class="nav-tab" data-vista="inicio" onclick="cambiarVista('inicio')" title="Resumen general del motor">
+        <button class="nav-tab" data-vista="inicio" data-action="cambiar-vista" data-vista="inicio" title="Resumen general del motor">
             <span class="nav-tab-icono"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9.5 9-7 9 7V20a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9.5 22v-8h5v8"/></svg></span>
             <span data-i18n="navInicio">Inicio</span>
         </button>
 
-        <button class="nav-tab" data-vista="pronosticos" onclick="cambiarVista('pronosticos')" title="Partidos analizados por el motor">
+        <button class="nav-tab" data-vista="pronosticos" data-action="cambiar-vista" data-vista="pronosticos" title="Partidos analizados por el motor">
             <span class="nav-tab-icono"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5a3 3 0 0 0-2.9 2.2A3 3 0 0 0 7 12.5a3 3 0 0 0 2.2 5.2H11a2 2 0 0 0 2-2V7a2 2 0 0 0-1-2z"/><path d="M12 5a3 3 0 0 1 2.9 2.2A3 3 0 0 1 17 12.5a3 3 0 0 1-2.2 5.2H13a2 2 0 0 1-2-2V7a2 2 0 0 1 1-2z"/></svg></span>
             <span data-i18n="navPredicciones">Predicciones</span>
         </button>
 
-        <button class="nav-tab" data-vista="live" onclick="cambiarVista('live')" title="Partidos en juego y próximos de hoy">
+        <button class="nav-tab" data-vista="live" data-action="cambiar-vista" data-vista="live" title="Partidos en juego y próximos de hoy">
             <span class="nav-tab-icono"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></span>
             <span data-i18n="navLive">Live Center</span>
-            <span class="dash-punto-vivo" id="sidebar-live-punto" style="display:none;" title="Hay partidos en juego"></span>
+            <span class="dash-punto-vivo" id="sidebar-live-punto" class="u-hide" title="Hay partidos en juego"></span>
         </button>
 
-        <button class="nav-tab" data-vista="mispredicciones" onclick="cambiarVista('mispredicciones')" title="Tus picks marcados y su historial">
+        <button class="nav-tab" data-vista="mispredicciones" data-action="cambiar-vista" data-vista="mispredicciones" title="Tus picks marcados y su historial">
             <span class="nav-tab-icono"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></span>
             <span data-i18n="navMisPredicciones">Mis Predicciones</span>
-            <span class="contador-favoritos" id="contador-mispredicciones" style="display:none;">0</span>
+            <span class="contador-favoritos" id="contador-mispredicciones" class="u-hide">0</span>
         </button>
 
         <p class="dash-nav-grupo" data-i18n="grupoExplorar">EXPLORAR</p>
 
-        <button class="nav-tab" data-vista="basquet" onclick="cambiarVista('basquet')" title="Básquet">
+        <button class="nav-tab" data-vista="basquet" data-action="cambiar-vista" data-vista="basquet" title="Básquet">
             <span class="nav-tab-icono"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 6h12"/><path d="M12 18V6"/></svg></span>
             <span>Básquet</span>
         </button>
 
-        <button class="nav-tab" data-vista="tenis" onclick="cambiarVista('tenis')" title="Tenis">
+        <button class="nav-tab" data-vista="tenis" data-action="cambiar-vista" data-vista="tenis" title="Tenis">
             <span class="nav-tab-icono"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="8"/><path d="M8 14a6 6 0 0 0 8-8"/></svg></span>
             <span>Tenis</span>
         </button>
 
-        <button class="nav-tab" data-vista="voley" onclick="cambiarVista('voley')" title="Vóley">
+        <button class="nav-tab" data-vista="voley" data-action="cambiar-vista" data-vista="voley" title="Vóley">
             <span class="nav-tab-icono"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="8"/><path d="M12 4v16"/><path d="M4 12h16"/></svg></span>
             <span>Vóley</span>
         </button>
 
-        <button class="nav-tab" data-vista="competiciones" onclick="cambiarVista('competiciones')" title="Ligas cubiertas por el motor">
+        <button class="nav-tab" data-vista="competiciones" data-action="cambiar-vista" data-vista="competiciones" title="Ligas cubiertas por el motor">
             <span class="nav-tab-icono"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8"/><path d="M12 17v4"/><path d="M7 4h10v4a5 5 0 0 1-10 0z"/><path d="M7 6H4v2a3 3 0 0 0 3 3"/><path d="M17 6h3v2a3 3 0 0 1-3 3"/></svg></span>
             <span data-i18n="navCompeticiones">Competiciones</span>
         </button>
 
-        <button class="nav-tab" data-vista="ranking" onclick="cambiarVista('ranking')" title="Ranking de mercados y equipos">
+        <button class="nav-tab" data-vista="ranking" data-action="cambiar-vista" data-vista="ranking" title="Ranking de mercados y equipos">
             <span class="nav-tab-icono"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 16v-5"/><path d="M12 16V7"/><path d="M17 16v-3"/></svg></span>
             <span data-i18n="navRanking">Ranking</span>
         </button>
 
-        <button class="nav-tab" data-vista="dobles" onclick="cambiarVista('dobles')" title="Combinadas dobles y múltiples">
+        <button class="nav-tab" data-vista="dobles" data-action="cambiar-vista" data-vista="dobles" title="Combinadas dobles y múltiples">
             <span class="nav-tab-icono"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 2 9 5-9 5-9-5z"/><path d="m3 12 9 5 9-5"/><path d="m3 17 9 5 9-5"/></svg></span>
             <span data-i18n="navDobles">Dobles</span>
         </button>
 
-        <button class="nav-tab" onclick="enfocarBuscador(event)" title="Buscar partidos, equipos o ligas">
+        <button class="nav-tab" data-action="enfocar-buscador" title="Buscar partidos, equipos o ligas">
             <span class="nav-tab-icono"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></span>
             <span data-i18n="navBuscar">Buscar</span>
         </button>
-        <button class="nav-tab" data-vista="favoritos" onclick="cambiarVista('favoritos')" title="Tus ligas y equipos seguidos">
+        <button class="nav-tab" data-vista="favoritos" data-action="cambiar-vista" data-vista="favoritos" title="Tus ligas y equipos seguidos">
             <span class="nav-tab-icono"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 2.6 2.9 5.9 6.5.95-4.7 4.6 1.1 6.45L12 17.4 6.2 20.5l1.1-6.45-4.7-4.6 6.5-.95z"/></svg></span>
             <span data-i18n="navFavoritos">Favoritos</span>
-            <span class="contador-favoritos" id="contador-favoritos" style="display:none;">0</span>
+            <span class="contador-favoritos" id="contador-favoritos" class="u-hide">0</span>
         </button>
 
-        <button class="nav-tab" data-vista="historial" onclick="cambiarVista('historial')" title="Historial público auditable">
+        <button class="nav-tab" data-vista="historial" data-action="cambiar-vista" data-vista="historial" title="Historial público auditable">
             <span class="nav-tab-icono"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
             <span data-i18n="navHistorial">Historial</span>
         </button>
@@ -193,7 +165,7 @@
         <div class="dash-pie-bloque">
             <span class="dash-pie-label" data-i18n="pieSalud">Salud del motor</span>
             <strong class="dash-pie-valor" id="sidebar-salud">—</strong>
-            <div class="dash-pie-barra"><span id="sidebar-salud-barra" style="width:0%;"></span></div>
+            <div class="dash-pie-barra"><span id="sidebar-salud-barra" class="u-w-0"></span></div>
         </div>
         <div class="dash-pie-fila">
             <span data-i18n="pieBrier">Brier</span>
@@ -208,12 +180,12 @@
 </aside>
 
 <!-- ============ TOGGLE DEL SIDEBAR (solo pantallas pequeñas) ============ -->
-<button class="app-nav-toggle dash-menu-flotante" id="boton-menu-flotante" onclick="toggleMenuMovil()" aria-label="Abrir menú de navegación">
+<button class="app-nav-toggle dash-menu-flotante" id="boton-menu-flotante" data-action="toggle-menu-movil" aria-label="Abrir menú de navegación">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18"/><path d="M3 12h18"/><path d="M3 18h18"/></svg>
 </button>
 
 <!-- ============ REABRIR SIDEBAR COLAPSADO (solo escritorio) ============ -->
-<button class="dash-sidebar-abrir" id="boton-abrir-sidebar" onclick="toggleSidebarDesktop()" aria-label="Mostrar panel lateral" title="Mostrar panel lateral">
+<button class="dash-sidebar-abrir" id="boton-abrir-sidebar" data-action="toggle-sidebar-desktop" aria-label="Mostrar panel lateral" title="Mostrar panel lateral">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18"/><path d="M3 12h18"/><path d="M3 18h18"/></svg>
 </button>
 
@@ -224,16 +196,16 @@
         <div class="dash-header">
         <div class="dash-header-saludo">
             <p class="dash-eyebrow" data-i18n="eyebrow">Panel de control</p>
-            <h2 id="hero-saludo" class="dashboard-title aurora-text" style="font-size: 1.15rem !important; line-height: 1.25 !important; margin: 0 0 6px 0 !important;">Hola, Usuario</h2>
+            <h2 id="hero-saludo" class="dashboard-title aurora-text dashboard-hero-title">Hola, Usuario</h2>
             <p class="dash-header-sub" data-i18n="sub">Poisson + Dixon-Coles · Brier auditable.</p>
         </div>
         <div class="dash-header-acciones">
             <div class="dash-buscador">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-                <input type="search" id="input-busqueda-dash" placeholder="Buscar equipo o liga…" data-i18n-placeholder="buscarPlaceholder" oninput="sincronizarBusquedaDashboard(this.value)">
+                <input type="search" id="input-busqueda-dash" placeholder="Buscar equipo o liga…" data-i18n-placeholder="buscarPlaceholder" data-action="buscar" data-origen="dash">
             </div>
             <div class="dash-perfil-wrap">
-                <button class="dash-perfil" id="btn-perfil" type="button" onclick="alternarPerfil(event)" aria-expanded="false" title="Perfil y ajustes" aria-haspopup="true" aria-label="Perfil de usuario">
+                <button class="dash-perfil" id="btn-perfil" type="button" data-action="alternar-perfil" aria-expanded="false" title="Perfil y ajustes" aria-haspopup="true" aria-label="Perfil de usuario">
                     <span class="dash-perfil-avatar" id="perfil-avatar" aria-hidden="true">U</span>
                     <span class="dash-perfil-datos">
                         <strong id="perfil-nombre">Usuario</strong>
@@ -241,11 +213,11 @@
                     <svg class="dash-perfil-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
                 </button>
                 <div class="dash-perfil-panel" role="menu" aria-label="Menú de perfil">
-                    <button class="dash-perfil-item" type="button" role="menuitem" onclick="cambiarVista('mispredicciones')">Mis predicciones guardadas</button>
-                    <button class="dash-perfil-item" type="button" role="menuitem" onclick="cambiarVista('favoritos')">Equipos favoritos</button>
-                    <button class="dash-perfil-item" type="button" role="menuitem" onclick="cambiarVista('historial')">Historial público</button>
-                    <button class="dash-perfil-item" type="button" role="menuitem" onclick="exportarDatos()">Exportar mis datos</button>
-                    <button class="dash-perfil-item" type="button" role="menuitem" onclick="alternarIdioma()">Idioma / Language: <strong id="idioma-actual">ES</strong></button>
+                    <button class="dash-perfil-item" type="button" role="menuitem" data-action="cambiar-vista" data-vista="mispredicciones">Mis predicciones guardadas</button>
+                    <button class="dash-perfil-item" type="button" role="menuitem" data-action="cambiar-vista" data-vista="favoritos">Equipos favoritos</button>
+                    <button class="dash-perfil-item" type="button" role="menuitem" data-action="cambiar-vista" data-vista="historial">Historial público</button>
+                    <button class="dash-perfil-item" type="button" role="menuitem" data-action="exportar-datos">Exportar mis datos</button>
+                    <button class="dash-perfil-item" type="button" role="menuitem" data-action="alternar-idioma">Idioma / Language: <strong id="idioma-actual">ES</strong></button>
                 </div>
                 <div id="perfil-auth-panel" style="border-top:1px solid var(--line); margin-top:8px; padding-top:8px;">
                     <div id="auth-info-sesion"></div>
@@ -268,7 +240,7 @@
                 <span class="dash-kpi-label" data-i18n="kpiAciertos">Aciertos <span class="dash-tip" data-tip="% de mercados acertados sobre picks ya liquidados contra el resultado real.">?</span></span>
                 <strong class="dash-kpi-valor" id="kpi-aciertos" aria-live="polite">—</strong>
                 <span class="dash-kpi-pie" id="kpi-verificados">Sin datos todavía</span>
-                <div class="dash-kpi-barra"><span id="kpi-aciertos-barra" style="width:0%;"></span></div>
+                <div class="dash-kpi-barra"><span id="kpi-aciertos-barra" class="u-w-0"></span></div>
             </div>
         </article>
 
@@ -289,7 +261,7 @@
 
         <!-- KPI Predicciones Hoy: Mediano / Acción -->
         <article class="bento-item kpi-card-accion">
-            <div class="dash-kpi dash-kpi-accion" role="button" tabindex="0" onclick="cambiarVista('pronosticos')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();cambiarVista('pronosticos')}" title="Ir a las recomendaciones activas de hoy">
+            <button type="button" class="dash-kpi dash-kpi-accion" data-action="cambiar-vista" data-vista="pronosticos" title="Ir a las recomendaciones activas de hoy">
                 <div class="dash-kpi-top">
                     <span class="dash-kpi-icono rosa">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v4"/><path d="M12 17v4"/><path d="M3 12h4"/><path d="M17 12h4"/><path d="m6.3 6.3 2.8 2.8"/><path d="m14.9 14.9 2.8 2.8"/><path d="m17.7 6.3-2.8 2.8"/><path d="m9.1 14.9-2.8 2.8"/></svg>
@@ -299,12 +271,12 @@
                 <span class="dash-kpi-label" data-i18n="kpiHoy">Predicciones hoy <span class="dash-tip" data-tip="Recomendaciones activas del motor para la jornada de hoy (9 mercados por partido).">?</span></span>
                 <strong class="dash-kpi-valor" id="kpi-hoy" aria-live="polite">…</strong>
                 <span class="dash-kpi-pie" id="kpi-hoy-pie">Cargando la jornada de hoy…</span>
-            </div>
+            </button>
         </article>
 
         <!-- Acceso Rápido: Predicciones IA -->
         <article class="bento-item quick-access">
-            <button class="dash-quick-card" onclick="cambiarVista('pronosticos')" title="Partidos analizados por el motor, con 9 mercados y probabilidad calibrada">
+            <button class="dash-quick-card" data-action="cambiar-vista" data-vista="pronosticos" title="Partidos analizados por el motor, con 9 mercados y probabilidad calibrada">
                 <span class="dash-quick-icono verde">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5a3 3 0 0 0-2.9 2.2A3 3 0 0 0 7 12.5a3 3 0 0 0 2.2 5.2H11a2 2 0 0 0 2-2V7a2 2 0 0 0-1-2z"/><path d="M12 5a3 3 0 0 1 2.9 2.2A3 3 0 0 1 17 12.5a3 3 0 0 1-2.2 5.2H13a2 2 0 0 1-2-2V7a2 2 0 0 1 1-2z"/></svg>
                 </span>
@@ -318,7 +290,7 @@
 
         <!-- Acceso Rápido: Analítica -->
         <article class="bento-item quick-access">
-            <button class="dash-quick-card" onclick="cambiarVista('analitica')" title="Calibración en vivo y factores autoajustados por resultados reales">
+            <button class="dash-quick-card" data-action="cambiar-vista" data-vista="analitica" title="Calibración en vivo y factores autoajustados por resultados reales">
                 <span class="dash-quick-icono cyan">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m7 14 3.5-4 3 3L20 6"/></svg>
                 </span>
@@ -332,7 +304,7 @@
 
         <!-- Acceso Rápido: Mis Predicciones -->
         <article class="bento-item quick-access">
-            <button class="dash-quick-card" onclick="cambiarVista('mispredicciones')" title="Tus picks marcados con 📌, pendientes y ya verificados">
+            <button class="dash-quick-card" data-action="cambiar-vista" data-vista="mispredicciones" title="Tus picks marcados con 📌, pendientes y ya verificados">
                 <span class="dash-quick-icono oro">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
                 </span>
@@ -346,7 +318,7 @@
 
         <!-- Acceso Rápido: Favoritos -->
         <article class="bento-item quick-access">
-            <button class="dash-quick-card" onclick="cambiarVista('favoritos')" title="Partidos de tus equipos seguidos en los próximos 7 días">
+            <button class="dash-quick-card" data-action="cambiar-vista" data-vista="favoritos" title="Partidos de tus equipos seguidos en los próximos 7 días">
                 <span class="dash-quick-icono rosa">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m12 2.6 2.9 5.9 6.5.95-4.7 4.6 1.1 6.45L12 17.4 6.2 20.5l1.1-6.45-4.7-4.6 6.5-.95z"/></svg>
                 </span>
@@ -360,7 +332,7 @@
 
         <!-- Acceso Rápido: Transparencia -->
         <article class="bento-item quick-access">
-            <button class="dash-quick-card" onclick="cambiarVista('historial')" title="Historial público: cada pick liquidado contra el resultado real y Brier Score auditado">
+            <button class="dash-quick-card" data-action="cambiar-vista" data-vista="historial" title="Historial público: cada pick liquidado contra el resultado real y Brier Score auditado">
                 <span class="dash-quick-icono violeta">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"/><path d="M21 12a9 9 0 1 1-9-9"/><path d="M21 5v6h-6"/></svg>
                 </span>
@@ -378,12 +350,12 @@
         <article class="dash-panel dash-panel-lectura">
             <div class="dash-panel-cabecera">
                 <p class="dash-label-mono" id="dash-hoy-fecha">—</p>
-                <span class="dash-punto-vivo" id="dash-hoy-punto" style="visibility:hidden;"></span>
+                <span class="dash-punto-vivo" id="dash-hoy-punto" class="u-invisible"></span>
             </div>
             <p class="dash-label-dimmer">Lectura del motor</p>
             <h3 class="dash-panel-titulo" id="dash-hoy-leido">Cargando la jornada de hoy…</h3>
             <p class="dash-panel-sub" id="dash-hoy-detalle"></p>
-            <button class="dash-btn-terciario" onclick="cambiarVista('pronosticos')">Ver predicciones de hoy →</button>
+            <button class="dash-btn-terciario" data-action="cambiar-vista" data-vista="pronosticos">Ver predicciones de hoy →</button>
         </article>
 
         <article class="dash-panel" id="dash-ultima-liquidacion">
@@ -480,7 +452,7 @@
                             </defs>
                             <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="7"/>
                             <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="7" stroke-dasharray="4 6"/>
-                            <circle id="salud-gauge-arco" cx="60" cy="60" r="52" fill="none" stroke="url(#grad-health-unico)" stroke-width="7" stroke-linecap="round" pathLength="100" stroke-dasharray="0 100" stroke-dashoffset="25" transform="rotate(90 60 60)" style="transition: stroke-dasharray 0.6s;"/>
+                            <circle id="salud-gauge-arco" cx="60" cy="60" r="52" fill="none" stroke="url(#grad-health-unico)" stroke-width="7" stroke-linecap="round" pathLength="100" stroke-dasharray="0 100" stroke-dashoffset="25" transform="rotate(90 60 60)" class="health-gauge-arc-transition"/>
                             <text id="salud-gauge-texto" x="60" y="58" text-anchor="middle" font-family="var(--font-mono)" font-weight="700" font-size="30" fill="var(--text)">—</text>
                             <text id="salud-gauge-estado" x="60" y="74" text-anchor="middle" font-family="var(--font-mono)" font-weight="600" font-size="8.5" fill="#70839a" letter-spacing="1">SIN DATOS</text>
                         </svg>
@@ -497,7 +469,7 @@
                 <span class="health-label">Calibración por mercado <span class="tooltip-icono" title="Qué tan bien el modelo predice cada tipo de apuesta">?</span></span>
                 <p class="health-sub">Precisión real por categoría de apuesta, solo mercados ya liquidados.</p>
                 <div class="health-mercados" id="salud-mercados-lista">
-                    <p class="health-sub" style="margin:0;">Sin mercados verificados todavía.</p>
+                    <p class="health-sub" class="u-m-0">Sin mercados verificados todavía.</p>
                 </div>
             </div>
         </div>
@@ -550,7 +522,7 @@
             <span class="dash-cta-kicker">Empezar</span>
             <h2>Mirá el motor en acción con la jornada de hoy.</h2>
         </div>
-        <button class="landing-primary" onclick="cambiarVista('pronosticos')">Ver predicciones</button>
+        <button class="landing-primary" data-action="cambiar-vista" data-vista="pronosticos">Ver predicciones</button>
     </section>
     </div>
 </section>
@@ -562,75 +534,75 @@
         <p class="subtitulo-vista" data-i18n="pronosticosSub">Poisson + Dixon-Coles · 9 mercados por partido · probabilidad calibrada.</p>
     </div>
     <div id="live-region-pronosticos" class="sr-only" aria-live="polite"></div>
-    <div id="selector-deporte" role="tablist" aria-label="Selector de deporte" style="display:flex; gap:8px; margin:0 0 12px; overflow-x:auto; padding-bottom:4px;" class="animated-enter delay-1">
-        <button class="pestaña activa" role="tab" aria-selected="true" data-deporte="futbol" onclick="cambiarDeporte('futbol')">⚽ Fútbol</button>
-        <button class="pestaña" role="tab" aria-selected="false" data-deporte="basquet" onclick="cambiarDeporte('basquet')">🏀 Básquet</button>
-        <button class="pestaña" role="tab" aria-selected="false" data-deporte="tenis" onclick="cambiarDeporte('tenis')">🎾 Tenis</button>
-        <button class="pestaña" role="tab" aria-selected="false" data-deporte="voley" onclick="cambiarDeporte('voley')">🏐 Vóley</button>
-        <button class="pestaña" role="tab" aria-selected="false" data-deporte="todos" onclick="cambiarDeporte('todos')">Todos</button>
+    <div id="selector-deporte" role="tablist" aria-label="Selector de deporte" class="pills-container" class="animated-enter delay-1">
+        <button class="pestaña activa" role="tab" aria-selected="true" data-deporte="futbol" data-action="cambiar-deporte" data-deporte="futbol">⚽ Fútbol</button>
+        <button class="pestaña" role="tab" aria-selected="false" data-deporte="basquet" data-action="cambiar-deporte" data-deporte="basquet">🏀 Básquet</button>
+        <button class="pestaña" role="tab" aria-selected="false" data-deporte="tenis" data-action="cambiar-deporte" data-deporte="tenis">🎾 Tenis</button>
+        <button class="pestaña" role="tab" aria-selected="false" data-deporte="voley" data-action="cambiar-deporte" data-deporte="voley">🏐 Vóley</button>
+        <button class="pestaña" role="tab" aria-selected="false" data-deporte="todos" data-action="cambiar-deporte" data-deporte="todos">Todos</button>
     </div>
     <div class="pestañas-fecha">
-        <button class="pestaña activa" onclick="cambiarFecha('hoy', event)">Hoy</button>
-        <button class="pestaña" onclick="cambiarFecha('manana', event)">Mañana</button>
-        <button class="pestaña" onclick="cambiarFecha('semana', event)">Esta semana</button>
-        <button class="pestaña" onclick="mostrarSelectorFecha(event)">Otra fecha</button>
-        <button class="pestaña pestaña-finalizados" onclick="cambiarFecha('finalizados', event)">Finalizados</button>
+        <button class="pestaña activa" data-action="cambiar-fecha" data-fecha="hoy">Hoy</button>
+        <button class="pestaña" data-action="cambiar-fecha" data-fecha="manana">Mañana</button>
+        <button class="pestaña" data-action="cambiar-fecha" data-fecha="semana">Esta semana</button>
+        <button class="pestaña" data-action="mostrar-selector-fecha">Otra fecha</button>
+        <button class="pestaña pestaña-finalizados" data-action="cambiar-fecha" data-fecha="finalizados">Finalizados</button>
     </div>
 
-    <div class="selector-fecha-personalizada" id="selector-fecha-personalizada" style="display:none;">
+    <div class="selector-fecha-personalizada" id="selector-fecha-personalizada" class="u-hide">
         <input type="date" id="input-fecha-personalizada">
-        <button onclick="aplicarFechaPersonalizada()">Ver partidos</button>
+        <button data-action="aplicar-fecha-personalizada">Ver partidos</button>
     </div>
 
     <div class="barra-filtros-unificada" id="barra-filtros-unificada">
-        <div id="filtro-ligas-pills" class="filtro-ligas-pills" style="display: flex !important; gap: 8px; margin-bottom: 12px; overflow-x: auto; padding-bottom: 4px;"></div>
-        <input type="search" id="input-buscar-integrado" class="input-buscar-integrado" placeholder="Buscar equipo…" oninput="onBuscarIntegrado(this.value)">
+        <div id="filtro-ligas-pills" class="filtro-ligas-pills pills-container important"></div>
+        <input type="search" id="input-buscar-integrado" class="input-buscar-integrado" placeholder="Buscar equipo…" data-action="buscar" data-origen="integrado">
         <div id="filtros-rapidos-pills" style="display:flex;gap:6px;"></div>
     </div>
 
     <div id="contenedor-partidos">
-        <p style="text-align:center; color:#8fa896;">Cargando partidos...</p>
+        <p class="u-text-center u-text-muted">Cargando partidos...</p>
     </div>
 
     <div id="bloque-combinadas"></div>
     <!-- FAB FLOTANTE ARMAR COMBINADA: abre el flujo asistido de 2 pasos (partidos → perfil). El modo manual sigue accesible desde la vista Dobles y desde el propio asistido. -->
-    <button id="btn-fab-combinada" class="btn-fab-combinada" onclick="abrirCombinadaAsistida()" style="display:none;" aria-label="Armar Combinada">
+    <button id="btn-fab-combinada" class="btn-fab-combinada" data-action="abrir-combinada-asistida" class="u-hide" aria-label="Armar Combinada">
         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 7l3.5 2.5-1.3 4h-4.4l-1.3-4z"/><path d="M12 2v5M5.5 6.5l4 2M18.5 6.5l-4 2M4 16l4.8-2.5M20 16l-4.8-2.5M8.5 21.5L9.8 17M15.5 21.5l-1.3-4.5"/></svg>
         <span>Armar Combinada</span>
     </button>
 
 
     <!-- MODAL ARMAR COMBINADA -->
-    <div id="modal-armar-combinada" class="modal-overlay" style="display:none; position:fixed; inset:0; background:rgba(3,7,11,0.92); z-index:9999; align-items:center; justify-content:center; padding:16px; overflow-y:auto;">
-        <div class="modal-container" style="background:#0f172a; border:1px solid var(--card-border); border-radius:var(--radius-lg); width:100%; max-width:760px; max-height:85vh; height:85vh; display:flex; flex-direction:column; box-shadow:0 25px 50px -12px rgba(0,0,0,0.9); overflow:hidden; animation: modalFadeIn 0.25s ease; margin:auto; position:relative; z-index:10000;">
+    <div id="modal-armar-combinada" class="modal-overlay">
+        <div class="modal-container is-large">
             
             <!-- HEADER -->
-            <div class="modal-header" style="flex-shrink:0; padding:20px 24px; border-bottom:1px solid var(--line); display:flex; align-items:center; justify-content:between; background:var(--bg-raised);">
+            <div class="modal-header">
                 <div>
-                    <h3 style="font-family:var(--font-display); font-size:1.4rem; font-weight:600; margin:0; color:var(--text);">Armar Combinada Manual</h3>
-                    <p style="font-size:0.85rem; color:var(--text-muted); margin:4px 0 0;">Selecciona tus picks de cualquier partido y liga. Ajusta tu riesgo.</p>
+                    <h3 class="modal-title">Armar Combinada Manual</h3>
+                    <p class="modal-subtitle">Selecciona tus picks de cualquier partido y liga. Ajusta tu riesgo.</p>
                 </div>
-                <button onclick="cerrarModalArmarCombinada()" style="background:none; border:none; color:var(--text-muted); font-size:1.5rem; cursor:pointer; padding:4px 8px; border-radius:var(--radius-sm); transition:all 0.2s;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--text-muted)'">&times;</button>
+                <button type="button" class="btn-cerrar-modal" data-action="cerrar-modal-combinada" aria-label="Cerrar">&times;</button>
             </div>
 
             <!-- BODY (ACORDEONES POR LIGA) -->
-            <div id="modal-combinada-body" style="flex:1 1 auto; min-height:0; overflow-y:auto; padding:20px 24px; display:flex; flex-direction:column; gap:16px;">
-                <p style="text-align:center; color:var(--text);">Cargando partidos disponibles...</p>
+            <div id="modal-combinada-body" class="modal-body">
+                <p class="u-text-center">Cargando partidos disponibles...</p>
             </div>
 
             <!-- FOOTER / RESUMEN EN TIEMPO REAL -->
-            <div class="modal-footer" style="flex-shrink:0; padding:16px 24px; border-top:1px solid var(--line); background:var(--bg-raised); display:flex; flex-direction:column; gap:12px;">
+            <div class="modal-footer is-column">
                 <div id="modal-combinada-resumen" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; font-size:0.9rem;">
                     <div>
-                        <strong style="color:var(--text);">Picks:</strong> <span id="comb-count-picks" style="color:var(--green); font-weight:700;">0</span> | 
-                        <strong style="color:var(--text);">Probabilidad:</strong> <span id="comb-prob-total" style="color:var(--green); font-weight:700;">100%</span> | 
-                        <strong style="color:var(--text);">Cuota Est.:</strong> <span id="comb-cuota-total" style="color:var(--brand); font-weight:700;">1.00</span>
+                        <strong class="u-text-main">Picks:</strong> <span id="comb-count-picks" style="color:var(--green); font-weight:700;">0</span> | 
+                        <strong class="u-text-main">Probabilidad:</strong> <span id="comb-prob-total" style="color:var(--green); font-weight:700;">100%</span> | 
+                        <strong class="u-text-main">Cuota Est.:</strong> <span id="comb-cuota-total" style="color:var(--brand); font-weight:700;">1.00</span>
                     </div>
                     <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-                        <button onclick="limpiarCombinadaManual()" style="background:rgba(239,68,68,0.15); color:#ef4444; border:1px solid rgba(239,68,68,0.3); padding:8px 14px; border-radius:var(--radius-sm); font-weight:600; font-size:0.85rem; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background='rgba(239,68,68,0.25)'" onmouseout="this.style.background='rgba(239,68,68,0.15)'">Limpiar todo</button>
-                        <button onclick="compartirCombinadaManual()" style="background:rgba(123,225,200,0.15); color:var(--brand); border:1px solid rgba(123,225,200,0.3); padding:8px 14px; border-radius:var(--radius-sm); font-weight:600; font-size:0.85rem; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background='rgba(123,225,200,0.25)'" onmouseout="this.style.background='rgba(123,225,200,0.15)'">Compartir</button>
-                        <button onclick="guardarCombinadaGuardada()" style="background:rgba(242,196,116,0.15); color:var(--gold); border:1px solid rgba(242,196,116,0.3); padding:8px 14px; border-radius:var(--radius-sm); font-weight:600; font-size:0.85rem; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background='rgba(242,196,116,0.25)'" onmouseout="this.style.background='rgba(242,196,116,0.15)'">Guardar</button>
-                        <button onclick="confirmarCombinadaManual()" style="background:linear-gradient(135deg, var(--green), var(--brand)); color:#07120d; border:none; padding:10px 20px; border-radius:var(--radius-sm); font-weight:800; font-size:0.9rem; cursor:pointer; box-shadow:0 4px 16px -4px rgba(100,228,169,0.6); transition:all 0.2s;" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='translateY(0)'">Confirmar combinada</button>
+                        <button type="button" class="btn-accion btn-accion-peligro" data-action="limpiar-combinada">Limpiar todo</button>
+                        <button type="button" class="btn-accion btn-accion-marca" data-action="compartir-combinada">Compartir</button>
+                        <button type="button" class="btn-accion btn-accion-oro" data-action="guardar-combinada">Guardar</button>
+                        <button type="button" class="btn-accion btn-accion-primario" data-action="confirmar-combinada">Confirmar combinada</button>
                     </div>
                 </div>
             </div>
@@ -639,29 +611,29 @@
     </div>
 
     <!-- MODAL ARMAR COMBINADA ASISTIDA (FAB: paso 1 selección de partidos → paso 2 perfil de riesgo → resumen) -->
-    <div id="modal-combinada-asistida" class="modal-overlay" style="display:none; position:fixed; inset:0; background:rgba(3,7,11,0.92); z-index:9999; align-items:center; justify-content:center; padding:16px; overflow-y:auto;">
-        <div class="modal-container" style="background:#0f172a; border:1px solid var(--card-border); border-radius:var(--radius-lg); width:100%; max-width:760px; max-height:85vh; height:85vh; display:flex; flex-direction:column; box-shadow:0 25px 50px -12px rgba(0,0,0,0.9); overflow:hidden; animation: modalFadeIn 0.25s ease; margin:auto; position:relative; z-index:10000;">
+    <div id="modal-combinada-asistida" class="modal-overlay">
+        <div class="modal-container is-large">
 
             <!-- HEADER con stepper -->
-            <div class="modal-header" style="flex-shrink:0; padding:20px 24px; border-bottom:1px solid var(--line); display:flex; align-items:center; justify-content:space-between; background:var(--bg-raised);">
+            <div class="modal-header">
                 <div>
-                    <h3 style="font-family:var(--font-display); font-size:1.4rem; font-weight:600; margin:0; color:var(--text);">Armar Combinada</h3>
+                    <h3 class="modal-title">Armar Combinada</h3>
                     <div style="display:flex; align-items:center; gap:8px; margin-top:6px; font-size:0.8rem;">
                         <span id="asistida-step-1"></span>
                         <span style="color:var(--text-muted);">→</span>
                         <span id="asistida-step-2"></span>
                     </div>
                 </div>
-                <button onclick="cerrarCombinadaAsistida()" style="background:none; border:none; color:var(--text-muted); font-size:1.5rem; cursor:pointer; padding:4px 8px; border-radius:var(--radius-sm); transition:all 0.2s;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--text-muted)'">&times;</button>
+                <button type="button" class="btn-cerrar-modal" data-action="cerrar-combinada-asistida" aria-label="Cerrar">&times;</button>
             </div>
 
             <!-- BODY -->
-            <div id="asistida-body" style="flex:1 1 auto; min-height:0; overflow-y:auto; padding:20px 24px; display:flex; flex-direction:column; gap:16px;">
-                <p style="text-align:center; color:var(--text);">Cargando partidos disponibles...</p>
+            <div id="asistida-body" class="modal-body">
+                <p class="u-text-center">Cargando partidos disponibles...</p>
             </div>
 
             <!-- FOOTER -->
-            <div id="asistida-footer" class="modal-footer" style="flex-shrink:0; padding:16px 24px; border-top:1px solid var(--line); background:var(--bg-raised); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;"></div>
+            <div id="asistida-footer" class="modal-footer is-between"></div>
 
         </div>
     </div>
@@ -675,7 +647,7 @@
         <p class="subtitulo-vista">Partidos de los próximos 7 días donde juega alguno de tus equipos marcados con ★.</p>
     </div>
     <div id="contenedor-favoritos">
-        <p style="text-align:center; color:#8fa896;">Cargando...</p>
+        <p class="u-text-center u-text-muted">Cargando...</p>
     </div>
 </section>
 
@@ -711,7 +683,7 @@
             </div>
             <strong class="telemetria-valor" id="telemetria-brier">—</strong>
             <span class="telemetria-label">Brier Score</span>
-            <div class="telemetria-progreso"><div class="telemetria-progreso-fill" id="telemetria-brier-fill" style="width:0%; background:linear-gradient(90deg, #0284c7, #38bdf8);"></div></div>
+            <div class="telemetria-progreso"><div class="telemetria-progreso-fill" id="telemetria-brier-fill" id="telemetria-brier-fill" class="u-w-0 telemetria-brier-gradient"></div></div>
             <small class="telemetria-sub">0.00 = perfección · 0.25 = azar</small>
         </div>
 
@@ -722,7 +694,7 @@
             </div>
             <strong class="telemetria-valor" id="telemetria-muestras">0 / 20</strong>
             <span class="telemetria-label">Muestras para autoajuste</span>
-            <div class="telemetria-progreso"><div class="telemetria-progreso-fill" id="telemetria-progreso-barra" style="width:5%; background:linear-gradient(90deg, #f59e0b, #fbbf24);"></div></div>
+            <div class="telemetria-progreso"><div class="telemetria-progreso-fill" id="telemetria-progreso-barra" id="telemetria-progreso-barra" class="u-w-5 telemetria-progreso-gradient"></div></div>
             <small class="telemetria-sub" id="telemetria-faltan-txt">20 partidos restantes</small>
         </div>
 
@@ -733,7 +705,7 @@
             </div>
             <strong class="telemetria-valor" style="font-size:1.15rem; line-height:1.25; margin-top:3px;">Poisson + Dixon-Coles</strong>
             <span class="telemetria-label">Modelo predictivo</span>
-            <div class="telemetria-progreso"><div class="telemetria-progreso-fill" style="width:100%;"></div></div>
+            <div class="telemetria-progreso"><div class="telemetria-progreso-fill" class="u-w-100"></div></div>
             <small class="telemetria-sub">Ponderación temporal 70/25/5</small>
         </div>
     </div>
@@ -741,19 +713,19 @@
     <div class="analitica-controles-wrapper">
         <span class="analitica-controles-label">Filtrar por categoría de mercado:</span>
         <div class="analitica-controles">
-            <button class="filtro-btn activo" data-filtro="todos" onclick="filtrarAnalitica('todos', event)">
+            <button class="filtro-btn activo" data-filtro="todos" data-action="filtrar-analitica" data-categoria="todos">
                 <span>📊</span> Todos
             </button>
-            <button class="filtro-btn" data-filtro="resultado" onclick="filtrarAnalitica('resultado', event)">
+            <button class="filtro-btn" data-filtro="resultado" data-action="filtrar-analitica" data-categoria="resultado">
                 <span>🏆</span> Resultado 1X2
             </button>
-            <button class="filtro-btn" data-filtro="btts" onclick="filtrarAnalitica('btts', event)">
+            <button class="filtro-btn" data-filtro="btts" data-action="filtrar-analitica" data-categoria="btts">
                 <span>⚡</span> Ambos anotan
             </button>
-            <button class="filtro-btn" data-filtro="totalgoles" onclick="filtrarAnalitica('totalgoles', event)">
+            <button class="filtro-btn" data-filtro="totalgoles" data-action="filtrar-analitica" data-categoria="totalgoles">
                 <span>⚽</span> Total de goles
             </button>
-            <button class="filtro-btn" data-filtro="marcador" onclick="filtrarAnalitica('marcador', event)">
+            <button class="filtro-btn" data-filtro="marcador" data-action="filtrar-analitica" data-categoria="marcador">
                 <span>🎯</span> Marcador exacto
             </button>
         </div>
@@ -884,7 +856,7 @@
         <p class="subtitulo-vista" data-i18n="doblesSub">Dobles y múltiples sugeridas con los mejores picks de hoy. Cada pierna extra multiplica el riesgo.</p>
     </div>
     <div class="dash-dobles-acciones">
-        <button class="landing-primary" onclick="abrirModalArmarCombinada()">
+        <button class="landing-primary" data-action="abrir-modal-combinada">
             <span data-i18n="doblesManual">Armar combinada manual</span>
         </button>
     </div>
@@ -898,35 +870,35 @@
     <p class="pie-pagina-enlaces"><a href="privacidad.html">Privacidad</a> · <a href="terminos.html">Términos de uso</a> · <a href="https://github.com/kkkxxxs/fulbito">Código</a></p>
 </footer>
 
-<input type="file" id="input-importar-datos" accept="application/json" style="display:none" onchange="importarDatos(event)">
+<input type="file" id="input-importar-datos" accept="application/json" class="u-hide" data-action="importar-datos">
 
 <!-- MODAL DE CUENTA (auth) -->
-<div id="modal-auth" class="modal-overlay" style="display:none; position:fixed; inset:0; background:rgba(3,7,11,0.92); z-index:9999; align-items:center; justify-content:center; padding:16px; overflow-y:auto;">
-    <div class="modal-container" style="background:#0f172a; border:1px solid var(--card-border); border-radius:var(--radius-lg); width:100%; max-width:420px; display:flex; flex-direction:column; box-shadow:0 25px 50px -12px rgba(0,0,0,0.9); overflow:hidden; margin:auto; position:relative;">
-        <div style="padding:20px 24px; border-bottom:1px solid var(--line); background:var(--bg-raised); display:flex; justify-content:space-between; align-items:center;">
+<div id="modal-auth" class="modal-overlay">
+    <div class="modal-container is-auth">
+        <div class="modal-header">
             <div>
-                <h3 style="margin:0; color:var(--text); font-size:1.1rem;">Tu cuenta</h3>
-                <p style="margin:6px 0 0; color:var(--text-muted); font-size:0.82rem;">Opcional: guardá tu historial personal en la nube para conservarlo entre dispositivos.</p>
+                <h3 class="modal-title">Tu cuenta</h3>
+                <p class="modal-subtitle">Opcional: guardá tu historial personal en la nube para conservarlo entre dispositivos.</p>
             </div>
-            <button onclick="cerrarModalAuth()" style="background:none; border:none; color:var(--text-muted); font-size:1.5rem; cursor:pointer; padding:4px 8px;">&times;</button>
+            <button type="button" class="btn-cerrar-modal" data-action="cerrar-modal-auth" aria-label="Cerrar">&times;</button>
         </div>
-        <div style="padding:20px 24px; display:flex; flex-direction:column; gap:18px;">
-            <div style="display:flex; gap:8px;">
+        <div class="modal-body">
+            <div class="auth-tabs">
                 <button id="tab-login" type="button" data-modo-auth="login" style="flex:1; background:rgba(100,228,169,0.18); border:1px solid rgba(100,228,169,0.35); color:#64e4a9; padding:10px 14px; border-radius:var(--radius-sm); font-weight:700; cursor:pointer;">Entrar</button>
                 <button id="tab-register" type="button" data-modo-auth="register" style="flex:1; background:rgba(255,255,255,0.06); border:1px solid var(--line); color:var(--text); padding:10px 14px; border-radius:var(--radius-sm); font-weight:700; cursor:pointer;">Crear cuenta</button>
             </div>
-            <form id="form-auth" onsubmit="enviarAuth(event, (this.dataset.modo || 'login'))">
-                <label style="display:block; font-size:0.85rem; color:var(--text-muted); margin-bottom:6px;">Usuario (3-32: letras, números, _ . -)</label>
-                <input type="text" name="usuario" inputmode="latin" autocomplete="username" required pattern="[a-zA-Z0-9_.-]{3,32}" style="width:100%; background:rgba(255,255,255,0.06); border:1px solid var(--line); color:var(--text); padding:10px 12px; border-radius:var(--radius-sm); font-size:0.95rem; margin-bottom:12px;" placeholder="ej. kkkxxxs">
-                <label style="display:block; font-size:0.85rem; color:var(--text-muted); margin-bottom:6px;">Contraseña (≥ 8)</label>
-                <input type="password" name="password" id="auth-password" autocomplete="current-password" required minlength="8" style="width:100%; background:rgba(255,255,255,0.06); border:1px solid var(--line); color:var(--text); padding:10px 12px; border-radius:var(--radius-sm); font-size:0.95rem;" placeholder="••••••••">
-                <p id="auth-mensaje" style="min-height:1.25rem; margin:10px 0 0; font-size:0.85rem; color:#ff8d8d;"></p>
-                <div style="display:flex; gap:8px; margin-top:12px;">
+            <form id="form-auth" data-action="enviar-auth">
+                <label class="input-label">Usuario (3-32: letras, números, _ . -)</label>
+                <input type="text" name="usuario" inputmode="latin" autocomplete="username" required pattern="[a-zA-Z0-9_.-]{3,32}" class="input-field" placeholder="ej. kkkxxxs">
+                <label class="input-label">Contraseña (≥ 8)</label>
+                <input type="password" name="password" id="auth-password" autocomplete="current-password" required minlength="8" class="input-field" placeholder="••••••••">
+                <p id="auth-mensaje" class="auth-msg"></p>
+                <div class="flex-center-gap">
                     <button id="btn-login" type="submit" style="flex:1; background:linear-gradient(135deg, #64e4a9, #7be1c8); color:#07120d; border:none; padding:10px 16px; border-radius:var(--radius-sm); font-weight:800; cursor:pointer;">Entrar</button>
-                    <button id="btn-register" type="button" onclick="document.getElementById('form-auth').dataset.modo='register'; document.getElementById('auth-password').autocomplete='new-password'; document.getElementById('form-auth').requestSubmit();" style="flex:1; background:rgba(255,255,255,0.06); border:1px solid var(--line); color:var(--text); padding:10px 16px; border-radius:var(--radius-sm); font-weight:600; cursor:pointer;">Crear cuenta</button>
+                    <button id="btn-register" type="button" class="btn-auth-secundario" data-action="auth-registro">Crear cuenta</button>
                 </div>
             </form>
-            <p style="margin:0; font-size:0.78rem; color:var(--text-muted); line-height:1.4;">Anónimo por defecto (localStorage). La cuenta solo activa el respaldo en la DB. Anónimo +18 siempre.</p>
+            <p class="auth-footer-note">Anónimo por defecto (localStorage). La cuenta solo activa el respaldo en la DB. Anónimo +18 siempre.</p>
         </div>
     </div>
 </div>
@@ -934,15 +906,8 @@
 <script src="app-model.js?v=8"></script>
 <script src="app-ui.js?v=8"></script>
 <script src="app-init.js?v=8"></script>
+<script src="events.js?v=1"></script>
 
-<script>
-  if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js').catch(() => {});
-    });
-  }
-</script>
-
-<button class="btn-volver-arriba" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="Volver arriba">↑</button>
+<button class="btn-volver-arriba" type="button" data-action="scroll-arriba" aria-label="Volver arriba">↑</button>
 </body>
 </html>

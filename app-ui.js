@@ -151,7 +151,7 @@ function crearTarjetaHTML(partido, pronosticos, statsLocal, statsVisita, h2h, ta
         <ul class="lista-mercados animated-enter" id="mercados-${partido.id}">
           ${pronosticos.seleccionados.map(m => `<li>${filaMercado(m, partido.id, mejor && m === mejor)}</li>`).join('')}
         </ul>
-        <button class="boton-expandir" onclick="toggleMercados(${partido.id})">Ver más mercados</button>
+        <button class="boton-expandir" data-action="toggle-mercados" data-partido="${partido.id}">Ver más mercados</button>
 
         <section class="combos-partido">
           <h3 class="combos-partido-titulo">Combina en este partido</h3>
@@ -163,7 +163,7 @@ function crearTarjetaHTML(partido, pronosticos, statsLocal, statsVisita, h2h, ta
           ${pronosticos.top3Marcadores.map(m => `<span class="marcador-chip">${m.marcador} <em>${m.probabilidad}%</em></span>`).join('')}
         </div>
 
-        <button class="boton-expandir" onclick="toggleCatalogo(${partido.id})">Ver los ${pronosticos.catalogoCompleto.length} mercados evaluados</button>
+        <button class="boton-expandir" data-action="toggle-catalogo" data-partido="${partido.id}">Ver los ${pronosticos.catalogoCompleto.length} mercados evaluados</button>
         <div class="catalogo-completo" id="catalogo-${partido.id}" style="display:none;">
         ${(pronosticos.catalogoCompleto || []).map(c => `<div class="catalogo-fila"><span>${escaparHTML(c.seleccion)}</span></div>`).join('')}
       </div>
@@ -302,7 +302,7 @@ function crearTarjetaHTML(partido, pronosticos, statsLocal, statsVisita, h2h, ta
           <span class="prob-combinada" style="color:${combinada.probabilidad >= 30 ? 'var(--green)' : 'var(--gold)'}">${combinada.probabilidad}%</span>
         </div>
         ${piernasHTML}
-        <button class="boton-compartir" onclick="compartirCombinada(this, '${etiqueta}', ${indice})">Compartir</button>
+        <button class="boton-compartir" data-action="compartir-combinada" data-etiqueta="${etiqueta}" data-indice="${indice}">Compartir</button>
       </div>
     `;
   }
@@ -841,8 +841,8 @@ function crearTarjetaHTML(partido, pronosticos, statsLocal, statsVisita, h2h, ta
             <p>El modelo compara automÃ¡ticamente lo que pronosticÃ³ contra el resultado real de cada partido que consultes en la app.</p>
           </div>
           <div class="panel-acciones-calibracion">
-            <button class="boton-accion-secundario" onclick="exportarDatos()" title="Exportar respaldo de datos en JSON">ðŸ“¥ Exportar datos</button>
-            <button class="boton-accion-secundario peligro" onclick="reiniciarHistorial()" title="Reiniciar historial y calibraciÃ³n">ðŸ”„ Reiniciar</button>
+            <button class="boton-accion-secundario" data-action="exportar-datos" title="Exportar respaldo de datos en JSON">ðŸ“¥ Exportar datos</button>
+            <button class="boton-accion-secundario peligro" data-action="reiniciar-historial" title="Reiniciar historial y calibraciÃ³n">ðŸ”„ Reiniciar</button>
           </div>
         </div>
 
@@ -1064,7 +1064,7 @@ function crearTarjetaHTML(partido, pronosticos, statsLocal, statsVisita, h2h, ta
       <div class="bloque-combinadas sin-borde-superior">
         <div class="historial-header">
           <p class="subtitulo-combinadas" style="margin:0;">Basado en ${estadisticas.totalVerificados} pronÃ³sticos ya verificados en este navegador.</p>
-          <button class="boton-reiniciar" onclick="reiniciarHistorial()">Reiniciar</button>
+          <button class="boton-reiniciar" data-action="reiniciar-historial">Reiniciar</button>
         </div>
 
         <div class="precision-general">
@@ -1214,8 +1214,8 @@ function crearTarjetaHTML(partido, pronosticos, statsLocal, statsVisita, h2h, ta
         <div class="historial-filtros-barra" style="margin-top:16px;">
           <span></span>
           <div style="display:flex; gap:8px;">
-            <button class="boton-reiniciar" onclick="exportarDatos()">Exportar mis datos</button>
-            <button class="boton-reiniciar" onclick="document.getElementById('input-importar-datos').click()">Importar datos</button>
+            <button class="boton-reiniciar" data-action="exportar-datos">Exportar mis datos</button>
+            <button class="boton-reiniciar" data-action="abrir-importar-datos">Importar datos</button>
           </div>
         </div>
       `;
@@ -1236,14 +1236,14 @@ function crearTarjetaHTML(partido, pronosticos, statsLocal, statsVisita, h2h, ta
       ${resumenHistorialCardsHTML(resumen)}
       <div class="historial-filtros-barra">
         <div class="historial-filtros-chips">
-          <button class="chip-filtro ${filtroHistorial === 'todos' ? 'activo' : ''}" onclick="cambiarFiltroHistorial('todos')">Todos</button>
-          <button class="chip-filtro ${filtroHistorial === 'ganados' ? 'activo' : ''}" onclick="cambiarFiltroHistorial('ganados')">Ganados</button>
-          <button class="chip-filtro ${filtroHistorial === 'perdidos' ? 'activo' : ''}" onclick="cambiarFiltroHistorial('perdidos')">Perdidos</button>
+          <button class="chip-filtro ${filtroHistorial === 'todos' ? 'activo' : ''}" data-action="cambiar-filtro-historial" data-filtro="todos">Todos</button>
+          <button class="chip-filtro ${filtroHistorial === 'ganados' ? 'activo' : ''}" data-action="cambiar-filtro-historial" data-filtro="ganados">Ganados</button>
+          <button class="chip-filtro ${filtroHistorial === 'perdidos' ? 'activo' : ''}" data-action="cambiar-filtro-historial" data-filtro="perdidos">Perdidos</button>
         </div>
         <div style="display:flex; gap:8px; flex-wrap:wrap;">
-          <button class="boton-reiniciar" onclick="exportarDatos()">Exportar mis datos</button>
-          <button class="boton-reiniciar" onclick="document.getElementById('input-importar-datos').click()">Importar datos</button>
-          <button class="boton-reiniciar" onclick="reiniciarHistorial()">Reiniciar historial</button>
+          <button class="boton-reiniciar" data-action="exportar-datos">Exportar mis datos</button>
+          <button class="boton-reiniciar" data-action="abrir-importar-datos">Importar datos</button>
+          <button class="boton-reiniciar" data-action="reiniciar-historial">Reiniciar historial</button>
         </div>
       </div>
       <p class="historial-conteo-resultados">${evaluaciones.length} picks encontrados${terminoBusqueda ? ` para "${escaparHTML(terminoBusqueda)}"` : ''}</p>
@@ -1279,11 +1279,11 @@ function crearTarjetaHTML(partido, pronosticos, statsLocal, statsVisita, h2h, ta
    console.log('renderFiltroLigas ejecutado', ligaSeleccionada);
 
    const lista = (typeof COMPETICIONES !== 'undefined' && COMPETICIONES) ? COMPETICIONES.split(',') : [];
-   let html = `<button class="filtro-liga-btn ${ligaSeleccionada === 'TODAS' ? 'activa' : ''}" onclick="cambiarLiga('TODAS')">Todas las ligas</button>`;
+   let html = `<button class="filtro-liga-btn ${ligaSeleccionada === 'TODAS' ? 'activa' : ''}" data-action="cambiar-liga" data-liga="TODAS">Todas las ligas</button>`;
 
    lista.forEach(cod => {
      const nombre = (typeof NOMBRES_LIGA !== 'undefined' && NOMBRES_LIGA[cod]) ? NOMBRES_LIGA[cod] : cod;
-     html += `<button class="filtro-liga-btn ${ligaSeleccionada === cod ? 'activa' : ''}" onclick="cambiarLiga('${cod}')">${nombre}</button>`;
+     html += `<button class="filtro-liga-btn ${ligaSeleccionada === cod ? 'activa' : ''}" data-action="cambiar-liga" data-liga="${cod}">${nombre}</button>`;
    });
 
    cont.innerHTML = html;
@@ -1359,7 +1359,7 @@ function crearTarjetaHTML(partido, pronosticos, statsLocal, statsVisita, h2h, ta
         ? 'No hay partidos programados para maÃ±ana en las ligas cubiertas. ProbÃ¡ con "Esta semana".'
         : 'No hay partidos para mostrar con este filtro.';
       const accionFecha = (!terminoBusqueda && filtroRapidoActual !== 'favoritos' && (esHoy || esManana))
-        ? `<div style="margin-top:12px;"><button class="boton-reintentar" onclick="document.querySelectorAll('.pestaÃ±a')[${esHoy ? 1 : 2}]?.click()">Ver ${esHoy ? 'MaÃ±ana' : 'Esta semana'}</button></div>`
+        ? `<div style="margin-top:12px;"><button class="boton-reintentar" data-action="cambiar-fecha" data-fecha="${esHoy ? 'manana' : 'semana'}">Ver ${esHoy ? 'Mañana' : 'Esta semana'}</button></div>`
         : '';
       contenedor.innerHTML = `${partidosModoDemo ? avisoDatosDemoHTML() : ''}<div class="estado-vacio" style="text-align:center; color:#8fa896;"><p style="margin:0;">${escaparHTML(mensaje)}</p>${accionFecha}</div>`;
       requestAnimationFrame(() => contenedor.classList.add('visible'));
