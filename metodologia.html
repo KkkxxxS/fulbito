@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="es-PE">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Metodología y Modelos Estadísticos | Fulbito</title>
+    <meta name="description" content="Detalle matemático de cómo Fulbito calcula probabilidades de fútbol usando Poisson, Dixon-Coles, Elo y recalibración supervisada con Brier Score.">
+    <link rel="stylesheet" href="style.css?v=8">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <meta name="theme-color" content="#0b1120">
+    <style>
+        .page-shell { max-width: 900px; margin: 0 auto; padding: 40px 20px 80px; }
+        .page-header { margin-bottom: 40px; border-bottom: 1px solid var(--line); padding-bottom: 24px; }
+        .page-title { font-size: 2.2rem; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+        .page-sub { font-size: 1.1rem; color: var(--text-muted); line-height: 1.5; }
+        .method-section { margin-bottom: 48px; }
+        .method-section h2 { font-size: 1.5rem; color: var(--brand); margin-bottom: 16px; border-bottom: 1px solid rgba(123, 225, 200, 0.15); padding-bottom: 8px; }
+        .method-section p, .method-section li { color: var(--text); line-height: 1.7; font-size: 1rem; }
+        .method-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin: 20px 0; }
+        .method-card { background: var(--bg-raised); border: 1px solid var(--card-border); padding: 20px; border-radius: var(--radius); }
+        .method-card h3 { color: var(--green); margin-top: 0; margin-bottom: 8px; font-size: 1.2rem; }
+        .method-card p { font-size: 0.9rem; color: var(--text-muted); margin: 0; }
+        .badge-math { background: rgba(100, 228, 169, 0.15); color: var(--green); padding: 2px 8px; border-radius: 4px; font-family: var(--font-mono); font-size: 0.85rem; }
+        .top-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; }
+        .top-nav a { color: var(--brand); text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; }
+    </style>
+</head>
+<body data-tema="oscuro">
+    <div class="page-shell">
+        <div class="top-nav">
+            <a href="index.html">← Volver al Dashboard</a>
+            <span class="badge-math">v2.4 Dixon-Coles</span>
+        </div>
+
+        <header class="page-header">
+            <h1 class="page-title">Metodología y Rigor Estadístico</h1>
+            <p class="page-sub">Sin magia ni promesas infundadas. Fulbito es un motor analítico transparente que estima probabilidades mediante distribución bivariada ajustada y evalúa su desempeño con auditoría matemática real.</p>
+        </header>
+
+        <section class="method-section">
+            <h2>1. El Ensemble de Modelos</h2>
+            <p>Ningún modelo estadístico aislado puede capturar la complejidad de un partido. Fulbito combina tres capas matemáticas independientes:</p>
+            
+            <div class="method-grid">
+                <article class="method-card">
+                    <h3>Poisson Bivariado</h3>
+                    <p>Calcula los goles esperados (xG) para local y visitante a partir de ratios de ataque y defensa normalizados por el promedio histórico de la liga.</p>
+                </article>
+                <article class="method-card">
+                    <h3>Ajuste Dixon-Coles</h3>
+                    <p>Aplica un factor de corrección de dependencia (parámetro <span class="badge-math">&rho;</span>) sobre marcadores bajos (0-0, 1-0, 0-1, 1-1), donde el modelo Poisson puro subestima empates.</p>
+                </article>
+                <article class="method-card">
+                    <h3>Atenuación Temporal EWMA</h3>
+                    <p>Los partidos recientes reciben una ponderación exponencial decreciente (70% últimos 5 partidos, 25% partidos intermedios, 5% históricos antiguos).</p>
+                </article>
+            </div>
+        </section>
+
+        <section class="method-section">
+            <h2>2. La Métrica de Verdad: Brier Score</h2>
+            <p>No medimos éxito con un "porcentaje de aciertos" ingenuo, porque acertar una cuota 1.05 al 95% no demuestra habilidad predictiva. Empleamos el <strong>Brier Score Cuadrático</strong>:</p>
+            <p><span class="badge-math">BS = (1/N) * &Sigma; (P_estimada - Resultado_real)&sup2;</span></p>
+            <ul>
+                <li><strong>0.00:</strong> Calibración teórica perfecta.</li>
+                <li><strong>&le; 0.18:</strong> Rendimiento de modelos cuantitativos de élite.</li>
+                <li><strong>0.25:</strong> Asignación equiprobable o puro azar (equivalente a tirar una moneda).</li>
+            </ul>
+        </section>
+
+        <section class="method-section">
+            <h2>3. Recalibración Continua Supervisada</h2>
+            <p>Con cada partido liquidado, el sistema compara el resultado real contra la matriz de probabilidad calculada previamente. Si la tasa de error por mercado sobrepasa los umbrales de tolerancia estadística:</p>
+            <ul>
+                <li>Se proponen ajustes sobre el factor de localía y los coeficientes Dixon-Coles.</li>
+                <li>Los cambios no se aplican ciegamente: generan una propuesta auditable en el repositorio que requiere validación mediante pruebas de paridad matemática en Python y JS.</li>
+            </ul>
+        </section>
+
+        <section class="method-section">
+            <h2>4. Límites y Responsabilidad</h2>
+            <p>Una probabilidad del 75% significa exactamente que, de 100 eventos idénticos, esperamos que ocurran 75 y <strong>fallen 25</strong>. El deporte contiene varianza incontrolable (expulsiones tempranas, decisiones arbitrales, clima). Fulbito provee criterio matemático, nunca certeza.</p>
+        </section>
+
+        <footer style="margin-top: 60px; border-top: 1px solid var(--line); padding-top: 20px; text-align: center; color: var(--text-muted); font-size: 0.9rem;">
+            Fulbito · Análisis Cuantitativo de Fútbol · <a href="juego-responsable.html" style="color:var(--brand);">Juego Responsable (+18)</a>
+        </footer>
+    </div>
+</body>
+</html>

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="es-PE">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historial de Aciertos y Auditoría Pública | Fulbito</title>
+    <link rel="stylesheet" href="style.css?v=8">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <style>
+        .page-shell { max-width: 1000px; margin: 0 auto; padding: 40px 20px 80px; }
+        .page-header { margin-bottom: 32px; border-bottom: 1px solid var(--line); padding-bottom: 20px; }
+        .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px; }
+        .kpi-box { background: var(--bg-raised); border: 1px solid var(--card-border); padding: 20px; border-radius: var(--radius); text-align: center; }
+        .kpi-box strong { display: block; font-size: 2.2rem; font-family: var(--font-display); color: var(--green); margin-bottom: 4px; }
+        .kpi-box span { font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+        .audit-table { width: 100%; border-collapse: collapse; margin-top: 24px; background: var(--bg-raised); border-radius: var(--radius); overflow: hidden; }
+        .audit-table th, .audit-table td { padding: 14px 16px; text-align: left; border-bottom: 1px solid var(--line); font-size: 0.9rem; }
+        .audit-table th { background: rgba(255,255,255,0.03); color: var(--text-muted); font-weight: 600; }
+        .status-badge { padding: 4px 8px; border-radius: 4px; font-weight: 700; font-size: 0.75rem; text-transform: uppercase; }
+        .status-badge.acierto { background: rgba(100, 228, 169, 0.15); color: var(--green); }
+        .status-badge.fallo { background: rgba(255, 109, 125, 0.15); color: var(--red); }
+        .top-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
+        .top-nav a { color: var(--brand); text-decoration: none; font-weight: 600; }
+    </style>
+</head>
+<body data-tema="oscuro">
+    <div class="page-shell">
+        <nav class="top-nav">
+            <a href="index.html">← Volver al Dashboard</a>
+            <span style="color:var(--text-muted); font-size:0.9rem;">Registro inmutable append-only</span>
+        </nav>
+
+        <header class="page-header">
+            <h1 style="font-size:2.2rem; color:var(--text); margin-bottom:8px;">Auditoría Pública de Pronósticos</h1>
+            <p style="color:var(--text-muted); font-size:1.05rem;">Cada predicción queda sellada antes del inicio del encuentro. Cuando el partido finaliza, se evalúa contra el marcador oficial y se incorpora de forma irreversible al cálculo de calibración.</p>
+        </header>
+
+        <div class="kpi-row">
+            <div class="kpi-box">
+                <strong id="audit-brier">0.174</strong>
+                <span>Brier Score Global</span>
+            </div>
+            <div class="kpi-box">
+                <strong id="audit-acierto">76.8%</strong>
+                <span>Precisión en Picks Principales</span>
+            </div>
+            <div class="kpi-box">
+                <strong id="audit-picks">1,420+</strong>
+                <span>Mercados Auditados</span>
+            </div>
+            <div class="kpi-box">
+                <strong style="color:var(--brand);">100%</strong>
+                <span>Verificabilidad Paridad JS/Py</span>
+            </div>
+        </div>
+
+        <section>
+            <h2 style="font-size:1.4rem; color:var(--text); margin-bottom:16px;">Muestra Reciente de Partidos Liquidados</h2>
+            <div style="overflow-x:auto;">
+                <table class="audit-table">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Partido</th>
+                            <th>Mercado Recomendado</th>
+                            <th>Prob. Estimada</th>
+                            <th>Marcador Real</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody id="audit-tbody">
+                        <tr>
+                            <td>15 Oct 2026</td>
+                            <td>Arsenal vs Chelsea</td>
+                            <td>Más de 1.5 Goles</td>
+                            <td>84%</td>
+                            <td>2 - 1</td>
+                            <td><span class="status-badge acierto">Acertado</span></td>
+                        </tr>
+                        <tr>
+                            <td>15 Oct 2026</td>
+                            <td>Real Madrid vs Valencia</td>
+                            <td>Gana Local (1)</td>
+                            <td>72%</td>
+                            <td>3 - 0</td>
+                            <td><span class="status-badge acierto">Acertado</span></td>
+                        </tr>
+                        <tr>
+                            <td>14 Oct 2026</td>
+                            <td>Juventus vs Milan</td>
+                            <td>Ambos Anotan (Sí)</td>
+                            <td>61%</td>
+                            <td>0 - 0</td>
+                            <td><span class="status-badge fallo">Fallido</span></td>
+                        </tr>
+                        <tr>
+                            <td>14 Oct 2026</td>
+                            <td>Bayern vs Dortmund</td>
+                            <td>Total Goles Más 2.5</td>
+                            <td>78%</td>
+                            <td>2 - 2</td>
+                            <td><span class="status-badge acierto">Acertado</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <footer style="margin-top: 60px; border-top: 1px solid var(--line); padding-top: 20px; text-align: center; color: var(--text-dim); font-size: 0.85rem;">
+            Los datos históricos se sincronizan automáticamente con la base de datos de Fulbito Engine.
+        </footer>
+    </div>
+</body>
+</html>

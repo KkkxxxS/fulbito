@@ -10901,3 +10901,144 @@ button.dash-kpi {
 }
 
 
+
+/* ============================================================
+   HERO COMERCIAL / PRESENTACIÓN DE ALTO IMPACTO (Estilo Choco.bet)
+   ============================================================ */
+
+.commercial-hero {
+  background: radial-gradient(ellipse 100% 80% at 50% -20%, rgba(123, 225, 200, 0.12) 0%, rgba(11, 17, 32, 0) 70%),
+              linear-gradient(180deg, rgba(16, 27, 42, 0.6) 0%, rgba(11, 17, 32, 0.95) 100%);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-lg);
+  padding: 32px 28px;
+  margin-bottom: 24px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5);
+}
+
+.commercial-hero::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(123, 225, 200, 0.4), transparent);
+}
+
+.hero-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(100, 228, 169, 0.1);
+  border: 1px solid rgba(100, 228, 169, 0.25);
+  color: var(--green);
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+.hero-main-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.8rem, 3.5vw, 2.6rem);
+  font-weight: 700;
+  line-height: 1.15;
+  color: var(--text);
+  margin: 0 0 10px 0;
+  letter-spacing: -0.02em;
+}
+
+.hero-main-title span {
+  background: linear-gradient(135deg, var(--text) 30%, var(--brand) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.hero-description {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+  max-width: 680px;
+  margin: 0 0 20px 0;
+}
+
+.hero-nav-pills {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.hero-btn-primary {
+  background: linear-gradient(135deg, var(--green), var(--brand));
+  color: #07120d;
+  font-weight: 800;
+  font-size: 0.85rem;
+  padding: 10px 18px;
+  border-radius: var(--radius-sm);
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 14px -3px rgba(100, 228, 169, 0.5);
+  transition: transform 0.2s var(--ease);
+}
+
+.hero-btn-primary:hover {
+  transform: translateY(-1px);
+}
+
+.hero-btn-ghost {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--line);
+  color: var(--text);
+  font-weight: 600;
+  font-size: 0.85rem;
+  padding: 9px 16px;
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  transition: background 0.2s var(--ease), border-color 0.2s var(--ease);
+}
+
+.hero-btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+
+/* ============================================================
+   LECTURA TÉCNICA Y EXPLICACIONES CUALITATIVAS (Estilo Choco.bet)
+   ============================================================ */
+
+.lectura-pick-box {
+  background: rgba(255, 255, 255, 0.02);
+  border-left: 3px solid var(--brand);
+  padding: 10px 14px;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  margin: 12px 0 16px;
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+
+.lectura-pick-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--brand);
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 0.7rem;
+  letter-spacing: 0.05em;
+  margin-bottom: 4px;
+}
+
+.lectura-pick-texto {
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.lectura-pick-texto strong {
+  color: var(--text);
+}
+
