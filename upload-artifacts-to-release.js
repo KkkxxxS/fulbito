@@ -33,13 +33,19 @@ function run(cmd) {
   }
 }
 
-function existeAsset(assetName) {
+function releaseActual() {
   try {
-    const info = run(`gh api repos/${REPO}/releases/tags/${TAG} --jq '.assets[] | select(.name=="${assetName}") | .id'`);
-    return info ? info.trim() : null;
+    return JSON.parse(run(`gh api repos/${REPO}/releases/tags/${TAG}`));
   } catch (e) {
     return null;
   }
+}
+
+function existeAsset(assetName) {
+  const release = releaseActual();
+  if (!release || !Array.isArray(release.assets)) return null;
+  const asset = release.assets.find(a => a.name === assetName);
+  return asset ? String(asset.id) : null;
 }
 
 function main() {
@@ -63,17 +69,17 @@ function main() {
 
   // Verificar si la release existe
   let releaseId = null;
-  try {
-    const info = run(`gh api repos/${REPO}/releases/tags/${TAG} --jq '.id'`);
-    releaseId = info.trim();
+  const release = releaseActual();
+  if (release && release.id) {
+    releaseId = String(release.id);
     console.log('Release existente, id:', releaseId);
-  } catch (e) {
+  } else {
     console.log('Release no existe, se creará...');
   }
 
   // Si no existe, crear release
   if (!releaseId) {
-    const salida = run(`gh api --method POST repos/${REPO}/releases -f tag_name=${TAG} -f name="${RELEASE_NAME}" -f draft=false -f prerelease=false -f generate_release_notes=false`);
+    const salida = run(`gh api --method POST repos/${REPO}/releases -f tag_name=${TAG} -f name="${RELEASE_NAME}" -F draft=false -F prerelease=false -F generate_release_notes=false`);
     const parsed = JSON.parse(salida);
     releaseId = parsed.id;
     console.log('Release creada, id:', releaseId);

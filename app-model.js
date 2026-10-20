@@ -1474,6 +1474,7 @@
     btts:        { titulo: 'Ambos Anotan',     mercado: 'Ambos equipos anotan' },
     equipomarca: { titulo: 'Equipo Marca',     mercado: 'Equipo marca' },
     handicap:    { titulo: 'Hándicap',         mercado: 'Hándicap asiático' },
+    dnb:         { titulo: 'Sin Empate',       mercado: 'Empate no acción (DNB)' },
     marcador:    { titulo: 'Marcador Exacto',  mercado: 'Resultado exacto' }
   };
 
@@ -1511,6 +1512,10 @@
         const margen = parametros.lado === 'local' ? (golesLocal - golesVisita) : (golesVisita - golesLocal);
         return margen >= parametros.valor;
       }
+      case 'dnb':
+        if (parametros.lado === 'local') return golesLocal > golesVisita;
+        if (parametros.lado === 'visita') return golesVisita > golesLocal;
+        return false;
       case 'marcador':
         return golesLocal === parametros.gl && golesVisita === parametros.gv;
       default:
@@ -1556,6 +1561,11 @@
     const pHandicap2 = sumaMatriz(matriz, maxGoles, (i, j) => (favoritoLocal ? (i - j) : (j - i)) >= 3);
     candidatos.push({ categoria: 'handicap', parametros: { lado: ladoFavorito, valor: 2 }, seleccion: `${nombreFavorito} -1 (gana por 2+)`, probabilidad: pHandicap1 });
     candidatos.push({ categoria: 'handicap', parametros: { lado: ladoFavorito, valor: 3 }, seleccion: `${nombreFavorito} -2 (gana por 3+)`, probabilidad: pHandicap2 });
+
+    const pDnbLocal = pLocal / (pLocal + pVisita);
+    const pDnbVisita = pVisita / (pLocal + pVisita);
+    candidatos.push({ categoria: 'dnb', parametros: { lado: 'local' }, seleccion: `DNB ${nombreLocal}`, probabilidad: pDnbLocal });
+    candidatos.push({ categoria: 'dnb', parametros: { lado: 'visita' }, seleccion: `DNB ${nombreVisita}`, probabilidad: pDnbVisita });
 
     let celdas = [];
     for (let i = 0; i <= maxGoles; i++) {
@@ -1634,6 +1644,12 @@
       seleccionados.push(mejorHandicap || mejorEquipoMarca);
     }
 
+    // --- Familia "especial": Sin Empate (DNB) ---
+    const mejorDnb = candidatos
+      .filter(c => c.categoria === 'dnb')
+      .sort((a, b) => b.probabilidad - a.probabilidad)[0];
+    if (mejorDnb && mejorDnb.probabilidad >= 0.60) seleccionados.push(mejorDnb);
+
     // --- Marcador exacto: ya varía solo según el partido ---
     const mejorMarcador = candidatos.filter(c => c.categoria === 'marcador')[0];
     if (mejorMarcador) seleccionados.push(mejorMarcador);
@@ -1674,6 +1690,10 @@
     if (ctx.h2h && ctx.h2h.disponible && ctx.h2h.totalPartidos >= 3) {
       if (ctx.h2h.victoriasLocal > ctx.h2h.victoriasVisita) razones.push(`El historial directo favorece a ${ctx.nombreLocal} (${ctx.h2h.victoriasLocal}V-${ctx.h2h.empates}E-${ctx.h2h.victoriasVisita}V).`);
       else if (ctx.h2h.victoriasVisita > ctx.h2h.victoriasLocal) razones.push(`El historial directo favorece a ${ctx.nombreVisita} (${ctx.h2h.victoriasVisita}V-${ctx.h2h.empates}E-${ctx.h2h.victoriasLocal}V).`);
+    }
+
+    if (m.categoria === 'dnb') {
+      razones.push(`Mercado cubierto: recuperas tu apuesta si el partido termina en empate.`);
     }
 
     if (razones.length === 0) razones.push(`Calculado con el modelo estadístico (Poisson + Dixon-Coles) según los datos disponibles.`);

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Script de pronósticos de Fulbito - Modelo estadístico con Poisson + Dixon-Coles + ML
+ Script de pronósticos de Fulbito - Modelo estadístico con Poisson + Dixon-Coles
 Genera pronosticos.json para el frontend.
 """
 
@@ -19,8 +19,6 @@ from typing import Dict, List, Any, Optional
 from dataclasses import dataclass
 from scipy import stats
 import xgboost as xgb
-from sklearn.linear_model import LogisticRegression
-from sklearn.preprocessing import StandardScaler
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -1325,126 +1323,6 @@ class ModeloEstadistico:
         
         return resultado
 
-# ==================== ML (XGBoost + Regresión Logística) ====================
-
-class ModeloAprendizajeAutomatico:
-    def __init__(self):
-        self.xgb_model = None
-        self.lr_model = None
-        self.scaler = StandardScaler()
-        self.feature_names = [
-            'golesFavorLocal', 'golesContraLocal', 'golesFavorVisita', 'golesContraVisita',
-            'puntosPromedioLocal', 'puntosPromedioVisita', 'partidosJugadosLocal', 'partidosJugadosVisita',
-            'factorLocalia', 'factorTablaLocal', 'factorTablaVisita', 'factorH2HLocal', 'factorH2HVisita',
-            'tendenciaLocal', 'tendenciaVisita', 'descansoLocal', 'descansoVisita'
-        ]
-    
-    def prepararDatosParaML(self, partidos, stats_locales, stats_visitantes, tablas, h2hs, codigo_liga):
-        """Prepara datos para entrenamiento de ML"""
-        X = []
-        y = []
-        
-        for i, partido in enumerate(partidos):
-            if i >= len(stats_locales) or i >= len(stats_visitantes):
-                continue
-            
-            stats_local = stats_locales[i]
-            stats_visita = stats_visitantes[i]
-            tabla = tablas[i]
-            h2h = h2hs[i]
-            
-            # Características
-            features = [
-                stats_local['local']['golesFavor'],
-                stats_local['local']['golesContra'],
-                stats_visita['visita']['golesFavor'],
-                stats_visita['visita']['golesContra'],
-                stats_local['puntosPromedio'],
-                stats_visita['puntosPromedio'],
-                stats_local['partidosJugados'],
-                stats_visita['partidosJugados'],
-                self._calcularFactorLocalia(codigo_liga),
-                self._calcularFactorTabla(tabla, partido['homeTeam']['id']),
-                self._calcularFactorTabla(tabla, partido['awayTeam']['id']),
-                self._calcularFactorH2H(h2h, True),
-                self._calcularFactorH2H(h2h, False),
-                self._codificarTendencia(stats_local['tendencia']['direccion']),
-                self._codificarTendencia(stats_visita['tendencia']['direccion']),
-                stats_local['diasDescansoUltimoPartido'] or 0,
-                stats_visita['diasDescansoUltimoPartido'] or 0
-            ]
-            
-            # Resultado real (para entrenamiento)
-            # En producción, esto vendría de datos históricos verificados
-            # Por ahora, usamos un placeholder
-            resultado = 1 if stats_local['local']['golesFavor'] > stats_visita['visita']['golesContra'] else 0
-            
-            X.append(features)
-            y.append(resultado)
-        
-        return np.array(X), np.array(y)
-    
-    def _calcularFactorLocalia(self, codigo_liga):
-        perfiles = {
-            'PL': 1.05, 'PD': 1.04, 'BL1': 1.06, 'SA': 1.03,
-            'FL1': 1.02, 'CL': 1.07, 'DED': 1.08, 'ELC': 1.01,
-            'BSA': 1.04, 'PPL': 1.03, 'DEFAULT': 1.03
-        }
-        return perfiles.get(codigo_liga, perfiles['DEFAULT'])
-    
-    def _calcularFactorTabla(self, tabla, team_id):
-        info = tabla['mapa'].get(team_id)
-        if not info or not tabla['promedioLiga']:
-            return 1.0
-        return info['puntosPorPartido'] / tabla['promedioLiga']
-    
-    def _calcularFactorH2H(self, h2h, es_local):
-        if not h2h or not h2h['disponible'] or h2h['totalPartidos'] < 5:
-            return 1.0
-        total = h2h['totalPartidos']
-        dominio_local = (h2h['victoriasLocal'] - h2h['victoriasVisita']) / total
-        ajuste_max = 0.04
-        ajuste = max(-ajuste_max, min(ajuste_max, dominio_local * ajuste_max * 2))
-        return 1 + ajuste if es_local else 1 - ajuste
-    
-    def _codificarTendencia(self, direccion):
-        codigos = {'subiendo': 1, 'bajando': -1, 'neutral': 0}
-        return codigos.get(direccion, 0)
-    
-    def entrenar(self, X, y):
-        """Entrena modelos de ML"""
-        if len(X) < 10:
-            return
-        
-        # Escalar características
-        X_scaled = self.scaler.fit_transform(X)
-        
-        # Entrenar XGBoost
-        self.xgb_model = xgb.XGBClassifier(
-            n_estimators=100,
-            max_depth=3,
-            learning_rate=0.1,
-            random_state=42
-        )
-        self.xgb_model.fit(X_scaled, y)
-        
-        # Entrenar Regresión Logística
-        self.lr_model = LogisticRegression(random_state=42, max_iter=1000)
-        self.lr_model.fit(X_scaled, y)
-    
-    def predecir(self, X):
-        """Hace predicciones con ambos modelos"""
-        if not self.xgb_model or not self.lr_model:
-            return None
-        
-        X_scaled = self.scaler.transform(X)
-        pred_xgb = self.xgb_model.predict(X_scaled)
-        pred_lr = self.lr_model.predict(X_scaled)
-        
-        # Combinar predicciones
-        pred_combinada = (pred_xgb + pred_lr) / 2
-        return (pred_combinada > 0.5).astype(int)
-
 # ==================== GENERADOR DE PRONOSTICOS ====================
 
 # ==================== TELEMETRÍA PARA RECALIBRACIÓN ====================
@@ -1453,7 +1331,7 @@ def registrar_telemetria(salida, uso_datos_ejemplo, ruta_archivo='pronosticos_hi
     """Append-only del histórico oficial de pronósticos (diseño: telemetría, fase 2).
 
     Por cada corrida agrega UNA línea JSON con los insumos por partido (lambdas,
-    factores multiplicativos y probabilidades finales post-ML). Es la fuente de
+    factores multiplicativos y probabilidades finales). Es la fuente de
     verdad que consume recalibracion.py para el backtesting y el cruce
     anti-manipulación. NO altera el contenido de pronosticos.json.
     """
@@ -1509,7 +1387,6 @@ class GeneradorPronosticos:
     def __init__(self):
         self.config = Config()
         self.modelo_estadistico = ModeloEstadistico(self.config)
-        self.modelo_ml = ModeloAprendizajeAutomatico()
         self.pronosticos = {}
         # Telemetría de recalibración: True cuando la generación usa datos de
         # ejemplo (integración con el backend todavía no conectada).
@@ -1858,55 +1735,19 @@ class GeneradorPronosticos:
         
         return self.pronosticos
     
-    def aplicarML(self, pronosticos):
-        """Aplica ML para ajustar probabilidades"""
-        # Extraer características de los pronósticos
-        X = []
-        for id_partido, data in pronosticos.items():
-            p = data['pronosticos']
-            features = [
-                p['parametrosModelo']['lambdaLocal'],
-                p['parametrosModelo']['lambdaVisita'],
-                len(p['seleccionados']),
-                p['probMarcador'] / 100,
-                1 if p['favoritoLocal'] else 0,
-                p['partidosMin'] / 10
-            ]
-            X.append(features)
-        
-        if len(X) >= 10:
-            X = np.array(X)
-            predicciones_ml = self.modelo_ml.predecir(X)
-            
-            if predicciones_ml is not None:
-                # Ajustar probabilidades basadas en ML
-                for i, (id_partido, data) in enumerate(pronosticos.items()):
-                    p = data['pronosticos']
-                    factor_ajuste = 0.9 + (predicciones_ml[i] * 0.2)  # Ajuste entre 0.9 y 1.1
-                    
-                    for mercado in p['seleccionados']:
-                        mercado['probabilidad'] = min(92, max(8, mercado['probabilidad'] * factor_ajuste))
-                    
-                    p['probMarcador'] = min(92, max(8, p['probMarcador'] * factor_ajuste))
-        
-        return pronosticos
-    
     def guardarPronosticos(self, ruta_archivo: str = 'pronosticos.json'):
         """Guarda pronósticos en archivo JSON"""
-        # Aplicar ML
-        pronosticos_ajustados = self.aplicarML(self.pronosticos)
-        
         # Preparar salida final
         salida = {
             'version': '2.0',
             'generadoEn': datetime.now(timezone.utc).isoformat(),
             'modelo': {
-                'tipo': 'Poisson + Dixon-Coles + ML',
+                'tipo': 'Poisson + Dixon-Coles',
                 'rhoDixonColes': self.config.RHO_DIXON_COLES,
                 'factorLocalia': self.config.FACTOR_LOCALIA_BASE,
-                'mlUsado': True
+                'mlUsado': False
             },
-            'pronosticos': pronosticos_ajustados
+            'pronosticos': self.pronosticos
         }
         
         with open(ruta_archivo, 'w', encoding='utf-8') as f:
@@ -2159,8 +2000,7 @@ def main(argv=None):
     salida = generador.guardarPronosticos(args.salida)
 
     print(f"Generados {len(pronosticos)} pronósticos")
-    print(f"Modelo: Poisson + Dixon-Coles + ML")
-    print(f"Probabilidades ajustadas por XGBoost y Regresión Logística")
+    print(f"Modelo: Poisson + Dixon-Coles")
 
     return salida
 

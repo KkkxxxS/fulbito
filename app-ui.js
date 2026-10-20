@@ -48,7 +48,7 @@
           </div>
           <footer class="fila-nobet-detalle">
             <span class="icono-info-nobet" aria-hidden="true">?</span>
-            <p class="cuota-implicita">Ningún mercado de esta categoría supera el umbral mínimo de seguridad (${datos.probabilidad}% real).</p>
+            <p class="cuota-implicita">Ningï¿½n mercado de esta categorï¿½a supera el umbral mï¿½nimo de seguridad (${datos.probabilidad}% real).</p>
           </footer>
         </li>
       `;
@@ -56,7 +56,7 @@
     const conf = obtenerConfianza(datos);
     const cuota = cuotaImplicita(datos.probabilidad);
     const contextoTxt = datos.contexto ? `<div class="fila-contexto-block"><span class="contexto-label">Contexto:</span> ${escaparHTML(datos.contexto)}</div>` : '';
-    const explicacionTxt = datos.explicacion ? `<div class="fila-explicacion-block"><span class="explicacion-label">Explicación:</span> ${escaparHTML(datos.explicacion)}</div>` : '';
+    const explicacionTxt = datos.explicacion ? `<div class="fila-explicacion-block"><span class="explicacion-label">Explicaciï¿½n:</span> ${escaparHTML(datos.explicacion)}</div>` : '';
 
     return `
       <li class="fila-mercado animated-enter motion-card mercado-${datos.tipo} ${esPrincipal ? 'mercado-principal motion-pop' : ''}" role="listitem">
@@ -83,7 +83,7 @@
         ${explicacionTxt}
         <ul class="fila-razones">${(datos.razones || []).map(r => `<li class="fila-razon">+ ${escaparHTML(r)}</li>`).join('')}</ul>
         <footer class="fila-mercado-footer">
-          <span class="cuota-implicita-tag" title="Cuota justa según probabilidad real estimada">Cuota justa: <strong>@${cuota}</strong></span>
+          <span class="cuota-implicita-tag" title="Cuota justa segï¿½n probabilidad real estimada">Cuota justa: <strong>@${cuota}</strong></span>
         </footer>
       </li>
     `;
@@ -125,7 +125,7 @@ function crearTarjetaHTML(partido, pronosticos, statsLocal, statsVisita, h2h, ta
         <header class="tarjeta-partido-topbar">
           <div class="partido-topbar-izq">
             <span class="partido-liga-tag">${escaparHTML(liga)}</span>
-            <span class="partido-fecha-tag">${fechaTexto} · ${horaTexto}</span>
+            <span class="partido-fecha-tag">${fechaTexto} ï¿½ ${horaTexto}</span>
           </div>
           <div class="partido-topbar-der">
             ${chipCuentaRegresiva(partido.utcDate)}
@@ -136,7 +136,7 @@ function crearTarjetaHTML(partido, pronosticos, statsLocal, statsVisita, h2h, ta
           ${bloqueEquipoHTML(local, statsLocal, 'alineacion-izq', partido.homeTeam.crest, tabla, partido.homeTeam.id)}
           <div class="centro-partido">
             <span class="vs-circulo">VS</span>
-            <div class="marcador-estimado-badge" title="Marcador más probable estimado por el modelo">
+            <div class="marcador-estimado-badge" title="Marcador mï¿½s probable estimado por el modelo">
               <span class="marcador-estimado-label">Estimado</span>
               <strong class="marcador-estimado-val">${escaparHTML(pronosticos.marcadorProbable)}</strong>
             </div>
@@ -152,24 +152,24 @@ function crearTarjetaHTML(partido, pronosticos, statsLocal, statsVisita, h2h, ta
             Lectura del Modelo
           </div>
           <p class="lectura-pick-texto">
-            ${mejor ? `El modelo proyecta ventaja en <strong>${escaparHTML(mejor.mercado || mejor.categoria)}: ${escaparHTML(mejor.seleccion)}</strong> con <strong>${mejor.probabilidad}%</strong> de probabilidad estimada basada en la correlacion Dixon-Coles y localia.` : "Distribucion equilibrada; sin sesgo estadistico dominante en mercados principales."}
+            ${mejor ? `El modelo proyecta ventaja en <strong>${escaparHTML(mejor.mercado || mejor.categoria)}: ${escaparHTML(mejor.seleccion)}</strong> con <strong>${mejor.probabilidad}%</strong> de probabilidad estimada basada en la correlaciÃ³n Dixon-Coles y localÃ­a. ${mejor.razones ? `<br><small>${mejor.razones.map(r => 'â€¢ ' + r).join('<br>')}</small>` : ''}` : "DistribuciÃ³n equilibrada; sin sesgo estadÃ­stico dominante en mercados principales."}
           </p>
         </div>
 
-        ${pronosticos.pocaData ? `<div class="aviso-datos warning"><span class="aviso-icon">?</span> Datos limitados (${pronosticos.partidosMin} partidos analizados) · pronóstico menos confiable</div>` : ''}
-        ${pronosticos.sinNadaEnJuego ? `<div class="aviso-datos warning"><span class="aviso-icon">?</span> Uno de los equipos ya no se juega nada en la tabla (título o descenso resuelto)</div>` : ''}
+        ${pronosticos.pocaData ? `<div class="aviso-datos warning"><span class="aviso-icon">?</span> Datos limitados (${pronosticos.partidosMin} partidos analizados) ï¿½ pronï¿½stico menos confiable</div>` : ''}
+        ${pronosticos.sinNadaEnJuego ? `<div class="aviso-datos warning"><span class="aviso-icon">?</span> Uno de los equipos ya no se juega nada en la tabla (tï¿½tulo o descenso resuelto)</div>` : ''}
 
         <ul class="lista-mercados animated-enter" id="mercados-${partido.id}">
           ${pronosticos.seleccionados.map(m => `<li>${filaMercado(m, partido.id, mejor && m === mejor)}</li>`).join('')}
         </ul>
-        <button class="boton-expandir" data-action="toggle-mercados" data-partido="${partido.id}">Ver más mercados</button>
+        <button class="boton-expandir" data-action="toggle-mercados" data-partido="${partido.id}">Ver mï¿½s mercados</button>
 
         <section class="combos-partido">
           <h3 class="combos-partido-titulo">Combina en este partido</h3>
           <ul>${pronosticos.combosPartido.map(comboPartidoHTML).join('')}</ul>
         </section>
 
-        <p class="marcadores-probables-titulo">Marcadores más probables</p>
+        <p class="marcadores-probables-titulo">Marcadores mï¿½s probables</p>
         <div class="marcadores-probables">
           ${pronosticos.top3Marcadores.map(m => `<span class="marcador-chip">${m.marcador} <em>${m.probabilidad}%</em></span>`).join('')}
         </div>
@@ -1370,7 +1370,7 @@ function crearTarjetaHTML(partido, pronosticos, statsLocal, statsVisita, h2h, ta
         ? 'No hay partidos programados para maÃ±ana en las ligas cubiertas. ProbÃ¡ con "Esta semana".'
         : 'No hay partidos para mostrar con este filtro.';
       const accionFecha = (!terminoBusqueda && filtroRapidoActual !== 'favoritos' && (esHoy || esManana))
-        ? `<div style="margin-top:12px;"><button class="boton-reintentar" data-action="cambiar-fecha" data-fecha="${esHoy ? 'manana' : 'semana'}">Ver ${esHoy ? 'Mañana' : 'Esta semana'}</button></div>`
+        ? `<div style="margin-top:12px;"><button class="boton-reintentar" data-action="cambiar-fecha" data-fecha="${esHoy ? 'manana' : 'semana'}">Ver ${esHoy ? 'Maï¿½ana' : 'Esta semana'}</button></div>`
         : '';
       contenedor.innerHTML = `${partidosModoDemo ? avisoDatosDemoHTML() : ''}<div class="estado-vacio" style="text-align:center; color:#8fa896;"><p style="margin:0;">${escaparHTML(mensaje)}</p>${accionFecha}</div>`;
       requestAnimationFrame(() => contenedor.classList.add('visible'));

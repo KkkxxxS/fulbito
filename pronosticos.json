@@ -2,10 +2,10 @@
   "version": "2.0",
   "generadoEn": "2026-10-08T15:37:12.081626+00:00",
   "modelo": {
-    "tipo": "Poisson + Dixon-Coles + ML",
+    "tipo": "Poisson + Dixon-Coles",
     "rhoDixonColes": -0.04,
     "factorLocalia": 1.08,
-    "mlUsado": true
+    "mlUsado": false
   },
   "pronosticos": {
     "555028": {
