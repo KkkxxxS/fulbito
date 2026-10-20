@@ -30,6 +30,8 @@ jobs:
         run: npm run test:server
       - name: Auth e historial personal del servidor
         run: npm run test:auth
+      - name: Liquidación server-side del track record
+        run: npm run test:liquidacion
       - name: Verificación del modelo JS
         run: npm run verify
       - name: Smoke test del frontend

@@ -36,6 +36,21 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           node upload-artifacts-to-release.js
+      - name: Liquidar track record server-side (cruce pronósticos × resultados)
+        continue-on-error: true
+        env:
+          BACKEND_URL: ${{ secrets.FULBITO_BACKEND_URL }}
+          HISTORIAL_API_KEY: ${{ secrets.HISTORIAL_API_KEY }}
+        run: |
+          if [ -z "$BACKEND_URL" ] || [ -z "$HISTORIAL_API_KEY" ]; then
+            echo "Faltan FULBITO_BACKEND_URL o HISTORIAL_API_KEY: se omite la liquidación."
+            exit 0
+          fi
+          curl -sS -X POST "$BACKEND_URL/api/historial/liquidar" \
+            -H "X-Api-Key: $HISTORIAL_API_KEY" \
+            -H "Content-Type: application/json" \
+            --max-time 60
+          echo
       - name: Crear PR de la propuesta (aprobación manual)
         if: steps.recalibracion.outputs.id != ''
         env:

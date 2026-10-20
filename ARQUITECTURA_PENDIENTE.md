@@ -54,11 +54,19 @@ Advirtamos explícitamente por qué los números que hoy se muestran en el panel
 - GitHub Actions (`actualizar_pronosticos.yml`, 08:00 UTC) ejecuta `pronosticos.py` con paridad verificada y commitea `pronosticos.json` + telemetría.
 - **Pendiente:** guardar cada jornada en una estructura persistente y versionada (DB) en vez de `git add -f pronosticos.json` diario sobre el repo.
 
-### 2. Verificación Autónoma de Resultados — **Parcial**
+### 2. Verificación Autónoma de Resultados — **Resuelto (server-side)**
 - El frontend liquida el historial personal consultando partidos `FINISHED` (`actualizarHistorialConResultados` en `app-ui.js`).
-- **Pendiente:** un proceso server-side (cron) que cruce resultados contra los pronósticos del pool sin depender de que el usuario abra la app.
+- **Server-side:** `POST /api/historial/liquidar` (protegido con `X-Api-Key`) cruza
+  las entradas pendientes del pool global contra resultados reales de
+  football-data.org y las sella como acierto/fallo. La lógica pura vive en
+  `server/liquidacion.js` (espejo verificado de `verificarMercado` del cliente) y
+  la orquestación I/O en `server.js` (`liquidarHistorialDesdeApi`). El cron diario
+  lo dispara como paso adicional en `actualizar_pronosticos.yml`.
+- El tope de 200 entradas del pool global ahora es configurable
+  (`HISTORIAL_MAX_ENTRIES`, por defecto `0` = sin tope) para permitir el
+  track-record liquidado a escala.
 
-### 3. Sincronización Transparente con el Cliente — **Pendiente**
+### 3. Sincronización Transparente con el Cliente — **Parcial**
 - `GET /api/historial` y `/api/historial/stats` existen, pero el cliente sigue
   local-first (el remoto es solo respaldo), así que los partidos que el usuario no
   visitó siguen fuera del track record visible.
@@ -70,5 +78,7 @@ Advirtamos explícitamente por qué los números que hoy se muestran en el panel
   tarjeta); el cálculo JS (`app-model.js`) queda como *offline fallback* y sigue
   validado por `test_paridad.py`. Pendiente: deprecar gradualmente el motor JS si
   la cobertura del artefacto alcanza el 100% de los partidos.
-- **CI incompleta**: el workflow no corre `test_recalibracion.py`, `npm check` ni hay CI en push; `server.js` no tiene tests.
+- **CI incompleta**: el workflow ya corre `test_recalibracion.py`, `npm check`,
+  `test:parity`, `test:server`, `test:auth`, `test:liquidacion`, `verify`, `smoke`,
+  `test:utils` y `test:events` en push/PR (`ci.yml`).
 - **Frontend monolítico**: 4 archivos JS globals + `style.css` de 256KB, sin build ni tests por módulo.

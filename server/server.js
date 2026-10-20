@@ -3,6 +3,7 @@ const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
 const compression = require('compression');
+const { liquidarHistorial, marcadorDePartido } = require('./liquidacion');
 const app = express();
 
 // Carga de .env (raíz del repo primero, luego server/) para desarrollo local.
@@ -200,8 +201,22 @@ function leerHistorialGlobal() {
 }
 
 let escrituraPendiente = null;
+
+// Tope de entradas del pool global. 0 = sin tope (full history), que es lo
+// que habilita el track-record liquidado a escala. Configurable por env para
+// poder acotarlo si el JSON/payload crece demasiado.
+const HISTORIAL_MAX_ENTRIES = (() => {
+  const n = parseInt(process.env.HISTORIAL_MAX_ENTRIES || '0', 10);
+  return Number.isFinite(n) && n > 0 ? n : 0;
+})();
+
+function recortarHistorial(historial) {
+  if (!Array.isArray(historial)) return [];
+  return HISTORIAL_MAX_ENTRIES > 0 ? historial.slice(-HISTORIAL_MAX_ENTRIES) : historial;
+}
+
 function guardarHistorialGlobal(historial) {
-  const recortado = Array.isArray(historial) ? historial.slice(-200) : [];
+  const recortado = recortarHistorial(historial);
   historialCacheMemoria = recortado;
   // Debounce: si llegan varias escrituras seguidas, esperamos la última.
   if (escrituraPendiente) clearTimeout(escrituraPendiente);
@@ -221,7 +236,7 @@ async function inicializarHistorial() {
     if (storage.inicializar) await storage.inicializar();
     const previo = await storage.leer();
     if (Array.isArray(previo) && previo.length > 0) {
-      historialCacheMemoria = previo.slice(-200);
+      historialCacheMemoria = recortarHistorial(previo);
       // Rehidrata el archivo legacy para que sirva de espejo legible.
       asegurarHistorialGlobal();
       fs.promises.writeFile(HISTORIAL_PATH, JSON.stringify(historialCacheMemoria, null, 2), 'utf8').catch(() => {});
@@ -375,6 +390,66 @@ app.post('/api/historial', requireHistorialWriteKey, (req, res) => {
 
 app.put('/api/historial', requireHistorialWriteKey, (req, res) => {
   const c=req.body||{}; const historial=Array.isArray(c.historial)?c.historial:[]; if(historial.length>500)return res.status(400).json({error:'payload_too_large',message:'Máximo 500 entradas'}); const guardado=guardarHistorialGlobal(historial); res.json({ok:true,historial:guardado,total:guardado.length});
+});
+
+// ============ LIQUIDACIÓN SERVER-SIDE DEL TRACK RECORD ============
+// Cruza las entradas pendientes del pool global contra resultados reales
+// (football-data.org) y las sella como acierto/fallo. Es idempotente: solo
+// procesa registros sin `verificado`. Pensado para el cron diario y para
+// dispararse manualmente.
+const LIQUIDACION_VENTANA_DIAS = 30;
+
+function idsPartidosPendientes(historial, hoy) {
+  const ids = new Set();
+  for (const registro of historial || []) {
+    if (!registro || registro.verificado || !registro.partidoId) continue;
+    const fecha = new Date(registro.fecha || registro.timestamp || 0).getTime();
+    if (Number.isFinite(fecha) && fecha <= hoy.getTime()) ids.add(String(registro.partidoId));
+  }
+  return ids;
+}
+
+async function liquidarHistorialDesdeApi() {
+  const historial = leerHistorialGlobal();
+  const hoy = new Date();
+  const pendientes = idsPartidosPendientes(historial, hoy);
+  if (pendientes.size === 0) {
+    return { ok: true, liquidados: 0, pendientes: 0, mensaje: 'Sin entradas pendientes' };
+  }
+
+  const desde = new Date(hoy.getTime() - LIQUIDACION_VENTANA_DIAS * 24 * 60 * 60 * 1000);
+  const fFrom = desde.toISOString().slice(0, 10);
+  const fTo = hoy.toISOString().slice(0, 10);
+
+  const resp = await fetchFootballData(
+    `${BASE_URL}/matches?competitions=${COMPETICIONES.join(',')}&dateFrom=${fFrom}&dateTo=${fTo}`
+  );
+  if (!resp.ok) {
+    const error = new Error(`football-data respondió ${resp.status}`);
+    error.status = resp.status >= 500 ? 502 : resp.status;
+    throw error;
+  }
+  const datos = await resp.json();
+  const finalizados = (datos.matches || []).filter(p => p.status === 'FINISHED' && marcadorDePartido(p));
+
+  const mapaResultados = new Map();
+  for (const partido of finalizados) mapaResultados.set(String(partido.id), partido);
+
+  const { historial: liquidado, liquidados } = liquidarHistorial(historial, mapaResultados);
+  if (liquidados > 0) guardarHistorialGlobal(liquidado);
+
+  return { ok: true, liquidados, pendientes: pendientes.size, finalizados: finalizados.length };
+}
+
+// Dispara la liquidación (protegido con la misma clave que las escrituras).
+// Pensado para el cron diario: POST /api/historial/liquidar con X-Api-Key.
+app.post('/api/historial/liquidar', requireHistorialWriteKey, async (req, res) => {
+  try {
+    const resultado = await liquidarHistorialDesdeApi();
+    res.json(resultado);
+  } catch (error) {
+    enviarErrorFuente(res, error, 'POST /api/historial/liquidar');
+  }
 });
 
 // ============ TELEMETRÍA DE ERRORES DEL CLIENTE ============
