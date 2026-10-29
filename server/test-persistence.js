@@ -45,6 +45,13 @@ function arrancarServidor() {
       },
       stdio: ['ignore', 'ignore', 'pipe']
     });
+    let stderr = '';
+    if (hijo.stderr) {
+      hijo.stderr.on('data', (trozo) => {
+        stderr = (stderr + trozo.toString()).slice(-8000);
+      });
+    }
+    const detalleError = () => stderr.trim() ? `\n--- stderr del servidor ---\n${stderr.trim()}` : '';
     let intervalo = null;
     const esperar = Date.now() + 15000;
     let resuelto = false;
@@ -52,7 +59,7 @@ function arrancarServidor() {
     hijo.once('exit', (codigo) => {
       if (!resuelto) {
         parar();
-        reject(new Error(`el servidor terminó antes de iniciar (exit=${codigo})`));
+        reject(new Error(`el servidor terminó antes de iniciar (exit=${codigo})${detalleError()}`));
       }
     });
     const sondeo = setInterval(() => {

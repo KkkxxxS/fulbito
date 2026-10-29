@@ -20,12 +20,17 @@ En Render, abre el servicio del backend (por ejemplo `fulbito-forh`) y revisa
 | Campo | Valor |
 | --- | --- |
 | Runtime | Node |
+| Node Version | 22 o superior (`NODE_VERSION=22`) |
 | Root Directory | raíz del repo (recomendado) |
 | Build Command | `npm install` |
 | Start Command | `npm start` |
 | Health Check Path | `/health` |
 | Auto-Deploy | Yes (rama `main`) |
 | Region | la misma que la base de datos |
+
+> **Node 22 es obligatorio.** `better-sqlite3@13` declara `engines: node >= 22`;
+> con Node 20 el servidor no arranca y el health check falla. Si Render usa una
+> versión anterior por defecto, agrega la variable de entorno `NODE_VERSION=22`.
 
 El `npm start` de la raíz ya hace `cd server && node server.js`. Si tu servicio
 usa `server/` como Root Directory, entonces Build Command y Start Command son

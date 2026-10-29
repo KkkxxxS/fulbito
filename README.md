@@ -53,6 +53,8 @@ npx serve .
 
 ### Backend
 
+Requiere **Node.js 22 o superior** (`better-sqlite3@13` no funciona en Node 20).
+
 ```bash
 npm install
 npm start        # equivale a: cd server && node server.js
