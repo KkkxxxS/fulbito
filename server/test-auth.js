@@ -7,19 +7,29 @@
  * historial por usuario, que vive en la misma kv-store que el pool global pero
  * aislado por usuario (`historial:<usuarioId>`).
  *
- * Usa un puerto propio y limpia los artefactos (db/json legacy) al terminar.
+ * Usa un puerto propio y un directorio temporal: nunca toca `server/data`
+ * (historial real del usuario). La base PostgreSQL se usa solo si está
+ * configurada, para probar migraciones, auth e historial personal.
  */
 const { spawn } = require('child_process');
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
 
 const PUERTO = 33222;
 const BASE = `http://127.0.0.1:${PUERTO}`;
 const DIR = __dirname;
-const DB = path.join(DIR, 'data', 'historial.db');
-const DB_SHM = path.join(DIR, 'data', 'historial.db-shm');
-const DB_WAL = path.join(DIR, 'data', 'historial.db-wal');
-const JSON_LEGACY = path.join(DIR, 'data', 'historial.json');
+let TEMP_DATA = null;
+
+// Mismo orden que server.js: .env de la raíz y luego server/. Sin esto, el
+// test no vería DATABASE_URL configurada solo en server/.env y se omitiría
+// aunque el servidor sí pudiera conectarse.
+try {
+  require('dotenv').config({
+    path: [path.join(DIR, '..', '.env'), path.join(DIR, '.env')],
+    quiet: true
+  });
+} catch (e) { /* dotenv opcional */ }
 
 let fallos = 0;
 function check(nombre, condicion, detalle) {
@@ -35,7 +45,12 @@ function arrancarServidor() {
   return new Promise((resolve, reject) => {
     const hijo = spawn(process.execPath, ['server.js'], {
       cwd: DIR,
-      env: { ...process.env, PORT: String(PUERTO), DATABASE_URL: process.env.DATABASE_URL || '' },
+      env: {
+        ...process.env,
+        PORT: String(PUERTO),
+        DATABASE_URL: process.env.DATABASE_URL || '',
+        FULBITO_DATA_DIR: TEMP_DATA
+      },
       stdio: ['ignore', 'ignore', 'pipe']
     });
     let resuelto = false;
@@ -81,6 +96,13 @@ async function llamar(metodo, ruta, cuerpo, token) {
 
 async function main() {
   console.log('=== TEST DE AUTH E HISTORIAL PERSONAL ===');
+  if (!String(process.env.DATABASE_URL || '').trim()) {
+    console.log('  [OMITIDO] Sin DATABASE_URL: las cuentas requieren PostgreSQL.');
+    console.log('  Configurá DATABASE_URL en .env o en el entorno para ejecutar este test.');
+    console.log('\n=== RESULTADO: OMITIDO (sin DATABASE_URL) ===');
+    return;
+  }
+  TEMP_DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'fulbito-auth-'));
   const hijo = await arrancarServidor();
   try {
     const usuario = `tester_${Date.now() % 100000}`;
@@ -88,6 +110,8 @@ async function main() {
 
     const reg = await llamar('POST', '/api/auth/register', { usuario, password });
     check('register crea cuenta y devuelve token', reg.r.ok && reg.datos.ok && typeof reg.datos.token === 'string', JSON.stringify(reg.datos));
+    check('las respuestas de auth no se cachean', /no-store/.test(reg.r.headers.get('cache-control') || ''),
+      reg.r.headers.get('cache-control') || 'sin Cache-Control');
     const token1 = reg.datos && reg.datos.token;
 
     const regDup = await llamar('POST', '/api/auth/register', { usuario, password });
@@ -134,6 +158,18 @@ async function main() {
     const h1 = await llamar('GET', '/api/mi-historial', undefined, token);
     check('GET /api/mi-historial devuelve lo guardado', h1.r.ok && h1.datos.historial.length === 2 && h1.datos.historial[1].verificado === true, JSON.stringify(h1.datos));
 
+    const login2 = await llamar('POST', '/api/auth/login', { usuario, password });
+    const token2 = login2.datos && login2.datos.token;
+    check('segundo login devuelve un token distinto', login2.r.ok && typeof token2 === 'string' && token2 !== token,
+      JSON.stringify(login2.datos));
+    const todas = await llamar('POST', '/api/auth/logout-all', undefined, token);
+    check('logout-all responde ok', todas.r.ok, JSON.stringify(todas.datos));
+
+    const meTrasTodas = await llamar('GET', '/api/auth/me', undefined, token);
+    const meTrasTodas2 = await llamar('GET', '/api/auth/me', undefined, token2);
+    check('logout-all invalida todas las sesiones', meTrasTodas.r.status === 401 && meTrasTodas2.r.status === 401,
+      `token1=${meTrasTodas.r.status} token2=${meTrasTodas2.r.status}`);
+
     const out = await llamar('POST', '/api/auth/logout', undefined, token);
     check('logout responde ok', out.r.ok, JSON.stringify(out.datos));
 
@@ -141,10 +177,7 @@ async function main() {
     check('el token queda invalidado tras logout', mePostOut.r.status === 401, `status=${mePostOut.r.status}`);
   } finally {
     await detener(hijo);
-  }
-
-  for (const archivo of [DB, DB_SHM, DB_WAL, JSON_LEGACY]) {
-    if (fs.existsSync(archivo)) fs.unlinkSync(archivo);
+    if (TEMP_DATA) fs.rmSync(TEMP_DATA, { recursive: true, force: true });
   }
 
   console.log(`\n=== RESULTADO: ${fallos === 0 ? 'TODAS LAS COMPROBACIONES PASARON' : 'HAY FALLOS'} ===`);
@@ -153,8 +186,6 @@ async function main() {
 
 main().catch((e) => {
   console.error(e);
-  for (const archivo of [DB, DB_SHM, DB_WAL, JSON_LEGACY]) {
-    if (fs.existsSync(archivo)) fs.unlinkSync(archivo);
-  }
+  if (TEMP_DATA) fs.rmSync(TEMP_DATA, { recursive: true, force: true });
   process.exit(1);
 });

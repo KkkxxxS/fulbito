@@ -1,7 +1,7 @@
 ﻿// ============================================
-// auth.js â€” sesiÃ³n opcional de Fulbito (sin dependencias externas)
-// GuÃ¡rdalo despuÃ©s de app-model.js: usa BACKEND_URL allÃ­ definido.
-// El flujo anÃ³nimo localStorage sigue funcionando; esto es un complemento
+// auth.js — sesión opcional de Fulbito (sin dependencias externas)
+// Guárdalo después de app-model.js: usa BACKEND_URL allí definido.
+// El flujo anónimo localStorage sigue funcionando; esto es un complemento
 // que permite conservar el historial personal entre dispositivos/navegadores.
 // ============================================
 (function () {
@@ -10,7 +10,7 @@
   const CLAVE_TOKEN = 'fulbito_auth_token';
   const CLAVE_USUARIO = 'fulbito_auth_usuario';
 
-  // BACKEND_URL viene de app-model.js; fallback si ese script no cargÃ³ aÃºn.
+  // BACKEND_URL viene de app-model.js; fallback si ese script no cargó aún.
   function backend() {
     return (typeof BACKEND_URL !== 'undefined' && BACKEND_URL) || 'https://fulbito-forh.onrender.com';
   }
@@ -75,7 +75,7 @@
       body: JSON.stringify({ usuario, password })
     });
     const datos = await r.json().catch(() => ({}));
-    if (!r.ok) throw new Error(datos.message || datos.error || 'Error al iniciar sesiÃ³n');
+    if (!r.ok) throw new Error(datos.message || datos.error || 'Error al iniciar sesión');
     guardarSesion(datos.usuario, datos.token);
     return datos;
   }
@@ -91,13 +91,29 @@
     limpiarSesion();
   }
 
+  async function cerrarTodasLasSesiones() {
+    const token = obtenerToken();
+    try {
+      if (token) {
+        const r = await fetch(backend() + '/api/auth/logout-all', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer ' + token }
+        });
+        if (!r.ok && r.status !== 401) throw new Error('No se pudieron cerrar las sesiones');
+      }
+    } finally {
+      limpiarSesion();
+    }
+    return { ok: true };
+  }
+
   function mezclarHistoriales(local, nube) {
     const porId = new Map();
     (local || []).forEach(h => { porId.set(h.partidoId, h); });
     (nube || []).forEach(h => {
       const existente = porId.get(h.partidoId);
       if (!existente) { porId.set(h.partidoId, h); return; }
-      // Conservamos el verificado (si alguno lo estÃ¡, queda verificado).
+      // Conservamos el verificado (si alguno lo está, queda verificado).
       const ganador = (h.verificado && !existente.verificado) ? h
         : (existente.verificado && !h.verificado) ? existente
         : (h.verificado ? h : existente);
@@ -139,7 +155,7 @@
       if (typeof guardarHistorial === 'function') guardarHistorial(mezclado);
       else try { localStorage.setItem('fulbito_historial_pronosticos', JSON.stringify(mezclado)); } catch (e) {}
       if (mezclado.length === 0) return mezclado;
-      // Si el local aportÃ³ entradas que la nube no tenÃ­a (o viceversa), subimos el mezclado.
+      // Si el local aportó entradas que la nube no tenía (o viceversa), subimos el mezclado.
       const localIds = new Set((local || []).map(h => h.partidoId));
       const nubeIds = new Set((nube || []).map(h => h.partidoId));
       const hayNuevas = mezclado.some(h => !localIds.has(h.partidoId) || !nubeIds.has(h.partidoId));
@@ -160,17 +176,19 @@
     if (avatarEl) avatarEl.textContent = ses ? usuario.slice(0, 1).toUpperCase() : 'U';
     if (heroEl) heroEl.textContent = ses ? `Hola, ${usuario}` : 'Hola, Usuario';
     if (botonAuth) {
-      botonAuth.textContent = ses ? 'Cerrar sesiÃ³n' : 'Cuenta';
-      botonAuth.title = ses ? `Cerrar sesiÃ³n de ${usuario}` : 'Iniciar sesiÃ³n o crear cuenta';
-      botonAuth.setAttribute('aria-label', ses ? `SesiÃ³n de ${usuario}` : 'Iniciar sesiÃ³n o crear cuenta');
+      botonAuth.textContent = ses ? 'Cerrar sesión' : 'Cuenta';
+      botonAuth.title = ses ? `Cerrar sesión de ${usuario}` : 'Iniciar sesión o crear cuenta';
+      botonAuth.setAttribute('aria-label', ses ? `Sesión de ${usuario}` : 'Iniciar sesión o crear cuenta');
     }
     if (wrapAuth) wrapAuth.style.display = ses ? 'none' : '';
     const infoSesion = document.getElementById('auth-info-sesion');
     if (infoSesion) {
       if (ses) {
-        infoSesion.innerHTML = `Conectado como <strong style="color:var(--text);">${escaparHTML(usuario)}</strong>.<br><button class="dash-perfil-item" type="button" data-action="cerrar-sesion" style="margin-top:6px;">Cerrar sesiÃ³n</button>`;
+        infoSesion.innerHTML = `Conectado como <strong style="color:var(--text);">${escaparHTML(usuario)}</strong>.<br>
+          <button class="dash-perfil-item" type="button" data-action="cerrar-sesion" style="margin-top:6px;">Cerrar sesión</button>
+          <button class="dash-perfil-item" type="button" data-action="cerrar-todas-sesiones" style="margin-top:6px;">Cerrar en todos los dispositivos</button>`;
       } else {
-        infoSesion.innerHTML = `<button class="dash-perfil-item" type="button" data-action="abrir-modal-auth">Iniciar sesiÃ³n / Crear cuenta</button>`;
+        infoSesion.innerHTML = `<button class="dash-perfil-item" type="button" data-action="abrir-modal-auth">Iniciar sesión / Crear cuenta</button>`;
       }
     }
   }
@@ -213,10 +231,11 @@
     const password = form.elements.password && form.elements.password.value || '';
     const msg = document.getElementById('auth-mensaje');
     if (msg) msg.textContent = '';
-    if (!usuario || !password) { if (msg) msg.textContent = 'CompletÃ¡ usuario y contraseÃ±a.'; return; }
-    if (usuario.length < 3 || password.length < 8) { if (msg) msg.textContent = 'Usuario â‰¥ 3; contraseÃ±a â‰¥ 8 caracteres.'; return; }
+    if (!usuario || !password) { if (msg) msg.textContent = 'Completá usuario y contraseña.'; return; }
+    if (usuario.length < 3 || password.length < 8) { if (msg) msg.textContent = 'Usuario ≥ 3; contraseña ≥ 8 caracteres.'; return; }
+    if (password.length > 128) { if (msg) msg.textContent = 'La contraseña no puede superar 128 caracteres.'; return; }
     const btn = form.querySelector('button[type="submit"]');
-    if (btn) { btn.disabled = true; btn.dataset.texto = btn.textContent; btn.textContent = 'â€¦'; }
+    if (btn) { btn.disabled = true; btn.dataset.texto = btn.textContent; btn.textContent = '…'; }
     try {
       if (modo === 'register') await registrar(usuario, password);
       else await iniciarSesion(usuario, password);
@@ -226,11 +245,11 @@
       if (typeof actualizarContadorMisPredicciones === 'function') actualizarContadorMisPredicciones();
       aplicarSesionUI();
       if (mezcla && window.__fulbitoMostrarError === undefined) {
-        // feedback mÃ­nimo post-login
+        // feedback mínimo post-login
         try {
           const nota = document.createElement('div');
           nota.style.cssText = 'position:fixed;left:12px;right:12px;bottom:12px;z-index:99999;background:rgba(100,228,169,0.16);border:1px solid rgba(100,228,169,0.35);color:#d6ffe8;padding:10px 14px;border-radius:12px;font:14px/1.4 system-ui;';
-          nota.textContent = 'SesiÃ³n iniciada. Tu historial personal se sincronizÃ³ con la nube.';
+          nota.textContent = 'Sesión iniciada. Tu historial personal se sincronizó con la nube.';
           document.body.appendChild(nota); setTimeout(() => nota.remove(), 3200);
         } catch (e) {}
       }
@@ -248,13 +267,14 @@
   window.cargarHistorialNube = cargarHistorialNube;
   window.guardarHistorialNube = guardarHistorialNube;
   window.cerrarSesionFulbito = cerrarSesion;
+  window.cerrarTodasLasSesionesFulbito = cerrarTodasLasSesiones;
   window.abrirModalAuth = abrirModalAuth;
   window.cerrarModalAuth = cerrarModalAuth;
   window.enviarAuth = enviarAuth;
   window.obtenerTokenFulbito = obtenerToken;
   window.setModoAuth = setModoAuth;
 
-  // Envolver guardarHistorial para reflejar en la nube cuando hay sesiÃ³n.
+  // Envolver guardarHistorial para reflejar en la nube cuando hay sesión.
   function instalarGanchoHistorial() {
     if (typeof window.guardarHistorial !== 'function') return false;
     if (window.guardarHistorial.__conNube) return true;
@@ -287,10 +307,10 @@
       });
     }
     instalarGanchoHistorial();
-    // Reintento del gancho si app-ui aÃºn no cargÃ³.
+    // Reintento del gancho si app-ui aún no cargó.
     if (!instalarGanchoHistorial()) {
-      setTimeout(instalGanchoHistorial, 600);
-      setTimeout(instalGanchoHistorial, 1800);
+      setTimeout(instalarGanchoHistorial, 600);
+      setTimeout(instalarGanchoHistorial, 1800);
     }
   }
 

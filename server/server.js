@@ -3,12 +3,13 @@ const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
 const compression = require('compression');
-const { liquidarHistorial, marcadorDePartido } = require('./liquidacion');
+const { liquidarHistorial, marcadorDePartido, verificarMercado } = require('./liquidacion');
 const app = express();
 
 // Carga de .env (raíz del repo primero, luego server/) para desarrollo local.
 // En producción (Render/Heroku) se usan las env vars del dashboard.
 // dotenv es opcional en deploys mínimos (rootDir/server sin dependencias propias).
+// Debe ejecutarse ANTES de require('./db'): db.js lee DATABASE_URL al conectar.
 try {
   require('dotenv').config({
     path: [path.join(__dirname, '..', '.env'), path.join(__dirname, '.env')],
@@ -16,15 +17,36 @@ try {
   });
 } catch (e) { /* dotenv no instalado: ignora y usa process.env */ }
 
+const db = require('./db'); // Conexión centralizada (lazy: lee DATABASE_URL al usar)
+const {
+  crearLimitador,
+  compararSeguro,
+  validarPassword,
+  aplicarNoCache,
+  limitarAuth
+} = require('./seguridad');
+
 const ORIGENES_PERMITIDOS = new Set([
   'https://kkkxxxs.github.io',
   'https://fulbito-flame.vercel.app',
   'http://localhost:3000',
   'http://127.0.0.1:3000',
+  'http://localhost:4321',
+  'http://127.0.0.1:4321',
   'http://localhost:8000',
-  'http://127.0.0.1:8000',
-  'null'
+  'http://127.0.0.1:8000'
 ]);
+
+// Orígenes extra por entorno (previews de Vercel/Cloudflare, dominio propio).
+// Formato: CORS_ORIGINS=https://fulbito.app,https://preview.vercel.app
+for (const origen of String(process.env.CORS_ORIGINS || '').split(',')) {
+  const limpio = origen.trim();
+  if (limpio) ORIGENES_PERMITIDOS.add(limpio);
+}
+
+// Render/Heroku terminan TLS en un proxy: confiar en el primer hop permite
+// que req.ip y X-Forwarded-For reflejen la IP real para el rate limit.
+app.set('trust proxy', 1);
 
 // Compresión gzip para todas las respuestas (mejora ~70% el tamaño transferido)
 app.use(compression());
@@ -40,7 +62,12 @@ app.use((req, res, next) => {
 app.use(express.json({ limit: '2mb' }));
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin || ORIGENES_PERMITIDOS.has(origin) || origin === 'null') return callback(null, true);
+    // `null` llega desde file:// y algunos contextos sandbox. Se permite solo
+    // en desarrollo; en producción ampliaría el origen a cualquier file local.
+    const permitirNull = process.env.NODE_ENV !== 'production';
+    if (!origin || ORIGENES_PERMITIDOS.has(origin) || (origin === 'null' && permitirNull)) {
+      return callback(null, true);
+    }
     return callback(new Error('Origen no permitido'));
   }
 }));
@@ -59,15 +86,29 @@ if (!API_KEY) {
 
 const HISTORIAL_API_KEY = process.env.HISTORIAL_API_KEY;
 if (!HISTORIAL_API_KEY && process.env.NODE_ENV === 'production') { console.warn('ADVERTENCIA: falta HISTORIAL_API_KEY para escrituras de /api/historial'); }
-function requireHistorialWriteKey(req, res, next){ const k=req.headers['x-api-key']; if(!k||k!==HISTORIAL_API_KEY) return res.status(401).json({error:'unauthorized',message:'X-Api-Key requerido para escrituras'}); next(); }
+function requireHistorialWriteKey(req, res, next){
+  const k = req.headers['x-api-key'];
+  // Si la clave no está configurada, las escrituras quedan cerradas. La
+  // comparación es en tiempo constante para no filtrar la clave por timing.
+  if (!HISTORIAL_API_KEY || !k || !compararSeguro(String(k), HISTORIAL_API_KEY)) {
+    return res.status(401).json({ error: 'unauthorized', message: 'X-Api-Key requerido para escrituras' });
+  }
+  next();
+}
 
 // ============ HISTORIAL COMPARTIDO GLOBAL (DB primero, archivo legacy) ============
+// Directorio de datos locales (SQLite/ELO). Los tests lo redirigen a un
+// directorio temporal para no tocar el historial real del usuario.
+const DATA_DIR = process.env.FULBITO_DATA_DIR
+  ? path.resolve(process.env.FULBITO_DATA_DIR)
+  : path.join(__dirname, 'data');
+
 // El filesystem de Render free es efímero (se pierde en cada redeploy/restart),
 // así que la persistencia primaria va a una base de datos:
 //   - Postgres gestionada si existe la env DATABASE_URL (recomendado en producción)
 //   - SQLite local por defecto (server/data/historial.db)
 // server/data/historial.json se mantiene como espejo legacy legible para humanos.
-const HISTORIAL_PATH = path.join(__dirname, 'data', 'historial.json');
+const HISTORIAL_PATH = path.join(DATA_DIR, 'historial.json');
 
 let storageHistorial = null;
 let storageHistorialFallo = null;
@@ -185,18 +226,44 @@ function asegurarHistorialGlobal() {
 
 let historialCacheMemoria = null;
 
-function leerHistorialGlobal() {
-  // El cache se llena en el boot desde la DB (inicializarHistorial) y se mantiene
-  // al día en cada escritura. Si no arrancó todavía, cae al archivo legacy.
+// Lectura legacy (SQLite/archivo) usada cuando no hay DATABASE_URL o cuando
+// Postgres falla. El cache se llena en el boot desde el storage.
+function leerHistorialLegacy() {
   if (historialCacheMemoria) return historialCacheMemoria;
   try {
     asegurarHistorialGlobal();
-    const contenido = fs.readFileSync(HISTORIAL_PATH, 'utf8');
-    const datos = JSON.parse(contenido);
+    const datos = JSON.parse(fs.readFileSync(HISTORIAL_PATH, 'utf8'));
     historialCacheMemoria = Array.isArray(datos) ? datos : [];
     return historialCacheMemoria;
   } catch (error) {
     return [];
+  }
+}
+
+async function leerHistorialGlobal() {
+  if (!db.disponible()) return leerHistorialLegacy();
+
+  try {
+    const res = await db.query(`
+      SELECT p.*,
+             (SELECT json_agg(m.*) FROM mercados_pronostico m WHERE m.pronostico_id = p.id) as mercados
+      FROM pronosticos_globales p
+      ORDER BY p.fecha DESC
+    `);
+    return res.rows.map(p => ({
+      ...p,
+      partidoId: p.partido_id,
+      id: p.id,
+      // Mapeamos los nombres de columna para mantener compatibilidad con el frontend
+      fecha: p.fecha,
+      verificado: p.verificado,
+      marcadorFinal: p.marcador_final,
+      liquidadoEn: p.liquidado_en,
+      mercados: p.mercados || []
+    }));
+  } catch (e) {
+    console.error('Error leyendo historial global (se usa el storage local):', e.message);
+    return leerHistorialLegacy();
   }
 }
 
@@ -215,10 +282,10 @@ function recortarHistorial(historial) {
   return HISTORIAL_MAX_ENTRIES > 0 ? historial.slice(-HISTORIAL_MAX_ENTRIES) : historial;
 }
 
-function guardarHistorialGlobal(historial) {
-  const recortado = recortarHistorial(historial);
+// Escritura legacy con debounce: mantiene el cache en memoria y persiste en
+// SQLite (o el storage configurado) sin bloquear la respuesta HTTP.
+function guardarHistorialLegacy(recortado) {
   historialCacheMemoria = recortado;
-  // Debounce: si llegan varias escrituras seguidas, esperamos la última.
   if (escrituraPendiente) clearTimeout(escrituraPendiente);
   escrituraPendiente = setTimeout(async () => {
     await guardarHistorialEnStorage(recortado);
@@ -228,6 +295,82 @@ function guardarHistorialGlobal(historial) {
     escrituraPendiente = null;
   }, 500);
   return recortado;
+}
+
+async function guardarHistorialGlobal(historial) {
+  if (!Array.isArray(historial)) return [];
+  const recortado = recortarHistorial(historial);
+
+  if (!db.disponible()) return guardarHistorialLegacy(recortado);
+
+  try {
+    // Para simplificar la actualización masiva, usamos una transacción.
+    await db.pool.connect().then(async (client) => {
+      try {
+        await client.query('BEGIN');
+
+        for (const registro of historial) {
+          if (!registro || !registro.partidoId) continue;
+
+          // 1. Insertar o actualizar el pronóstico base. No hay constraint
+          // único sobre partido_id (puede haber datos viejos duplicados), así
+          // que resolvemos el upsert con SELECT + UPDATE/INSERT.
+          const fecha = registro.fecha || registro.timestamp || new Date().toISOString();
+          const existente = await client.query(
+            'SELECT id FROM pronosticos_globales WHERE partido_id = $1 ORDER BY id DESC LIMIT 1',
+            [String(registro.partidoId)]
+          );
+
+          let pId;
+          if (existente.rows.length > 0) {
+            pId = existente.rows[0].id;
+            await client.query(`
+              UPDATE pronosticos_globales
+              SET fecha = $1, verificado = $2, marcador_final = $3, liquidado_en = $4
+              WHERE id = $5`,
+              [fecha, Boolean(registro.verificado), registro.marcadorFinal || null,
+               registro.liquidadoEn || null, pId]
+            );
+          } else {
+            const pRes = await client.query(`
+              INSERT INTO pronosticos_globales (partido_id, fecha, verificado, marcador_final, liquidado_en)
+              VALUES ($1, $2, $3, $4, $5)
+              RETURNING id`,
+              [String(registro.partidoId), fecha, Boolean(registro.verificado),
+               registro.marcadorFinal || null, registro.liquidadoEn || null]
+            );
+            pId = pRes.rows[0].id;
+          }
+
+          // 2. Limpiar mercados antiguos y re-insertar los actuales
+          await client.query('DELETE FROM mercados_pronostico WHERE pronostico_id = $1', [pId]);
+          if (registro.mercados && Array.isArray(registro.mercados)) {
+            for (const m of registro.mercados) {
+              await client.query(
+                'INSERT INTO mercados_pronostico (pronostico_id, categoria, parametros, acierto) VALUES ($1, $2, $3, $4)',
+                [pId, m.categoria, JSON.stringify(m.parametros || {}), m.acierto]
+              );
+            }
+          }
+        }
+        await client.query('COMMIT');
+      } catch (e) {
+        await client.query('ROLLBACK');
+        throw e;
+      } finally {
+        client.release();
+      }
+    });
+
+    // Espejo legacy en archivo para no romper logs externos.
+    historialCacheMemoria = recortado;
+    fs.promises.writeFile(HISTORIAL_PATH, JSON.stringify(recortado, null, 2), 'utf8').catch(() => {});
+
+    return recortado;
+  } catch (e) {
+    console.error('Error guardando historial global (se usa el storage local):', e.message);
+    return guardarHistorialLegacy(recortado);
+  }
 }
 
 async function inicializarHistorial() {
@@ -378,18 +521,24 @@ app.get('/health', (req, res) => {
   res.json({ ok: true });
 });
 
-app.get('/api/historial', (req, res) => {
+app.get('/api/historial', async (req, res) => {
   res.setHeader('Cache-Control', 'public, max-age=15');
-  res.json({ ok: true, historial: leerHistorialGlobal() });
+  res.json({ ok: true, historial: await leerHistorialGlobal() });
 });
-app.get('/api/historial/stats', (req,res)=>{ const h=leerHistorialGlobal(); const ver=h.filter(x=>x&&x.verificado).length; const ult=h.length>0?(h[h.length-1].fecha||h[h.length-1].timestamp||null):null; res.setHeader('Cache-Control','public, max-age=15'); res.json({ok:true,total:h.length,verificados:ver,ultimo:ult,actualizadoEn:new Date().toISOString()}); });
-
-app.post('/api/historial', requireHistorialWriteKey, (req, res) => {
-  const c=req.body||{}; const historial=Array.isArray(c.historial)?c.historial:[]; if(historial.length>500)return res.status(400).json({error:'payload_too_large',message:'Máximo 500 entradas'}); const guardado=guardarHistorialGlobal(historial); res.json({ok:true,historial:guardado,total:guardado.length});
+app.get('/api/historial/stats', async (req,res)=>{
+  const h = await leerHistorialGlobal();
+  const ver = h.filter(x => x && x.verificado).length;
+  const ult = h.length > 0 ? (h[0].fecha || h[0].timestamp || null) : null;
+  res.setHeader('Cache-Control','public, max-age=15');
+  res.json({ok:true,total:h.length,verificados:ver,ultimo:ult,actualizadoEn:new Date().toISOString()});
 });
 
-app.put('/api/historial', requireHistorialWriteKey, (req, res) => {
-  const c=req.body||{}; const historial=Array.isArray(c.historial)?c.historial:[]; if(historial.length>500)return res.status(400).json({error:'payload_too_large',message:'Máximo 500 entradas'}); const guardado=guardarHistorialGlobal(historial); res.json({ok:true,historial:guardado,total:guardado.length});
+app.post('/api/historial', requireHistorialWriteKey, async (req, res) => {
+  const c=req.body||{}; const historial=Array.isArray(c.historial)?c.historial:[]; if(historial.length>500)return res.status(400).json({error:'payload_too_large',message:'Máximo 500 entradas'}); const guardado=await guardarHistorialGlobal(historial); res.json({ok:true,historial:guardado,total:guardado.length});
+});
+
+app.put('/api/historial', requireHistorialWriteKey, async (req, res) => {
+  const c=req.body||{}; const historial=Array.isArray(c.historial)?c.historial:[]; if(historial.length>500)return res.status(400).json({error:'payload_too_large',message:'Máximo 500 entradas'}); const guardado=await guardarHistorialGlobal(historial); res.json({ok:true,historial:guardado,total:guardado.length});
 });
 
 // ============ LIQUIDACIÓN SERVER-SIDE DEL TRACK RECORD ============
@@ -409,20 +558,13 @@ function idsPartidosPendientes(historial, hoy) {
   return ids;
 }
 
-async function liquidarHistorialDesdeApi() {
-  const historial = leerHistorialGlobal();
-  const hoy = new Date();
-  const pendientes = idsPartidosPendientes(historial, hoy);
-  if (pendientes.size === 0) {
-    return { ok: true, liquidados: 0, pendientes: 0, mensaje: 'Sin entradas pendientes' };
-  }
-
+async function obtenerFinalizadosRecientes(hoy) {
   const desde = new Date(hoy.getTime() - LIQUIDACION_VENTANA_DIAS * 24 * 60 * 60 * 1000);
   const fFrom = desde.toISOString().slice(0, 10);
   const fTo = hoy.toISOString().slice(0, 10);
 
   const resp = await fetchFootballData(
-    `${BASE_URL}/matches?competitions=${COMPETICIONES.join(',')}&dateFrom=${fFrom}&dateTo=${fTo}`
+    `${BASE_URL}/matches?competitions=${Array.from(COMPETICIONES_PERMITIDAS).join(',')}&dateFrom=${fFrom}&dateTo=${fTo}`
   );
   if (!resp.ok) {
     const error = new Error(`football-data respondió ${resp.status}`);
@@ -430,15 +572,98 @@ async function liquidarHistorialDesdeApi() {
     throw error;
   }
   const datos = await resp.json();
-  const finalizados = (datos.matches || []).filter(p => p.status === 'FINISHED' && marcadorDePartido(p));
+  return (datos.matches || []).filter(p => p.status === 'FINISHED' && marcadorDePartido(p));
+}
+
+async function liquidarHistorialDesdeApi() {
+  const hoy = new Date();
+
+  // Sin Postgres liquidamos sobre el historial legacy (SQLite/archivo): así el
+  // cron local y el fallback de desarrollo siguen funcionando.
+  if (!db.disponible()) {
+    const historial = leerHistorialLegacy();
+    const pendientes = idsPartidosPendientes(historial, hoy);
+    if (pendientes.size === 0) {
+      return { ok: true, liquidados: 0, pendientes: 0, mensaje: 'Sin entradas pendientes' };
+    }
+
+    const finalizados = await obtenerFinalizadosRecientes(hoy);
+    const mapaResultados = new Map();
+    for (const partido of finalizados) mapaResultados.set(String(partido.id), partido);
+
+    const { historial: liquidado, liquidados } = liquidarHistorial(historial, mapaResultados);
+    if (liquidados > 0) await guardarHistorialGlobal(liquidado);
+
+    return { ok: true, liquidados, pendientes: pendientes.size, finalizados: finalizados.length };
+  }
+
+  // 1. Buscar pronósticos globales que no estén verificados y cuya fecha ya pasó
+  const resPendientes = await db.query(`
+    SELECT p.id, p.partido_id,
+           (SELECT json_agg(m.*) FROM mercados_pronostico m WHERE m.pronostico_id = p.id) as mercados
+    FROM pronosticos_globales p
+    WHERE p.verificado = FALSE
+      AND p.fecha <= $1`,
+    hoy.toISOString()
+  );
+
+  const pendientes = resPendientes.rows;
+  if (pendientes.length === 0) {
+    return { ok: true, liquidados: 0, pendientes: 0, mensaje: 'Sin entradas pendientes' };
+  }
+
+  const finalizados = await obtenerFinalizadosRecientes(hoy);
 
   const mapaResultados = new Map();
   for (const partido of finalizados) mapaResultados.set(String(partido.id), partido);
 
-  const { historial: liquidado, liquidados } = liquidarHistorial(historial, mapaResultados);
-  if (liquidados > 0) guardarHistorialGlobal(liquidado);
+  let liquidadosCount = 0;
 
-  return { ok: true, liquidados, pendientes: pendientes.size, finalizados: finalizados.length };
+  // 2. Procesar y guardar resultados en la DB usando una transacción
+  await db.pool.connect().then(async (client) => {
+    try {
+      await client.query('BEGIN');
+
+      for (const p of pendientes) {
+        const partido = mapaResultados.get(String(p.partido_id));
+        if (!partido) continue;
+
+        const marcador = marcadorDePartido(partido);
+        if (!marcador) continue;
+
+        // Evaluar cada mercado del pronóstico
+        const mercadosActualizados = (p.mercados || []).map(m => ({
+          ...m,
+          acierto: verificarMercado(m.categoria, m.parametros, marcador.local, marcador.visita)
+        }));
+
+        // Actualizar pronóstico base
+        await client.query(`
+          UPDATE pronosticos_globales
+          SET verificado = TRUE, marcador_final = $1, liquidado_en = $2
+          WHERE id = $3`,
+          [`${marcador.local}-${marcador.visita}`, new Date().toISOString(), p.id]
+        );
+
+        // Actualizar mercados
+        for (const m of mercadosActualizados) {
+          await client.query(
+            'UPDATE mercados_pronostico SET acierto = $1 WHERE pronostico_id = $2 AND categoria = $3',
+            [m.acierto, p.id, m.categoria]
+          );
+        }
+        liquidadosCount++;
+      }
+      await client.query('COMMIT');
+    } catch (e) {
+      await client.query('ROLLBACK');
+      throw e;
+    } finally {
+      client.release();
+    }
+  });
+
+  return { ok: true, liquidados: liquidadosCount, pendientes: pendientes.length, finalizados: finalizados.length };
 }
 
 // Dispara la liquidación (protegido con la misma clave que las escrituras).
@@ -483,6 +708,37 @@ const crypto = require('crypto');
 const SAL_LONGITUD = 16;
 const PROLONGACION_SESION_MS = 30 * 24 * 60 * 60 * 1000; // 30 días
 const USUARIO_RE = /^[a-z0-9_.-]{3,32}$/;
+
+// Límites de intentos: login por IP+usuario, registro por IP. En memoria es
+// suficiente para un solo proceso (Render free); si se escala horizontalmente
+// habría que moverlo a un store compartido.
+const limitadorLogin = crearLimitador({ max: 10, ventanaMs: 15 * 60 * 1000 });
+const limitadorRegistro = crearLimitador({ max: 5, ventanaMs: 60 * 60 * 1000 });
+
+function dbNoConfigurada(res) {
+  return res.status(503).json({
+    error: 'db_no_configurada',
+    message: 'Las cuentas no están disponibles: el servidor necesita DATABASE_URL (PostgreSQL).'
+  });
+}
+
+async function limpiarSesionesExpiradas() {
+  try {
+    await db.query('DELETE FROM sesiones WHERE expira < NOW()');
+  } catch (e) {
+    // No es crítico: la sesión expirada igual se rechaza al leerla.
+  }
+}
+
+app.use('/api/auth', (req, res, next) => {
+  aplicarNoCache(res);
+  next();
+});
+app.use('/api/mi-historial', (req, res, next) => {
+  aplicarNoCache(res);
+  next();
+});
+
 function claveUsuario(u) { return `usuario:${normalizarUsuario(u)}`; }
 function claveSesion(hashToken) { return `sesion:${hashToken}`; }
 function normalizarUsuario(u) { return String(u || '').trim().toLowerCase(); }
@@ -495,79 +751,196 @@ async function obtenerSesion(req) {
   const auth = req.headers['authorization'] || '';
   const m = /^Bearer\s+(.+)$/i.exec(auth);
   if (!m) return null;
-  const ht = hashToken(m[1].trim());
-  const ses = await kvLeer(claveSesion(ht));
-  if (!ses || !ses.expira || ses.expira < Date.now()) {
-    if (ses) await kvBorrar(claveSesion(ht));
+  const token = m[1].trim();
+  const ht = hashToken(token);
+
+  try {
+    const res = await db.query('SELECT s.*, u.usuario as username FROM sesiones s JOIN usuarios u ON s.usuario_id = u.id WHERE s.token_hash = $1', [ht]);
+    const ses = res.rows[0];
+    if (!ses || !ses.expira || new Date(ses.expira).getTime() < Date.now()) {
+      if (ses) await db.query('DELETE FROM sesiones WHERE token_hash = $1', [ht]);
+      return null;
+    }
+    return { usuarioId: ses.usuario_id, usuario: ses.username, expira: ses.expira };
+  } catch (e) {
+    console.error('Error obteniendo sesión:', e);
     return null;
   }
-  return ses;
 }
 function requerirSesion(handler) {
   return async (req, res, next) => {
+    if (!db.disponible()) return dbNoConfigurada(res);
     try {
       const ses = await obtenerSesion(req);
       if (!ses) return res.status(401).json({ error: 'unauthorized', message: 'Sesión requerida (Bearer <token>)' });
       req.sesion = ses;
-      return handler(req, res, next);
+      return await handler(req, res, next);
     } catch (e) { return res.status(500).json({ error: true, message: 'Error interno' }); }
   };
 }
 
 const RESERVA_NOMBRES = new Set(['system', 'admin', 'root', 'fulbito', 'api']);
 
-app.post('/api/auth/register', async (req, res) => {
+app.post('/api/auth/register', limitarAuth(limitadorRegistro), async (req, res) => {
+  if (!db.disponible()) return dbNoConfigurada(res);
   const usuario = normalizarUsuario(req.body && req.body.usuario);
   const password = String(req.body && req.body.password || '');
   if (!USUARIO_RE.test(usuario)) return res.status(400).json({ error: 'bad_usuario', message: 'El usuario debe tener 3-32 caracteres: letras, números, _ . - .' });
   if (RESERVA_NOMBRES.has(usuario)) return res.status(400).json({ error: 'usuario_reservado', message: 'Nombre no disponible.' });
-  if (password.length < 8) return res.status(400).json({ error: 'bad_password', message: 'La contraseña debe tener al menos 8 caracteres.' });
-  const existente = await kvLeer(claveUsuario(usuario));
-  if (existente) return res.status(409).json({ error: 'ya_existe', message: 'Ese usuario ya está registrado. Iniciá sesión en su lugar.' });
-  const salt = crypto.randomBytes(SAL_LONGITUD).toString('hex');
-  const hash = hashPassword(password, salt);
-  const id = uuid();
-  const registro = { id, usuario, salt, hash, creado: new Date().toISOString() };
-  await kvGuardar(claveUsuario(usuario), registro);
-  await kvGuardar(`usuario_id:${id}`, { usuario, id });
-  const token = tokenAleatorio(); const ht = hashToken(token);
-  await kvGuardar(claveSesion(ht), { usuarioId: id, usuario, expira: Date.now() + PROLONGACION_SESION_MS });
-  res.json({ ok: true, usuario, token });
+  const errorPassword = validarPassword(password);
+  if (errorPassword) return res.status(400).json({ error: 'bad_password', message: errorPassword });
+
+  try {
+    await limpiarSesionesExpiradas();
+    // Verificar existencia
+    const existente = await db.query('SELECT id FROM usuarios WHERE usuario = $1', [usuario]);
+    if (existente.rows.length > 0) return res.status(409).json({ error: 'ya_existe', message: 'Ese usuario ya está registrado. Iniciá sesión en su lugar.' });
+
+    const salt = crypto.randomBytes(SAL_LONGITUD).toString('hex');
+    const hash = hashPassword(password, salt);
+    const token = tokenAleatorio();
+    const ht = hashToken(token);
+    const expira = new Date(Date.now() + PROLONGACION_SESION_MS).toISOString();
+
+    // Transacción para crear usuario y sesión
+    await db.pool.connect().then(async (client) => {
+      try {
+        await client.query('BEGIN');
+        const userRes = await client.query(
+          'INSERT INTO usuarios (usuario, password_hash, salt) VALUES ($1, $2, $3) RETURNING id',
+          [usuario, hash, salt]
+        );
+        const userId = userRes.rows[0].id;
+        await client.query(
+          'INSERT INTO sesiones (token_hash, usuario_id, expira) VALUES ($1, $2, $3)',
+          [ht, userId, expira]
+        );
+        await client.query('COMMIT');
+      } catch (e) {
+        await client.query('ROLLBACK');
+        throw e;
+      } finally {
+        client.release();
+      }
+    });
+
+    res.json({ ok: true, usuario, token });
+  } catch (e) {
+    if (e && e.code === '23505') {
+      return res.status(409).json({ error: 'ya_existe', message: 'Ese usuario ya está registrado. Iniciá sesión en su lugar.' });
+    }
+    console.error('Error en register:', e);
+    res.status(500).json({ error: 'internal', message: 'Error interno del servidor' });
+  }
 });
-app.post('/api/auth/login', async (req, res) => {
+app.post('/api/auth/login', limitarAuth(limitadorLogin, { incluirUsuario: true }), async (req, res) => {
+  if (!db.disponible()) return dbNoConfigurada(res);
   const usuario = normalizarUsuario(req.body && req.body.usuario);
   const password = String(req.body && req.body.password || '');
   if (!usuario || !password) return res.status(400).json({ error: 'bad_request', message: 'Faltan usuario y contraseña.' });
-  const registro = await kvLeer(claveUsuario(usuario));
-  if (!registro) return res.status(401).json({ error: 'invalid_credentials', message: 'Credenciales incorrectas.' });
-  const hash = hashPassword(password, registro.salt);
-  if (hash !== registro.hash) return res.status(401).json({ error: 'invalid_credentials', message: 'Credenciales incorrectas.' });
-  const token = tokenAleatorio(); const ht = hashToken(token);
-  await kvGuardar(claveSesion(ht), { usuarioId: registro.id, usuario: registro.usuario, expira: Date.now() + PROLONGACION_SESION_MS });
-  res.json({ ok: true, usuario: registro.usuario, token });
+  if (password.length > 128) return res.status(401).json({ error: 'invalid_credentials', message: 'Credenciales incorrectas.' });
+
+  try {
+    const resUser = await db.query('SELECT id, salt, password_hash FROM usuarios WHERE usuario = $1', [usuario]);
+    const registro = resUser.rows[0];
+    if (!registro) {
+      // Mismo coste de scrypt que un usuario real para no filtrar existencia
+      // de cuentas por diferencias de tiempo.
+      crypto.scryptSync(password, 'fulbito-dummy-salt', 64);
+      return res.status(401).json({ error: 'invalid_credentials', message: 'Credenciales incorrectas.' });
+    }
+
+    const hash = hashPassword(password, registro.salt);
+    if (!compararSeguro(hash, registro.password_hash)) {
+      return res.status(401).json({ error: 'invalid_credentials', message: 'Credenciales incorrectas.' });
+    }
+
+    await limpiarSesionesExpiradas();
+    const token = tokenAleatorio();
+    const ht = hashToken(token);
+    const expira = new Date(Date.now() + PROLONGACION_SESION_MS).toISOString();
+
+    await db.query(
+      'INSERT INTO sesiones (token_hash, usuario_id, expira) VALUES ($1, $2, $3)',
+      [ht, registro.id, expira]
+    );
+
+    res.json({ ok: true, usuario, token });
+  } catch (e) {
+    console.error('Error en login:', e);
+    res.status(500).json({ error: 'internal', message: 'Error interno del servidor' });
+  }
 });
 app.post('/api/auth/logout', async (req, res) => {
-  const auth = req.headers['authorization'] || ''; const m = /^Bearer\s+(.+)$/i.exec(auth);
-  if (m) await kvBorrar(claveSesion(hashToken(m[1].trim())));
+  if (db.disponible()) {
+    const auth = req.headers['authorization'] || '';
+    const m = /^Bearer\s+(.+)$/i.exec(auth);
+    if (m) {
+      try {
+        const ht = hashToken(m[1].trim());
+        await db.query('DELETE FROM sesiones WHERE token_hash = $1', [ht]);
+      } catch (e) {
+        console.error('Error cerrando sesión:', e.message);
+      }
+    }
+  }
   res.json({ ok: true });
 });
+app.post('/api/auth/logout-all', requerirSesion(async (req, res) => {
+  await db.query('DELETE FROM sesiones WHERE usuario_id = $1', [req.sesion.usuarioId]);
+  res.json({ ok: true, message: 'Sesiones cerradas en todos los dispositivos.' });
+}));
 app.get('/api/auth/me', async (req, res) => {
+  if (!db.disponible()) return dbNoConfigurada(res);
   const ses = await obtenerSesion(req);
   if (!ses) return res.status(401).json({ error: 'unauthorized', message: 'Sesión requerida' });
   res.json({ ok: true, usuario: ses.usuario, usuarioId: ses.usuarioId, expira: ses.expira });
 });
 function claveHistorialUsuario(usuarioId) { return `historial:${usuarioId}`; }
 app.get('/api/mi-historial', requerirSesion(async (req, res) => {
-  const historial = await kvLeer(claveHistorialUsuario(req.sesion.usuarioId));
-  res.setHeader('Cache-Control', 'private, max-age=0, no-store');
-  res.json({ ok: true, historial: Array.isArray(historial) ? historial : [] });
+  try {
+    const res = await db.query(
+      'SELECT datos FROM pronosticos_usuario WHERE usuario_id = $1 ORDER BY id ASC',
+      [req.sesion.usuarioId]
+    );
+    const historial = res.rows.map(r => r.datos);
+    res.setHeader('Cache-Control', 'private, max-age=0, no-store');
+    res.json({ ok: true, historial: Array.isArray(historial) ? historial : [] });
+  } catch (e) {
+    console.error('Error leyendo mi-historial:', e);
+    res.status(500).json({ error: true, mensaje: 'Error interno' });
+  }
 }));
 app.put('/api/mi-historial', requerirSesion(async (req, res) => {
   const historial = Array.isArray(req.body && req.body.historial) ? req.body.historial : [];
   if (historial.length > 500) return res.status(400).json({ error: 'payload_too_large', message: 'Máximo 500 entradas' });
   const usuarioHistorial = historial.slice(-500);
-  await kvGuardar(claveHistorialUsuario(req.sesion.usuarioId), usuarioHistorial);
-  res.json({ ok: true, historial: usuarioHistorial, total: usuarioHistorial.length });
+
+  try {
+    // Limpiamos el historial actual y guardamos el nuevo (estilo reemplazo como el original)
+    await db.pool.connect().then(async (client) => {
+      try {
+        await client.query('BEGIN');
+        await client.query('DELETE FROM pronosticos_usuario WHERE usuario_id = $1', [req.sesion.usuarioId]);
+        for (const registro of usuarioHistorial) {
+          await client.query(
+            'INSERT INTO pronosticos_usuario (usuario_id, partido_id, datos) VALUES ($1, $2, $3)',
+            [req.sesion.usuarioId, String(registro.partidoId || 'unknown'), JSON.stringify(registro)]
+          );
+        }
+        await client.query('COMMIT');
+      } catch (e) {
+        await client.query('ROLLBACK');
+        throw e;
+      } finally {
+        client.release();
+      }
+    });
+    res.json({ ok: true, historial: usuarioHistorial, total: usuarioHistorial.length });
+  } catch (e) {
+    console.error('Error guardando mi-historial:', e);
+    res.status(500).json({ error: 'internal', message: 'Error interno del servidor' });
+  }
 }));
 
 function generarETag(datos) {
@@ -694,7 +1067,40 @@ app.get('/api/liga/:code/standings', async (req, res) => {
   }
 });
 
+// ============ MOTOR DE SEÑALES DE VALOR ============
+function generarSenalesDeValor(mercado, stats = {}) {
+  const senales = [];
+  const prob = mercado.probabilidad || 0;
+  const cat = mercado.categoria || '';
+
+  // 1. Dominio Estadístico
+  if (prob >= 75) {
+    senales.push({ icono: '🔥', texto: 'Dominio claro: Ventaja estadística significativa' });
+  } else if (prob >= 65) {
+    senales.push({ icono: '📈', texto: 'Tendencia sólida: Probabilidad alta de acierto' });
+  }
+
+  // 2. Análisis por Categoría
+  if (cat === 'total_goles' && prob >= 60) {
+    senales.push({ icono: '⚽', texto: 'Tendencia ofensiva: Alta frecuencia de goles' });
+  }
+  if (cat === 'resultado' && prob >= 60) {
+    senales.push({ icono: '🏆', texto: 'Favorito claro: Superioridad en el modelo' });
+  }
+  if (cat === 'ambos_marcan' && prob >= 60) {
+    senales.push({ icono: '🥅', texto: 'Ataques eficientes: Alta probabilidad de goles mutuos' });
+  }
+
+  // 3. Factor Contextual (Simulado basado en prob)
+  if (prob >= 55 && prob < 65) {
+    senales.push({ icono: '⚖️', texto: 'Valor equilibrado: Probabilidad optimizada' });
+  }
+
+  return senales.slice(0, 2); // Limitamos a 2 señales para no saturar la UI
+}
+
 // ============ NORMALIZADOR DE APIS (Factory) ============
+
 function normalizarPartidos(partidos, provider) {
   if (provider === 'the-odds') {
     return partidos.map(p => ({
@@ -854,7 +1260,7 @@ app.get('/api/odds/:sport', async (req, res) => {
 // Ports a Node de backend_motores/motor_basquet.py y motor_tenis.py.
 // Se entrenan con resultados recientes de The Odds API (endpoint /scores)
 // y se combinan con el consenso de cuotas (probabilidad implícita sin margen).
-const ELO_STATE_PATH = path.join(__dirname, 'data', 'elo_state.json');
+const ELO_STATE_PATH = path.join(DATA_DIR, 'elo_state.json');
 const BASE_ELO = 1500;
 
 function erfAprox(x) {
@@ -1193,7 +1599,22 @@ app.get('/api/predicciones/:deporte', async (req, res) => {
       await entrenarEloDesdeScores(sportKey, 'basquet');
     }
 
-    const predicciones = (partidos || []).map(p => prediccionPartido(p, deporte));
+    const predicciones = (partidos || []).map(p => {
+    const pred = prediccionPartido(p, deporte);
+
+    // Enriquecemos cada mercado con señales de valor
+    if (pred.modelo) {
+      // Para simplicidad, aplicamos las señales a los resultados principales
+      // En una versión más compleja, esto se haría por cada mercado evaluado
+      pred.senalesGlobales = generarSenalesDeValor({
+        probabilidad: Math.max(pred.modelo.local.probabilidad, pred.modelo.visita.probabilidad),
+        categoria: 'resultado'
+      });
+    }
+
+    return pred;
+  });
+
     const salida = {
       deporte,
       generadoEn: new Date().toISOString(),
@@ -1216,7 +1637,12 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 3000;
 let servidor = null;
 
-inicializarHistorial().finally(() => {
+inicializarHistorial().finally(async () => {
+  try {
+    await db.inicializarBaseDeDatos();
+  } catch (e) {
+    console.error('Error inicializando la DB relacional:', e);
+  }
   servidor = app.listen(PORT, () => {
     console.log(`Servidor de fulbito corriendo en el puerto ${PORT}`);
   });
@@ -1242,6 +1668,10 @@ function cerrarServidor(senial) {
         if (r && typeof r.catch === 'function') r.catch(() => {});
       } catch (e) { /* el storage ya puede estar cerrado */ }
     }
+    try {
+      const r = db.pool.end();
+      if (r && typeof r.catch === 'function') r.catch(() => {});
+    } catch (e) { /* pool no inicializado o ya cerrado */ }
   };
   if (!servidor) {
     flushPendiente().then(() => { cerrarStorage(); process.exit(0); });

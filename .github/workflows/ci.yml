@@ -7,6 +7,20 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: fulbito
+          POSTGRES_PASSWORD: fulbito
+          POSTGRES_DB: fulbito_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -28,8 +42,13 @@ jobs:
         run: npm test
       - name: Persistencia del historial del servidor (SQLite)
         run: npm run test:server
-      - name: Auth e historial personal del servidor
+      - name: Utilidades de seguridad de auth (sin DB)
+        run: npm run test:seguridad
+      - name: Auth e historial personal del servidor (PostgreSQL)
         run: npm run test:auth
+        env:
+          DATABASE_URL: postgresql://fulbito:fulbito@localhost:5432/fulbito_test
+          DATABASE_SSL: 'false'
       - name: Liquidación server-side del track record
         run: npm run test:liquidacion
       - name: Verificación del modelo JS

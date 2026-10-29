@@ -103,6 +103,14 @@
     /* ---------- cuenta ---------- */
     'abrir-modal-auth': function () { global.abrirModalAuth && global.abrirModalAuth(); },
     'cerrar-modal-auth': function () { global.cerrarModalAuth(); },
+    'cerrar-sesion': function () {
+      if (typeof global.cerrarSesionFulbito === 'function') global.cerrarSesionFulbito();
+    },
+    'cerrar-todas-sesiones': function () {
+      if (typeof global.cerrarTodasLasSesionesFulbito === 'function') {
+        global.cerrarTodasLasSesionesFulbito().catch(function () {});
+      }
+    },
     'enviar-auth': function (el, e) { global.enviarAuth(e, el.dataset.modo || 'login'); },
     'auth-registro': function () {
       var form = doc.getElementById('form-auth');

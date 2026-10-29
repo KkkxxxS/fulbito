@@ -5,21 +5,22 @@
  *
  * Verifica el ciclo que antes se perdía en Render free (filesystem efímero):
  *   1. El historial se escribe con X-Api-Key.
- *   2. Se mantiene al reiniciar (persistencia en DB: SQLite local / Postgres con DATABASE_URL).
+ *   2. Se mantiene al reiniciar (persistencia en SQLite).
  *   3. Las escrituras sin key son rechazadas.
  *
- * Usa un puerto propio y limpia los artefactos (db/json legacy) al terminar.
+ * Usa un puerto propio y un directorio temporal: nunca toca `server/data`
+ * (historial real del usuario) ni la base PostgreSQL configurada.
  */
 const { spawn } = require('child_process');
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
 
 const PUERTO = 33221;
 const CLAVE = 'clave-de-prueba';
 const BASE = `http://127.0.0.1:${PUERTO}`;
 const DIR = __dirname;
-const DB = path.join(DIR, 'data', 'historial.db');
-const JSON_LEGACY = path.join(DIR, 'data', 'historial.json');
+const DATA_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'fulbito-persistencia-'));
 
 let fallos = 0;
 function check(nombre, condicion, detalle) {
@@ -35,7 +36,13 @@ function arrancarServidor() {
   return new Promise((resolve, reject) => {
     const hijo = spawn(process.execPath, ['server.js'], {
       cwd: DIR,
-      env: { ...process.env, PORT: String(PUERTO), HISTORIAL_API_KEY: CLAVE, DATABASE_URL: process.env.DATABASE_URL || '' },
+      env: {
+        ...process.env,
+        PORT: String(PUERTO),
+        HISTORIAL_API_KEY: CLAVE,
+        DATABASE_URL: '',
+        FULBITO_DATA_DIR: DATA_DIR
+      },
       stdio: ['ignore', 'ignore', 'pipe']
     });
     let intervalo = null;
@@ -121,9 +128,7 @@ async function main() {
     await detener(hijo2);
   }
 
-  for (const archivo of [DB, JSON_LEGACY]) {
-    if (fs.existsSync(archivo)) fs.unlinkSync(archivo);
-  }
+  fs.rmSync(DATA_DIR, { recursive: true, force: true });
 
   console.log(`\n=== RESULTADO: ${fallos === 0 ? 'TODAS LAS COMPROBACIONES PASARON' : 'HAY FALLOS'} ===`);
   process.exit(fallos === 0 ? 0 : 1);
@@ -131,8 +136,6 @@ async function main() {
 
 main().catch((e) => {
   console.error(e);
-  for (const archivo of [DB, JSON_LEGACY]) {
-    if (fs.existsSync(archivo)) fs.unlinkSync(archivo);
-  }
+  fs.rmSync(DATA_DIR, { recursive: true, force: true });
   process.exit(1);
 });
