@@ -65,7 +65,9 @@ Variables de entorno (copiá `.env.example` a `.env`):
 | --- | --- | --- |
 | `FOOTBALL_DATA_API_KEY` | Sí (backend) | API key de football-data.org |
 | `HISTORIAL_API_KEY` | Sí (prod) | Protege las escrituras de `/api/historial` (`X-Api-Key`) |
-| `DATABASE_URL` | Recomendada (prod) | Postgres gestionado; si falta usa SQLite local |
+| `CORS_ORIGINS` | No | Orígenes extra permitidos, separados por coma (previews o dominio propio) |
+| `DATABASE_URL` | Sí para cuentas | Postgres gestionado. Sin ella, cuentas e historial personal dan 503; el historial global usa SQLite local |
+| `DATABASE_SSL` | No | `false` para Postgres local/CI sin TLS (por defecto exige TLS) |
 | `PORT` | No | Puerto del server (Render lo inyecta; local `3000`) |
 
 ## Scripts
@@ -76,6 +78,8 @@ Variables de entorno (copiá `.env.example` a `.env`):
 | `npm test` | Suite de recalibración (12 escenarios) |
 | `npm run test:parity` | Paridad numérica Python ↔ JS |
 | `npm run test:server` | Persistencia del historial (arranca el server y prueba el storage) |
+| `npm run test:seguridad` | Limitador de intentos, comparación segura y política de contraseñas |
+| `npm run test:auth` | Cuentas e historial personal (requiere `DATABASE_URL`; se omite sin ella) |
 | `npm run verify` | Verificación del modelo JS |
 | `npm run smoke` | Smoke test del frontend (carga de módulos) |
 
@@ -105,17 +109,35 @@ persistencia, modelo, smoke y utilidades de frontend).
 
 - **Frontend:** GitHub Pages (sitio canónico: `https://kkkxxxs.github.io/fulbito/`).
 - **Backend:** Render (free tier). Configurá `DATABASE_URL` (Neon/Supabase/Render)
-  para que el historial sobreviva a los redeploys; sin ella usa SQLite efímero.
+  para cuentas, sesiones e historial personal; sin ella esas rutas responden 503 y
+  el historial global usa SQLite efímero.
+- **Guía paso a paso:** [`DESPLIEGUE_RENDER.md`](DESPLIEGUE_RENDER.md), con
+  variables, verificación y test de auth contra la base real.
+
+### Landing Astro (preview, fase 0)
+
+`web/` contiene una landing estática en Astro que **no reemplaza la app**:
+
+```bash
+cd web
+npm install
+npm run dev      # http://localhost:4321
+npm run build
+```
+
+Detalles y deploy del preview: [`web/README.md`](web/README.md).
 
 ## Deuda técnica conocida
 
 - **Persistencia del pipeline:** `pronosticos.json` / `pronosticos_historicos.jsonl`
   se commitean a diario con `git add -f`: el repo crecerá sin límite. Migrarlos a
   la DB/objeto es una decisión de arquitectura (ver `ARQUITECTURA_PENDIENTE.md`).
-- **Identidad de usuario:** no hay login. El historial global es un pool anónimo;
-  el personal vive en `localStorage`. Añadir auth (JWT/Supabase) es un cambio mayor.
+- **Identidad de usuario:** cuentas opcionales con sesiones opacas en Postgres
+  (`usuarios`, `sesiones`); el historial personal usa `pronosticos_usuario`. El
+  flujo anónimo sigue en `localStorage`. Sin `DATABASE_URL` las cuentas están
+  deshabilitadas (503) y el historial global es un pool anónimo.
 - **Frontend monolítico:** sin build ni tests por módulo; `style.css` es grande.
+  Plan de migración incremental a Astro para páginas públicas en `MIGRACION_ASTRO.md`.
 - **i18n parcial:** solo se traduce el chrome con `data-i18n`, no los textos del motor.
 - **CSP:** se aplica vía `<meta>` con `'unsafe-inline'` (hay handlers/estilos inline);
   migrar a un build permitiría endurecerla.
-</content>

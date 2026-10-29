@@ -44,9 +44,12 @@ Advirtamos explícitamente por qué los números que hoy se muestran en el panel
      `Historial cargado desde postgres (N entradas).`
   4. Verificar: `GET /api/historial/stats` — el `total` sobrevive a restarts del dyno.
 
-### 2.2. Autenticación y autoridad sobre `/api/historial` — **Resuelto (parcial)**
-- Las escrituras `POST/PUT /api/historial` exigen `X-Api-Key` (`requireHistorialWriteKey`) y el frontend ya no escribe en el pool global (no-op); el historial personal vive en `localStorage`.
-- **Pendiente:** no hay identidad de usuario (cookies/JWT/Supabase), por lo que el track record sigue siendo un pool anónimo que solo puebla backend/CI. Las lecturas (`GET /api/historial`) son públicas y los sanity-checks de `recalibracion.py` mitigan, no eliminan, el riesgo de un pool contaminado vía la propia CI.
+### 2.2. Autenticación y autoridad sobre `/api/historial` — **Resuelto (cuentas opcionales)**
+
+- Las escrituras `POST/PUT /api/historial` exigen `X-Api-Key` (`requireHistorialWriteKey`) y el frontend ya no escribe en el pool global (no-op).
+- **Implementado:** cuentas opcionales con PostgreSQL (`usuarios`, `sesiones`), contraseñas con scrypt + salt, tokens opacos de 32 bytes hasheados con SHA-256, sesiones de 30 días, rate limit de login/registro, comparación en tiempo constante, `POST /api/auth/logout-all` y cabeceras `no-store`. El historial personal vive en `pronosticos_usuario`.
+- **Requisito:** configurar `DATABASE_URL`; sin ella las rutas de cuenta responden 503 y el historial personal no está disponible (el historial global sigue con SQLite/archivo).
+- **Pendiente:** verificación de email y recuperación de contraseña; mover el rate limit a un store compartido si se escala a más de un proceso; migrar cualquier dato legado de la antigua kv de auth si existiera.
 
 ## Plan de Arquitectura a Mediano/Largo Plazo
 
@@ -79,6 +82,6 @@ Advirtamos explícitamente por qué los números que hoy se muestran en el panel
   validado por `test_paridad.py`. Pendiente: deprecar gradualmente el motor JS si
   la cobertura del artefacto alcanza el 100% de los partidos.
 - **CI incompleta**: el workflow ya corre `test_recalibracion.py`, `npm check`,
-  `test:parity`, `test:server`, `test:auth`, `test:liquidacion`, `verify`, `smoke`,
-  `test:utils` y `test:events` en push/PR (`ci.yml`).
+  `test:parity`, `test:server`, `test:seguridad`, `test:auth` (con PostgreSQL),
+  `test:liquidacion`, `verify`, `smoke`, `test:utils` y `test:events` en push/PR (`ci.yml`).
 - **Frontend monolítico**: 4 archivos JS globals + `style.css` de 256KB, sin build ni tests por módulo.
