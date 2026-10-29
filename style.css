@@ -11042,3 +11042,95 @@ button.dash-kpi {
   color: var(--text);
 }
 
+/* ============================================================
+   NUEVOS COMPONENTES DE MERCADO (app-ui.js)
+   Ventana de probabilidad, señales y columnas de tarjeta.
+   ============================================================ */
+
+.prob-rango {
+  color: var(--brand);
+  font-size: 1.35rem;
+  line-height: 1;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.senales-contenedor {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 2px 0 8px;
+}
+
+.senal-valor {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-muted);
+  font-size: 0.65rem;
+  font-weight: 600;
+  line-height: 1.4;
+  transition: background 0.18s var(--ease), border-color 0.18s var(--ease), color 0.18s var(--ease);
+}
+
+.senal-valor:hover {
+  background: var(--green-dim);
+  border-color: var(--green);
+  color: var(--green);
+}
+
+.senal-valor-icono {
+  font-size: 0.8rem;
+  line-height: 1;
+}
+
+/* La barra necesita mostrar el indicador por encima y por debajo. */
+.fila-mercado .barra-probabilidad {
+  overflow: visible;
+}
+
+.fila-mercado .barra-relleno {
+  position: relative;
+}
+
+.barra-ventana-indicador {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  left: 100%;
+  width: 2px;
+  transform: translateX(-50%);
+  border-radius: 2px;
+  background: #fff;
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.9), 0 0 12px var(--brand);
+  pointer-events: none;
+  z-index: 3;
+}
+
+.dash-kpi-icono.verde {
+  color: var(--green);
+  border: 1px solid var(--green-dim);
+}
+
+.calibracion-barra-relleno.real {
+  background: var(--green);
+}
+
+.lectura-pick-texto small {
+  display: block;
+  margin-top: 6px;
+  color: var(--text-dim);
+  font-style: normal;
+  line-height: 1.5;
+}
+
+/* Las columnas conservan el flujo vertical actual de la tarjeta. */
+.tarjeta-partido-col-izq,
+.tarjeta-partido-col-der {
+  min-width: 0;
+}
+

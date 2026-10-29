@@ -19,6 +19,15 @@
     return `<span class="chip-cuenta-regresiva ${t.urgente ? 'urgente' : ''}">${t.urgente ? '🔴' : '⏱'} ${t.texto}</span>`;
   }
 
+  function obtenerVentanaProbabilidad(prob, conf) {
+    const margenes = { 'Alta': 2, 'Media': 5, 'Baja': 8 };
+    const margen = margenes[conf] || 5;
+    return {
+      min: Math.max(0, prob - margen),
+      max: Math.min(100, prob + margen)
+    };
+  }
+
   function nivelConfianza(probabilidad) {
     if (probabilidad >= 80) return { etiqueta: 'Alta', clase: 'conf-alta' };
     if (probabilidad >= 65) return { etiqueta: 'Media', clase: 'conf-media' };
@@ -48,33 +57,56 @@
           </div>
           <footer class="fila-nobet-detalle">
             <span class="icono-info-nobet" aria-hidden="true">?</span>
-            <p class="cuota-implicita">Ning�n mercado de esta categor�a supera el umbral m�nimo de seguridad (${datos.probabilidad}% real).</p>
+            <p class="cuota-implicita">Ningún mercado de esta categoría supera el umbral mínimo de seguridad (${datos.probabilidad}% real).</p>
           </footer>
         </li>
       `;
     }
     const conf = obtenerConfianza(datos);
+    const ventana = obtenerVentanaProbabilidad(datos.probabilidad, conf.etiqueta);
     const cuota = cuotaImplicita(datos.probabilidad);
     const contextoTxt = datos.contexto ? `<div class="fila-contexto-block"><span class="contexto-label">Contexto:</span> ${escaparHTML(datos.contexto)}</div>` : '';
-    const explicacionTxt = datos.explicacion ? `<div class="fila-explicacion-block"><span class="explicacion-label">Explicaci�n:</span> ${escaparHTML(datos.explicacion)}</div>` : '';
+    const explicacionTxt = datos.explicacion ? `<div class="fila-explicacion-block"><span class="explicacion-label">Explicación:</span> ${escaparHTML(datos.explicacion)}</div>` : '';
+
+    const senales = [
+      { icono: '🔥', texto: 'Dominio claro' },
+      { icono: '📈', texto: 'Tendencia sólida' },
+      { icono: '⚽', texto: 'Tendencia ofensiva' },
+      { icono: '🏆', texto: 'Favorito claro' },
+      { icono: '⚖️', texto: 'Valor equilibrado' }
+    ].filter(s => {
+      if (s.texto === 'Dominio claro' && datos.probabilidad < 75) return false;
+      if (s.texto === 'Tendencia sólida' && (datos.probabilidad < 65 || datos.probabilidad >= 75)) return false;
+      if (s.texto === 'Tendencia ofensiva' && (datos.categoria !== 'total_goles' || datos.probabilidad < 60)) return false;
+      if (s.texto === 'Favorito claro' && (datos.categoria !== 'resultado' || datos.probabilidad < 60)) return false;
+      if (s.texto === 'Valor equilibrado' && (datos.probabilidad < 55 || datos.probabilidad >= 65)) return false;
+      return true;
+    }).slice(0, 2);
+
+    const senalesHTML = senales.length > 0
+      ? `<div class="senales-contenedor">${senales.map(s => `<span class="senal-valor"><span class="senal-valor-icono">${s.icono}</span>${s.texto}</span>`).join('')}</div>`
+      : '';
 
     return `
       <li class="fila-mercado animated-enter motion-card mercado-${datos.tipo} ${esPrincipal ? 'mercado-principal motion-pop' : ''}" role="listitem">
-        ${esPrincipal ? `<div class="etiqueta-pick-principal" aria-label="Pick principal del partido">? Pick del partido</div>` : ''}
+        ${esPrincipal ? `<div class="etiqueta-pick-principal" aria-label="Pick principal del partido">⭐ Pick del partido</div>` : ''}
         ${contextoTxt}
         <header class="fila-header">
           <div class="fila-header-izq">
             ${iconoMercado(datos.tipo)}
-            <span class="fila-porcentaje motion-count">${datos.probabilidad}%</span>
+            <span class="fila-porcentaje prob-rango">${ventana.min}% - ${ventana.max}%</span>
           </div>
           <div class="fila-header-der">
-            <span class="badge-confianza-lectura ${conf.clase}">Confianza: ${conf.etiqueta}</span>
+            <span class="badge-confianza-lectura ${conf.clase}">${conf.etiqueta}</span>
             ${botonMiPrediccion(partidoId, datos.categoria)}
           </div>
         </header>
+        ${senalesHTML}
         <h4 class="fila-titulo">${escaparHTML(datos.titulo)}</h4>
         <div class="barra-probabilidad" role="progressbar" aria-valuenow="${datos.probabilidad}" aria-valuemin="0" aria-valuemax="100" aria-label="Probabilidad ${datos.probabilidad}%">
-          <div class="barra-relleno conf-${conf.clase}" style="width:${datos.probabilidad}%"></div>
+          <div class="barra-relleno conf-${conf.clase}" style="width:${datos.probabilidad}%">
+            <div class="barra-ventana-indicador" style="left: 100%"></div>
+          </div>
         </div>
         <div class="fila-mercado-cuerpo">
           <p class="fila-mercado-nombre">${escaparHTML(datos.mercado)}</p>
@@ -83,7 +115,7 @@
         ${explicacionTxt}
         <ul class="fila-razones">${(datos.razones || []).map(r => `<li class="fila-razon">+ ${escaparHTML(r)}</li>`).join('')}</ul>
         <footer class="fila-mercado-footer">
-          <span class="cuota-implicita-tag" title="Cuota justa seg�n probabilidad real estimada">Cuota justa: <strong>@${cuota}</strong></span>
+          <span class="cuota-implicita-tag" title="Cuota justa según probabilidad real estimada">Cuota justa: <strong style="color:var(--brand)">@${cuota}</strong></span>
         </footer>
       </li>
     `;
@@ -107,7 +139,7 @@
     return `<div class="info-h2h-pill"><span class="h2h-icono">⚖</span> Historial directo (${h2h.totalPartidos} PJ): <strong>${h2h.victoriasLocal}V</strong> local · <strong>${h2h.empates}E</strong> · <strong>${h2h.victoriasVisita}V</strong> visita</div>`;
   }
 
-function crearTarjetaHTML(partido, pronosticos, statsLocal, statsVisita, h2h, tabla) {
+  function crearTarjetaHTML(partido, pronosticos, statsLocal, statsVisita, h2h, tabla) {
     const local = partido.homeTeam.name;
     const visita = partido.awayTeam.name;
     const liga = partido.competition.name;
@@ -125,60 +157,64 @@ function crearTarjetaHTML(partido, pronosticos, statsLocal, statsVisita, h2h, ta
         <header class="tarjeta-partido-topbar">
           <div class="partido-topbar-izq">
             <span class="partido-liga-tag">${escaparHTML(liga)}</span>
-            <span class="partido-fecha-tag">${fechaTexto} � ${horaTexto}</span>
+            <span class="partido-fecha-tag">${fechaTexto} ${horaTexto}</span>
           </div>
           <div class="partido-topbar-der">
             ${chipCuentaRegresiva(partido.utcDate)}
           </div>
         </header>
 
-        <section class="encabezado-partido">
-          ${bloqueEquipoHTML(local, statsLocal, 'alineacion-izq', partido.homeTeam.crest, tabla, partido.homeTeam.id)}
-          <div class="centro-partido">
-            <span class="vs-circulo">VS</span>
-            <div class="marcador-estimado-badge" title="Marcador m�s probable estimado por el modelo">
-              <span class="marcador-estimado-label">Estimado</span>
-              <strong class="marcador-estimado-val">${escaparHTML(pronosticos.marcadorProbable)}</strong>
+        <div class="tarjeta-partido-col-izq">
+          <section class="encabezado-partido">
+            ${bloqueEquipoHTML(local, statsLocal, 'alineacion-izq', partido.homeTeam.crest, tabla, partido.homeTeam.id)}
+            <div class="centro-partido">
+              <span class="vs-circulo">VS</span>
+              <div class="marcador-estimado-badge" title="Marcador más probable estimado por el modelo">
+                <span class="marcador-estimado-label">Estimado</span>
+                <strong class="marcador-estimado-val">${escaparHTML(pronosticos.marcadorProbable)}</strong>
+              </div>
             </div>
-          </div>
-          ${bloqueEquipoHTML(visita, statsVisita, 'alineacion-der', partido.awayTeam.crest, tabla, partido.awayTeam.id)}
-        </section>
+            ${bloqueEquipoHTML(visita, statsVisita, 'alineacion-der', partido.awayTeam.crest, tabla, partido.awayTeam.id)}
+          </section>
 
-        ${h2hHTML(h2h)}
-        
-        <div class="lectura-pick-box">
-          <div class="lectura-pick-header">
-            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
-            Lectura del Modelo
+          ${h2hHTML(h2h)}
+
+          <div class="lectura-pick-box">
+            <div class="lectura-pick-header">
+              <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+              Lectura del Modelo
+            </div>
+            <p class="lectura-pick-texto">
+              ${mejor ? `El modelo proyecta ventaja en <strong>${escaparHTML(mejor.mercado || mejor.categoria)}: ${escaparHTML(mejor.seleccion)}</strong> con <strong>${mejor.probabilidad}%</strong> de probabilidad estimada basada en la correlación Dixon-Coles y localía. ${mejor.razones ? `<br><small>${mejor.razones.map(r => '• ' + r).join('<br>')}</small>` : ''}` : "Distribución equilibrada; sin sesgo estadístico dominante en mercados principales."}
+            </p>
           </div>
-          <p class="lectura-pick-texto">
-            ${mejor ? `El modelo proyecta ventaja en <strong>${escaparHTML(mejor.mercado || mejor.categoria)}: ${escaparHTML(mejor.seleccion)}</strong> con <strong>${mejor.probabilidad}%</strong> de probabilidad estimada basada en la correlación Dixon-Coles y localía. ${mejor.razones ? `<br><small>${mejor.razones.map(r => '• ' + r).join('<br>')}</small>` : ''}` : "Distribución equilibrada; sin sesgo estadístico dominante en mercados principales."}
-          </p>
+
+          ${pronosticos.pocaData ? `<div class="aviso-datos warning"><span class="aviso-icon">?</span> Datos limitados (${pronosticos.partidosMin} partidos analizados) — pronóstico menos confiable</div>` : ''}
+          ${pronosticos.sinNadaEnJuego ? `<div class="aviso-datos warning"><span class="aviso-icon">?</span> Uno de los equipos ya no se juega nada en la tabla (título o descenso resuelto)</div>` : ''}
         </div>
 
-        ${pronosticos.pocaData ? `<div class="aviso-datos warning"><span class="aviso-icon">?</span> Datos limitados (${pronosticos.partidosMin} partidos analizados) � pron�stico menos confiable</div>` : ''}
-        ${pronosticos.sinNadaEnJuego ? `<div class="aviso-datos warning"><span class="aviso-icon">?</span> Uno de los equipos ya no se juega nada en la tabla (t�tulo o descenso resuelto)</div>` : ''}
+        <div class="tarjeta-partido-col-der">
+          <ul class="lista-mercados animated-enter" id="mercados-${partido.id}">
+            ${pronosticos.seleccionados.map(m => `<li>${filaMercado(m, partido.id, mejor && m === mejor)}</li>`).join('')}
+          </ul>
+          <button class="boton-expandir" data-action="toggle-mercados" data-partido="${partido.id}">Ver más mercados</button>
 
-        <ul class="lista-mercados animated-enter" id="mercados-${partido.id}">
-          ${pronosticos.seleccionados.map(m => `<li>${filaMercado(m, partido.id, mejor && m === mejor)}</li>`).join('')}
-        </ul>
-        <button class="boton-expandir" data-action="toggle-mercados" data-partido="${partido.id}">Ver m�s mercados</button>
+          <section class="combos-partido">
+            <h3 class="combos-partido-titulo">Combina en este partido</h3>
+            <ul>${pronosticos.combosPartido.map(comboPartidoHTML).join('')}</ul>
+          </section>
 
-        <section class="combos-partido">
-          <h3 class="combos-partido-titulo">Combina en este partido</h3>
-          <ul>${pronosticos.combosPartido.map(comboPartidoHTML).join('')}</ul>
-        </section>
+          <p class="marcadores-probables-titulo">Marcadores más probables</p>
+          <div class="marcadores-probables">
+            ${pronosticos.top3Marcadores.map(m => `<span class="marcador-chip">${m.marcador} <em>${m.probabilidad}%</em></span>`).join('')}
+          </div>
 
-        <p class="marcadores-probables-titulo">Marcadores m�s probables</p>
-        <div class="marcadores-probables">
-          ${pronosticos.top3Marcadores.map(m => `<span class="marcador-chip">${m.marcador} <em>${m.probabilidad}%</em></span>`).join('')}
+          <button class="boton-expandir" data-action="toggle-catalogo" data-partido="${partido.id}">Ver los ${pronosticos.catalogoCompleto.length} mercados evaluados</button>
+          <div class="catalogo-completo" id="catalogo-${partido.id}" style="display:none;">
+          ${(pronosticos.catalogoCompleto || []).map(c => `<div class="catalogo-fila"><span>${escaparHTML(c.seleccion)}</span></div>`).join('')}
+          </div>
         </div>
-
-        <button class="boton-expandir" data-action="toggle-catalogo" data-partido="${partido.id}">Ver los ${pronosticos.catalogoCompleto.length} mercados evaluados</button>
-        <div class="catalogo-completo" id="catalogo-${partido.id}" style="display:none;">
-        ${(pronosticos.catalogoCompleto || []).map(c => `<div class="catalogo-fila"><span>${escaparHTML(c.seleccion)}</span></div>`).join('')}
-      </div>
-    </article>`;
+      </article>`;
   }
 
   function toggleMercados(partidoId) {
@@ -359,23 +395,16 @@ function crearTarjetaHTML(partido, pronosticos, statsLocal, statsVisita, h2h, ta
   }
 
   // ============ TRACKEADOR DE ACIERTOS ============
-  // El historial se guarda en el backend (servidor) para que sobreviva a la
-  // limpieza de caché del navegador. localStorage es solo un espejo/cache local
-  // que se rehidrata al cargar la página. Estrategia: "remote-first, local-fallback".
   const CLAVE_HISTORIAL = 'fulbito_historial_pronosticos';
   const CLAVE_HISTORIAL_SINCRO = 'fulbito_historial_sincro';
   let historialSincronizando = false;
   let historialSincronizadoEnSesion = false;
 
   async function cargarHistorialCompartido() {
-    // El pool global es de solo lectura y no debe sobreescribir el localStorage local.
     return;
   }
 
   async function sincronizarHistorialRemoto(historial) {
-    // No-op: el pool global del servidor no se modifica desde el navegador.
-    // Las escrituras requieren X-Api-Key y son exclusivas de backend/CI.
-    // El historial personal vive en localStorage.
     return;
   }
 
@@ -389,8 +418,6 @@ function crearTarjetaHTML(partido, pronosticos, statsLocal, statsVisita, h2h, ta
   }
 
   function leerHistorial() {
-    // Si el remoto ya cargó en esta sesión, usar el local (que es espejo del remoto).
-    // Si todavía no sincronizó pero hay datos locales, usarlos (modo offline).
     return leerHistorialLocal();
   }
 
@@ -398,7 +425,6 @@ function crearTarjetaHTML(partido, pronosticos, statsLocal, statsVisita, h2h, ta
     try {
       const recortado = historial.slice(-200);
       localStorage.setItem(CLAVE_HISTORIAL, JSON.stringify(recortado));
-      // Sincronizar en background, no bloqueante
       sincronizarHistorialRemoto(recortado);
     } catch (e) {}
   }
@@ -433,14 +459,12 @@ function crearTarjetaHTML(partido, pronosticos, statsLocal, statsVisita, h2h, ta
   async function actualizarHistorialConResultados() {
     const historial = leerHistorial();
     const hoy = new Date();
-    // Solo considerar pronósticos cuya fecha no sea futura respecto a hoy para evitar dateFrom > dateTo
     const pendientes = historial.filter(h => !h.verificado && new Date(h.fecha).getTime() <= hoy.getTime());
     if (pendientes.length === 0) return leerHistorial();
 
     const fechasPendientes = pendientes.map(h => new Date(h.fecha).getTime());
     let fechaDesde = new Date(Math.min(...fechasPendientes));
-    
-    // Limitar fechaDesde a un máximo de 7 días atrás desde hoy para evitar rangos excesivos o bloqueos de la API
+
     const hace7dias = new Date(hoy);
     hace7dias.setDate(hace7dias.getDate() - 7);
     if (fechaDesde.getTime() < hace7dias.getTime()) {
@@ -455,7 +479,6 @@ function crearTarjetaHTML(partido, pronosticos, statsLocal, statsVisita, h2h, ta
     let fFromStr = formatearFecha(fechaDesde);
     let fToStr = formatearFecha(hoy);
     if (fFromStr > fToStr) {
-      console.warn(`[Historial] Se detectó fechaDesde (${fFromStr}) posterior a fechaTo (${fToStr}). Intercambiando automáticamente.`);
       const temp = fFromStr;
       fFromStr = fToStr;
       fToStr = temp;
@@ -619,7 +642,6 @@ function crearTarjetaHTML(partido, pronosticos, statsLocal, statsVisita, h2h, ta
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (prefersReducedMotion) return;
 
-    // 1. Match Card Entrance (Staggered)
     const cards = document.querySelectorAll('.tarjeta-partido');
     if (cards.length > 0) {
       motion.stagger(cards, {
@@ -632,7 +654,6 @@ function crearTarjetaHTML(partido, pronosticos, statsLocal, statsVisita, h2h, ta
       });
     }
 
-    // 2. Suggested Market 'Pop'
     const pops = document.querySelectorAll('.mercado-principal');
     if (pops.length > 0) {
       motion(pops, {
@@ -643,7 +664,6 @@ function crearTarjetaHTML(partido, pronosticos, statsLocal, statsVisita, h2h, ta
       });
     }
 
-    // 3. Accuracy Count-up
     const pctElements = document.querySelectorAll('.motion-count');
     pctElements.forEach(el => {
       const finalVal = parseInt(el.textContent);
@@ -661,7 +681,6 @@ function crearTarjetaHTML(partido, pronosticos, statsLocal, statsVisita, h2h, ta
     });
   }
 
-  // Global event delegation for button press effect
   document.addEventListener('mousedown', (e) => {
     const btn = e.target.closest('.boton-expandir, .boton-compartir, .boton-pick, .nav-tab');
     if (btn && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
@@ -676,7 +695,6 @@ function crearTarjetaHTML(partido, pronosticos, statsLocal, statsVisita, h2h, ta
     }
   });
 
-  // Card hover effects (using motion for smooth scale/shadow)
   document.addEventListener('mouseover', (e) => {
     const card = e.target.closest('.tarjeta-partido');
     if (card && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
@@ -691,8 +709,6 @@ function crearTarjetaHTML(partido, pronosticos, statsLocal, statsVisita, h2h, ta
     }
   });
 
-
-  // ============ EXPORTAR / IMPORTAR DATOS (respaldo entre navegadores) ============
   const CLAVES_EXPORTABLES = [CLAVE_FAVORITOS, CLAVE_MIS_PREDICCIONES, CLAVE_HISTORIAL, CLAVE_CALIBRACION];
 
   function exportarDatos() {
@@ -750,7 +766,6 @@ function crearTarjetaHTML(partido, pronosticos, statsLocal, statsVisita, h2h, ta
     event.target.value = '';
   }
 
-  // ============ TELEMETRÍA Y ANALÍTICA ============
   let filtroAnaliticaActual = 'todos';
 
   function filtrarAnalitica(categoria, event) {
@@ -763,7 +778,6 @@ function crearTarjetaHTML(partido, pronosticos, statsLocal, statsVisita, h2h, ta
   }
 
   function actualizarTelemetriaAnalitica() {
-    // Mismo estado único que el dashboard (fuente de verdad única).
     const e = calcularEstadoSalud();
     const historial = leerHistorial();
     const saludEl = document.getElementById('telemetria-salud');
@@ -1098,7 +1112,6 @@ function crearTarjetaHTML(partido, pronosticos, statsLocal, statsVisita, h2h, ta
     `;
   }
 
-  // ============ HISTORIAL COMPLETO (vista "Historial", estilo tablero de picks liquidados) ============
   function calcularResumenHistorial(historial) {
     const verificados = historial.filter(h => h.verificado);
     let total = 0, aciertos = 0, sumaProb = 0;
@@ -1269,7 +1282,6 @@ function crearTarjetaHTML(partido, pronosticos, statsLocal, statsVisita, h2h, ta
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 
-  // ============ SKELETON LOADER ============
   function skeletonHTML() {
     let bloques = '';
     for (let i = 0; i < 2; i++) {
@@ -1299,12 +1311,8 @@ function crearTarjetaHTML(partido, pronosticos, statsLocal, statsVisita, h2h, ta
 
    cont.innerHTML = html;
    cont.style.cssText = 'display: flex !important; gap: 8px; margin-bottom: 12px; overflow-x: auto; padding-bottom: 4px;';
- }
+  }
 
-  // ============ FILTROS RÁPIDOS DE PICKS ============
-  // Nota: 'manana'/'semana'/'otra' usan el mismo pipeline de fetch (obtenerPartidos)
-  // que 'hoy'; un estado vacío ahí es falta de datos del backend para ese rango,
-  // no un bug del filtro local (ver renderizarPartidosFiltrados).
   let filtroRapidoActual = 'todos';
 
   function setFiltroRapido(tipo, event) {
@@ -1322,10 +1330,6 @@ function crearTarjetaHTML(partido, pronosticos, statsLocal, statsVisita, h2h, ta
     else renderizarPartidosFiltrados();
   }
 
-  // ============ RENDER PRINCIPAL DE PARTIDOS ============
-
-  // Aviso honesto cuando la lista viene de PARTIDOS_FALLBACK (backend caído):
-  // sin esto, la pestaña "Hoy" mostraba tarjetas demo (06/09) sin decirlo.
   function avisoDatosDemoHTML() {
     return `
       <div class="aviso-datos-demo" role="status">
@@ -1370,7 +1374,7 @@ function crearTarjetaHTML(partido, pronosticos, statsLocal, statsVisita, h2h, ta
         ? 'No hay partidos programados para mañana en las ligas cubiertas. Probá con "Esta semana".'
         : 'No hay partidos para mostrar con este filtro.';
       const accionFecha = (!terminoBusqueda && filtroRapidoActual !== 'favoritos' && (esHoy || esManana))
-        ? `<div style="margin-top:12px;"><button class="boton-reintentar" data-action="cambiar-fecha" data-fecha="${esHoy ? 'manana' : 'semana'}">Ver ${esHoy ? 'Ma�ana' : 'Esta semana'}</button></div>`
+        ? `<div style="margin-top:12px;"><button class="boton-reintentar" data-action="cambiar-fecha" data-fecha="${esHoy ? 'manana' : 'semana'}">Ver ${esHoy ? 'Mañana' : 'Esta semana'}</button></div>`
         : '';
       contenedor.innerHTML = `${partidosModoDemo ? avisoDatosDemoHTML() : ''}<div class="estado-vacio" style="text-align:center; color:#8fa896;"><p style="margin:0;">${escaparHTML(mensaje)}</p>${accionFecha}</div>`;
       requestAnimationFrame(() => contenedor.classList.add('visible'));
@@ -1393,7 +1397,7 @@ function crearTarjetaHTML(partido, pronosticos, statsLocal, statsVisita, h2h, ta
       const [h2h, tabla] = await Promise.all([
        obtenerHeadToHead(partido.id),
        obtenerTabla(codigoLiga)
-     ]);
+      ]);
       const [statsLocal, statsVisita] = await Promise.all([
         obtenerStatsEquipo(partido.homeTeam.id, codigoLiga, tabla),
         obtenerStatsEquipo(partido.awayTeam.id, codigoLiga, tabla)
@@ -1403,7 +1407,6 @@ function crearTarjetaHTML(partido, pronosticos, statsLocal, statsVisita, h2h, ta
         statsLocal, statsVisita, h2h, tabla, codigoLiga
       });
 
-      // Reordenar mercados según filtro rápido activo para destacar la opción elegida
       if (filtroRapidoActual === 'alta_confianza') {
         pronosticos.seleccionados.sort((a, b) => (b.probabilidad || 0) - (a.probabilidad || 0));
       } else if (filtroRapidoActual === 'btts') {
@@ -1423,7 +1426,6 @@ function crearTarjetaHTML(partido, pronosticos, statsLocal, statsVisita, h2h, ta
     contenedor.innerHTML = (partidosModoDemo ? avisoDatosDemoHTML() : '') + htmlFinal;
     renderCombinadas(seleccionesParaCombinar);
 
-    // Trigger animations after DOM is ready
     if (typeof triggerUIAnimations === 'function') {
       requestAnimationFrame(() => triggerUIAnimations());
     }
@@ -1432,9 +1434,6 @@ function crearTarjetaHTML(partido, pronosticos, statsLocal, statsVisita, h2h, ta
     if (vistaActual === 'analitica') renderHistorial(calcularEstadisticasHistorial(historialActualizado), historialActualizado);
     if (vistaActual === 'historial') renderHistorialCompleto(historialActualizado);
   }
-
-  // ============ FINALIZADOS (pronostico vs resultado real, dentro de Pronosticos) ============
-  let partidosFinalizadosCache = [];
 
   function tarjetaFinalizadoHTML(entrada) {
     const h = entrada;
@@ -1467,7 +1466,6 @@ function crearTarjetaHTML(partido, pronosticos, statsLocal, statsVisita, h2h, ta
   async function cargarFinalizados() {
     const contenedor = document.getElementById('contenedor-partidos');
     const contenedorCombinadas = document.getElementById('bloque-combinadas');
-    // Los finalizados no tienen respaldo demo: su error se muestra tal cual.
     partidosModoDemo = false;
     contenedor.classList.remove('visible');
     contenedor.innerHTML = skeletonHTML();
@@ -1484,7 +1482,6 @@ function crearTarjetaHTML(partido, pronosticos, statsLocal, statsVisita, h2h, ta
       return;
     }
 
-    // Solo nos interesan los partidos que ya pronosticamos (aparecen en el historial local)
     const historial = await actualizarHistorialYCalibracion();
     const idsFinalizados = new Set(partidos.map(p => p.id));
     partidosFinalizadosCache = historial
@@ -1518,7 +1515,6 @@ function crearTarjetaHTML(partido, pronosticos, statsLocal, statsVisita, h2h, ta
     requestAnimationFrame(() => contenedor.classList.add('visible'));
   }
 
-  // ============ CARGA PRINCIPAL ============
   async function cargarPartidos(tipoFecha) {
     if (tipoFecha === 'finalizados') {
       await cargarFinalizados();
@@ -1572,26 +1568,18 @@ function crearTarjetaHTML(partido, pronosticos, statsLocal, statsVisita, h2h, ta
     let partidos = await obtenerPartidos(fechaInicio, fechaFin);
     clearTimeout(avisoDespertar);
 
-    // obtenerPartidos devuelve PARTIDOS_FALLBACK cuando el backend no responde:
-    // eso es contenido demo (fechas fijas), no la jornada real.
     const usandoDemo = !Array.isArray(partidos) || partidos === PARTIDOS_FALLBACK;
     if (!Array.isArray(partidos)) {
       partidos = PARTIDOS_FALLBACK;
     }
     partidosModoDemo = usandoDemo;
 
-    // Con datos reales recortamos al día de la pestaña aunque quede vacío: si el rango
-    // [hoy, mañana] trae partidos de otro día, mostrarlos bajo "Hoy"/"Mañana" contradecía
-    // al KPI (que ya cuenta solo los partidos del día local). En modo demo no filtramos,
-    // para que el visitante vea igual las tarjetas de ejemplo (el aviso aclara que son demo).
     if (diaObjetivo && Array.isArray(partidos) && !usandoDemo) {
       partidos = partidos.filter(p => fechaLocalDePartido(p.utcDate) === diaObjetivo);
     }
 
     partidosDelRango = partidos;
     if (tipoFecha === 'hoy') {
-      // La vista y el KPI leen de la misma lista, con el mismo criterio de fecha:
-      // solo cuentan los partidos cuya fecha local es hoy.
       kpiHoyModoDemo = usandoDemo;
       partidosDeHoy = usandoDemo
         ? null
@@ -1638,7 +1626,6 @@ function crearTarjetaHTML(partido, pronosticos, statsLocal, statsVisita, h2h, ta
     finConsulta.setDate(finConsulta.getDate() + 1);
 
     let partidos = await obtenerPartidos(formatearFecha(inicioConsulta), formatearFecha(finConsulta));
-    // Igual que en cargarPartidos: PARTIDOS_FALLBACK significa backend caído (datos demo).
     partidosModoDemo = !Array.isArray(partidos) || partidos === PARTIDOS_FALLBACK;
     if (!Array.isArray(partidos)) {
       partidos = PARTIDOS_FALLBACK;
@@ -1651,7 +1638,6 @@ function crearTarjetaHTML(partido, pronosticos, statsLocal, statsVisita, h2h, ta
 
     partidos = partidos.filter(p => fechaLocalDePartido(p.utcDate) === valor);
 
-    // Sin servidor no podemos afirmar que esa fecha ya pasó: mostramos el aviso demo.
     if (partidos.length === 0 && !partidosModoDemo && valor < formatearFecha(new Date())) {
       contenedor.innerHTML = `<p style="text-align:center; color:#8fa896;">Esa fecha ya pasó, así que esos partidos ya se jugaron (o ya no están programados). Elige hoy o una fecha futura para ver pronósticos, o mira la pestaña "Finalizados" para ver resultados verificados.</p>`;
       requestAnimationFrame(() => contenedor.classList.add('visible'));
@@ -1663,17 +1649,6 @@ function crearTarjetaHTML(partido, pronosticos, statsLocal, statsVisita, h2h, ta
     ligaSeleccionada = 'TODAS';
     renderFiltroLigas();
     await renderizarPartidosFiltrados();
-  }
-  // ============ VISTA DE FAVORITOS ============
-  let partidosFavoritosCache = [];
-
-  function tarjetaFavoritoVaciaHTML() {
-    return `
-      <div class="aviso-servidor">
-        <p><strong>Aún no sigues ningún equipo.</strong></p>
-        <p>Toca la estrella ☆ junto al nombre de un equipo, en cualquier partido de "Pronósticos", y va a aparecer aquí.</p>
-      </div>
-    `;
   }
 
   async function cargarFavoritos() {
@@ -1696,7 +1671,6 @@ function crearTarjetaHTML(partido, pronosticos, statsLocal, statsVisita, h2h, ta
       contenedor.innerHTML = `<p style="text-align:center; color:#ff6b6b;">Error: ${escaparHTML(partidos.mensaje)}</p>`;
       return;
     }
-    // Backend caído: los partidos son demo y la lista tiene que avisarlo.
     partidosModoDemo = !Array.isArray(partidos) || partidos === PARTIDOS_FALLBACK;
 
     partidosFavoritosCache = (Array.isArray(partidos) ? partidos : []).filter(p =>
@@ -1758,6 +1732,3 @@ function crearTarjetaHTML(partido, pronosticos, statsLocal, statsVisita, h2h, ta
       requestAnimationFrame(() => triggerUIAnimations());
     }
   }
-
-
-
