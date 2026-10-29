@@ -1,0 +1,65 @@
+---
+import '../styles/global.css';
+
+const {
+  title = 'Fulbito — Probabilidades reales, no promesas',
+  description = 'Pronósticos de fútbol, básquet, tenis y vóley con un modelo estadístico auditable: Poisson + Dixon-Coles, historial verificado y cero suscripciones.',
+  image = 'https://kkkxxxs.github.io/fulbito/icon-512.png'
+} = Astro.props;
+
+const canonical = new URL(Astro.url.pathname, Astro.site);
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebApplication',
+  name: 'Fulbito',
+  url: canonical.href,
+  applicationCategory: 'SportsApplication',
+  operatingSystem: 'Any',
+  description,
+  offers: {
+    '@type': 'Offer',
+    price: '0',
+    priceCurrency: 'USD'
+  }
+};
+---
+
+<!doctype html>
+<html lang="es-PE">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <meta name="theme-color" content="#05070a" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="https://kkkxxxs.github.io/fulbito/icon-192.png" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Fulbito" />
+    <meta property="og:locale" content="es_PE" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={image} />
+
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={image} />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600&display=swap"
+      rel="stylesheet"
+    />
+
+    <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+  </head>
+  <body>
+    <a class="skip-link" href="#contenido">Saltar al contenido</a>
+    <slot />
+  </body>
+</html>

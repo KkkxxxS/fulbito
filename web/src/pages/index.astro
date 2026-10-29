@@ -1,0 +1,440 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const appUrl = 'https://kkkxxxs.github.io/fulbito/';
+const legalBase = 'https://kkkxxxs.github.io/fulbito';
+
+const stats = [
+  { value: '4', label: 'Deportes cubiertos' },
+  { value: '9', label: 'Mercados por partido' },
+  { value: '0', label: 'Suscripciones' },
+  { value: '100%', label: 'Historial público' }
+];
+
+const features = [
+  {
+    title: 'Probabilidad calibrada',
+    text: 'Un modelo Poisson + Dixon-Coles estima goles y mercados. Cada número se puede explicar; ninguno es una corazonada.'
+  },
+  {
+    title: 'Historial que no se edita',
+    text: 'Cada pick se liquida contra el resultado real. Aciertos y errores quedan registrados en el historial público.'
+  },
+  {
+    title: 'Brier Score auditable',
+    text: 'Medimos la calibración con una métrica estándar. Si el modelo se desvía de la realidad, se nota en el número.'
+  },
+  {
+    title: 'Cuatro deportes',
+    text: 'Fútbol de las principales ligas, básquet, tenis y vóley. La misma disciplina estadística en cada mercado.'
+  },
+  {
+    title: 'Sin paywall',
+    text: 'Fulbito se usa completo sin suscripción. No hay plan Pro, créditos ni picks bloqueados.'
+  },
+  {
+    title: 'Hecho para el teléfono',
+    text: 'Instalable como PWA, con favoritos, picks guardados y una lectura rápida de la jornada.'
+  }
+];
+
+const steps = [
+  {
+    number: '01',
+    title: 'Datos, no ruido',
+    text: 'Resultados y cuotas de las competiciones cubiertas alimentan el motor. La calidad del dato manda.'
+  },
+  {
+    number: '02',
+    title: 'Modelo estadístico',
+    text: 'Poisson + Dixon-Coles estima la distribución de goles y de ahí salen las probabilidades de cada mercado.'
+  },
+  {
+    number: '03',
+    title: 'Verificación pública',
+    text: 'Cuando el partido termina, el pick se liquida solo. El acierto o el fallo se suma al historial y al Brier Score.'
+  }
+];
+
+const faqs = [
+  {
+    q: '¿Fulbito es gratis?',
+    a: 'Sí. No hay suscripciones, paywall ni planes de pago. La app completa y el historial público son gratuitos.'
+  },
+  {
+    q: '¿De dónde salen las probabilidades?',
+    a: 'De un modelo estadístico propio basado en Poisson y Dixon-Coles, alimentado con resultados y cuotas de las ligas cubiertas. No es una opinión editorial ni una copia de las cuotas de la casa de apuestas.'
+  },
+  {
+    q: '¿Garantizan que voy a acertar?',
+    a: 'No. Ningún modelo serio garantiza resultados. Fulbito entrega probabilidades, no certezas. El historial existe justamente para que puedas juzgar la calibración con datos.'
+  },
+  {
+    q: '¿Qué es el Brier Score?',
+    a: 'Es una métrica que mide qué tan bien calibradas están las probabilidades: compara lo que el modelo dijo con lo que realmente pasó. Más bajo es mejor. Sirve para auditar el motor, no para vender humo.'
+  },
+  {
+    q: '¿Necesito una cuenta?',
+    a: 'Puedes explorar pronósticos e historial sin cuenta. La cuenta sirve para guardar picks, favoritos y tu historial personal en la nube.'
+  },
+  {
+    q: '¿Fulbito es una casa de apuestas?',
+    a: 'No. Es una herramienta de analítica deportiva. No procesa apuestas ni cobra por pronósticos. Juega responsablemente y nunca apuestes dinero que no puedas perder.'
+  }
+];
+---
+
+<BaseLayout>
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="brand" href="/" aria-label="Fulbito, inicio">
+        <span class="brand-mark" aria-hidden="true">F</span>
+        <span class="brand-name">Fulbito<em>IA</em></span>
+      </a>
+
+      <nav class="site-nav" aria-label="Navegación principal">
+        <a href="#producto">Producto</a>
+        <a href="#como-funciona">Cómo funciona</a>
+        <a href="#transparencia">Transparencia</a>
+        <a href="#faq">FAQ</a>
+      </nav>
+
+      <div class="header-actions">
+        <a class="btn btn-ghost" href={appUrl}>Abrir la app</a>
+        <a class="btn btn-primary" href={appUrl}>Ver pronósticos <span class="arrow" aria-hidden="true">→</span></a>
+      </div>
+    </div>
+  </header>
+
+  <main id="contenido">
+    <section class="hero">
+      <div class="container">
+        <div class="hero-grid">
+          <div class="hero-copy">
+            <span class="hero-badge">
+              <span class="live-dot" aria-hidden="true"></span>
+              Modelo abierto · Sin suscripciones
+            </span>
+
+            <h1>Probabilidades reales,<br /><span class="accent">no promesas.</span></h1>
+
+            <p class="hero-lead">
+              Fulbito convierte datos de fútbol, básquet, tenis y vóley en
+              <strong>probabilidades auditables</strong>. Poisson + Dixon-Coles,
+              historial liquidado contra la realidad y un Brier Score que puedes revisar.
+            </p>
+
+            <div class="hero-actions">
+              <a class="btn btn-primary btn-lg" href={appUrl}>
+                Abrir Fulbito <span class="arrow" aria-hidden="true">→</span>
+              </a>
+              <a class="btn btn-ghost btn-lg" href="#como-funciona">Cómo funciona</a>
+            </div>
+
+            <p class="hero-note">Gratis. Sin registro para explorar. Sin planes ni créditos.</p>
+          </div>
+
+          <div class="hero-visual" role="group" aria-label="Ejemplo ilustrativo de una lectura del motor">
+            <div class="match-card">
+              <div class="match-card-head">
+                <span class="card-label">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M3 3v18h18" /><path d="m7 14 3.5-4 3 3L20 6" />
+                  </svg>
+                  Lectura del motor
+                </span>
+                <span class="card-chip">Ejemplo</span>
+              </div>
+
+              <div class="match-body">
+                <div class="match-meta">
+                  <span>Premier League · Jornada 10</span>
+                  <span>1X2</span>
+                </div>
+
+                <div class="match-teams">
+                  <div class="team">
+                    <span class="team-shield" aria-hidden="true">ARS</span>
+                    <span class="team-name">Arsenal</span>
+                  </div>
+                  <span class="vs">VS</span>
+                  <div class="team">
+                    <span class="team-name">Chelsea</span>
+                    <span class="team-shield" aria-hidden="true">CHE</span>
+                  </div>
+                </div>
+
+                <div class="prob-grid">
+                  <div class="prob">
+                    <div class="prob-top">
+                      <span class="prob-name">Local</span>
+                      <span class="prob-value">47%</span>
+                    </div>
+                    <div class="prob-bar"><span class="bar-local"></span></div>
+                  </div>
+                  <div class="prob">
+                    <div class="prob-top">
+                      <span class="prob-name">Empate</span>
+                      <span class="prob-value">26%</span>
+                    </div>
+                    <div class="prob-bar"><span class="bar-draw"></span></div>
+                  </div>
+                  <div class="prob">
+                    <div class="prob-top">
+                      <span class="prob-name">Visita</span>
+                      <span class="prob-value">27%</span>
+                    </div>
+                    <div class="prob-bar"><span class="bar-away"></span></div>
+                  </div>
+                </div>
+
+                <div class="match-foot">
+                  <span>9 mercados analizados</span>
+                  <span class="brier-pill">
+                    <span class="live-dot" aria-hidden="true"></span>
+                    Brier 0.182
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div class="floating-note">
+              <span class="note-icon" aria-hidden="true">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 2v20" /><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                </svg>
+              </span>
+              <span>
+                <strong>Sin paywall</strong>
+                <small>Todo el historial y todos los picks, gratis.</small>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="stats" role="group" aria-label="Fulbito en números">
+          {stats.map((stat) => (
+            <div class="stat">
+              <span class="stat-value">{stat.value}</span>
+              <span class="stat-label">{stat.label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-alt" id="producto">
+      <div class="container">
+        <div class="section-head">
+          <span class="eyebrow">Producto</span>
+          <h2 class="section-title">Todo lo que necesitas para leer un partido. Nada de lo que no.</h2>
+          <p class="section-lead">
+            Sin gamificación vacía ni promesas de dinero fácil. Una herramienta para
+            entender probabilidades, seguir tus equipos y revisar si el modelo cumple.
+          </p>
+        </div>
+
+        <div class="feature-grid">
+          {features.map((feature, index) => (
+            <article class="feature">
+              <span class="feature-index" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
+              <span class="feature-icon" aria-hidden="true">
+                {index === 0 && (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 3v18h18" /><path d="m7 14 3.5-4 3 3L20 6" />
+                  </svg>
+                )}
+                {index === 1 && (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" />
+                  </svg>
+                )}
+                {index === 2 && (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="9" /><path d="m8.5 12.5 2.3 2.3 4.7-5.1" />
+                  </svg>
+                )}
+                {index === 3 && (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="9" /><path d="M3.6 9h16.8M3.6 15h16.8M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18" />
+                  </svg>
+                )}
+                {index === 4 && (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2v20" /><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                  </svg>
+                )}
+                {index === 5 && (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="6" y="2" width="12" height="20" rx="2.5" /><path d="M11 18h2" />
+                  </svg>
+                )}
+              </span>
+              <h3>{feature.title}</h3>
+              <p>{feature.text}</p>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="como-funciona">
+      <div class="container">
+        <div class="section-head">
+          <span class="eyebrow">Cómo funciona</span>
+          <h2 class="section-title">Del dato al pick, sin caja negra.</h2>
+          <p class="section-lead">
+            El motor no adivina: estima una distribución de resultados y la contrasta
+            con lo que pasa en la cancha. Así se construye una probabilidad útil.
+          </p>
+        </div>
+
+        <div class="steps">
+          {steps.map((step) => (
+            <article class="step">
+              <span class="step-num">{step.number}</span>
+              <h3>{step.title}</h3>
+              <p>{step.text}</p>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-alt" id="transparencia">
+      <div class="container">
+        <div class="transparency">
+          <div class="transparency-copy">
+            <span class="eyebrow">Transparencia</span>
+            <h2 class="section-title">Si el modelo falla, el historial lo muestra.</h2>
+            <p>
+              La mayoría de los pronósticos se venden con una captura de pantalla del
+              acierto. Fulbito registra todos los picks, los liquida contra el resultado
+              real y publica la calibración. Los malos días también cuentan.
+            </p>
+
+            <ul class="check-list">
+              <li>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4 4L19 6" /></svg>
+                Historial público con picks pendientes y liquidados.
+              </li>
+              <li>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4 4L19 6" /></svg>
+                Brier Score para medir calibración, no solo aciertos.
+              </li>
+              <li>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4 4L19 6" /></svg>
+                Sin borrar picks perdedores ni reescribir el pasado.
+              </li>
+            </ul>
+          </div>
+
+          <aside class="metric-card" aria-label="Ejemplo de calibración del modelo">
+            <div class="metric-card-head">
+              <span>Salud del motor</span>
+              <span class="card-chip">Ejemplo</span>
+            </div>
+
+            <div class="gauge-wrap">
+              <div class="gauge" role="img" aria-label="Indicador de calibración de ejemplo">
+                <span class="gauge-value">
+                  <strong>78%</strong>
+                  <small>Calibración</small>
+                </span>
+              </div>
+              <div class="gauge-copy">
+                <strong>Brier Score 0.182</strong>
+                <p>Más bajo es mejor. Se calcula comparando la probabilidad asignada con el resultado real de cada pick.</p>
+              </div>
+            </div>
+
+            <p class="metric-foot">
+              <strong>Nota:</strong> los valores mostrados son ilustrativos. Consulta el
+              historial público de la app para ver las métricas reales y actualizadas.
+            </p>
+          </aside>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="faq">
+      <div class="container">
+        <div class="section-head section-head-center">
+          <span class="eyebrow">Preguntas frecuentes</span>
+          <h2 class="section-title">Lo que suele preguntarse antes de entrar.</h2>
+        </div>
+
+        <div class="faq">
+          {faqs.map((faq) => (
+            <details>
+              <summary>{faq.q}</summary>
+              <p>{faq.a}</p>
+            </details>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <section class="final-cta">
+      <div class="container">
+        <div class="cta-panel">
+          <span class="eyebrow eyebrow-center">Empieza por un partido</span>
+          <h2>Lee la jornada con números que puedes revisar.</h2>
+          <p>
+            Abre Fulbito, elige un partido y mira cómo el modelo reparte las
+            probabilidades. Después vuelve al historial y comprueba si cumplió.
+          </p>
+          <div class="hero-actions">
+            <a class="btn btn-primary btn-lg" href={appUrl}>
+              Abrir Fulbito <span class="arrow" aria-hidden="true">→</span>
+            </a>
+            <a class="btn btn-ghost btn-lg" href={`${legalBase}/metodologia.html`}>Ver metodología</a>
+          </div>
+          <p class="hero-note">Sin registro para explorar. Sin suscripción. Sin promesas de dinero.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-inner">
+        <div class="footer-brand">
+          <a class="brand" href="/" aria-label="Fulbito, inicio">
+            <span class="brand-mark" aria-hidden="true">F</span>
+            <span class="brand-name">Fulbito<em>IA</em></span>
+          </a>
+          <p>
+            Probabilidades deportivas con un modelo estadístico auditable.
+            Proyecto independiente, sin casa de apuestas detrás.
+          </p>
+        </div>
+
+        <div class="footer-col">
+          <h3>Producto</h3>
+          <ul>
+            <li><a href={appUrl}>Abrir la app</a></li>
+            <li><a href="#como-funciona">Cómo funciona</a></li>
+            <li><a href="#transparencia">Transparencia</a></li>
+            <li><a href={`${legalBase}/resultados.html`}>Resultados</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h3>Legal</h3>
+          <ul>
+            <li><a href={`${legalBase}/metodologia.html`}>Metodología</a></li>
+            <li><a href={`${legalBase}/privacidad.html`}>Privacidad</a></li>
+            <li><a href={`${legalBase}/terminos.html`}>Términos</a></li>
+            <li><a href={`${legalBase}/juego-responsable.html`}>Juego responsable</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <span>© {new Date().getFullYear()} Fulbito. Analítica deportiva, no apuestas.</span>
+        <span class="mono">POISSON + DIXON-COLES · BRIER AUDITABLE</span>
+      </div>
+    </div>
+  </footer>
+</BaseLayout>
