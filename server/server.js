@@ -899,11 +899,11 @@ app.get('/api/auth/me', async (req, res) => {
 function claveHistorialUsuario(usuarioId) { return `historial:${usuarioId}`; }
 app.get('/api/mi-historial', requerirSesion(async (req, res) => {
   try {
-    const res = await db.query(
+    const filas = await db.query(
       'SELECT datos FROM pronosticos_usuario WHERE usuario_id = $1 ORDER BY id ASC',
       [req.sesion.usuarioId]
     );
-    const historial = res.rows.map(r => r.datos);
+    const historial = filas.rows.map(r => r.datos);
     res.setHeader('Cache-Control', 'private, max-age=0, no-store');
     res.json({ ok: true, historial: Array.isArray(historial) ? historial : [] });
   } catch (e) {
