@@ -225,6 +225,24 @@ async function main() {
       `status=${rProxy.status} fuente=${rProxy.headers.get('x-fulbito-fuente')}`
     );
 
+    const rCorsOk = await fetch(`${BASE}/health`, {
+      headers: { Origin: 'https://kkkxxxs.github.io' }
+    });
+    check(
+      'un origen permitido recibe la cabecera CORS',
+      rCorsOk.ok && rCorsOk.headers.get('access-control-allow-origin') === 'https://kkkxxxs.github.io',
+      `status=${rCorsOk.status} ACAO=${rCorsOk.headers.get('access-control-allow-origin')}`
+    );
+
+    const rCorsNo = await fetch(`${BASE}/health`, {
+      headers: { Origin: 'https://origen-no-permitido.example' }
+    });
+    check(
+      'un origen no permitido no recibe CORS y tampoco un 500',
+      rCorsNo.status === 200 && rCorsNo.headers.get('access-control-allow-origin') === null,
+      `status=${rCorsNo.status} ACAO=${rCorsNo.headers.get('access-control-allow-origin')}`
+    );
+
     // Esperar a que el debounce de escritura (500ms) persista en la DB antes de reiniciar.
     await new Promise((resolve) => setTimeout(resolve, 800));
   } finally {

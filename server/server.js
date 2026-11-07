@@ -68,7 +68,9 @@ app.use(cors({
     if (!origin || ORIGENES_PERMITIDOS.has(origin) || (origin === 'null' && permitirNull)) {
       return callback(null, true);
     }
-    return callback(new Error('Origen no permitido'));
+    // Un origen no permitido simplemente no recibe cabeceras CORS (el navegador
+    // bloquea la lectura). Devolver un error aquí convertía cada intento en 500.
+    return callback(null, false);
   }
 }));
 
