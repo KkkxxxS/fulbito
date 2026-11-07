@@ -207,6 +207,8 @@ local), y `resultados.html` lee `GET /api/historial`.
 | `too many connections` | URL sin pooler en Neon | Usar la connection string **pooled** |
 | Primera petición tarda ~1 min | Free Web Service dormido | Es normal; reintentar |
 | Datos desaparecen tras redeploy | Sin `DATABASE_URL`, SQLite es efímero en Render | Configurar Postgres |
+| Los cambios no aparecen tras `git push` | Auto-Deploy desactivado o build fallido | Revisar **Events/Logs** y hacer **Manual Deploy → Deploy latest commit** |
+| `/api/pronosticos` devuelve 404 | El servicio corre un commit anterior | Redeploy del último commit de `main` |
 
 ## 8. Seguridad
 
