@@ -16,6 +16,7 @@ const { spawn } = require('child_process');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
+const { construirEntradasDesdeArtefacto } = require('../historial-artefacto');
 
 const PUERTO = 33221;
 const CLAVE = 'clave-de-prueba';
@@ -50,6 +51,7 @@ function arrancarServidor() {
         HISTORIAL_API_KEY: CLAVE,
         DATABASE_URL: '',
         FULBITO_DATA_DIR: DATA_DIR,
+        FULBITO_AUTO_TRACK_RECORD: 'false',
         // Fuerza el proxy a descargar un artefacto de ejemplo: debe rechazarlo
         // y caer a la copia local commiteada, sin depender de GitHub.
         FULBITO_ARTIFACT_URL: ARTEFACTO_EJEMPLO
@@ -167,6 +169,51 @@ const ENTRADAS_NUEVAS = [
 
 async function main() {
   console.log('=== TEST DE PERSISTENCIA DEL SERVIDOR ===');
+
+  // La conversión artefacto -> historial es la base del track record: solo
+  // deben entrar partidos futuros, programados y con mercados.
+  const ahoraFijo = Date.parse('2026-11-07T12:00:00Z');
+  const artefactoPrueba = {
+    generadoEn: '2026-11-07T08:00:00Z',
+    pronosticos: {
+      'futuro': {
+        partido: {
+          id: 'futuro',
+          homeTeam: { name: 'Local FC' },
+          awayTeam: { name: 'Visita FC' },
+          competition: { name: 'Liga de Prueba' },
+          utcDate: '2026-11-07T14:00:00Z',
+          status: 'TIMED'
+        },
+        pronosticos: {
+          seleccionados: [
+            { categoria: 'resultado', parametros: { lado: 'local' }, seleccion: 'Gana Local FC', probabilidad: 55 }
+          ]
+        }
+      },
+      'pasado': {
+        partido: { id: 'pasado', utcDate: '2026-11-07T10:00:00Z', status: 'TIMED' },
+        pronosticos: { seleccionados: [{ categoria: 'resultado', probabilidad: 50 }] }
+      },
+      'finalizado': {
+        partido: { id: 'finalizado', utcDate: '2026-11-07T14:00:00Z', status: 'FINISHED' },
+        pronosticos: { seleccionados: [{ categoria: 'resultado', probabilidad: 50 }] }
+      }
+    }
+  };
+  const entradasPrueba = construirEntradasDesdeArtefacto(artefactoPrueba, ahoraFijo);
+  check(
+    'el artefacto solo aporta partidos futuros y programados',
+    entradasPrueba.length === 1 && entradasPrueba[0].partidoId === 'futuro' &&
+      entradasPrueba[0].local === 'Local FC' && entradasPrueba[0].visita === 'Visita FC' &&
+      entradasPrueba[0].liga === 'Liga de Prueba' && entradasPrueba[0].mercados.length === 1,
+    JSON.stringify(entradasPrueba)
+  );
+  check(
+    'un artefacto marcado como ejemplo no aporta entradas',
+    construirEntradasDesdeArtefacto({ datosDeEjemplo: true, ...artefactoPrueba }, ahoraFijo).length === 0
+  );
+
   const hijo1 = await arrancarServidor();
   try {
     const rPost = await postJson('/api/historial', { historial: [ENTRADA_BASE] });

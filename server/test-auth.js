@@ -49,7 +49,8 @@ function arrancarServidor() {
         ...process.env,
         PORT: String(PUERTO),
         DATABASE_URL: process.env.DATABASE_URL || '',
-        FULBITO_DATA_DIR: TEMP_DATA
+        FULBITO_DATA_DIR: TEMP_DATA,
+        FULBITO_AUTO_TRACK_RECORD: 'false'
       },
       stdio: ['ignore', 'ignore', 'pipe']
     });

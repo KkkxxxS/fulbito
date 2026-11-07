@@ -18,6 +18,7 @@
  */
 const fs = require('fs');
 const path = require('path');
+const { construirEntradasDesdeArtefacto } = require('./historial-artefacto');
 
 const BACKEND_URL = String(process.env.FULBITO_BACKEND_URL || process.env.BACKEND_URL || '')
   .replace(/\/+$/, '');
@@ -27,56 +28,9 @@ const ARCHIVO = process.argv[2]
   ? path.resolve(process.argv[2])
   : path.join(__dirname, 'pronosticos.json');
 const TAMANO_LOTE = 200;
-// Margen para no registrar un partido que ya comenzó (look-ahead bias).
-const MARGEN_MS = 5 * 60 * 1000;
 
 function log(...args) {
   console.log('[sync-historial]', ...args);
-}
-
-function construirEntradas(artefacto) {
-  const pronosticos = (artefacto && artefacto.pronosticos) || {};
-  const ahora = Date.now();
-  const entradas = [];
-  const vistos = new Set();
-
-  for (const [id, item] of Object.entries(pronosticos)) {
-    const partido = item && item.partido;
-    const prediccion = item && item.pronosticos;
-    if (!partido || !prediccion || !Array.isArray(prediccion.seleccionados)) continue;
-
-    const partidoId = String(partido.id || id);
-    if (vistos.has(partidoId)) continue;
-
-    const fechaMs = Date.parse(partido.utcDate || '');
-    if (!Number.isFinite(fechaMs) || fechaMs <= ahora - MARGEN_MS) continue;
-
-    const estado = String(partido.status || '').toUpperCase();
-    if (estado && !['TIMED', 'SCHEDULED'].includes(estado)) continue;
-
-    const mercados = prediccion.seleccionados
-      .filter(m => m && m.categoria)
-      .map(m => ({
-        categoria: String(m.categoria),
-        parametros: m.parametros && typeof m.parametros === 'object' ? m.parametros : {},
-        seleccion: m.seleccion || null,
-        probabilidad: Number.isFinite(Number(m.probabilidad)) ? Number(m.probabilidad) : null
-      }));
-    if (mercados.length === 0) continue;
-
-    vistos.add(partidoId);
-    entradas.push({
-      partidoId,
-      local: (partido.homeTeam && partido.homeTeam.name) || '',
-      visita: (partido.awayTeam && partido.awayTeam.name) || '',
-      liga: (partido.competition && partido.competition.name) || '',
-      fecha: partido.utcDate,
-      mercados,
-      verificado: false
-    });
-  }
-
-  return entradas;
 }
 
 async function enviarLote(lote) {
@@ -111,7 +65,7 @@ async function main() {
     log('El artefacto está marcado como datos de ejemplo: no se registra en el historial público.');
     return;
   }
-  const entradas = construirEntradas(artefacto);
+  const entradas = construirEntradasDesdeArtefacto(artefacto);
   if (entradas.length === 0) {
     log(`No hay partidos futuros en el artefacto (${artefacto.generadoEn || 'sin fecha'}).`);
     return;

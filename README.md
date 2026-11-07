@@ -68,6 +68,7 @@ Variables de entorno (copiá `.env.example` a `.env`):
 | `FOOTBALL_DATA_API_KEY` | Sí (backend) | API key de football-data.org |
 | `HISTORIAL_API_KEY` | Sí (prod) | Protege las escrituras de `/api/historial` y `/api/historial/ingest` (`X-Api-Key`) |
 | `FULBITO_ARTIFACT_URL` | No | URL del `pronosticos.json` diario. Por defecto usa el Release `artifacts-daily` |
+| `FULBITO_AUTO_TRACK_RECORD` | No | `false` desactiva el ingest + liquidación automáticos del backend. Por defecto se activan en producción/Render |
 | `CORS_ORIGINS` | No | Orígenes extra permitidos, separados por coma (previews o dominio propio) |
 | `DATABASE_URL` | Sí para cuentas | Postgres gestionado. Sin ella, cuentas e historial personal dan 503; el historial global usa SQLite local |
 | `DATABASE_SSL` | No | `false` para Postgres local/CI sin TLS (por defecto exige TLS) |
@@ -96,6 +97,12 @@ registra los partidos futuros en el historial público
 (`POST /api/historial/ingest`, idempotente) y liquida los ya terminados.
 También abre un **PR de recalibración** para aprobación manual (los overrides
 aprobados se guardan en `parametros_aprobados.json`).
+
+Además, el backend sincroniza el track record por su cuenta al arrancar y cada
+60 minutos: lee el mismo artefacto, registra los partidos futuros que todavía no
+comenzaron y liquida los terminados. Es idempotente y no necesita los secrets de
+GitHub, así que el historial no queda vacío si el workflow no puede escribir.
+Se puede desactivar con `FULBITO_AUTO_TRACK_RECORD=false`.
 
 `GET /api/pronosticos` sirve ese artefacto diario con cache y fallback local;
 el frontend lo consume antes de caer al cálculo JS. Si el artefacto viene

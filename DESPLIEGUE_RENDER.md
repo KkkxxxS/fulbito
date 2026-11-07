@@ -177,12 +177,14 @@ DELETE FROM usuarios WHERE usuario LIKE 'tester_%';
 
 Las sesiones se borran en cascada.
 
-## 6. Conectar GitHub Actions (ingest + liquidación diaria)
+## 6. Conectar GitHub Actions (opcional, recomendado)
 
-El workflow `actualizar_pronosticos.yml` registra los partidos nuevos con
-`POST /api/historial/ingest` y después liquida los terminados con
-`POST /api/historial/liquidar`, ambos con `X-Api-Key`. En GitHub:
-**Settings → Secrets and variables → Actions**:
+El backend ya registra y liquida el track record por su cuenta al arrancar y
+cada 60 minutos (lee el artefacto oficial y escribe directo en Postgres). Los
+secrets de GitHub son una vía adicional: el workflow `actualizar_pronosticos.yml`
+registra los partidos nuevos con `POST /api/historial/ingest` y después liquida
+los terminados con `POST /api/historial/liquidar`, ambos con `X-Api-Key`. En
+GitHub: **Settings → Secrets and variables → Actions**:
 
 | Secret | Valor |
 | --- | --- |
@@ -190,7 +192,7 @@ El workflow `actualizar_pronosticos.yml` registra los partidos nuevos con
 | `HISTORIAL_API_KEY` | el mismo valor configurado en Render |
 
 Sin estos secrets, el workflow omite el ingest y la liquidación (no falla), pero
-el historial global no se actualiza desde el pipeline. El frontend consume el
+el backend igual mantiene el historial actualizado. El frontend consume el
 artefacto diario a través de `GET /api/pronosticos` (proxy con cache y fallback
 local), y `resultados.html` lee `GET /api/historial`.
 

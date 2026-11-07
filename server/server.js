@@ -4,6 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const compression = require('compression');
 const { liquidarHistorial, marcadorDePartido, verificarMercado } = require('./liquidacion');
+const { construirEntradasDesdeArtefacto } = require('../historial-artefacto');
 const app = express();
 
 // Carga de .env (raíz del repo primero, luego server/) para desarrollo local.
@@ -1120,6 +1121,55 @@ app.get('/api/pronosticos', async (req, res) => {
   }
 });
 
+// ============ SINCRONIZACIÓN AUTOMÁTICA DEL TRACK RECORD ============
+// El workflow diario es la vía principal, pero depende de los secrets de
+// GitHub. El backend puede registrar y liquidar por sí mismo: lee el mismo
+// artefacto oficial y escribe directo en la DB, sin necesitar la API key.
+// Es idempotente y solo registra partidos que todavía no han comenzado.
+const AUTO_TRACK_RECORD = process.env.FULBITO_AUTO_TRACK_RECORD === 'true'
+  || (process.env.FULBITO_AUTO_TRACK_RECORD !== 'false'
+    && (process.env.NODE_ENV === 'production' || process.env.RENDER === 'true'));
+const INTERVALO_TRACK_RECORD_MS = 60 * 60 * 1000;
+
+let trackRecordEnCurso = false;
+
+async function sincronizarTrackRecord() {
+  if (trackRecordEnCurso) return;
+  trackRecordEnCurso = true;
+  try {
+    try {
+      const { datos, fuente } = await obtenerPronosticosOficiales();
+      const entradas = construirEntradasDesdeArtefacto(datos);
+      if (entradas.length === 0) {
+        console.log(`[track-record] sin partidos futuros en el artefacto (${fuente}).`);
+      } else {
+        const resultado = await ingestarHistorialGlobal(entradas);
+        console.log(`[track-record] artefacto ${fuente}: +${resultado.insertados} nuevos, ${resultado.omitidos} existentes, ${resultado.total} en total.`);
+      }
+    } catch (error) {
+      console.warn('[track-record] no se pudo registrar el artefacto:', error.message);
+    }
+
+    try {
+      const resultado = await liquidarHistorialDesdeApi();
+      if (resultado.liquidados > 0) {
+        console.log(`[track-record] liquidados ${resultado.liquidados}; pendientes ${resultado.pendientes}.`);
+      }
+    } catch (error) {
+      console.warn('[track-record] no se pudo liquidar:', error.message);
+    }
+  } finally {
+    trackRecordEnCurso = false;
+  }
+}
+
+function programarSincronizacionTrackRecord() {
+  if (!AUTO_TRACK_RECORD) return;
+  // Pequeña espera para no competir con el arranque y las migraciones.
+  setTimeout(() => { sincronizarTrackRecord(); }, 5000).unref?.();
+  setInterval(() => { sincronizarTrackRecord(); }, INTERVALO_TRACK_RECORD_MS).unref?.();
+}
+
 // Endpoint: partidos por rango de fechas
 app.get('/api/partidos', async (req, res) => {
   const { dateFrom, dateTo, competitions } = req.query;
@@ -1808,6 +1858,10 @@ inicializarHistorial().finally(async () => {
   }
   servidor = app.listen(PORT, () => {
     console.log(`Servidor de fulbito corriendo en el puerto ${PORT}`);
+    if (AUTO_TRACK_RECORD) {
+      console.log('[track-record] sincronización automática activada (cada 60 min).');
+    }
+    programarSincronizacionTrackRecord();
   });
 });
 
