@@ -1872,7 +1872,7 @@
         });
         if (r.ok) {
           const datos = await r.json();
-          if (datos && datos.pronosticos) return datos;
+          if (datos && datos.pronosticos && datos.datosDeEjemplo !== true) return datos;
         }
       } finally {
         clearTimeout(temporizador);
@@ -1882,7 +1882,11 @@
       // el archivo local para no bloquear la vista de pronósticos.
     }
     const r = await fetch('pronosticos.json', { cache: 'no-store' });
-    return r.ok ? r.json() : null;
+    if (!r.ok) return null;
+    const local = await r.json();
+    // Un artefacto de ejemplo no es un pronóstico oficial: devolver null hace
+    // que el motor JS calcule con los datos reales del partido.
+    return local && local.datosDeEjemplo !== true ? local : null;
   }
 
   function cargarPronosticosOficiales() {

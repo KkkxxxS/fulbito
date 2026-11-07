@@ -23,6 +23,12 @@ const BASE = `http://127.0.0.1:${PUERTO}`;
 const DIR = __dirname;
 const DATA_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'fulbito-persistencia-'));
 const FECHA_PASADA = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+// Artefacto trampa: el proxy debe rechazarlo por estar marcado como ejemplo.
+const ARTEFACTO_EJEMPLO = 'data:application/json,' + encodeURIComponent(JSON.stringify({
+  generadoEn: 'ejemplo',
+  datosDeEjemplo: true,
+  pronosticos: { '999': { partido: { id: '999' }, pronosticos: { seleccionados: [] } } }
+}));
 
 let fallos = 0;
 function check(nombre, condicion, detalle) {
@@ -44,8 +50,9 @@ function arrancarServidor() {
         HISTORIAL_API_KEY: CLAVE,
         DATABASE_URL: '',
         FULBITO_DATA_DIR: DATA_DIR,
-        // Fuerza el fallback local del proxy para que el test no dependa de GitHub.
-        FULBITO_ARTIFACT_URL: 'http://127.0.0.1:1/no-existe.json'
+        // Fuerza el proxy a descargar un artefacto de ejemplo: debe rechazarlo
+        // y caer a la copia local commiteada, sin depender de GitHub.
+        FULBITO_ARTIFACT_URL: ARTEFACTO_EJEMPLO
       },
       stdio: ['ignore', 'ignore', 'pipe']
     });
@@ -219,10 +226,11 @@ async function main() {
     const rProxy = await fetch(`${BASE}/api/pronosticos`);
     const proxyDatos = await rProxy.json();
     check(
-      'GET /api/pronosticos usa la copia local como fallback',
+      'GET /api/pronosticos descarta el ejemplo y usa la copia local',
       rProxy.ok && rProxy.headers.get('x-fulbito-fuente') === 'local' &&
-        Boolean(proxyDatos.pronosticos) && Object.keys(proxyDatos.pronosticos).length > 0,
-      `status=${rProxy.status} fuente=${rProxy.headers.get('x-fulbito-fuente')}`
+        Boolean(proxyDatos.pronosticos) && Object.keys(proxyDatos.pronosticos).length > 0 &&
+        proxyDatos.generadoEn !== 'ejemplo' && !proxyDatos.pronosticos['999'],
+      `status=${rProxy.status} fuente=${rProxy.headers.get('x-fulbito-fuente')} generadoEn=${proxyDatos.generadoEn}`
     );
 
     const rCorsOk = await fetch(`${BASE}/health`, {

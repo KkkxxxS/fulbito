@@ -87,6 +87,20 @@ function main() {
 
   // Subir/reemplazar cada asset
   for (const asset of ASSETS) {
+    // Si la corrida cayó en datos de ejemplo, no reemplazar el pronosticos.json
+    // real del día anterior: es peor mostrar picks inventados que uno viejo.
+    if (asset === 'pronosticos.json') {
+      try {
+        const datos = JSON.parse(fs.readFileSync(asset, 'utf8'));
+        if (datos && datos.datosDeEjemplo === true) {
+          console.warn('  [SKIP] pronosticos.json está marcado como datos de ejemplo; se conserva el artefacto real anterior.');
+          continue;
+        }
+      } catch (e) {
+        console.warn('  [SKIP] pronosticos.json no es JSON válido; se conserva el artefacto real anterior.');
+        continue;
+      }
+    }
     const idExistente = existeAsset(asset);
     if (idExistente) {
       console.log(`  → Eliminando asset previo: ${asset} (id=${idExistente})`);

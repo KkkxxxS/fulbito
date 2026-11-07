@@ -18,6 +18,14 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Restaurar telemetría acumulada (append-only) del Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Sin este paso cada corrida parte del JSONL commiteado (viejo) y el
+          # asset del Release se sobrescribe perdiendo el historial acumulado.
+          gh release download artifacts-daily --pattern pronosticos_historicos.jsonl --clobber || true
+          gh release download artifacts-daily --pattern bitacora_recalibracion.jsonl --clobber || true
       - name: Validar paridad del modelo (Python vs JS)
         run: python test_paridad.py
       - name: Suite de recalibración (12 escenarios)

@@ -90,15 +90,18 @@ Variables de entorno (copiá `.env.example` a `.env`):
 ## Pipeline diario
 
 `.github/workflows/actualizar_pronosticos.yml` corre a las **08:00 UTC**:
-ejecuta paridad + recalibración, regenera `pronosticos.json`, sube el artefacto
-al Release `artifacts-daily`, registra los partidos futuros en el historial
-público (`POST /api/historial/ingest`, idempotente) y liquida los ya terminados.
+restaura la telemetría acumulada del Release, ejecuta paridad + recalibración,
+regenera `pronosticos.json`, sube el artefacto al Release `artifacts-daily`,
+registra los partidos futuros en el historial público
+(`POST /api/historial/ingest`, idempotente) y liquida los ya terminados.
 También abre un **PR de recalibración** para aprobación manual (los overrides
 aprobados se guardan en `parametros_aprobados.json`).
 
 `GET /api/pronosticos` sirve ese artefacto diario con cache y fallback local;
-el frontend lo consume antes de caer al cálculo JS. `resultados.html` lee
-`GET /api/historial` y muestra el track record real (sin cifras hardcodeadas).
+el frontend lo consume antes de caer al cálculo JS. Si el artefacto viene
+marcado `datosDeEjemplo: true`, el proxy y el frontend lo descartan para no
+publicar picks inventados. `resultados.html` lee `GET /api/historial` y muestra
+el track record real (sin cifras hardcodeadas).
 
 El workflow `ci.yml` valida todo en cada push/PR (sintaxis, paridad, recalibración,
 persistencia, modelo, smoke y utilidades de frontend).

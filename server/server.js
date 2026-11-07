@@ -1089,6 +1089,10 @@ async function obtenerPronosticosOficiales() {
     if (!datos || typeof datos !== 'object' || !datos.pronosticos) {
       throw new Error('el artefacto no tiene el formato esperado');
     }
+    // Un artefacto de ejemplo nunca debe mostrarse como pronóstico oficial.
+    if (datos.datosDeEjemplo === true) {
+      throw new Error('el artefacto está marcado como datos de ejemplo');
+    }
     guardarEnCache('pronosticos-oficiales', datos);
     return { datos, fuente: 'release' };
   } catch (error) {
@@ -1096,7 +1100,7 @@ async function obtenerPronosticosOficiales() {
   }
 
   const local = leerPronosticosLocales();
-  if (local && local.pronosticos) {
+  if (local && local.pronosticos && local.datosDeEjemplo !== true) {
     guardarEnCache('pronosticos-oficiales', local);
     return { datos: local, fuente: 'local' };
   }
