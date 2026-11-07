@@ -79,6 +79,9 @@ async function inicializarBaseDeDatos() {
       CREATE TABLE IF NOT EXISTS pronosticos_globales (
         id SERIAL PRIMARY KEY,
         partido_id TEXT NOT NULL,
+        local TEXT,
+        visita TEXT,
+        liga TEXT,
         fecha TIMESTAMP WITH TIME ZONE NOT NULL,
         verificado BOOLEAN DEFAULT FALSE,
         marcador_final TEXT,
@@ -87,6 +90,10 @@ async function inicializarBaseDeDatos() {
       );
     `);
     await cliente.query('CREATE INDEX IF NOT EXISTS idx_partido_id ON pronosticos_globales(partido_id);');
+    // Migraciones idempotentes para bases creadas antes de estas columnas.
+    await cliente.query('ALTER TABLE pronosticos_globales ADD COLUMN IF NOT EXISTS local TEXT;');
+    await cliente.query('ALTER TABLE pronosticos_globales ADD COLUMN IF NOT EXISTS visita TEXT;');
+    await cliente.query('ALTER TABLE pronosticos_globales ADD COLUMN IF NOT EXISTS liga TEXT;');
 
     // 4. Tabla de Mercados (Detalle de cada pronóstico)
     await cliente.query(`
@@ -95,10 +102,14 @@ async function inicializarBaseDeDatos() {
         pronostico_id INTEGER REFERENCES pronosticos_globales(id) ON DELETE CASCADE,
         categoria TEXT NOT NULL,
         parametros JSONB NOT NULL,
-        acierto BOOLEAN
+        acierto BOOLEAN,
+        seleccion TEXT,
+        probabilidad NUMERIC
       );
     `);
     await cliente.query('CREATE INDEX IF NOT EXISTS idx_mercado_pronostico_id ON mercados_pronostico(pronostico_id);');
+    await cliente.query('ALTER TABLE mercados_pronostico ADD COLUMN IF NOT EXISTS seleccion TEXT;');
+    await cliente.query('ALTER TABLE mercados_pronostico ADD COLUMN IF NOT EXISTS probabilidad NUMERIC;');
 
     // 5. Tabla de Pronósticos de Usuario (Historial Personal)
     await cliente.query(`

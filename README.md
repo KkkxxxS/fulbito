@@ -66,7 +66,8 @@ Variables de entorno (copiá `.env.example` a `.env`):
 | Variable | Requerida | Descripción |
 | --- | --- | --- |
 | `FOOTBALL_DATA_API_KEY` | Sí (backend) | API key de football-data.org |
-| `HISTORIAL_API_KEY` | Sí (prod) | Protege las escrituras de `/api/historial` (`X-Api-Key`) |
+| `HISTORIAL_API_KEY` | Sí (prod) | Protege las escrituras de `/api/historial` y `/api/historial/ingest` (`X-Api-Key`) |
+| `FULBITO_ARTIFACT_URL` | No | URL del `pronosticos.json` diario. Por defecto usa el Release `artifacts-daily` |
 | `CORS_ORIGINS` | No | Orígenes extra permitidos, separados por coma (previews o dominio propio) |
 | `DATABASE_URL` | Sí para cuentas | Postgres gestionado. Sin ella, cuentas e historial personal dan 503; el historial global usa SQLite local |
 | `DATABASE_SSL` | No | `false` para Postgres local/CI sin TLS (por defecto exige TLS) |
@@ -84,13 +85,20 @@ Variables de entorno (copiá `.env.example` a `.env`):
 | `npm run test:auth` | Cuentas e historial personal (requiere `DATABASE_URL`; se omite sin ella) |
 | `npm run verify` | Verificación del modelo JS |
 | `npm run smoke` | Smoke test del frontend (carga de módulos) |
+| `node sync-historial.js` | Registra los partidos futuros del artefacto en el historial público (requiere `FULBITO_BACKEND_URL` y `HISTORIAL_API_KEY`) |
 
 ## Pipeline diario
 
 `.github/workflows/actualizar_pronosticos.yml` corre a las **08:00 UTC**:
-ejecuta paridad + recalibración, regenera `pronosticos.json`, commitea el
-artefacto y la telemetría, y abre un **PR de recalibración** para aprobación
-manual (los overrides aprobados se guardan en `parametros_aprobados.json`).
+ejecuta paridad + recalibración, regenera `pronosticos.json`, sube el artefacto
+al Release `artifacts-daily`, registra los partidos futuros en el historial
+público (`POST /api/historial/ingest`, idempotente) y liquida los ya terminados.
+También abre un **PR de recalibración** para aprobación manual (los overrides
+aprobados se guardan en `parametros_aprobados.json`).
+
+`GET /api/pronosticos` sirve ese artefacto diario con cache y fallback local;
+el frontend lo consume antes de caer al cálculo JS. `resultados.html` lee
+`GET /api/historial` y muestra el track record real (sin cifras hardcodeadas).
 
 El workflow `ci.yml` valida todo en cada push/PR (sintaxis, paridad, recalibración,
 persistencia, modelo, smoke y utilidades de frontend).

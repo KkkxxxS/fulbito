@@ -1741,6 +1741,7 @@ class GeneradorPronosticos:
         salida = {
             'version': '2.0',
             'generadoEn': datetime.now(timezone.utc).isoformat(),
+            'datosDeEjemplo': bool(self.usoDatosDeEjemplo),
             'modelo': {
                 'tipo': 'Poisson + Dixon-Coles',
                 'rhoDixonColes': self.config.RHO_DIXON_COLES,

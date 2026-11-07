@@ -4,102 +4,81 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Historial de Aciertos y Auditoría Pública | Fulbito</title>
-    <link rel="stylesheet" href="style.css?v=8">
+    <meta name="description" content="Track record público de Fulbito: pronósticos sellados antes del partido y liquidados contra resultados oficiales.">
+    <link rel="stylesheet" href="style.css?v=9">
     <link rel="icon" type="image/x-icon" href="favicon.ico">
     <style>
         .page-shell { max-width: 1000px; margin: 0 auto; padding: 40px 20px 80px; }
         .page-header { margin-bottom: 32px; border-bottom: 1px solid var(--line); padding-bottom: 20px; }
-        .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px; }
+        .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 20px; }
         .kpi-box { background: var(--bg-raised); border: 1px solid var(--card-border); padding: 20px; border-radius: var(--radius); text-align: center; }
         .kpi-box strong { display: block; font-size: 2.2rem; font-family: var(--font-display); color: var(--green); margin-bottom: 4px; }
         .kpi-box span { font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
         .audit-table { width: 100%; border-collapse: collapse; margin-top: 24px; background: var(--bg-raised); border-radius: var(--radius); overflow: hidden; }
-        .audit-table th, .audit-table td { padding: 14px 16px; text-align: left; border-bottom: 1px solid var(--line); font-size: 0.9rem; }
+        .audit-table th, .audit-table td { padding: 14px 16px; text-align: left; border-bottom: 1px solid var(--line); font-size: 0.9rem; vertical-align: top; }
         .audit-table th { background: rgba(255,255,255,0.03); color: var(--text-muted); font-weight: 600; }
-        .status-badge { padding: 4px 8px; border-radius: 4px; font-weight: 700; font-size: 0.75rem; text-transform: uppercase; }
+        .audit-table tbody tr:last-child td { border-bottom: 0; }
+        .status-badge { padding: 4px 8px; border-radius: 4px; font-weight: 700; font-size: 0.75rem; text-transform: uppercase; white-space: nowrap; }
         .status-badge.acierto { background: rgba(100, 228, 169, 0.15); color: var(--green); }
         .status-badge.fallo { background: rgba(255, 109, 125, 0.15); color: var(--red); }
-        .top-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
+        .top-nav { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 32px; flex-wrap: wrap; }
         .top-nav a { color: var(--brand); text-decoration: none; font-weight: 600; }
+        .audit-nota { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 8px; }
+        .audit-aviso { color: var(--text-dim); font-size: 0.82rem; margin-top: 12px; }
+        .audit-vacio { color: var(--text-muted); text-align: center; padding: 28px 16px; }
     </style>
 </head>
 <body data-tema="oscuro">
     <div class="page-shell">
         <nav class="top-nav">
             <a href="index.html">← Volver al Dashboard</a>
-            <span style="color:var(--text-muted); font-size:0.9rem;">Registro inmutable append-only</span>
+            <span style="color:var(--text-muted); font-size:0.9rem;">Registro append-only</span>
         </nav>
 
         <header class="page-header">
             <h1 style="font-size:2.2rem; color:var(--text); margin-bottom:8px;">Auditoría Pública de Pronósticos</h1>
-            <p style="color:var(--text-muted); font-size:1.05rem;">Cada predicción queda sellada antes del inicio del encuentro. Cuando el partido finaliza, se evalúa contra el marcador oficial y se incorpora de forma irreversible al cálculo de calibración.</p>
+            <p style="color:var(--text-muted); font-size:1.05rem;">Cada pronóstico se registra antes del inicio del encuentro. Cuando el partido termina, se evalúa contra el marcador oficial y queda sellado. Esta página se alimenta directamente de la API: no hay cifras de ejemplo.</p>
         </header>
 
         <div class="kpi-row">
             <div class="kpi-box">
-                <strong id="audit-brier">0.174</strong>
-                <span>Brier Score Global</span>
+                <strong id="audit-brier">—</strong>
+                <span>Brier Score (mercados)</span>
             </div>
             <div class="kpi-box">
-                <strong id="audit-acierto">76.8%</strong>
-                <span>Precisión en Picks Principales</span>
+                <strong id="audit-acierto">—</strong>
+                <span>Precisión de mercados liquidados</span>
             </div>
             <div class="kpi-box">
-                <strong id="audit-picks">1,420+</strong>
-                <span>Mercados Auditados</span>
+                <strong id="audit-picks">—</strong>
+                <span>Mercados auditados</span>
             </div>
             <div class="kpi-box">
-                <strong style="color:var(--brand);">100%</strong>
-                <span>Verificabilidad Paridad JS/Py</span>
+                <strong id="audit-partidos" style="color:var(--brand);">—</strong>
+                <span>Partidos registrados</span>
             </div>
         </div>
 
+        <p class="audit-nota" id="audit-nota">Cargando historial público…</p>
+        <p class="audit-aviso">Brier Score: menor es mejor. Se calcula sobre mercados ya liquidados, comparando la probabilidad publicada con el resultado real (0 o 1).</p>
+
         <section>
-            <h2 style="font-size:1.4rem; color:var(--text); margin-bottom:16px;">Muestra Reciente de Partidos Liquidados</h2>
+            <h2 style="font-size:1.4rem; color:var(--text); margin: 28px 0 16px;">Mercados liquidados recientemente</h2>
             <div style="overflow-x:auto;">
                 <table class="audit-table">
                     <thead>
                         <tr>
                             <th>Fecha</th>
                             <th>Partido</th>
-                            <th>Mercado Recomendado</th>
-                            <th>Prob. Estimada</th>
-                            <th>Marcador Real</th>
+                            <th>Mercado publicado</th>
+                            <th>Prob. estimada</th>
+                            <th>Marcador real</th>
                             <th>Estado</th>
                         </tr>
                     </thead>
                     <tbody id="audit-tbody">
                         <tr>
-                            <td>15 Oct 2026</td>
-                            <td>Arsenal vs Chelsea</td>
-                            <td>Más de 1.5 Goles</td>
-                            <td>84%</td>
-                            <td>2 - 1</td>
-                            <td><span class="status-badge acierto">Acertado</span></td>
-                        </tr>
-                        <tr>
-                            <td>15 Oct 2026</td>
-                            <td>Real Madrid vs Valencia</td>
-                            <td>Gana Local (1)</td>
-                            <td>72%</td>
-                            <td>3 - 0</td>
-                            <td><span class="status-badge acierto">Acertado</span></td>
-                        </tr>
-                        <tr>
-                            <td>14 Oct 2026</td>
-                            <td>Juventus vs Milan</td>
-                            <td>Ambos Anotan (Sí)</td>
-                            <td>61%</td>
-                            <td>0 - 0</td>
-                            <td><span class="status-badge fallo">Fallido</span></td>
-                        </tr>
-                        <tr>
-                            <td>14 Oct 2026</td>
-                            <td>Bayern vs Dortmund</td>
-                            <td>Total Goles Más 2.5</td>
-                            <td>78%</td>
-                            <td>2 - 2</td>
-                            <td><span class="status-badge acierto">Acertado</span></td>
+                            <td colspan="6" class="audit-vacio">Cargando datos reales…</td>
                         </tr>
                     </tbody>
                 </table>
@@ -107,8 +86,164 @@
         </section>
 
         <footer style="margin-top: 60px; border-top: 1px solid var(--line); padding-top: 20px; text-align: center; color: var(--text-dim); font-size: 0.85rem;">
-            Los datos históricos se sincronizan automáticamente con la base de datos de Fulbito Engine.
+            Datos en vivo desde la API de Fulbito. Solo se publican pronósticos registrados antes del inicio y liquidados con resultados oficiales.
         </footer>
     </div>
+
+    <noscript>
+        <p style="text-align:center;color:#999;">Esta página necesita JavaScript para consultar el historial público.</p>
+    </noscript>
+
+    <script>
+    (function () {
+        'use strict';
+
+        var API = 'https://fulbito-forh.onrender.com';
+        var tbody = document.getElementById('audit-tbody');
+        var nota = document.getElementById('audit-nota');
+        var kpiBrier = document.getElementById('audit-brier');
+        var kpiAcierto = document.getElementById('audit-acierto');
+        var kpiPicks = document.getElementById('audit-picks');
+        var kpiPartidos = document.getElementById('audit-partidos');
+        var formatoFecha = new Intl.DateTimeFormat('es-PE', { day: '2-digit', month: 'short', year: 'numeric' });
+        var formatoNumero = new Intl.NumberFormat('es-PE');
+
+        function probabilidad(valor) {
+            var n = Number(valor);
+            if (!isFinite(n)) return null;
+            return n > 1 ? n / 100 : n;
+        }
+
+        function fechaLegible(valor) {
+            var ms = Date.parse(valor || '');
+            return isFinite(ms) ? formatoFecha.format(new Date(ms)) : '—';
+        }
+
+        function texto(valor, respaldo) {
+            return valor == null || valor === '' ? (respaldo || '—') : String(valor);
+        }
+
+        function crearCelda(contenido, etiqueta) {
+            var td = document.createElement('td');
+            if (etiqueta) {
+                var span = document.createElement('span');
+                span.className = etiqueta;
+                span.textContent = contenido;
+                td.appendChild(span);
+            } else {
+                td.textContent = contenido;
+            }
+            return td;
+        }
+
+        function filaVacia(mensaje) {
+            var tr = document.createElement('tr');
+            var td = document.createElement('td');
+            td.colSpan = 6;
+            td.className = 'audit-vacio';
+            td.textContent = mensaje;
+            tr.appendChild(td);
+            return tr;
+        }
+
+        function pintarKpis(historial) {
+            var verificados = 0;
+            var aciertos = 0;
+            var sumaBrier = 0;
+            var conBrier = 0;
+
+            historial.forEach(function (registro) {
+                if (!registro || !registro.verificado) return;
+                (registro.mercados || []).forEach(function (mercado) {
+                    if (!mercado || typeof mercado.acierto !== 'boolean') return;
+                    verificados += 1;
+                    if (mercado.acierto) aciertos += 1;
+                    var p = probabilidad(mercado.probabilidad);
+                    if (p != null) {
+                        sumaBrier += Math.pow(p - (mercado.acierto ? 1 : 0), 2);
+                        conBrier += 1;
+                    }
+                });
+            });
+
+            kpiBrier.textContent = conBrier > 0 ? (sumaBrier / conBrier).toFixed(3) : '—';
+            kpiAcierto.textContent = verificados > 0 ? ((aciertos / verificados) * 100).toFixed(1) + '%' : '—';
+            kpiPicks.textContent = formatoNumero.format(verificados);
+            kpiPartidos.textContent = formatoNumero.format(historial.length);
+
+            var pendientes = historial.filter(function (h) { return h && !h.verificado; }).length;
+            if (historial.length === 0) {
+                nota.textContent = 'Aún no hay partidos registrados. El bot diario los agregará en la próxima corrida.';
+            } else {
+                nota.textContent = historial.length + ' partidos registrados · ' + pendientes + ' pendientes de liquidar · ' + verificados + ' mercados ya auditados.';
+            }
+        }
+
+        function pintarTabla(historial) {
+            var filas = [];
+            historial.forEach(function (registro) {
+                if (!registro || !registro.verificado) return;
+                (registro.mercados || []).forEach(function (mercado) {
+                    if (!mercado || typeof mercado.acierto !== 'boolean') return;
+                    filas.push({ registro: registro, mercado: mercado });
+                });
+            });
+
+            filas.sort(function (a, b) {
+                var fa = Date.parse(a.registro.liquidadoEn || a.registro.fecha || '') || 0;
+                var fb = Date.parse(b.registro.liquidadoEn || b.registro.fecha || '') || 0;
+                return fb - fa;
+            });
+
+            tbody.textContent = '';
+            if (filas.length === 0) {
+                tbody.appendChild(filaVacia('Todavía no hay partidos liquidados. Los pronósticos se registran antes de cada partido y se liquidan cuando termina.'));
+                return;
+            }
+
+            filas.slice(0, 40).forEach(function (fila) {
+                var registro = fila.registro;
+                var mercado = fila.mercado;
+                var tr = document.createElement('tr');
+                tr.appendChild(crearCelda(fechaLegible(registro.fecha)));
+                tr.appendChild(crearCelda(texto(registro.local, 'Local') + ' vs ' + texto(registro.visita, 'Visitante')));
+                tr.appendChild(crearCelda(texto(mercado.seleccion, mercado.categoria)));
+                var p = probabilidad(mercado.probabilidad);
+                tr.appendChild(crearCelda(p == null ? '—' : Math.round(p * 100) + '%'));
+                tr.appendChild(crearCelda(texto(registro.marcadorFinal)));
+                tr.appendChild(crearCelda(mercado.acierto ? 'Acertado' : 'Fallido', 'status-badge ' + (mercado.acierto ? 'acierto' : 'fallo')));
+                tbody.appendChild(tr);
+            });
+        }
+
+        function pintarError() {
+            kpiBrier.textContent = '—';
+            kpiAcierto.textContent = '—';
+            kpiPicks.textContent = '—';
+            kpiPartidos.textContent = '—';
+            nota.textContent = 'No se pudo cargar el historial público. Reintenta en unos minutos.';
+            tbody.textContent = '';
+            tbody.appendChild(filaVacia('No se pudo conectar con la API de Fulbito.'));
+        }
+
+        var control = typeof AbortController === 'function' ? new AbortController() : null;
+        var temporizador = control ? setTimeout(function () { control.abort(); }, 15000) : null;
+
+        fetch(API + '/api/historial', { cache: 'no-store', signal: control ? control.signal : undefined })
+            .then(function (r) {
+                if (!r.ok) throw new Error('HTTP ' + r.status);
+                return r.json();
+            })
+            .then(function (datos) {
+                var historial = datos && Array.isArray(datos.historial) ? datos.historial : [];
+                pintarKpis(historial);
+                pintarTabla(historial);
+            })
+            .catch(pintarError)
+            .finally(function () {
+                if (temporizador) clearTimeout(temporizador);
+            });
+    })();
+    </script>
 </body>
 </html>

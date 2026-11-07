@@ -1859,14 +1859,39 @@
   let pronosticosOficialesCargadosEn = 0;
   const TTL_PRONOSTICOS_OFICIALES = 60 * 60 * 1000;
 
+  // Descarga el artefacto oficial: primero el proxy del backend (que sirve el
+  // Release diario con cache) y, si falla, la copia relativa commiteada.
+  async function descargarPronosticosOficiales() {
+    try {
+      const control = new AbortController();
+      const temporizador = setTimeout(() => control.abort(), 12000);
+      try {
+        const r = await fetch(`${BACKEND_URL}/api/pronosticos`, {
+          cache: 'no-store',
+          signal: control.signal
+        });
+        if (r.ok) {
+          const datos = await r.json();
+          if (datos && datos.pronosticos) return datos;
+        }
+      } finally {
+        clearTimeout(temporizador);
+      }
+    } catch (e) {
+      // El backend puede estar dormido (Render free) o sin red: seguimos con
+      // el archivo local para no bloquear la vista de pronósticos.
+    }
+    const r = await fetch('pronosticos.json', { cache: 'no-store' });
+    return r.ok ? r.json() : null;
+  }
+
   function cargarPronosticosOficiales() {
     const ahora = Date.now();
     if (pronosticosOficialesCache && ahora - pronosticosOficialesCargadosEn < TTL_PRONOSTICOS_OFICIALES) {
       return Promise.resolve(pronosticosOficialesCache);
     }
     if (pronosticosOficialesPromesa) return pronosticosOficialesPromesa;
-    pronosticosOficialesPromesa = fetch('pronosticos.json', { cache: 'no-store' })
-      .then(r => r.ok ? r.json() : null)
+    pronosticosOficialesPromesa = descargarPronosticosOficiales()
       .then(datos => {
         pronosticosOficialesCache = datos;
         pronosticosOficialesCargadosEn = Date.now();

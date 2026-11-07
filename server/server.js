@@ -246,7 +246,7 @@ async function leerHistorialGlobal() {
   try {
     const res = await db.query(`
       SELECT p.*,
-             (SELECT json_agg(m.*) FROM mercados_pronostico m WHERE m.pronostico_id = p.id) as mercados
+             (SELECT json_agg(m.* ORDER BY m.id) FROM mercados_pronostico m WHERE m.pronostico_id = p.id) as mercados
       FROM pronosticos_globales p
       ORDER BY p.fecha DESC
     `);
@@ -255,11 +255,19 @@ async function leerHistorialGlobal() {
       partidoId: p.partido_id,
       id: p.id,
       // Mapeamos los nombres de columna para mantener compatibilidad con el frontend
+      local: p.local,
+      visita: p.visita,
+      liga: p.liga,
       fecha: p.fecha,
       verificado: p.verificado,
       marcadorFinal: p.marcador_final,
       liquidadoEn: p.liquidado_en,
-      mercados: p.mercados || []
+      mercados: (p.mercados || []).map(m => ({
+        ...m,
+        parametros: m.parametros || {},
+        // NUMERIC llega como string desde el driver de PostgreSQL.
+        probabilidad: m.probabilidad == null ? null : Number(m.probabilidad)
+      }))
     }));
   } catch (e) {
     console.error('Error leyendo historial global (se usa el storage local):', e.message);
@@ -297,11 +305,14 @@ function guardarHistorialLegacy(recortado) {
   return recortado;
 }
 
-async function guardarHistorialGlobal(historial) {
+async function guardarHistorialGlobal(historial, opciones = {}) {
   if (!Array.isArray(historial)) return [];
   const recortado = recortarHistorial(historial);
+  // `espejo` permite persistir solo las entradas nuevas en la DB pero mantener
+  // el cache/archivo legacy con el historial completo (usado por el ingest).
+  const completo = Array.isArray(opciones.espejo) ? recortarHistorial(opciones.espejo) : recortado;
 
-  if (!db.disponible()) return guardarHistorialLegacy(recortado);
+  if (!db.disponible()) return guardarHistorialLegacy(completo);
 
   try {
     // Para simplificar la actualización masiva, usamos una transacción.
@@ -326,18 +337,22 @@ async function guardarHistorialGlobal(historial) {
             pId = existente.rows[0].id;
             await client.query(`
               UPDATE pronosticos_globales
-              SET fecha = $1, verificado = $2, marcador_final = $3, liquidado_en = $4
+              SET fecha = $1, verificado = $2, marcador_final = $3, liquidado_en = $4,
+                  local = COALESCE($6, local), visita = COALESCE($7, visita), liga = COALESCE($8, liga)
               WHERE id = $5`,
               [fecha, Boolean(registro.verificado), registro.marcadorFinal || null,
-               registro.liquidadoEn || null, pId]
+               registro.liquidadoEn || null, pId, registro.local || null,
+               registro.visita || null, registro.liga || null]
             );
           } else {
             const pRes = await client.query(`
-              INSERT INTO pronosticos_globales (partido_id, fecha, verificado, marcador_final, liquidado_en)
-              VALUES ($1, $2, $3, $4, $5)
+              INSERT INTO pronosticos_globales
+                (partido_id, fecha, verificado, marcador_final, liquidado_en, local, visita, liga)
+              VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
               RETURNING id`,
               [String(registro.partidoId), fecha, Boolean(registro.verificado),
-               registro.marcadorFinal || null, registro.liquidadoEn || null]
+               registro.marcadorFinal || null, registro.liquidadoEn || null,
+               registro.local || null, registro.visita || null, registro.liga || null]
             );
             pId = pRes.rows[0].id;
           }
@@ -347,8 +362,13 @@ async function guardarHistorialGlobal(historial) {
           if (registro.mercados && Array.isArray(registro.mercados)) {
             for (const m of registro.mercados) {
               await client.query(
-                'INSERT INTO mercados_pronostico (pronostico_id, categoria, parametros, acierto) VALUES ($1, $2, $3, $4)',
-                [pId, m.categoria, JSON.stringify(m.parametros || {}), m.acierto]
+                `INSERT INTO mercados_pronostico
+                   (pronostico_id, categoria, parametros, acierto, seleccion, probabilidad)
+                 VALUES ($1, $2, $3, $4, $5, $6)`,
+                [pId, m.categoria, JSON.stringify(m.parametros || {}),
+                 typeof m.acierto === 'boolean' ? m.acierto : null,
+                 m.seleccion || null,
+                 Number.isFinite(Number(m.probabilidad)) ? Number(m.probabilidad) : null]
               );
             }
           }
@@ -363,14 +383,67 @@ async function guardarHistorialGlobal(historial) {
     });
 
     // Espejo legacy en archivo para no romper logs externos.
-    historialCacheMemoria = recortado;
-    fs.promises.writeFile(HISTORIAL_PATH, JSON.stringify(recortado, null, 2), 'utf8').catch(() => {});
+    historialCacheMemoria = completo;
+    fs.promises.writeFile(HISTORIAL_PATH, JSON.stringify(completo, null, 2), 'utf8').catch(() => {});
 
     return recortado;
   } catch (e) {
     console.error('Error guardando historial global (se usa el storage local):', e.message);
-    return guardarHistorialLegacy(recortado);
+    return guardarHistorialLegacy(completo);
   }
+}
+
+// Convierte una entrada arbitraria (p. ej. la que arma sync-historial.js desde
+// el artefacto Python) al shape que persiste el servidor. Los campos de texto
+// se recortan para que una escritura con la API key no pueda inflar la DB.
+function normalizarEntradaHistorial(entrada) {
+  if (!entrada || !entrada.partidoId) return null;
+  const mercados = (Array.isArray(entrada.mercados) ? entrada.mercados : [])
+    .filter(m => m && m.categoria)
+    .map(m => ({
+      categoria: String(m.categoria).slice(0, 40),
+      parametros: m.parametros && typeof m.parametros === 'object' ? m.parametros : {},
+      seleccion: m.seleccion == null ? null : String(m.seleccion).slice(0, 200),
+      probabilidad: Number.isFinite(Number(m.probabilidad)) ? Number(m.probabilidad) : null,
+      acierto: typeof m.acierto === 'boolean' ? m.acierto : null
+    }));
+  return {
+    partidoId: String(entrada.partidoId).slice(0, 64),
+    local: entrada.local ? String(entrada.local).slice(0, 120) : null,
+    visita: entrada.visita ? String(entrada.visita).slice(0, 120) : null,
+    liga: entrada.liga ? String(entrada.liga).slice(0, 120) : null,
+    fecha: entrada.fecha || entrada.timestamp || new Date().toISOString(),
+    mercados,
+    verificado: false,
+    marcadorFinal: null,
+    liquidadoEn: null
+  };
+}
+
+// Ingest idempotente del pool público: inserta solo partidos que aún no
+// existen. Si un partido ya fue liquidado, se conserva tal cual (nunca se
+// reemplaza por una predicción nueva).
+async function ingestarHistorialGlobal(entradas) {
+  const lista = (Array.isArray(entradas) ? entradas : [])
+    .map(normalizarEntradaHistorial)
+    .filter(Boolean);
+
+  const actual = await leerHistorialGlobal();
+  const existentes = new Set(actual.map(r => String(r.partidoId)));
+  const nuevas = [];
+  for (const entrada of lista) {
+    if (existentes.has(entrada.partidoId)) continue;
+    existentes.add(entrada.partidoId);
+    nuevas.push(entrada);
+  }
+
+  if (nuevas.length === 0) {
+    return { insertados: 0, omitidos: lista.length, total: actual.length };
+  }
+
+  const total = actual.concat(nuevas);
+  await guardarHistorialGlobal(nuevas, { espejo: total });
+  return { insertados: nuevas.length, omitidos: lista.length - nuevas.length, total: total.length };
 }
 
 async function inicializarHistorial() {
@@ -539,6 +612,24 @@ app.post('/api/historial', requireHistorialWriteKey, async (req, res) => {
 
 app.put('/api/historial', requireHistorialWriteKey, async (req, res) => {
   const c=req.body||{}; const historial=Array.isArray(c.historial)?c.historial:[]; if(historial.length>500)return res.status(400).json({error:'payload_too_large',message:'Máximo 500 entradas'}); const guardado=await guardarHistorialGlobal(historial); res.json({ok:true,historial:guardado,total:guardado.length});
+});
+
+// Ingest diario del artefacto oficial. Solo agrega partidos nuevos para que el
+// track record sea inmutable: un pronóstico ya sellado (o liquidado) no se
+// reemplaza por la predicción de una corrida posterior.
+app.post('/api/historial/ingest', requireHistorialWriteKey, async (req, res) => {
+  const c = req.body || {};
+  const historial = Array.isArray(c.historial) ? c.historial : [];
+  if (historial.length > 500) {
+    return res.status(400).json({ error: 'payload_too_large', message: 'Máximo 500 entradas' });
+  }
+  try {
+    const resultado = await ingestarHistorialGlobal(historial);
+    res.json({ ok: true, ...resultado });
+  } catch (e) {
+    console.error('Error en ingest de historial global:', e.message);
+    res.status(500).json({ error: 'ingest_error', message: 'No se pudo registrar el historial.' });
+  }
 });
 
 // ============ LIQUIDACIÓN SERVER-SIDE DEL TRACK RECORD ============
@@ -956,6 +1047,72 @@ function responderConCache(req, res, datos, maxAgeSegundos = 60) {
   res.setHeader('ETag', etag);
   res.json(datos);
 }
+
+// ============ ARTEFACTO OFICIAL DE PRONÓSTICOS ============
+// El pipeline Python publica `pronosticos.json` en un GitHub Release diario.
+// El navegador no puede consumir ese asset directamente porque la redirección
+// final a release-assets.githubusercontent.com no envía CORS. El backend lo
+// descarga y lo sirve desde su propio origen, con cache y copia local de
+// respaldo si GitHub no responde.
+const PRONOSTICOS_ARTIFACT_URL = process.env.FULBITO_ARTIFACT_URL
+  || 'https://github.com/KkkxxxS/fulbito/releases/download/artifacts-daily/pronosticos.json';
+const TTL_PRONOSTICOS_OFICIALES = 15 * 60 * 1000;
+
+function leerPronosticosLocales() {
+  try {
+    return JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'pronosticos.json'), 'utf8'));
+  } catch (e) {
+    return null;
+  }
+}
+
+async function obtenerPronosticosOficiales() {
+  const cacheado = obtenerDeCache('pronosticos-oficiales', TTL_PRONOSTICOS_OFICIALES);
+  if (cacheado) return { datos: cacheado, fuente: 'cache' };
+
+  try {
+    const control = new AbortController();
+    const temporizador = setTimeout(() => control.abort(), FETCH_TIMEOUT_MS);
+    let resp;
+    try {
+      resp = await fetch(PRONOSTICOS_ARTIFACT_URL, {
+        headers: { Accept: 'application/json', 'User-Agent': 'Fulbito/1.0' },
+        signal: control.signal
+      });
+    } finally {
+      clearTimeout(temporizador);
+    }
+    if (!resp.ok) throw new Error(`el artefacto respondió ${resp.status}`);
+    const datos = await resp.json();
+    if (!datos || typeof datos !== 'object' || !datos.pronosticos) {
+      throw new Error('el artefacto no tiene el formato esperado');
+    }
+    guardarEnCache('pronosticos-oficiales', datos);
+    return { datos, fuente: 'release' };
+  } catch (error) {
+    console.warn('No se pudo descargar el artefacto oficial (se usa la copia local):', error.message);
+  }
+
+  const local = leerPronosticosLocales();
+  if (local && local.pronosticos) {
+    guardarEnCache('pronosticos-oficiales', local);
+    return { datos: local, fuente: 'local' };
+  }
+
+  const error = new Error('No hay artefacto de pronósticos disponible.');
+  error.status = 503;
+  throw error;
+}
+
+app.get('/api/pronosticos', async (req, res) => {
+  try {
+    const { datos, fuente } = await obtenerPronosticosOficiales();
+    res.setHeader('X-Fulbito-Fuente', fuente);
+    responderConCache(req, res, datos, fuente === 'local' ? 60 : 300);
+  } catch (error) {
+    enviarErrorFuente(res, error, 'GET /api/pronosticos');
+  }
+});
 
 // Endpoint: partidos por rango de fechas
 app.get('/api/partidos', async (req, res) => {

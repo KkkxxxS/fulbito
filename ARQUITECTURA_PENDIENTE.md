@@ -54,8 +54,9 @@ Advirtamos explícitamente por qué los números que hoy se muestran en el panel
 ## Plan de Arquitectura a Mediano/Largo Plazo
 
 ### 1. Generación Diaria de Pronósticos — **Resuelto**
-- GitHub Actions (`actualizar_pronosticos.yml`, 08:00 UTC) ejecuta `pronosticos.py` con paridad verificada y commitea `pronosticos.json` + telemetría.
-- **Pendiente:** guardar cada jornada en una estructura persistente y versionada (DB) en vez de `git add -f pronosticos.json` diario sobre el repo.
+- GitHub Actions (`actualizar_pronosticos.yml`, 08:00 UTC) ejecuta `pronosticos.py` con paridad verificada y publica el artefacto en el Release `artifacts-daily`.
+- **Implementado:** `GET /api/pronosticos` sirve ese artefacto con cache y fallback local; el frontend lo consume antes de caer al motor JS. Ya no depende del `pronosticos.json` commiteado (que queda solo como respaldo).
+- **Implementado:** `sync-historial.js` registra cada jornada en el pool global vía `POST /api/historial/ingest` (idempotente, no reescribe pronósticos sellados) y luego se liquidan los resultados.
 
 ### 2. Verificación Autónoma de Resultados — **Resuelto (server-side)**
 - El frontend liquida el historial personal consultando partidos `FINISHED` (`actualizarHistorialConResultados` en `app-ui.js`).
@@ -69,11 +70,10 @@ Advirtamos explícitamente por qué los números que hoy se muestran en el panel
   (`HISTORIAL_MAX_ENTRIES`, por defecto `0` = sin tope) para permitir el
   track-record liquidado a escala.
 
-### 3. Sincronización Transparente con el Cliente — **Parcial**
-- `GET /api/historial` y `/api/historial/stats` existen, pero el cliente sigue
-  local-first (el remoto es solo respaldo), así que los partidos que el usuario no
-  visitó siguen fuera del track record visible.
-- **Pendiente:** frontend por defecto en `GET /api/historial` consolidado.
+### 3. Sincronización Transparente con el Cliente — **Resuelto para el track record público**
+- `GET /api/historial` y `/api/historial/stats` alimentan `resultados.html` con datos reales (KPIs y mercados liquidados), sin cifras hardcodeadas.
+- El historial personal sigue siendo local-first y se sincroniza con `/api/mi-historial` para usuarios logueados.
+- **Pendiente:** consolidar el historial personal anónimo entre dispositivos (requiere cuenta).
 
 ### 4. Deuda técnica restante (no cubierta por este documento)
 - **Motor canónico**: el frontend consume `pronosticos.json` (Python) por defecto

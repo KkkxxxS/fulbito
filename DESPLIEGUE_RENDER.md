@@ -84,6 +84,7 @@ Dashboard → servicio → **Environment** → **Add Environment Variable**:
 | `RAPIDAPI_VOLLEY_PATH` | ruta, por defecto `/matches/upcoming` | Opcional |
 | `CORS_ORIGINS` | orígenes extra separados por coma | Opcional |
 | `DATABASE_SSL` | `false` solo si tu Postgres no usa TLS | Opcional |
+| `FULBITO_ARTIFACT_URL` | URL del `pronosticos.json` diario; por defecto el Release `artifacts-daily` | Opcional |
 
 Genera `HISTORIAL_API_KEY` en PowerShell:
 
@@ -176,18 +177,22 @@ DELETE FROM usuarios WHERE usuario LIKE 'tester_%';
 
 Las sesiones se borran en cascada.
 
-## 6. Conectar GitHub Actions (liquidación diaria)
+## 6. Conectar GitHub Actions (ingest + liquidación diaria)
 
-El workflow `actualizar_pronosticos.yml` llama a `POST /api/historial/liquidar`
-con `X-Api-Key`. En GitHub: **Settings → Secrets and variables → Actions**:
+El workflow `actualizar_pronosticos.yml` registra los partidos nuevos con
+`POST /api/historial/ingest` y después liquida los terminados con
+`POST /api/historial/liquidar`, ambos con `X-Api-Key`. En GitHub:
+**Settings → Secrets and variables → Actions**:
 
 | Secret | Valor |
 | --- | --- |
 | `FULBITO_BACKEND_URL` | `https://fulbito-forh.onrender.com` |
 | `HISTORIAL_API_KEY` | el mismo valor configurado en Render |
 
-Sin estos secrets, el workflow omite la liquidación (no falla), pero el historial
-global no se actualiza desde el pipeline.
+Sin estos secrets, el workflow omite el ingest y la liquidación (no falla), pero
+el historial global no se actualiza desde el pipeline. El frontend consume el
+artefacto diario a través de `GET /api/pronosticos` (proxy con cache y fallback
+local), y `resultados.html` lee `GET /api/historial`.
 
 ## 7. Problemas comunes
 

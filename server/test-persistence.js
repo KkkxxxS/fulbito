@@ -5,8 +5,9 @@
  *
  * Verifica el ciclo que antes se perdía en Render free (filesystem efímero):
  *   1. El historial se escribe con X-Api-Key.
- *   2. Se mantiene al reiniciar (persistencia en SQLite).
- *   3. Las escrituras sin key son rechazadas.
+ *   2. El ingest diario solo agrega partidos nuevos (idempotente).
+ *   3. Un registro ya liquidado no se pisa con una predicción posterior.
+ *   4. Los mercados conservan selección y probabilidad al reiniciar.
  *
  * Usa un puerto propio y un directorio temporal: nunca toca `server/data`
  * (historial real del usuario) ni la base PostgreSQL configurada.
@@ -21,6 +22,7 @@ const CLAVE = 'clave-de-prueba';
 const BASE = `http://127.0.0.1:${PUERTO}`;
 const DIR = __dirname;
 const DATA_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'fulbito-persistencia-'));
+const FECHA_PASADA = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
 let fallos = 0;
 function check(nombre, condicion, detalle) {
@@ -41,7 +43,9 @@ function arrancarServidor() {
         PORT: String(PUERTO),
         HISTORIAL_API_KEY: CLAVE,
         DATABASE_URL: '',
-        FULBITO_DATA_DIR: DATA_DIR
+        FULBITO_DATA_DIR: DATA_DIR,
+        // Fuerza el fallback local del proxy para que el test no dependa de GitHub.
+        FULBITO_ARTIFACT_URL: 'http://127.0.0.1:1/no-existe.json'
       },
       stdio: ['ignore', 'ignore', 'pipe']
     });
@@ -97,29 +101,130 @@ async function leerHistorial() {
   return datos.historial;
 }
 
+async function leerStats() {
+  const r = await fetch(`${BASE}/api/historial/stats`);
+  return r.json();
+}
+
+async function postJson(ruta, cuerpo, conKey = true) {
+  const headers = { 'Content-Type': 'application/json' };
+  if (conKey) headers['X-Api-Key'] = CLAVE;
+  const r = await fetch(`${BASE}${ruta}`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(cuerpo)
+  });
+  const texto = await r.text();
+  let datos = null;
+  try { datos = JSON.parse(texto); } catch (e) {}
+  return { status: r.status, ok: r.ok, datos, texto };
+}
+
+const ENTRADA_BASE = {
+  partidoId: 123,
+  local: 'Alianza',
+  visita: 'U',
+  liga: 'PL',
+  fecha: FECHA_PASADA,
+  mercados: [
+    { categoria: 'resultado', parametros: { lado: 'local' }, seleccion: 'Gana Alianza', probabilidad: 54 }
+  ],
+  verificado: false
+};
+
+const ENTRADAS_NUEVAS = [
+  {
+    partidoId: 456,
+    local: 'Equipo A',
+    visita: 'Equipo B',
+    liga: 'PL',
+    fecha: FECHA_PASADA,
+    mercados: [
+      { categoria: 'resultado', parametros: { lado: 'local' }, seleccion: 'Gana A', probabilidad: 55 },
+      { categoria: 'btts', parametros: { si: true }, seleccion: 'Ambos anotan: Sí', probabilidad: 61 }
+    ],
+    verificado: false
+  },
+  {
+    partidoId: 789,
+    local: 'Equipo C',
+    visita: 'Equipo D',
+    liga: 'SA',
+    fecha: FECHA_PASADA,
+    mercados: [
+      { categoria: 'totalgoles', parametros: { linea: 2.5, direccion: 'mas' }, seleccion: 'Más de 2.5 goles', probabilidad: 58 }
+    ],
+    verificado: false
+  }
+];
+
 async function main() {
   console.log('=== TEST DE PERSISTENCIA DEL SERVIDOR ===');
   const hijo1 = await arrancarServidor();
   try {
-    const payload = {
-      historial: [
-        { partidoId: 123, local: 'Alianza', visita: 'U', liga: 'PL', fecha: new Date().toISOString(), verificado: false }
-      ]
-    };
-    const rPost = await fetch(`${BASE}/api/historial`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Api-Key': CLAVE },
-      body: JSON.stringify(payload)
-    });
-    const postDatos = await rPost.json();
-    check('POST con X-Api-Key guarda el historial', rPost.ok && postDatos.total === 1, JSON.stringify(postDatos));
+    const rPost = await postJson('/api/historial', { historial: [ENTRADA_BASE] });
+    check('POST con X-Api-Key guarda el historial', rPost.ok && rPost.datos.total === 1, rPost.texto);
 
-    const rSinKey = await fetch(`${BASE}/api/historial`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
+    const rSinKey = await postJson('/api/historial', { historial: [ENTRADA_BASE] }, false);
     check('POST sin X-Api-Key es rechazado (401)', rSinKey.status === 401, `status=${rSinKey.status}`);
+
+    const rIngestSinKey = await postJson('/api/historial/ingest', { historial: ENTRADAS_NUEVAS }, false);
+    check('POST ingest sin X-Api-Key es rechazado (401)', rIngestSinKey.status === 401, `status=${rIngestSinKey.status}`);
+
+    const rIngest = await postJson('/api/historial/ingest', { historial: ENTRADAS_NUEVAS });
+    check(
+      'POST ingest inserta solo los partidos nuevos',
+      rIngest.ok && rIngest.datos.insertados === 2 && rIngest.datos.omitidos === 0 && rIngest.datos.total === 3,
+      rIngest.texto
+    );
+
+    const rIngest2 = await postJson('/api/historial/ingest', { historial: ENTRADAS_NUEVAS });
+    check(
+      'POST ingest es idempotente',
+      rIngest2.ok && rIngest2.datos.insertados === 0 && rIngest2.datos.omitidos === 2 && rIngest2.datos.total === 3,
+      rIngest2.texto
+    );
+
+    let historial = await leerHistorial();
+    const entrada456 = historial.find((h) => String(h.partidoId) === '456');
+    const mercado456 = entrada456 && entrada456.mercados && entrada456.mercados[0];
+    check(
+      'los mercados conservan selección y probabilidad',
+      Boolean(mercado456) && mercado456.seleccion === 'Gana A' && mercado456.probabilidad === 55,
+      JSON.stringify(mercado456)
+    );
+
+    // Liquidamos manualmente la entrada 456 con el historial completo (el POST
+    // legacy reemplaza el archivo, igual que hace el cliente).
+    const conLiquidado = historial.map((h) => String(h.partidoId) === '456'
+      ? { ...h, verificado: true, marcadorFinal: '2-1', liquidadoEn: new Date().toISOString() }
+      : h);
+    const rLiquidar = await postJson('/api/historial', { historial: conLiquidado });
+    check('una entrada se puede marcar como liquidada', rLiquidar.ok, rLiquidar.texto);
+
+    const rIngest3 = await postJson('/api/historial/ingest', { historial: [ENTRADAS_NUEVAS[0]] });
+    historial = await leerHistorial();
+    const entrada456Liquidada = historial.find((h) => String(h.partidoId) === '456');
+    check(
+      'el ingest no pisa un registro ya liquidado',
+      rIngest3.ok && rIngest3.datos.insertados === 0 &&
+        Boolean(entrada456Liquidada) && entrada456Liquidada.verificado === true &&
+        entrada456Liquidada.marcadorFinal === '2-1',
+      JSON.stringify(entrada456Liquidada)
+    );
+
+    const stats = await leerStats();
+    check('stats refleja total y verificados', stats.total === 3 && stats.verificados === 1, JSON.stringify(stats));
+
+    const rProxy = await fetch(`${BASE}/api/pronosticos`);
+    const proxyDatos = await rProxy.json();
+    check(
+      'GET /api/pronosticos usa la copia local como fallback',
+      rProxy.ok && rProxy.headers.get('x-fulbito-fuente') === 'local' &&
+        Boolean(proxyDatos.pronosticos) && Object.keys(proxyDatos.pronosticos).length > 0,
+      `status=${rProxy.status} fuente=${rProxy.headers.get('x-fulbito-fuente')}`
+    );
+
     // Esperar a que el debounce de escritura (500ms) persista en la DB antes de reiniciar.
     await new Promise((resolve) => setTimeout(resolve, 800));
   } finally {
@@ -129,8 +234,28 @@ async function main() {
   const hijo2 = await arrancarServidor();
   try {
     const historial = await leerHistorial();
-    check('el historial sobrevive al reinicio del servidor', historial.length === 1 && historial[0].local === 'Alianza',
-      JSON.stringify(historial));
+    check('el historial sobrevive al reinicio del servidor', historial.length === 3, JSON.stringify(historial));
+
+    const entrada456 = historial.find((h) => String(h.partidoId) === '456');
+    check(
+      'el estado liquidado sobrevive al reinicio',
+      Boolean(entrada456) && entrada456.verificado === true && entrada456.marcadorFinal === '2-1',
+      JSON.stringify(entrada456)
+    );
+
+    const mercado456 = entrada456 && entrada456.mercados && entrada456.mercados[0];
+    check(
+      'los campos de mercado sobreviven al reinicio',
+      Boolean(mercado456) && mercado456.seleccion === 'Gana A' && mercado456.probabilidad === 55,
+      JSON.stringify(mercado456)
+    );
+
+    const rIngest4 = await postJson('/api/historial/ingest', { historial: ENTRADAS_NUEVAS });
+    check(
+      'el ingest sigue siendo idempotente tras el reinicio',
+      rIngest4.ok && rIngest4.datos.insertados === 0 && rIngest4.datos.omitidos === 2,
+      rIngest4.texto
+    );
   } finally {
     await detener(hijo2);
   }
