@@ -133,9 +133,19 @@ async function inicializarBaseDeDatos() {
   }
 }
 
+function normalizarParametrosQuery(params) {
+  return params === undefined || Array.isArray(params) ? params : [params];
+}
+
 module.exports = {
   pool,
   disponible,
   inicializarBaseDeDatos,
-  query: (text, params) => obtenerPool().query(text, params)
+  normalizarParametrosQuery,
+  query: (text, params) => {
+    // `pg` exige que los valores sean un array. Aceptamos un escalar para no
+    // repetir el fallo "Query values must be an array" que dejó la liquidación
+    // del track record sin ejecutarse en producción.
+    return obtenerPool().query(text, normalizarParametrosQuery(params));
+  }
 };

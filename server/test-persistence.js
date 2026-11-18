@@ -17,6 +17,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const { construirEntradasDesdeArtefacto } = require('../historial-artefacto');
+const db = require('./db');
 
 const PUERTO = 33221;
 const CLAVE = 'clave-de-prueba';
@@ -169,6 +170,17 @@ const ENTRADAS_NUEVAS = [
 
 async function main() {
   console.log('=== TEST DE PERSISTENCIA DEL SERVIDOR ===');
+
+  console.log('\n0. Normalización de parámetros de db.query');
+  check(
+    'un escalar se envuelve en un array',
+    JSON.stringify(db.normalizarParametrosQuery('2026-11-18')) === '["2026-11-18"]'
+  );
+  check(
+    'un array se conserva',
+    JSON.stringify(db.normalizarParametrosQuery(['a', 1])) === '["a",1]'
+  );
+  check('undefined se conserva (consulta sin valores)', db.normalizarParametrosQuery(undefined) === undefined);
 
   // La conversión artefacto -> historial es la base del track record: solo
   // deben entrar partidos futuros, programados y con mercados.

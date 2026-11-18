@@ -712,7 +712,7 @@ async function liquidarHistorialDesdeApi() {
     FROM pronosticos_globales p
     WHERE p.verificado = FALSE
       AND p.fecha <= $1`,
-    hoy.toISOString()
+    [hoy.toISOString()]
   );
 
   const pendientes = resPendientes.rows;
