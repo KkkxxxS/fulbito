@@ -11,10 +11,82 @@
 (function (global) {
   'use strict';
 
-  // Motion 11 expone el global `Motion` (mayúscula); el resto de la app usa
-  // `motion` (minúscula). Sin este alias, app-ui.js lanza "motion is not defined"
-  // al animar tarjetas y contadores.
-  global.motion = global.Motion;
+  // Motion 11 expone el global `Motion` (mayúscula) como un objeto con
+  // `animate`, `stagger`, etc. app-ui.js usa la API de Motion One:
+  //   motion(objetivo, keyframesConOpciones)
+  //   motion.stagger(objetivos, keyframesConOpciones, { delay })
+  // Este puente traduce esas llamadas a `Motion.animate`, separando las
+  // opciones que el código mezcla con los keyframes. Sin él, la app lanza
+  // "motion is not defined" al animar tarjetas y contadores.
+  var OPCIONES_DE_ANIMACION = {
+    duration: true,
+    easing: true,
+    delay: true,
+    endDelay: true,
+    repeat: true,
+    direction: true,
+    onUpdate: true,
+    onComplete: true,
+    onPlay: true,
+    onStop: true
+  };
+
+  function separarOpciones(keyframes) {
+    var limpios = {};
+    var opciones = {};
+    for (var clave in keyframes) {
+      if (!Object.prototype.hasOwnProperty.call(keyframes, clave)) continue;
+      if (OPCIONES_DE_ANIMACION[clave]) {
+        opciones[clave] = keyframes[clave];
+      } else {
+        limpios[clave] = keyframes[clave];
+      }
+    }
+    return { keyframes: limpios, opciones: opciones };
+  }
+
+  function combinarOpciones(base, extra) {
+    var resultado = {};
+    var clave;
+    for (clave in base) resultado[clave] = base[clave];
+    if (extra) {
+      for (clave in extra) resultado[clave] = extra[clave];
+    }
+    return resultado;
+  }
+
+  function sinMotor() {
+    // Si el CDN de Motion no cargó, devolvemos un objeto inerte para que la
+    // interfaz siga funcionando sin animaciones en vez de romperse.
+    return { finished: Promise.resolve(), stop: function () {} };
+  }
+
+  global.motion = function (objetivo, keyframes, opciones) {
+    var motor = global.Motion;
+    if (!motor || typeof motor.animate !== 'function') return sinMotor();
+    var partes = separarOpciones(keyframes || {});
+    return motor.animate(objetivo, partes.keyframes, combinarOpciones(partes.opciones, opciones));
+  };
+
+  global.motion.stagger = function (objetivos, keyframes, opciones) {
+    var motor = global.Motion;
+    if (!motor || typeof motor.animate !== 'function') return sinMotor();
+    var partes = separarOpciones(keyframes || {});
+    var combinadas = combinarOpciones(partes.opciones, opciones);
+    var espera = typeof combinadas.delay === 'number' ? combinadas.delay : 0;
+    combinadas.delay = motor.stagger(espera);
+    return motor.animate(objetivos, partes.keyframes, combinadas);
+  };
+
+  // Conservar el resto de utilidades de Motion (spring, inView, etc.) sin
+  // pisar el puente que acabamos de definir.
+  if (global.Motion) {
+    for (var utilidad in global.Motion) {
+      if (Object.prototype.hasOwnProperty.call(global.Motion, utilidad) && !(utilidad in global.motion)) {
+        global.motion[utilidad] = global.Motion[utilidad];
+      }
+    }
+  }
 
   global.__fulbitoErrorMostrado = false;
 

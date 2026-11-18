@@ -104,5 +104,54 @@ for (const m of modulos) {
   }
 }
 
+// Regresión: bootstrap.js debe exponer la API que usa app-ui.js
+// (`motion(...)` y `motion.stagger(...)`) aunque el global del CDN sea `Motion`.
+if (typeof sandbox.motion === 'function' && typeof sandbox.motion.stagger === 'function') {
+  console.log('  [OK ] bootstrap.js expone motion() y motion.stagger()');
+} else {
+  console.log('  [FALLA] bootstrap.js no expone motion()/motion.stagger()');
+  fallos++;
+}
+
+let captura = null;
+sandbox.Motion = {
+  animate(objetivo, keyframes, opciones) {
+    captura = { objetivo, keyframes, opciones };
+    return { finished: Promise.resolve(), stop() {} };
+  },
+  stagger(paso) {
+    return (i) => i * paso;
+  }
+};
+
+sandbox.motion('tarjeta', { opacity: [0, 1], duration: 0.4, easing: 'ease-out' });
+const opcionesSeparadas =
+  captura &&
+  captura.keyframes &&
+  !('duration' in captura.keyframes) &&
+  !('easing' in captura.keyframes) &&
+  captura.opciones.duration === 0.4 &&
+  captura.opciones.easing === 'ease-out';
+if (opcionesSeparadas) {
+  console.log('  [OK ] motion() separa duración/easing de los keyframes');
+} else {
+  console.log('  [FALLA] motion() no separa las opciones de animación');
+  fallos++;
+}
+
+captura = null;
+sandbox.motion.stagger(['a', 'b'], { opacity: [0, 1], duration: 0.3 }, { delay: 0.06 });
+const staggerOk =
+  captura &&
+  captura.opciones.duration === 0.3 &&
+  typeof captura.opciones.delay === 'function' &&
+  captura.opciones.delay(2) === 0.12;
+if (staggerOk) {
+  console.log('  [OK ] motion.stagger() aplica el retardo escalonado');
+} else {
+  console.log('  [FALLA] motion.stagger() no aplica el retardo escalonado');
+  fallos++;
+}
+
 console.log(`\n=== HUMO FRONTEND: ${fallos === 0 ? 'TODOS LOS MODULOS CARGAN' : `${fallos} CON FALLO`} ===`);
 process.exit(fallos === 0 ? 0 : 1);
