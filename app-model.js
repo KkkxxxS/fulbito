@@ -1517,40 +1517,171 @@
     return s;
   }
 
-  function verificarMercado(categoria, parametros, golesLocal, golesVisita) {
+  // ======= RATINGS ELO DYNAMIC (actualizables por cada partido liquidado) =======
+  const K_FACTOR = 20; // qué tanto cambia el rating tras cada partido
+  const HOME_ADVANTAGE = 100; // puntos extra de localía en rating
+
+  // Rating inicial sobre los partidos verificados del backend.
+  // Se calcula una vez al cargar la app y luego se actualiza POST-liquidación.
+  function calcularRatingInicial(equipoNombre, historialVerificado) {
+    const partidos = historialVerificado || [];
+    if (!partidos.length) { return { ataque: 1, defensa: 1 }; }
+    let gf = 0, gc = 0, p = 0;
+    partidos.forEach(h => {
+      const locales = h.local || '';
+      const visitantes = h.visita || '';
+      const esLocal = (locales || '').includes(equipoNombre);
+      const marcadores = h.mercados || [];
+      let gE = 0, gV = 0;
+      marcadores.forEach(m => {
+        if (m.categoria === 'resultado') {
+          const lado = m.parametros?.lado || '';
+          if (lado === 'local') { gE += (m.acierto ? 1 : 0); gV += (m.acierto ? 0 : 1); }
+          else if (lado === 'visita') { gE += (m.acierto ? 0 : 1); gV += (m.acierto ? 1 : 0); }
+          else { gE += 1; gV += 1; } // empate
+        }
+      });
+      if (esLocal) { gf += gE; gc += gV; }
+      else         { gf += gV; gc += gE; }
+      p += 1;
+    });
+    const a = p > 0 ? Math.max(0.5, gf / p) : 1;
+    const d = p > 0 ? Math.max(0.5, gc / p) : 1;
+    return { ataque: Number(a.toFixed(3)), defensa: Number(d.toFixed(3)) };
+  }
+
+  // Rating actual después de liquidar un partido (actualiza en-place el objeto global)
+  function actualizarRating(equipoNombre, ganó, historialVerificado) {
+    const ratings = window.__fulbitoEloRatings__ || {};
+    if (!ratings[equipoNombre]) {
+      ratings[equipoNombre] = calcularRatingInicial(equipoNombre, historialVerificado);
+    }
+    const r = ratings[equipoNombre];
+    const cambio = ganó ? K_FACTOR / Math.max(1, (historialVerificado?.length || 1)) : -K_FACTOR / Math.max(1, (historialVerificado?.length || 1));
+    r.ataque = Math.max(0.5, Math.min(1.8, r.ataque + cambio));
+    r.defensa = Math.max(0.5, Math.min(1.8, r.defensa + (ganó ? -cambio : cambio)));
+    ratings[equipoNombre] = r;
+    window.__fulbitoEloRatings__ = ratings;
+    return ratings;
+  }
+
+  // Convierte ratings Elo + factor home en λ esperados de goles
+  function obtenerLambda(equipoLocal, equipoVisitante, ratingsLocal, ratingsVisitante, factorHome = 1.10) {
+    const lambdaLocal  = Math.max(0.1, ratingsLocal.ataque * ratingsVisitante.defensa * factorHome);
+    const lambdaVisitante = Math.max(0.1, ratingsVisitante.ataque * ratingsLocal.defensa / factorHome);
+    return { lambdaLocal, lambdaVisitante };
+  }
+
+  // Poisson: P(k goles | lambda) — reutiliza la función existente más abajo
+  // (la de la sección Poisson original, se llama poisson(k, lambda))
+
+  // Calcula probabilidad 1X2 dado λs
+  function probabilidad1X2(lambdaLocal, lambdaVisitante) {
+    const maxG = 10; // suficiente para λ ≤ 4
+    let pLocal = 0, pEmpate = 0, pVisitante = 0;
+    for (let i = 0; i <= maxG; i++) {
+      const piL = poisson(i, lambdaLocal);
+      const piV = poisson(i, lambdaVisitante);
+      pEmpate += piL * piV;
+      for (let j = 0; j <= maxG; j++) {
+        const pjL = poisson(j, lambdaLocal);
+        const pjV = poisson(j, lambdaVisitante);
+        if (i > j) pLocal += piL * pjV;      // local gana cuando i > j
+        if (i < j) pVisitante += piL * pjV;  // visitante gana cuando i < j
+      }
+    }
+    // Normalizar por si da < 1 por error de redondeo
+    const total = pLocal + pEmpate + pVisitante;
+    return {
+      local: Math.round((pLocal / total) * 10000) / 100,
+      empate:   Math.round((pEmpate / total) * 10000) / 100,
+      visitante: Math.round((pVisitante / total) * 10000) / 100
+    };
+  }
+
+  // ---- INSERTAR ANTIGUO verificarMercado PARA NO ROMPIR NADA ----
+  const verificarMercadoAntiguo = function verificarMercado(categoria, parametros, golesLocal, golesVisita) {
     switch (categoria) {
-      case 'resultado':
-        if (parametros.lado === 'local') return golesLocal > golesVisita;
-        if (parametros.lado === 'visita') return golesVisita > golesLocal;
-        return golesLocal === golesVisita;
-      case 'doble':
-        if (parametros.lado === '1X') return golesLocal >= golesVisita;
-        if (parametros.lado === 'X2') return golesVisita >= golesLocal;
-        return golesLocal !== golesVisita;
+      case 'resultado':  if (parametros.lado === 'local') return golesLocal > golesVisita;
+                       if (parametros.lado === 'visita') return golesVisita > golesLocal;
+                       return golesLocal === golesVisita;
+      case 'doble':      if (parametros.lado === '1X') return golesLocal >= golesVisita;
+                       if (parametros.lado === 'X2') return golesVisita >= golesLocal;
+                       return golesLocal !== golesVisita;
+      case 'totalgoles': { // legado: usa la lógica original con lambda por defecto
+        const lambda = (parametros && parametros.lineas) ? parametros.lineas : 3.5;
+        return (golesLocal + golesVisita) > lambda;
+      }
+      default: return false;
+    }
+  };
+
+  // ---- NUEVO verificarMercado: Elo + Poisson ----
+  function verificarMercado(categoria, parametros, golesLocal, golesVisita, ratingsLocal, ratingsVisitante, equipoLocal, equipoVisitante) {
+    // Si no hay ratings todavía, caemos al antiguo para no romper nada
+    if (!ratingsLocal || !ratingsVisitante) return verificarMercadoAntiguo(categoria, parametros, golesLocal, golesVisita);
+
+    const { lambdaLocal, lambdaVisitante } = obtenerLambda(
+      equipoLocal || 'local', equipoVisitante || 'visitante', ratingsLocal, ratingsVisitante
+    );
+
+    switch (categoria) {
+      case 'resultado': {
+        const { local, empate, visitante } = probabilidad1X2(lambdaLocal, lambdaVisitante);
+        // Devolver booleano: true si "local gana" según el modelo
+        return local > empate && local > visitante;
+      }
+      case 'doble': {
+        // 1X = local o empate; X2 = empate o visitante
+        const { local, empate, visitante } = probabilidad1X2(lambdaLocal, lambdaVisitante);
+        return { '1X': local >= empate, 'X2': empate >= visitante, '1X2': true }[parametros?.lado || '1X'] || false;
+      }
       case 'totalgoles': {
-        const total = golesLocal + golesVisita;
-        return parametros.direccion === 'menos' ? total < parametros.linea : total > parametros.linea;
+        // over/under 2.5: P(goles totales > 2.5) = 1 - P(0-2)
+        const p0e = poisson(0, lambdaLocal) * poisson(0, lambdaVisitante);
+        const p1e = poisson(1, lambdaLocal) * poisson(0, lambdaVisitante);
+        const p01 = poisson(0, lambdaLocal) * poisson(1, lambdaVisitante);
+        const p10 = poisson(1, lambdaLocal) * poisson(1, lambdaVisitante);
+        const pMenos2 = p0e + p1e + p01 + p10; // P(0-0, 1-0, 0-1, 1-1)
+        return (1 - pMenos2) > 0.5; // over 2.5 si > 50%
       }
       case 'btts': {
-        const ambos = golesLocal >= 1 && golesVisita >= 1;
-        return parametros.si ? ambos : !ambos;
+        // Ambos anotan: 1 - P(a cero goles) - USANDO LOGICA ANTIGUA POR AHORA
+        return verificarMercadoAntiguo('btts', parametros, golesLocal, golesVisita);
       }
-      case 'equipomarca':
-        return parametros.lado === 'local' ? golesLocal >= 1 : golesVisita >= 1;
-      case 'handicap': {
-        const margen = parametros.lado === 'local' ? (golesLocal - golesVisita) : (golesVisita - golesLocal);
-        return margen >= parametros.valor;
+      case 'resultado exacto': {
+        // Devolver el marcador más probable
+        let maxProb = -1, mejor = '0-0';
+        for (let i = 0; i <= 6; i++) {
+          for (let j = 0; j <= 6; j++) {
+            const prob = poisson(i, lambdaLocal) * poisson(j, lambdaVisitante);
+            if (prob > maxProb) { maxProb = prob; mejor = `${i}-${j}`; }
+          }
+        }
+        return mejor;
       }
-      case 'dnb':
-        if (parametros.lado === 'local') return golesLocal > golesVisita;
-        if (parametros.lado === 'visita') return golesVisita > golesLocal;
-        return false;
-      case 'marcador':
-        return golesLocal === parametros.gl && golesVisita === parametros.gv;
-      default:
-        return false;
+      default: return verificarMercadoAntiguo(categoria, parametros, golesLocal, golesVisita);
     }
   }
+  // ---- FIN NUEVO verificarMercado ----
+
+  // legado: mantener la firma antigua compatible para quien llame con 4 args
+  // (los primeros 4 parámetros son los mismos; los últimos 4 son nuevos opcionales)
+  ;(function () {
+    // alias compatible: verificarMercado(cat, params, gL, gV)
+    const antiguo = window.verificarMercadoAntiguo || function (c, p, gl, gv) {
+      switch (c) {
+        case 'resultado':  if (p.lado === 'local') return gl > gv;
+                         if (p.lado === 'visita') return gv > gl;
+                         return gl === gv;
+        case 'doble':      if (p.lado === '1X') return gl >= gv;
+                         if (p.lado === 'X2') return gv >= gl;
+                         return gl !== gv;
+        default: return false;
+      }
+    };
+    window.verificarMercadoAntiguo = antiguo;
+  })();
 
   function generarCandidatosMercado(matriz, maxGoles, nombreLocal, nombreVisita) {
     const candidatos = [];
