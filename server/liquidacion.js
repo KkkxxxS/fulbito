@@ -73,6 +73,35 @@ function marcadorDePartido(partido) {
   return { local: gl, visita: gv };
 }
 
+const DIA_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * Divide un rango de fechas en bloques cuya diferencia no supere `maxDias`.
+ * football-data.org rechaza períodos con más de 10 días de diferencia con
+ * HTTP 400 ("Specified period must not exceed 10 days").
+ * Devuelve fechas `YYYY-MM-DD` en UTC, contiguas y sin solaparse.
+ */
+function rangosDeFechas(desde, hasta, maxDias = 10) {
+  const inicio = new Date(desde);
+  const fin = new Date(hasta);
+  if (!Number.isFinite(inicio.getTime()) || !Number.isFinite(fin.getTime()) || inicio > fin) return [];
+
+  const max = Math.max(0, Math.floor(maxDias));
+  const inicioDia = Date.UTC(inicio.getUTCFullYear(), inicio.getUTCMonth(), inicio.getUTCDate());
+  const finDia = Date.UTC(fin.getUTCFullYear(), fin.getUTCMonth(), fin.getUTCDate());
+  const rangos = [];
+  let cursor = inicioDia;
+  while (cursor <= finDia) {
+    const finRango = Math.min(cursor + max * DIA_MS, finDia);
+    rangos.push({
+      dateFrom: new Date(cursor).toISOString().slice(0, 10),
+      dateTo: new Date(finRango).toISOString().slice(0, 10)
+    });
+    cursor = finRango + DIA_MS;
+  }
+  return rangos;
+}
+
 /**
  * Liquida un historial contra un mapa de partidos terminados.
  * Devuelve el historial completo con los pendientes sellados. No muta la entrada.
@@ -113,5 +142,6 @@ module.exports = {
   verificarMercado,
   evaluarMercados,
   marcadorDePartido,
+  rangosDeFechas,
   liquidarHistorial
 };

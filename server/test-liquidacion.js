@@ -6,7 +6,7 @@
  * correctamente los pendientes, sea idempotente y no toque entradas ya verificadas.
  */
 const assert = require('assert');
-const { verificarMercado, evaluarMercados, marcadorDePartido, liquidarHistorial } = require('./liquidacion');
+const { verificarMercado, evaluarMercados, marcadorDePartido, rangosDeFechas, liquidarHistorial } = require('./liquidacion');
 
 let pasadas = 0;
 let fallidas = 0;
@@ -41,7 +41,30 @@ check('score.fullTime', JSON.stringify(marcadorDePartido({ score: { fullTime: { 
 check('score null', marcadorDePartido({ score: { fullTime: { home: null, away: 1 } } }) === null);
 check('sin score', marcadorDePartido({}) === null);
 
-console.log('\n3. liquidarHistorial');
+console.log('\n3. rangosDeFechas (límite de 10 días de football-data.org)');
+const rangos30 = rangosDeFechas('2026-10-19T21:30:00Z', '2026-11-18T21:30:00Z', 10);
+check('30 días se divide en 3 bloques', rangos30.length === 3, JSON.stringify(rangos30));
+check(
+  'ningún bloque supera 10 días de diferencia',
+  rangos30.every(r => (Date.parse(r.dateTo) - Date.parse(r.dateFrom)) / 86400000 <= 10),
+  JSON.stringify(rangos30)
+);
+check(
+  'los bloques son contiguos y cubren todo el rango',
+  rangos30[0].dateFrom === '2026-10-19' && rangos30[0].dateTo === '2026-10-29' &&
+    rangos30[1].dateFrom === '2026-10-30' && rangos30[1].dateTo === '2026-11-09' &&
+    rangos30[2].dateFrom === '2026-11-10' && rangos30[2].dateTo === '2026-11-18',
+  JSON.stringify(rangos30)
+);
+check(
+  'un rango de exactamente 10 días queda en un solo bloque',
+  JSON.stringify(rangosDeFechas('2026-11-08', '2026-11-18', 10)) ===
+    JSON.stringify([{ dateFrom: '2026-11-08', dateTo: '2026-11-18' }])
+);
+check('un solo día genera un bloque', rangosDeFechas('2026-11-18', '2026-11-18', 10).length === 1);
+check('fechas invertidas no generan bloques', rangosDeFechas('2026-11-18', '2026-11-08', 10).length === 0);
+
+console.log('\n4. liquidarHistorial');
 const historial = [
   { partidoId: '1', verificado: false, mercados: [{ categoria: 'resultado', parametros: { lado: 'local' }, probabilidad: 60 }] },
   { partidoId: '2', verificado: true, marcadorFinal: '0-0', mercados: [{ categoria: 'resultado', parametros: { lado: 'local' }, acierto: false }] },

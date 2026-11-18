@@ -3,7 +3,7 @@ const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
 const compression = require('compression');
-const { liquidarHistorial, marcadorDePartido, verificarMercado } = require('./liquidacion');
+const { liquidarHistorial, marcadorDePartido, verificarMercado, rangosDeFechas } = require('./liquidacion');
 const { construirEntradasDesdeArtefacto } = require('../historial-artefacto');
 const app = express();
 
@@ -641,6 +641,7 @@ app.post('/api/historial/ingest', requireHistorialWriteKey, async (req, res) => 
 // procesa registros sin `verificado`. Pensado para el cron diario y para
 // dispararse manualmente.
 const LIQUIDACION_VENTANA_DIAS = 30;
+const LIQUIDACION_MAX_DIAS_POR_CONSULTA = 10;
 
 function idsPartidosPendientes(historial, hoy) {
   const ids = new Set();
@@ -654,19 +655,32 @@ function idsPartidosPendientes(historial, hoy) {
 
 async function obtenerFinalizadosRecientes(hoy) {
   const desde = new Date(hoy.getTime() - LIQUIDACION_VENTANA_DIAS * 24 * 60 * 60 * 1000);
-  const fFrom = desde.toISOString().slice(0, 10);
-  const fTo = hoy.toISOString().slice(0, 10);
+  // football-data.org limita cada consulta a 10 días; pedir 30 devuelve 400
+  // ("Specified period must not exceed 10 days") y la liquidación nunca corría.
+  const rangos = rangosDeFechas(desde, hoy, LIQUIDACION_MAX_DIAS_POR_CONSULTA);
+  const finalizados = [];
+  const vistos = new Set();
 
-  const resp = await fetchFootballData(
-    `${BASE_URL}/matches?competitions=${Array.from(COMPETICIONES_PERMITIDAS).join(',')}&dateFrom=${fFrom}&dateTo=${fTo}`
-  );
-  if (!resp.ok) {
-    const error = new Error(`football-data respondió ${resp.status}`);
-    error.status = resp.status >= 500 ? 502 : resp.status;
-    throw error;
+  for (const rango of rangos) {
+    const resp = await fetchFootballData(
+      `${BASE_URL}/matches?competitions=${Array.from(COMPETICIONES_PERMITIDAS).join(',')}&dateFrom=${rango.dateFrom}&dateTo=${rango.dateTo}`
+    );
+    if (!resp.ok) {
+      const error = new Error(`football-data respondió ${resp.status}`);
+      error.status = resp.status >= 500 ? 502 : resp.status;
+      throw error;
+    }
+    const datos = await resp.json();
+    for (const partido of datos.matches || []) {
+      if (partido.status !== 'FINISHED' || !marcadorDePartido(partido)) continue;
+      const id = String(partido.id);
+      if (vistos.has(id)) continue;
+      vistos.add(id);
+      finalizados.push(partido);
+    }
   }
-  const datos = await resp.json();
-  return (datos.matches || []).filter(p => p.status === 'FINISHED' && marcadorDePartido(p));
+
+  return finalizados;
 }
 
 async function liquidarHistorialDesdeApi() {
