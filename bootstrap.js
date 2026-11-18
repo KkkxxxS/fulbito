@@ -11,6 +11,11 @@
 (function (global) {
   'use strict';
 
+  // Motion 11 expone el global `Motion` (mayúscula); el resto de la app usa
+  // `motion` (minúscula). Sin este alias, app-ui.js lanza "motion is not defined"
+  // al animar tarjetas y contadores.
+  global.motion = global.Motion;
+
   global.__fulbitoErrorMostrado = false;
 
   global.__fulbitoMostrarError = function (detalle) {
