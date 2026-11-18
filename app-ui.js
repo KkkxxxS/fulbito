@@ -981,45 +981,15 @@
           <div class="benchmark-referencia-card">
             <div class="benchmark-head">
               <div>
-                <h4>Calibración histórica de referencia del modelo</h4>
-                <p>Precisión promedio calculada sobre 1,000+ partidos auditados de las 5 grandes ligas europeas:</p>
+                <h4>Sin métricas locales todavía</h4>
+                <p>Este panel mide tus pronósticos guardados en este navegador contra resultados oficiales. Cuando se liquide el primero, vas a ver acá la precisión y el Brier reales.</p>
               </div>
-              <span class="chip-status">Brier 0.17</span>
+              <span class="chip-status">Sin datos</span>
             </div>
-            <div class="benchmark-grid">
-              <div class="benchmark-item">
-                <div class="benchmark-info">
-                  <span>Resultado final (1X2)</span>
-                  <strong class="color-verde">84%</strong>
-                </div>
-                <div class="benchmark-bar"><div style="width: 84%; background: linear-gradient(90deg, #059669, #34d399);"></div></div>
-                <small>Calibración alta</small>
-              </div>
-              <div class="benchmark-item">
-                <div class="benchmark-info">
-                  <span>Doble oportunidad</span>
-                  <strong class="color-verde">81%</strong>
-                </div>
-                <div class="benchmark-bar"><div style="width: 81%; background: linear-gradient(90deg, #059669, #34d399);"></div></div>
-                <small>Calibración alta</small>
-              </div>
-              <div class="benchmark-item">
-                <div class="benchmark-info">
-                  <span>Total de goles (+/-)</span>
-                  <strong class="color-cyan">79%</strong>
-                </div>
-                <div class="benchmark-bar"><div style="width: 79%; background: linear-gradient(90deg, #0284c7, #38bdf8);"></div></div>
-                <small>Calibración buena</small>
-              </div>
-              <div class="benchmark-item">
-                <div class="benchmark-info">
-                  <span>Ambos anotan (BTTS)</span>
-                  <strong class="color-cyan">76%</strong>
-                </div>
-                <div class="benchmark-bar"><div style="width: 76%; background: linear-gradient(90deg, #0284c7, #38bdf8);"></div></div>
-                <small>Calibración media</small>
-              </div>
-            </div>
+            <p style="margin:0; color:var(--text-muted); font-size:0.9rem;">
+              El track record público y global, con cada pronóstico sellado antes del inicio, está en
+              <a href="resultados.html" style="color:var(--green); font-weight:600;">Transparencia</a>.
+            </p>
           </div>
         </div>
         ${panelCalibracionHTML()}
