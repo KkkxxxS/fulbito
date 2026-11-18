@@ -17,7 +17,7 @@
   const hashInicial = window.location.hash.replace('#', '');
   if (hashInicial === 'inicio') {
     cambiarVista('inicio', false);
-  } else if (['favoritos', 'analitica', 'mispredicciones', 'historial', 'pronosticos'].includes(hashInicial)) {
+  } else if (['favoritos', 'analitica', 'mispredicciones', 'historial', 'ranking', 'competiciones', 'pronosticos'].includes(hashInicial)) {
     cambiarVista(hashInicial, false);
   } else {
     history.replaceState(null, '', '#inicio');
@@ -30,7 +30,13 @@
       if (vistaActual === 'pronosticos') cargarPartidos(ultimaFechaCargada === 'otra' ? 'hoy' : ultimaFechaCargada);
       else if (vistaActual === 'favoritos') cargarFavoritos();
       else if (vistaActual === 'mispredicciones') actualizarHistorialYCalibracion().then(() => renderMisPredicciones());
-      else if (vistaActual === 'historial') actualizarHistorialYCalibracion().then(h => renderHistorialCompleto(h));
+      else if (vistaActual === 'historial') cargarHistorialCompartido().finally(() => renderHistorialCompleto(historialTrackRecord()));
+      else if (vistaActual === 'analitica') cargarHistorialCompartido().finally(() => {
+        const h = historialTrackRecord();
+        renderHistorial(calcularEstadisticasHistorial(h), h);
+      });
+      else if (vistaActual === 'ranking') cargarHistorialCompartido().finally(() => renderRankingGlobal());
+      else if (vistaActual === 'competiciones') cargarHistorialCompartido().finally(() => renderCompeticionesGlobal());
     }
     actualizarKPIsHome();
   }, 3 * 60 * 1000);

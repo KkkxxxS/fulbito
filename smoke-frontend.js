@@ -153,5 +153,50 @@ if (staggerOk) {
   fallos++;
 }
 
+// Regresión: Favoritos sin equipos debe mostrar un estado vacío con acción,
+// no lanzar ReferenceError por una función inexistente.
+const vacioFavoritos = typeof sandbox.tarjetaFavoritoVaciaHTML === 'function'
+  ? sandbox.tarjetaFavoritoVaciaHTML()
+  : '';
+if (vacioFavoritos.includes('data-vista="pronosticos"')) {
+  console.log('  [OK ] favoritos vacío enlaza a Predicciones');
+} else {
+  console.log('  [FALLA] tarjetaFavoritoVaciaHTML() no existe o no enlaza a Predicciones');
+  fallos++;
+}
+
+// Regresión: el track record global normaliza snake_case del backend y
+// conserva el acierto booleano de cada mercado.
+const registroNormalizado = typeof sandbox.normalizarRegistroHistorialGlobal === 'function'
+  ? sandbox.normalizarRegistroHistorialGlobal({
+      partido_id: '123',
+      local: 'Local FC',
+      visita: 'Visita FC',
+      liga: 'Liga Test',
+      fecha: '2026-01-01T12:00:00.000Z',
+      verificado: true,
+      marcador_final: '2-1',
+      mercados: [{ categoria: 'resultado', seleccion: 'Gana Local FC', probabilidad: 60, acierto: true }]
+    })
+  : null;
+if (registroNormalizado &&
+    registroNormalizado.partidoId === '123' &&
+    registroNormalizado.marcadorFinal === '2-1' &&
+    registroNormalizado.mercados[0].acierto === true) {
+  console.log('  [OK ] normaliza el historial global de /api/historial');
+} else {
+  console.log('  [FALLA] normalizarRegistroHistorialGlobal() no conserva los campos esperados');
+  fallos++;
+}
+
+const funcionesGlobales = ['cargarHistorialCompartido', 'renderRankingGlobal', 'renderCompeticionesGlobal', 'abrirLiga'];
+const faltantes = funcionesGlobales.filter(f => typeof sandbox[f] !== 'function');
+if (faltantes.length === 0) {
+  console.log('  [OK ] ranking, competiciones y track record global exponen sus funciones');
+} else {
+  console.log(`  [FALLA] faltan funciones: ${faltantes.join(', ')}`);
+  fallos++;
+}
+
 console.log(`\n=== HUMO FRONTEND: ${fallos === 0 ? 'TODOS LOS MODULOS CARGAN' : `${fallos} CON FALLO`} ===`);
 process.exit(fallos === 0 ? 0 : 1);

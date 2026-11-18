@@ -26,6 +26,7 @@
     'mostrar-selector-fecha': function (el, e) { global.mostrarSelectorFecha(e); },
     'aplicar-fecha-personalizada': function () { global.aplicarFechaPersonalizada(); },
     'cambiar-liga': function (el) { global.cambiarLiga(el.dataset.liga); },
+    'abrir-liga': function (el) { global.abrirLiga(el.dataset.liga); },
     'cambiar-filtro-historial': function (el) { global.cambiarFiltroHistorial(el.dataset.filtro); },
 
     /* ---------- UI ---------- */

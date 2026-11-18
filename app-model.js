@@ -117,8 +117,8 @@
     } else {
       setTxt('kpi-hoy', String(partidosDeHoy));
       setTxt('kpi-hoy-pie', partidosDeHoy === 1
-        ? 'partido con pronóstico hoy · 9 mercados'
-        : 'partidos con pronóstico hoy · 9 mercados');
+        ? 'partido con pronóstico hoy · 4 mercados'
+        : 'partidos con pronóstico hoy · 4 mercados');
     }
   }
 
@@ -157,6 +157,26 @@
   let favoritosCargadosAlMenosUnaVez = false;
   let filtroHistorial = 'todos';
 
+  // ============ TRACK RECORD GLOBAL ============
+  // cargarHistorialCompartido() (app-ui.js) llena este objeto con /api/historial.
+  // Inicio, sidebar, Analítica, Historial, Ranking y Competiciones leen de acá.
+  // "Mis predicciones" sigue leyendo solo el historial personal del navegador.
+  const trackRecordGlobal = {
+    historial: [],
+    total: 0,
+    cargadoEn: 0,
+    error: null
+  };
+
+  function historialTrackRecord() {
+    if (trackRecordGlobal.historial.length > 0) return trackRecordGlobal.historial;
+    return leerHistorial();
+  }
+
+  function usandoTrackRecordGlobal() {
+    return trackRecordGlobal.historial.length > 0;
+  }
+
   function cambiarVista(vista, actualizarHash = true) {
     vistaActual = vista;
     document.body.classList.toggle('home-mode', vista === 'inicio');
@@ -179,26 +199,33 @@
 
     if (vista === 'favoritos') {
       cargarFavoritos();
-     } else if (vista === 'analitica') {
-      // Re-asegurar sync con backend antes de mostrar, así si el usuario
-      // borró caché y abre "Analítica" ve su historial completo.
-      cargarHistorialCompartido().finally(() =>
-        actualizarHistorialYCalibracion().then(h => renderHistorial(calcularEstadisticasHistorial(h), h))
-      );
+    } else if (vista === 'analitica') {
+      // Analítica pública: siempre contra el track record global del backend.
+      cargarHistorialCompartido().finally(() => {
+        const h = historialTrackRecord();
+        renderHistorial(calcularEstadisticasHistorial(h), h);
+        actualizarKPIsHome();
+      });
     } else if (vista === 'historial') {
-      cargarHistorialCompartido().finally(() =>
-        actualizarHistorialYCalibracion().then(h => renderHistorialCompleto(h))
-      );
+      cargarHistorialCompartido().finally(() => {
+        renderHistorialCompleto(historialTrackRecord());
+        actualizarKPIsHome();
+      });
     } else if (vista === 'mispredicciones') {
+      // "Mis predicciones" sí es personal: sincroniza y liquida solo lo local.
       cargarHistorialCompartido().finally(() =>
         actualizarHistorialYCalibracion().then(() => renderMisPredicciones())
       );
+    } else if (vista === 'ranking') {
+      cargarHistorialCompartido().finally(() => {
+        renderRankingGlobal();
+        actualizarKPIsHome();
+      });
+    } else if (vista === 'competiciones') {
+      cargarHistorialCompartido().finally(() => renderCompeticionesGlobal());
     } else if (vista === 'inicio') {
-      // También en inicio: refrescar desde backend para que los KPIs reflejen
-      // lo último aunque hayas limpiado caché.
-      cargarHistorialCompartido().finally(() =>
-        actualizarHistorialYCalibracion().then(() => actualizarKPIsHome())
-      );
+      // Inicio: KPIs y paneles contra el track record global.
+      cargarHistorialCompartido().finally(() => actualizarKPIsHome());
     }
 
     // Control visibilidad FAB Armar Combinada (solo visible en vista pronosticos)
@@ -294,8 +321,9 @@
       else renderizarPartidosFiltrados();
     }
     else if (vistaActual === 'favoritos') renderizarFavoritos();
-    else if (vistaActual === 'analitica') { const h = leerHistorial(); renderHistorial(calcularEstadisticasHistorial(h), h); }
-    else if (vistaActual === 'historial') { renderHistorialCompleto(leerHistorial()); }
+    else if (vistaActual === 'analitica') { const h = historialTrackRecord(); renderHistorial(calcularEstadisticasHistorial(h), h); }
+    else if (vistaActual === 'historial') { renderHistorialCompleto(historialTrackRecord()); }
+    else if (vistaActual === 'ranking') renderRankingGlobal();
   }
 
   // Los dos inputs del header/vista escriben en el MISMO estado de búsqueda.
@@ -303,7 +331,7 @@
     const sidebar = document.getElementById('input-busqueda');
     if (sidebar && sidebar.value !== valor) sidebar.value = valor;
     // En vistas sin listado, saltar a Pronosticos para que el filtro sea visible.
-    if (!['pronosticos', 'favoritos', 'analitica', 'historial'].includes(vistaActual)) {
+    if (!['pronosticos', 'favoritos', 'analitica', 'historial', 'ranking'].includes(vistaActual)) {
       cambiarVista('pronosticos');
     }
     onBuscar(valor);
@@ -361,12 +389,12 @@
   // ============ SALUD DEL MOTOR: ESTADO ÚNICO (fuente de verdad) ============
   // UNA sola función calcula el estado y UNA sola lo pinta en todos los
   // lugares: KPI superior, sidebar, sección "Salud del motor Fulbito" y
-  // telemetría de Analítica. Fuente única: leerHistorial(), que tras
-  // cargarHistorialCompartido() refleja el pool verificado del servidor
-  // (la misma fuente que audita recalibracion.py). Con 0 partidos verificados,
-  // TODOS los lugares muestran "Sin datos todavía" — nunca números inventados.
+  // telemetría de Analítica. Fuente única: historialTrackRecord(), que usa el
+  // pool verificado del servidor cuando cargarHistorialCompartido() ya lo
+  // trajo (la misma fuente que audita recalibracion.py). Con 0 partidos
+  // verificados, TODOS los lugares muestran "Sin datos todavía".
   function calcularEstadoSalud() {
-    const historial = leerHistorial();
+    const historial = historialTrackRecord();
     let stats = null, brier = null;
     try { stats = calcularEstadisticasHistorial(historial); } catch (e) { stats = null; }
     try { brier = calcularBrierScore(historial); } catch (e) { brier = null; }
@@ -392,9 +420,10 @@
     const brierTxt = e.brierNum !== null ? e.brierNum.toFixed(2) : '—';
 
     // Aciertos (la "Salud del motor" vive solo en sidebar + sección inferior)
+    const etiquetaFuente = usandoTrackRecordGlobal() ? 'Global' : 'Local';
     setTxt('kpi-aciertos', e.pct !== null ? `${e.pct}%` : '—');
-    setTxt('kpi-aciertos-chip', e.conDatos ? 'Histórico' : 'Sin datos'); setChip('kpi-aciertos-chip', !e.conDatos);
-    setTxt('kpi-verificados', e.conDatos ? `${e.totalVerificados} verificados` : 'Sin datos todavía');
+    setTxt('kpi-aciertos-chip', e.conDatos ? etiquetaFuente : 'Sin datos'); setChip('kpi-aciertos-chip', !e.conDatos);
+    setTxt('kpi-verificados', e.conDatos ? `${e.totalVerificados} partidos sellados` : 'Sin datos todavía');
     setWidth('kpi-aciertos-barra', e.pct !== null ? `${e.pct}%` : '0%');
 
     // Sidebar (referencia rápida)
@@ -408,7 +437,7 @@
     setTxt('salud-gauge-estado', e.conDatos ? chipSalud.toUpperCase() : 'SIN DATOS');
     setAttr('salud-gauge-arco', 'stroke-dasharray', e.salud !== null ? `${e.salud} 100` : '0 100');
     setTxt('salud-stat-brier', `Brier ${brierTxt}`);
-    setTxt('salud-stat-picks', `${e.totalVerificados} picks`);
+    setTxt('salud-stat-picks', `${e.totalVerificados} partidos`);
     const gaugeNota = document.getElementById('salud-gauge-nota');
     if (gaugeNota) gaugeNota.style.display = e.conDatos ? 'none' : '';
     const lista = document.getElementById('salud-mercados-lista');
@@ -469,10 +498,10 @@
       setTxt('dash-hoy-detalle', '¿Buscás acción? Pasá a la vista Predicciones y mirá la semana completa.');
     } else {
       setTxt('dash-hoy-leido', `${partidosDeHoy} partido${partidosDeHoy === 1 ? '' : 's'} en la jornada de hoy.`);
-      setTxt('dash-hoy-detalle', 'Cada partido sale con 9 mercados y su probabilidad calibrada contra lo ya verificado.');
+      setTxt('dash-hoy-detalle', 'Cada partido sale con 4 mercados y su probabilidad calibrada contra lo ya verificado.');
     }
 
-    const historial = leerHistorial();
+    const historial = historialTrackRecord();
     const verificados = historial.filter(h => h.verificado);
 
     // Última liquidación
@@ -494,8 +523,8 @@
   function renderUltimaLiquidacion(verificados) {
     if (verificados.length === 0) {
       return `
-        <p class="dash-vacio-titulo">Todavía no hay picks liquidados.</p>
-        <p class="dash-vacio-sub">Marcá predicciones con el pin 📌 en cualquier partido de Predicciones y acá va a quedar registrado cómo le fue a cada mercado contra el resultado real.</p>
+        <p class="dash-vacio-titulo">Todavía no hay partidos sellados.</p>
+        <p class="dash-vacio-sub">Cuando el backend liquide el primer partido del track record global, acá vas a ver el marcador y cuántos mercados acertó el modelo.</p>
       `;
     }
     const ultimo = verificados[verificados.length - 1];
@@ -548,7 +577,7 @@
     return `
       <div class="dash-cobertura-ligas">${ligas}</div>
       <div class="dash-cobertura-meta">
-        <span>9 mercados por partido</span><span>·</span>
+        <span>4 mercados auditados por partido</span><span>·</span>
         <span>Fútbol · básquet · tenis · vóley</span><span>·</span>
         <span>Poisson + Dixon-Coles</span>
       </div>

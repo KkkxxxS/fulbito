@@ -61,6 +61,8 @@ function append(padre, hijo) { hijo._padre = padre; return hijo; }
 // ---- contexto ----
 const win = {
   cambiarVista: (v) => llamadas.push(['cambiarVista', v]),
+  cambiarLiga: (l) => llamadas.push(['cambiarLiga', l]),
+  abrirLiga: (l) => llamadas.push(['abrirLiga', l]),
   cambiarDeporte: (k) => llamadas.push(['cambiarDeporte', k]),
   cambiarFecha: (t, e) => llamadas.push(['cambiarFecha', t, !!e]),
   filtrarAnalitica: (c, e) => llamadas.push(['filtrarAnalitica', c, !!e]),
@@ -117,6 +119,10 @@ console.log('events.js: despachador de acciones');
 const navInicio = crearElemento('button', { 'data-action': 'cambiar-vista', 'data-vista': 'inicio' });
 disparar('click', navInicio);
 ok('click cambiar-vista enruta con data-vista', llamadas.some(c => c[0] === 'cambiarVista' && c[1] === 'inicio'));
+
+const tarjetaLiga = crearElemento('button', { 'data-action': 'abrir-liga', 'data-liga': 'PL' });
+disparar('click', tarjetaLiga);
+ok('click abrir-liga enruta con data-liga', llamadas.some(c => c[0] === 'abrirLiga' && c[1] === 'PL'));
 
 const depTenis = crearElemento('button', { 'data-action': 'cambiar-deporte', 'data-deporte': 'tenis' });
 disparar('click', depTenis);

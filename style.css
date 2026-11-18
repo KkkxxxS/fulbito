@@ -4404,8 +4404,6 @@ input {
      }
    }
 ============================================================ */
-.quick-access {
-
 .dashboard-label {
   color: var(--text-muted);
   font-size: var(--fs-xs);
@@ -6037,6 +6035,7 @@ body.home-mode .app-nav.dash-sidebar {
   top: 0;
   height: 100vh;
   min-height: 100vh;
+  transform: none;
   flex-direction: column;
   flex-shrink: 0;
   gap: 12px;
@@ -6388,6 +6387,11 @@ body.home-mode #vista-inicio #hero-saludo {
 }
 
 .dash-perfil[aria-expanded="true"] .dash-perfil-chevron { transform: rotate(180deg); }
+
+.dash-sidebar-cerrar {
+  display: none;
+  width: 30px;
+  height: 30px;
   border-radius: 9px;
   background: var(--dash-surface-2);
   border: 1px solid var(--dash-border);
@@ -7403,7 +7407,7 @@ body.home-mode #vista-inicio .dash-seccion { padding: 12px 0; margin: 0; }
     margin: 0 ;
   }
 
-  body.home-mode .dash-menu-flotante { display: flex; }
+  .dash-menu-flotante { display: flex; }
 
   /* Estado colapsado en móvil / resize: oculta sidebar y muestra botón de reabrir */
   body.home-mode.sidebar-oculto .app-nav.dash-sidebar { display: none ; }
@@ -11132,5 +11136,230 @@ button.dash-kpi {
 .tarjeta-partido-col-izq,
 .tarjeta-partido-col-der {
   min-width: 0;
+}
+
+/* ============ FAVORITOS: ESTADO VACÍO ============ */
+.favoritos-vacio { gap: 10px; }
+.favoritos-vacio-icono { font-size: 1.9rem; line-height: 1; color: var(--gold); }
+.favoritos-vacio .boton-reintentar { margin-top: 4px; }
+
+/* ============ RANKING GLOBAL ============ */
+.dash-ranking-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.dash-panel-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.dash-panel-head h3 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.dash-panel-nota {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  text-align: right;
+}
+
+.ranking-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.ranking-fila {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.ranking-puesto {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--text-dim);
+}
+
+.ranking-fila:first-child .ranking-puesto { color: var(--gold); }
+
+.ranking-info {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.ranking-titulo {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.ranking-titulo strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.82rem;
+  color: var(--text);
+}
+
+.ranking-muestra {
+  flex-shrink: 0;
+  font-size: 0.62rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.ranking-barra {
+  height: 5px;
+  border-radius: 999px;
+  background: rgba(148, 170, 199, 0.14);
+  overflow: hidden;
+}
+
+.ranking-barra span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--green), var(--brand));
+}
+
+.ranking-pct {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--green);
+}
+
+/* ============ COMPETICIONES ============ */
+.dash-ligas-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr));
+  gap: 12px;
+}
+
+.liga-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 7px;
+  width: 100%;
+  text-align: left;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  transition: border-color 0.2s var(--ease), transform 0.2s var(--ease);
+}
+
+.liga-card:not(button) { cursor: default; }
+.liga-card:hover { border-color: var(--dash-border-strong); }
+
+.liga-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 8px;
+}
+
+.liga-card-codigo {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--brand);
+  background: rgba(123, 225, 200, 0.1);
+  border: 1px solid rgba(123, 225, 200, 0.2);
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+
+.liga-card-flecha { color: var(--text-dim); font-size: 0.85rem; }
+
+.liga-card-chip {
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+
+.liga-card-nombre {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.3;
+}
+
+.liga-card-meta {
+  font-size: 0.72rem;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+@media (max-width: 900px) {
+  .dash-ranking-grid { grid-template-columns: 1fr; }
+  .ranking-titulo { flex-direction: column; align-items: flex-start; gap: 1px; }
+  .ranking-muestra { white-space: normal; }
+}
+
+/* El sidebar es off-canvas fuera de Inicio: en escritorio hace falta un
+   botón visible para abrirlo, igual que en móvil. */
+@media (min-width: 1025px) {
+  body:not(.home-mode) .dash-menu-flotante { display: flex; }
+}
+
+/* El buscador del sidebar no debe robar altura a la lista de vistas. */
+.dash-sidebar .app-nav-buscador { flex: 0 0 auto; }
+
+/* En móvil, fuera de Inicio el sidebar debe seguir siendo un panel fijo;
+   la regla genérica de nav pegajoso lo sacaría del viewport al hacer scroll. */
+@media (max-width: 640px) {
+  body:not(.home-mode) .app-nav.dash-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: min(280px, 84vw);
+    flex-direction: column;
+    transform: translateX(-100%);
+  }
+  body:not(.home-mode) .app-nav.dash-sidebar.menu-abierto { transform: none; }
+  body:not(.home-mode) .app-nav.dash-sidebar .app-nav-fila {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  body:not(.home-mode) .app-nav.dash-sidebar .app-nav-tabs {
+    flex-direction: column;
+    overflow-x: visible;
+    overflow-y: auto;
+    gap: 6px;
+  }
+  body:not(.home-mode) .app-nav.dash-sidebar .dash-nav {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+  }
 }
 

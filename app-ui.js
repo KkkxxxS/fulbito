@@ -400,11 +400,118 @@
   let historialSincronizando = false;
   let historialSincronizadoEnSesion = false;
 
-  async function cargarHistorialCompartido() {
-    return;
+  const HISTORIAL_GLOBAL_TTL_MS = 60 * 1000;
+  let historialGlobalCargando = null;
+
+  // Convierte una fila de /api/historial (snake_case de PostgreSQL) al esquema
+  // que ya usan todos los renderizadores del frontend (camelCase).
+  function normalizarRegistroHistorialGlobal(registro) {
+    if (!registro) return null;
+    const partidoId = registro.partidoId ?? registro.partido_id;
+    if (partidoId === undefined || partidoId === null || partidoId === '') return null;
+
+    const mercados = Array.isArray(registro.mercados) ? registro.mercados : [];
+    return {
+      partidoId: String(partidoId),
+      local: registro.local || 'Local',
+      visita: registro.visita || 'Visitante',
+      liga: registro.liga || 'Liga',
+      fecha: registro.fecha || new Date(0).toISOString(),
+      marcadorFinal: registro.marcadorFinal || registro.marcador_final || '',
+      verificado: registro.verificado === true,
+      mercados: mercados.map(m => ({
+        categoria: m.categoria || 'otro',
+        parametros: m.parametros || {},
+        seleccion: m.seleccion || m.categoria || 'Mercado',
+        probabilidad: Number(m.probabilidad) || 0,
+        acierto: m.acierto === true
+      }))
+    };
+  }
+
+  // Une historial local y global por partidoId. El registro sellado del
+  // servidor manda; si el local ya está sellado y el global no, se conserva
+  // el local para no perder información. Los campos que solo existen en el
+  // navegador (parámetros del modelo, favorito) se preservan al actualizar.
+  function fusionarHistorialGlobal(local, remoto) {
+    const mapa = new Map();
+    (local || []).forEach(h => {
+      if (h && h.partidoId !== undefined && h.partidoId !== null) mapa.set(String(h.partidoId), h);
+    });
+    (remoto || []).forEach(r => {
+      if (!r || r.partidoId === undefined || r.partidoId === null) return;
+      const id = String(r.partidoId);
+      const existente = mapa.get(id);
+      if (!existente) { mapa.set(id, r); return; }
+      if (r.verificado) {
+        mapa.set(id, Object.assign({}, existente, r, {
+          parametrosModelo: existente.parametrosModelo,
+          favoritoLocal: existente.favoritoLocal,
+          nombreFavorito: existente.nombreFavorito
+        }));
+      } else if (!existente.verificado) {
+        mapa.set(id, Object.assign({}, existente, r, {
+          mercados: r.mercados && r.mercados.length ? r.mercados : existente.mercados
+        }));
+      }
+    });
+    return Array.from(mapa.values())
+      .sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+  }
+
+  // Trae el track record público. No importa todos los registros globales al
+  // historial personal: solo actualiza los partidos que el usuario ya tenía
+  // guardados en este navegador. Así "Mis predicciones" sigue siendo tuyo.
+  async function cargarHistorialCompartido(forzar) {
+    const ahora = Date.now();
+    if (!forzar && trackRecordGlobal.historial.length > 0 &&
+        (ahora - trackRecordGlobal.cargadoEn) < HISTORIAL_GLOBAL_TTL_MS) {
+      return trackRecordGlobal.historial;
+    }
+    if (historialGlobalCargando) return historialGlobalCargando;
+
+    historialGlobalCargando = (async () => {
+      try {
+        const resp = await fetch(`${BACKEND_URL}/api/historial`, {
+          headers: { Accept: 'application/json' }
+        });
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const datos = await resp.json();
+        const lista = Array.isArray(datos) ? datos : (Array.isArray(datos.historial) ? datos.historial : []);
+        const normalizados = lista.map(normalizarRegistroHistorialGlobal).filter(Boolean);
+        if (normalizados.length === 0) throw new Error('El servidor no devolvió historial');
+
+        trackRecordGlobal.historial = normalizados;
+        trackRecordGlobal.total = normalizados.length;
+        trackRecordGlobal.cargadoEn = Date.now();
+        trackRecordGlobal.error = null;
+
+        // Actualizar solo picks personales ya existentes con el estado sellado.
+        // No importamos todo el track record global al historial del navegador.
+        const locales = leerHistorialLocal();
+        const idsLocales = new Set(locales.map(h => String(h.partidoId)));
+        const actualizados = fusionarHistorialGlobal(locales, normalizados)
+          .filter(h => idsLocales.has(String(h.partidoId)));
+        if (JSON.stringify(actualizados) !== JSON.stringify(locales)) {
+          try {
+            localStorage.setItem(CLAVE_HISTORIAL, JSON.stringify(actualizados.slice(-200)));
+          } catch (e) { /* localStorage lleno o bloqueado */ }
+        }
+        return trackRecordGlobal.historial;
+      } catch (e) {
+        trackRecordGlobal.error = e.message || 'No se pudo cargar el track record global';
+        return trackRecordGlobal.historial.length > 0 ? trackRecordGlobal.historial : leerHistorialLocal();
+      } finally {
+        historialGlobalCargando = null;
+      }
+    })();
+
+    return historialGlobalCargando;
   }
 
   async function sincronizarHistorialRemoto(historial) {
+    // La sincronización personal con la nube la maneja auth.js al iniciar
+    // sesión (PUT /api/mi-historial). Aquí no duplicamos escrituras.
     return;
   }
 
@@ -773,13 +880,13 @@
     document.querySelectorAll('.analitica-controles .filtro-btn').forEach(btn => {
       btn.classList.toggle('activo', btn.dataset.filtro === categoria);
     });
-    const h = leerHistorial();
+    const h = historialTrackRecord();
     renderHistorial(calcularEstadisticasHistorial(h), h);
   }
 
   function actualizarTelemetriaAnalitica() {
     const e = calcularEstadoSalud();
-    const historial = leerHistorial();
+    const historial = historialTrackRecord();
     const saludEl = document.getElementById('telemetria-salud');
     const brierEl = document.getElementById('telemetria-brier');
     const badgeSalud = document.getElementById('telemetria-salud-badge');
@@ -813,7 +920,13 @@
     const pct = Math.min(100, Math.max(5, Math.round((muestras / 20) * 100)));
 
     if (muestrasEl) muestrasEl.textContent = `${muestras} / 20`;
-    if (faltanTxt) faltanTxt.textContent = faltan > 0 ? `${faltan} partidos restantes` : 'Autoajustado con datos reales';
+    if (faltanTxt) {
+      faltanTxt.textContent = muestras === 0
+        ? 'La calibración local se activa con tus propios picks'
+        : faltan > 0
+        ? `${faltan} partidos propios restantes`
+        : 'Autoajustado con tus datos';
+    }
     if (barra) barra.style.width = `${pct}%`;
   }
 
@@ -955,25 +1068,25 @@
             <div class="auditoria-vacia-head">
               <span class="auditoria-vacia-icon">🔬</span>
               <div>
-                <h4>Auditoría continua de pronósticos en proceso</h4>
-                <p>El motor compara automáticamente lo que pronosticó contra el resultado real de cada partido que consultes en la app.</p>
+                <h4>Todavía no hay partidos sellados en el track record global</h4>
+                <p>El backend registra cada pronóstico antes del inicio y lo liquida contra el resultado oficial. Cuando se selle el primero, acá vas a ver la precisión, el Brier y la calibración reales.</p>
               </div>
             </div>
             <div class="auditoria-tips-grid">
               <div class="auditoria-tip">
                 <span class="auditoria-tip-num">1</span>
-                <strong>Explora partidos</strong>
-                <p>Ingresa a "Partidos" para analizar los encuentros de hoy o la semana.</p>
+                <strong>Registro previo</strong>
+                <p>El pronóstico se guarda antes de que empiece el partido.</p>
               </div>
               <div class="auditoria-tip">
                 <span class="auditoria-tip-num">2</span>
                 <strong>Pitazo final</strong>
-                <p>Cuando los partidos concluyen, el sistema obtiene el resultado oficial.</p>
+                <p>Cuando el partido termina, el backend obtiene el resultado oficial.</p>
               </div>
               <div class="auditoria-tip">
                 <span class="auditoria-tip-num">3</span>
-                <strong>Calibración dinámica</strong>
-                <p>El motor ajusta sus probabilidades para optimizar la tasa de acierto continuo.</p>
+                <strong>Auditoría pública</strong>
+                <p>Cada mercado liquidado queda con su acierto y su probabilidad original.</p>
               </div>
             </div>
           </div>
@@ -981,13 +1094,13 @@
           <div class="benchmark-referencia-card">
             <div class="benchmark-head">
               <div>
-                <h4>Sin métricas locales todavía</h4>
-                <p>Este panel mide tus pronósticos guardados en este navegador contra resultados oficiales. Cuando se liquide el primero, vas a ver acá la precisión y el Brier reales.</p>
+                <h4>Sin métricas globales todavía</h4>
+                <p>Este panel mide el track record público del backend, no los picks guardados en tu navegador. Cuando se liquide el primer partido, vas a ver acá la precisión y el Brier reales.</p>
               </div>
               <span class="chip-status">Sin datos</span>
             </div>
             <p style="margin:0; color:var(--text-muted); font-size:0.9rem;">
-              El track record público y global, con cada pronóstico sellado antes del inicio, está en
+              El detalle partido por partido, con cada pronóstico sellado antes del inicio, está en
               <a href="resultados.html" style="color:var(--green); font-weight:600;">Transparencia</a>.
             </p>
           </div>
@@ -1086,9 +1199,9 @@
     const verificados = historial.filter(h => h.verificado);
     let total = 0, aciertos = 0, sumaProb = 0;
     verificados.forEach(h => {
-      h.mercados.forEach(m => {
+      (h.mercados || []).forEach(m => {
         total++;
-        sumaProb += m.probabilidad;
+        sumaProb += Number(m.probabilidad) || 0;
         if (m.acierto) aciertos++;
       });
     });
@@ -1126,7 +1239,7 @@
 
   function cambiarFiltroHistorial(filtro) {
     filtroHistorial = filtro;
-    renderHistorialCompleto(leerHistorial());
+    renderHistorialCompleto(historialTrackRecord());
   }
 
   function obtenerEvaluacionesHistorial(historial) {
@@ -1176,11 +1289,21 @@
 
   const LIMITE_HISTORIAL_COMPLETO = 60;
 
+  // KPIs superiores de la vista Historial (los IDs ya existen en index.html).
+  function actualizarResumenHistorialGlobal(historial) {
+    const setTxt = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
+    const resumen = calcularResumenHistorial(historial || []);
+    setTxt('resumen-total', String(resumen.totalPicks));
+    setTxt('resumen-precision', resumen.totalPicks > 0 ? `${resumen.tasa}%` : '—');
+    setTxt('resumen-confianza', resumen.totalPicks > 0 ? `${resumen.confianzaMedia}%` : '—');
+  }
+
   function renderHistorialCompleto(historial) {
     const contenedor = document.getElementById('bloque-historial-completo');
     if (!contenedor) return;
 
     const resumen = calcularResumenHistorial(historial);
+    actualizarResumenHistorialGlobal(historial);
 
     if (resumen.totalPicks === 0) {
       const pendientes = historial.filter(h => !h.verificado);
@@ -1201,8 +1324,8 @@
         : '';
       contenedor.innerHTML = `
         <div class="aviso-servidor">
-          <p><strong>Todavía no hay picks liquidados.</strong></p>
-          <p>A medida que los partidos que Fulbito pronosticó terminen, van a aparecer acá con su resultado real.</p>
+          <p><strong>Todavía no hay partidos sellados en el track record global.</strong></p>
+          <p>A medida que los partidos que Fulbito pronosticó terminen, el backend los liquida y aparecen acá con su resultado real. También podés verlos en <a href="resultados.html" style="color:var(--green); font-weight:600;">Transparencia</a>.</p>
           ${pendientesHTML}
         </div>
         <div class="historial-filtros-barra" style="margin-top:16px;">
@@ -1225,7 +1348,7 @@
           <span class="motor-eyebrow">Performance</span>
           <h3>Historial de aciertos</h3>
         </div>
-        <span class="chip-status">Global</span>
+        <span class="chip-status">${usandoTrackRecordGlobal() ? 'Global' : 'Local'}</span>
       </div>
       ${resumenHistorialCardsHTML(resumen)}
       <div class="historial-filtros-barra">
@@ -1246,6 +1369,225 @@
       </div>
       ${evaluaciones.length > LIMITE_HISTORIAL_COMPLETO ? `<p class="historial-conteo-resultados">Mostrando ${mostrar.length} de ${evaluaciones.length}. Usa el buscador para acotar.</p>` : ''}
     `;
+  }
+
+  // ============ RANKING GLOBAL (datos reales de /api/historial) ============
+  function agregarRankingPorMercado(historial) {
+    const mapa = {};
+    (historial || []).filter(h => h.verificado).forEach(h => {
+      (h.mercados || []).forEach(m => {
+        const clave = m.categoria || 'otro';
+        if (!mapa[clave]) {
+          mapa[clave] = {
+            categoria: clave,
+            titulo: CATEGORIAS_MERCADO[clave]?.titulo || clave,
+            aciertos: 0, total: 0, sumaProb: 0
+          };
+        }
+        const d = mapa[clave];
+        d.total++;
+        if (m.acierto) d.aciertos++;
+        d.sumaProb += Number(m.probabilidad) || 0;
+      });
+    });
+    return Object.values(mapa).map(d => ({
+      ...d,
+      precision: d.total > 0 ? Math.round((d.aciertos / d.total) * 100) : 0,
+      confianza: d.total > 0 ? Math.round(d.sumaProb / d.total) : 0
+    })).sort((a, b) => b.precision - a.precision || b.total - a.total);
+  }
+
+  function agregarRankingPorEquipo(historial, limite) {
+    const mapa = {};
+    (historial || []).filter(h => h.verificado).forEach(h => {
+      [h.local, h.visita].forEach(nombre => {
+        if (!nombre) return;
+        if (!mapa[nombre]) mapa[nombre] = { equipo: nombre, partidos: 0, aciertos: 0, total: 0 };
+        const d = mapa[nombre];
+        d.partidos++;
+        (h.mercados || []).forEach(m => {
+          d.total++;
+          if (m.acierto) d.aciertos++;
+        });
+      });
+    });
+    return Object.values(mapa).map(d => ({
+      ...d,
+      precision: d.total > 0 ? Math.round((d.aciertos / d.total) * 100) : 0
+    })).sort((a, b) => b.partidos - a.partidos || b.precision - a.precision)
+      .slice(0, limite || 8);
+  }
+
+  function rankingVacioHTML() {
+    const mensaje = trackRecordGlobal.error
+      ? 'No se pudo cargar el track record global. Revisá la conexión con el backend y volvé a intentar.'
+      : 'El ranking se activa cuando el backend sella el primer partido del track record público.';
+    return `
+      <div class="aviso-servidor" style="margin:0;">
+        <p><strong>Sin datos auditados todavía.</strong></p>
+        <p>${escaparHTML(mensaje)}</p>
+        <p><a href="resultados.html" style="color:var(--green); font-weight:600;">Ver la página pública de transparencia</a></p>
+      </div>
+    `;
+  }
+
+  function renderRankingGlobal() {
+    const contMercados = document.getElementById('ranking-mercados');
+    const contEquipos = document.getElementById('ranking-equipos');
+    if (!contMercados || !contEquipos) return;
+
+    const historial = historialTrackRecord();
+    const mercados = agregarRankingPorMercado(historial);
+    const equipos = agregarRankingPorEquipo(historial, 8);
+
+    if (mercados.length === 0) {
+      const vacio = rankingVacioHTML();
+      contMercados.innerHTML = vacio;
+      contEquipos.innerHTML = vacio;
+      return;
+    }
+
+    contMercados.innerHTML = `<div class="ranking-lista">${mercados.map((m, i) => `
+      <div class="ranking-fila">
+        <span class="ranking-puesto">${i + 1}</span>
+        <div class="ranking-info">
+          <div class="ranking-titulo">
+            <strong>${escaparHTML(m.titulo)}</strong>
+            <span class="ranking-muestra">${m.total} mercados · confianza media ${m.confianza}%</span>
+          </div>
+          <div class="ranking-barra"><span style="width:${m.precision}%"></span></div>
+        </div>
+        <span class="ranking-pct">${m.precision}%</span>
+      </div>
+    `).join('')}</div>`;
+
+    contEquipos.innerHTML = `<div class="ranking-lista">${equipos.map((e, i) => `
+      <div class="ranking-fila">
+        <span class="ranking-puesto">${i + 1}</span>
+        <div class="ranking-info">
+          <div class="ranking-titulo">
+            <strong>${escaparHTML(e.equipo)}</strong>
+            <span class="ranking-muestra">${e.partidos} partido${e.partidos === 1 ? '' : 's'} · ${e.total} mercados</span>
+          </div>
+          <div class="ranking-barra"><span style="width:${e.precision}%"></span></div>
+        </div>
+        <span class="ranking-pct">${e.precision}%</span>
+      </div>
+    `).join('')}</div>`;
+  }
+
+  // ============ COMPETICIONES (ligas del historial + fecha activa) ============
+  const ALIAS_CODIGO_LIGA = {
+    'Campeonato Brasileiro Série A': 'BSA',
+    'Campeonato Brasileiro Serie A': 'BSA',
+    'Brasileirão': 'BSA',
+    'Brasileirao': 'BSA',
+    'LaLiga': 'PD',
+    'La Liga': 'PD',
+    'Primera Division': 'PD',
+    'Primera División': 'PD',
+    'UEFA Champions League': 'CL'
+  };
+
+  function codigoLigaPorNombre(nombre) {
+    if (!nombre) return null;
+    const buscado = String(nombre).trim().toLowerCase();
+    for (const p of (partidosDelRango || [])) {
+      if (p.competition && String(p.competition.name || '').toLowerCase() === buscado) {
+        return p.competition.code || null;
+      }
+    }
+    for (const [codigo, etiqueta] of Object.entries(NOMBRES_LIGA || {})) {
+      if (String(etiqueta).toLowerCase() === buscado) return codigo;
+    }
+    for (const [alias, codigo] of Object.entries(ALIAS_CODIGO_LIGA)) {
+      if (alias.toLowerCase() === buscado) return codigo;
+    }
+    return null;
+  }
+
+  function renderCompeticionesGlobal() {
+    const contenedor = document.getElementById('competiciones-grid');
+    if (!contenedor) return;
+
+    const mapa = new Map();
+    const asegurar = (nombre, codigo) => {
+      const clave = codigo || `nombre:${String(nombre || 'Otras').trim().toLowerCase()}`;
+      if (!mapa.has(clave)) {
+        mapa.set(clave, { nombre: nombre || codigo || 'Otras', codigo: codigo || null, activos: 0, picks: 0, aciertos: 0, total: 0 });
+      }
+      const d = mapa.get(clave);
+      if (!d.codigo && codigo) d.codigo = codigo;
+      if ((!d.nombre || d.nombre === d.codigo) && nombre) d.nombre = nombre;
+      return d;
+    };
+
+    // Cobertura declarada por el motor, aunque todavía no tenga picks.
+    Object.entries(NOMBRES_LIGA || {}).forEach(([codigo, nombre]) => {
+      asegurar(nombre, codigo);
+    });
+
+    // Solo contamos partidos reales: si el backend no respondió, no inflamos
+    // la cobertura con los partidos demo.
+    const partidosReales = (!partidosModoDemo && Array.isArray(partidosDelRango) && partidosDelRango !== PARTIDOS_FALLBACK)
+      ? partidosDelRango
+      : [];
+
+    partidosReales.forEach(p => {
+      if (!p.competition) return;
+      const codigo = p.competition.code || codigoLigaPorNombre(p.competition.name);
+      const d = asegurar(p.competition.name || codigo, codigo);
+      d.activos++;
+    });
+
+    (historialTrackRecord() || []).filter(h => h.verificado).forEach(h => {
+      const codigo = codigoLigaPorNombre(h.liga);
+      const d = asegurar(h.liga, codigo);
+      (h.mercados || []).forEach(m => {
+        d.picks++;
+        d.total++;
+        if (m.acierto) d.aciertos++;
+      });
+    });
+
+    const ligas = Array.from(mapa.values()).map(d => ({
+      ...d,
+      precision: d.total > 0 ? Math.round((d.aciertos / d.total) * 100) : null
+    })).sort((a, b) => (b.activos > 0) - (a.activos > 0) || b.picks - a.picks || a.nombre.localeCompare(b.nombre));
+
+    if (ligas.length === 0) {
+      contenedor.innerHTML = `
+        <div class="aviso-servidor" style="grid-column:1/-1;">
+          <p><strong>Sin ligas para mostrar todavía.</strong></p>
+          <p>${trackRecordGlobal.error ? 'No se pudo cargar el track record global desde el backend.' : 'Cuando el motor cargue partidos o el backend registre pronósticos, las ligas van a aparecer acá.'}</p>
+        </div>
+      `;
+      return;
+    }
+
+    contenedor.innerHTML = ligas.map(l => {
+      const contenido = `
+        <div class="liga-card-top">
+          <span class="liga-card-codigo">${escaparHTML(l.codigo || '—')}</span>
+          ${l.codigo ? '<span class="liga-card-flecha" aria-hidden="true">→</span>' : '<span class="liga-card-chip">Histórico</span>'}
+        </div>
+        <strong class="liga-card-nombre">${escaparHTML(l.nombre)}</strong>
+        <span class="liga-card-meta">${l.activos > 0 ? `${l.activos} partido${l.activos === 1 ? '' : 's'} en la fecha activa` : 'Sin partidos en la fecha activa'}</span>
+        <span class="liga-card-meta">${l.picks > 0 ? `${l.picks} picks auditados · ${l.precision}% de acierto` : 'Sin picks auditados todavía'}</span>
+      `;
+      return l.codigo
+        ? `<button type="button" class="dashboard-card liga-card" data-action="abrir-liga" data-liga="${escaparHTML(l.codigo)}">${contenido}</button>`
+        : `<div class="dashboard-card liga-card">${contenido}</div>`;
+    }).join('');
+  }
+
+  async function abrirLiga(codigo) {
+    if (!codigo) return;
+    cambiarVista('pronosticos');
+    if (!Array.isArray(partidosDelRango) || partidosDelRango.length === 0 || partidosDelRango === PARTIDOS_FALLBACK) {
+      await cargarPartidos('hoy');
+    }
+    if (typeof cambiarLiga === 'function') cambiarLiga(codigo);
   }
 
   function esperar(ms) {
@@ -1621,12 +1963,29 @@
     await renderizarPartidosFiltrados();
   }
 
+  let partidosFavoritosCache = [];
+
+  function tarjetaFavoritoVaciaHTML() {
+    return `
+      <div class="estado-vacio favoritos-vacio" role="status">
+        <span class="favoritos-vacio-icono" aria-hidden="true">★</span>
+        <strong>Todavía no seguís ningún equipo</strong>
+        <span>Entrá a Predicciones y tocá la estrella junto a un equipo. Sus próximos partidos van a aparecer acá.</span>
+        <button class="boton-reintentar" type="button" data-action="cambiar-vista" data-vista="pronosticos">Ir a Predicciones</button>
+      </div>
+    `;
+  }
+
   async function cargarFavoritos() {
     const contenedor = document.getElementById('contenedor-favoritos');
+    if (!contenedor) return;
+    contenedor.classList.remove('visible');
     const favoritos = leerFavoritos();
 
     if (favoritos.length === 0) {
+      partidosFavoritosCache = [];
       contenedor.innerHTML = tarjetaFavoritoVaciaHTML();
+      requestAnimationFrame(() => contenedor.classList.add('visible'));
       return;
     }
 
@@ -1639,6 +1998,7 @@
     const partidos = await obtenerPartidos(formatearFecha(hoy), formatearFecha(fin));
     if (partidos.error) {
       contenedor.innerHTML = `<p style="text-align:center; color:#ff6b6b;">Error: ${escaparHTML(partidos.mensaje)}</p>`;
+      requestAnimationFrame(() => contenedor.classList.add('visible'));
       return;
     }
     partidosModoDemo = !Array.isArray(partidos) || partidos === PARTIDOS_FALLBACK;
@@ -1652,14 +2012,17 @@
 
   async function renderizarFavoritos() {
     const contenedor = document.getElementById('contenedor-favoritos');
+    if (!contenedor) return;
     const favoritos = leerFavoritos();
 
     if (favoritos.length === 0) {
+      partidosFavoritosCache = [];
       contenedor.innerHTML = tarjetaFavoritoVaciaHTML();
+      requestAnimationFrame(() => contenedor.classList.add('visible'));
       return;
     }
 
-    const lista = partidosFavoritosCache.filter(coincideBusqueda).slice(0, 8);
+    const lista = (partidosFavoritosCache || []).filter(coincideBusqueda).slice(0, 8);
 
     if (lista.length === 0) {
       const mensaje = terminoBusqueda
@@ -1668,6 +2031,7 @@
         ? 'Sin conexión con el servidor no podemos confirmar si tus equipos favoritos juegan en los próximos 7 días.'
         : 'Tus equipos favoritos no juegan en los próximos 7 días.';
       contenedor.innerHTML = `${partidosModoDemo ? avisoDatosDemoHTML() : ''}<p style="text-align:center; color:#8fa896;">${escaparHTML(mensaje)}</p>`;
+      requestAnimationFrame(() => contenedor.classList.add('visible'));
       return;
     }
 
@@ -1697,6 +2061,7 @@
     }
 
     contenedor.innerHTML = (partidosModoDemo ? avisoDatosDemoHTML() : '') + htmlFinal;
+    requestAnimationFrame(() => contenedor.classList.add('visible'));
 
     if (typeof triggerUIAnimations === 'function') {
       requestAnimationFrame(() => triggerUIAnimations());

@@ -30,7 +30,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="dns-prefetch" href="https://fulbito-forh.onrender.com">
-    <link rel="stylesheet" href="style.css?v=7">
+    <link rel="stylesheet" href="style.css?v=8">
     <script src="https://cdn.jsdelivr.net/npm/motion@11.11.13/dist/motion.js"></script>
     <link rel="canonical" href="https://kkkxxxs.github.io/fulbito/">
 
@@ -268,7 +268,7 @@
                     </span>
                     <span class="dash-kpi-chip rosa" data-i18n="kpiHoyChip">Ver</span>
                 </div>
-                <span class="dash-kpi-label" data-i18n="kpiHoy">Predicciones hoy <span class="dash-tip" data-tip="Recomendaciones activas del motor para la jornada de hoy (9 mercados por partido).">?</span></span>
+                <span class="dash-kpi-label" data-i18n="kpiHoy">Predicciones hoy <span class="dash-tip" data-tip="Recomendaciones activas del motor para la jornada de hoy (4 mercados por partido).">?</span></span>
                 <strong class="dash-kpi-valor" id="kpi-hoy" aria-live="polite">…</strong>
                 <span class="dash-kpi-pie" id="kpi-hoy-pie">Cargando la jornada de hoy…</span>
             </button>
@@ -276,7 +276,7 @@
 
         <!-- Acceso Rápido: Predicciones IA -->
         <article class="bento-item quick-access">
-            <button class="dash-quick-card" data-action="cambiar-vista" data-vista="pronosticos" title="Partidos analizados por el motor, con 9 mercados y probabilidad calibrada">
+            <button class="dash-quick-card" data-action="cambiar-vista" data-vista="pronosticos" title="Partidos analizados por el motor, con 4 mercados y probabilidad calibrada">
                 <span class="dash-quick-icono verde">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5a3 3 0 0 0-2.9 2.2A3 3 0 0 0 7 12.5a3 3 0 0 0 2.2 5.2H11a2 2 0 0 0 2-2V7a2 2 0 0 0-1-2z"/><path d="M12 5a3 3 0 0 1 2.9 2.2A3 3 0 0 1 17 12.5a3 3 0 0 1-2.2 5.2H13a2 2 0 0 1-2-2V7a2 2 0 0 1 1-2z"/></svg>
                 </span>
@@ -531,7 +531,7 @@
     <div class="vista-cabecera animated-enter">
         <span class="vista-eyebrow" data-i18n="pronosticosEyebrow">Pronósticos</span>
         <h2 data-i18n="pronosticosTitulo">Partidos analizados por el motor</h2>
-        <p class="subtitulo-vista" data-i18n="pronosticosSub">Poisson + Dixon-Coles · 9 mercados por partido · probabilidad calibrada.</p>
+        <p class="subtitulo-vista" data-i18n="pronosticosSub">Poisson + Dixon-Coles · 4 mercados por partido · probabilidad calibrada.</p>
     </div>
     <div id="live-region-pronosticos" class="sr-only" aria-live="polite"></div>
     <div id="selector-deporte" role="tablist" aria-label="Selector de deporte" class="pills-container" class="animated-enter delay-1">
@@ -693,7 +693,7 @@
                 <span class="telemetria-badge warn" id="telemetria-ciclo-badge">Ciclo 1</span>
             </div>
             <strong class="telemetria-valor" id="telemetria-muestras">0 / 20</strong>
-            <span class="telemetria-label">Muestras para autoajuste</span>
+            <span class="telemetria-label">Muestras locales para autoajuste</span>
             <div class="telemetria-progreso"><div class="telemetria-progreso-fill" id="telemetria-progreso-barra" id="telemetria-progreso-barra" class="u-w-5 telemetria-progreso-gradient"></div></div>
             <small class="telemetria-sub" id="telemetria-faltan-txt">20 partidos restantes</small>
         </div>
@@ -910,10 +910,10 @@
     </div>
 </div>
 
-<script src="app-model.js?v=10"></script>
-<script src="app-ui.js?v=9"></script>
-<script src="app-init.js?v=8"></script>
-<script src="events.js?v=1"></script>
+<script src="app-model.js?v=11"></script>
+<script src="app-ui.js?v=10"></script>
+<script src="app-init.js?v=9"></script>
+<script src="events.js?v=2"></script>
 
 <button class="btn-volver-arriba" type="button" data-action="scroll-arriba" aria-label="Volver arriba">↑</button>
 </body>
