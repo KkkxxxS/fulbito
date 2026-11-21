@@ -11,6 +11,10 @@
 (function (global) {
   'use strict';
 
+  // Namespace raíz del frontend (Fase 10). Resto de módulos delegan en
+  // FULBITO.* (ver frontend/README.md); es el único namespace del shell.
+  global.FULBITO = global.FULBITO || {};
+
   // Motion 11 expone el global `Motion` (mayúscula) como un objeto con
   // `animate`, `stagger`, etc. app-ui.js usa la API de Motion One:
   //   motion(objetivo, keyframesConOpciones)

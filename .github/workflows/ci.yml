@@ -34,12 +34,18 @@ jobs:
           cache: 'npm'
       - name: Instalar dependencias Node
         run: npm ci
+      - name: Auditoría de dependencias (npm audit --audit-level=high, Fase 9)
+        run: npm audit --audit-level=high
       - name: Sintaxis y paridad del frontend (npm check)
         run: npm run check
       - name: Paridad numérica Python <-> JS
         run: npm run test:parity
+      - name: Contrato de liquidación (Python/JS/servidor)
+        run: npm run test:settlement
       - name: Suite de recalibración (12 escenarios)
         run: npm test
+      - name: Gobernanza de parámetros (aprobación/rechazo)
+        run: npm run test:gobernanza
       - name: Persistencia del historial del servidor (SQLite)
         run: npm run test:server
       - name: Utilidades de seguridad de auth (sin DB)
@@ -51,6 +57,16 @@ jobs:
           DATABASE_SSL: 'false'
       - name: Liquidación server-side del track record
         run: npm run test:liquidacion
+      - name: Métricas de evaluación (Brier multiclase, LogLoss, calibración)
+        run: npm run test:evaluation
+      - name: Comparación OOS de versiones de modelo (Fase 5.1)
+        run: npm run test:evaluation-report
+      - name: Versiones de modelo y calidad de datos (Fase 5.1)
+        run: npm run test:version
+      - name: Métricas de infraestructura y alertas (Fase 6.2/6.3)
+        run: npm run test:metrics && npm run test:alertas
+      - name: Recuperación de contraseña y auditoría (Fase 9)
+        run: npm run test:recovery && npm run test:audit
       - name: Verificación del modelo JS
         run: npm run verify
       - name: Smoke test del frontend

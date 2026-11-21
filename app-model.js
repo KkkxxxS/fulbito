@@ -1599,89 +1599,59 @@
     };
   }
 
-  // ---- INSERTAR ANTIGUO verificarMercado PARA NO ROMPIR NADA ----
-  const verificarMercadoAntiguo = function verificarMercado(categoria, parametros, golesLocal, golesVisita) {
-    switch (categoria) {
-      case 'resultado':  if (parametros.lado === 'local') return golesLocal > golesVisita;
-                       if (parametros.lado === 'visita') return golesVisita > golesLocal;
-                       return golesLocal === golesVisita;
-      case 'doble':      if (parametros.lado === '1X') return golesLocal >= golesVisita;
-                       if (parametros.lado === 'X2') return golesVisita >= golesLocal;
-                       return golesLocal !== golesVisita;
-      case 'totalgoles': { // legado: usa la lógica original con lambda por defecto
-        const lambda = (parametros && parametros.lineas) ? parametros.lineas : 3.5;
-        return (golesLocal + golesVisita) > lambda;
-      }
-      default: return false;
-    }
-  };
-
-  // ---- NUEVO verificarMercado: Elo + Poisson ----
-  function verificarMercado(categoria, parametros, golesLocal, golesVisita, ratingsLocal, ratingsVisitante, equipoLocal, equipoVisitante) {
-    // Si no hay ratings todavía, caemos al antiguo para no romper nada
-    if (!ratingsLocal || !ratingsVisitante) return verificarMercadoAntiguo(categoria, parametros, golesLocal, golesVisita);
-
-    const { lambdaLocal, lambdaVisitante } = obtenerLambda(
-      equipoLocal || 'local', equipoVisitante || 'visitante', ratingsLocal, ratingsVisitante
-    );
+  // ---- Liquidación de mercados (contrato único) -------------------------
+  // Espejo exacto de server/liquidacion.js y pronosticos.verificarMercado.
+  // Los fixtures compartidos viven en tests/fixtures/settlement.json y se
+  // ejecutan con `npm run test:settlement`. Esto liquida el marcador real:
+  // nunca usa ratings, lambdas ni probabilidades del modelo.
+  function verificarMercado(categoria, parametros, golesLocal, golesVisita) {
+    const gl = Number(golesLocal);
+    const gv = Number(golesVisita);
+    if (!Number.isFinite(gl) || !Number.isFinite(gv)) return false;
+    const p = parametros || {};
 
     switch (categoria) {
-      case 'resultado': {
-        const { local, empate, visitante } = probabilidad1X2(lambdaLocal, lambdaVisitante);
-        // Devolver booleano: true si "local gana" según el modelo
-        return local > empate && local > visitante;
-      }
-      case 'doble': {
-        // 1X = local o empate; X2 = empate o visitante
-        const { local, empate, visitante } = probabilidad1X2(lambdaLocal, lambdaVisitante);
-        return { '1X': local >= empate, 'X2': empate >= visitante, '1X2': true }[parametros?.lado || '1X'] || false;
-      }
+      case 'resultado':
+        if (p.lado === 'local') return gl > gv;
+        if (p.lado === 'visita') return gv > gl;
+        return gl === gv;
+      case 'doble':
+        if (p.lado === '1X') return gl >= gv;
+        if (p.lado === 'X2') return gv >= gl;
+        return gl !== gv;
       case 'totalgoles': {
-        // over/under 2.5: P(goles totales > 2.5) = 1 - P(0-2)
-        const p0e = poisson(0, lambdaLocal) * poisson(0, lambdaVisitante);
-        const p1e = poisson(1, lambdaLocal) * poisson(0, lambdaVisitante);
-        const p01 = poisson(0, lambdaLocal) * poisson(1, lambdaVisitante);
-        const p10 = poisson(1, lambdaLocal) * poisson(1, lambdaVisitante);
-        const pMenos2 = p0e + p1e + p01 + p10; // P(0-0, 1-0, 0-1, 1-1)
-        return (1 - pMenos2) > 0.5; // over 2.5 si > 50%
+        const linea = Number(p.linea);
+        if (!Number.isFinite(linea)) return false;
+        const total = gl + gv;
+        return p.direccion === 'menos' ? total < linea : total > linea;
       }
       case 'btts': {
-        // Ambos anotan: 1 - P(a cero goles) - USANDO LOGICA ANTIGUA POR AHORA
-        return verificarMercadoAntiguo('btts', parametros, golesLocal, golesVisita);
+        const ambos = gl >= 1 && gv >= 1;
+        return p.si ? ambos : !ambos;
       }
-      case 'resultado exacto': {
-        // Devolver el marcador más probable
-        let maxProb = -1, mejor = '0-0';
-        for (let i = 0; i <= 6; i++) {
-          for (let j = 0; j <= 6; j++) {
-            const prob = poisson(i, lambdaLocal) * poisson(j, lambdaVisitante);
-            if (prob > maxProb) { maxProb = prob; mejor = `${i}-${j}`; }
-          }
-        }
-        return mejor;
+      case 'equipomarca':
+        return p.lado === 'local' ? gl >= 1 : gv >= 1;
+      case 'handicap': {
+        const valor = Number(p.valor);
+        if (!Number.isFinite(valor)) return false;
+        const margen = p.lado === 'local' ? (gl - gv) : (gv - gl);
+        return margen >= valor;
       }
-      default: return verificarMercadoAntiguo(categoria, parametros, golesLocal, golesVisita);
+      case 'dnb':
+        if (p.lado === 'local') return gl > gv;
+        if (p.lado === 'visita') return gv > gl;
+        return false;
+      case 'marcador': {
+        const mgl = Number(p.gl);
+        const mgv = Number(p.gv);
+        if (!Number.isFinite(mgl) || !Number.isFinite(mgv)) return false;
+        return gl === mgl && gv === mgv;
+      }
+      default:
+        return false;
     }
   }
-  // ---- FIN NUEVO verificarMercado ----
-
-  // legado: mantener la firma antigua compatible para quien llame con 4 args
-  // (los primeros 4 parámetros son los mismos; los últimos 4 son nuevos opcionales)
-  ;(function () {
-    // alias compatible: verificarMercado(cat, params, gL, gV)
-    const antiguo = window.verificarMercadoAntiguo || function (c, p, gl, gv) {
-      switch (c) {
-        case 'resultado':  if (p.lado === 'local') return gl > gv;
-                         if (p.lado === 'visita') return gv > gl;
-                         return gl === gv;
-        case 'doble':      if (p.lado === '1X') return gl >= gv;
-                         if (p.lado === 'X2') return gv >= gl;
-                         return gl !== gv;
-        default: return false;
-      }
-    };
-    window.verificarMercadoAntiguo = antiguo;
-  })();
+  // ---- Fin liquidación de mercados --------------------------------------
 
   function generarCandidatosMercado(matriz, maxGoles, nombreLocal, nombreVisita) {
     const candidatos = [];

@@ -1,4 +1,5 @@
 const { Pool } = require('pg');
+const fs = require('fs');
 
 /**
  * Gestor de Base de Datos para Fulbito.
@@ -27,13 +28,30 @@ function obtenerPool() {
       connectionString: process.env.DATABASE_URL,
       connectionTimeoutMillis: 5000,
       max: 10,
-      ssl: process.env.DATABASE_SSL === 'false' ? false : { rejectUnauthorized: false }
+      // Fase 9: TLS con validación de certificado por defecto. DATABASE_SSL=false
+      // desactiva TLS (compat, sólo desarrollo local); DATABASE_SSL_CA_FILE añade CA personalizada.
+      ssl: modoSsl()
     });
     poolReal.on('error', (error) => {
       console.error('Error inesperado del pool PostgreSQL:', error.message);
     });
   }
   return poolReal;
+}
+
+function modoSsl() {
+  const modo = String(process.env.DATABASE_SSL || '').trim().toLowerCase();
+  if (!modo || modo === 'false') return false;
+  const opts = { rejectUnauthorized: true };
+  const caFile = String(process.env.DATABASE_SSL_CA_FILE || '').trim();
+  if (caFile) {
+    try {
+      opts.ca = fs.readFileSync(caFile);
+    } catch (e) {
+      console.warn('ADVERTENCIA: no se pudo leer DATABASE_SSL_CA_FILE:', caFile);
+    }
+  }
+  return opts;
 }
 
 // Proxy compatible con el uso existente: db.pool.connect(), db.pool.query().
@@ -111,6 +129,16 @@ async function inicializarBaseDeDatos() {
     await cliente.query('ALTER TABLE mercados_pronostico ADD COLUMN IF NOT EXISTS seleccion TEXT;');
     await cliente.query('ALTER TABLE mercados_pronostico ADD COLUMN IF NOT EXISTS probabilidad NUMERIC;');
 
+    // Tabla kv: almacén clave-valor usado por el layer de compatibilidad
+    // (espacios legacy de historial). En Fase 2 se deja de usarla; se mantiene
+    // para evitar romper lecturas de fases anteriores.
+    await cliente.query(`
+      CREATE TABLE IF NOT EXISTS kv (
+        clave TEXT PRIMARY KEY,
+        valor JSONB NOT NULL
+      );
+    `);
+
     // 5. Tabla de Pronósticos de Usuario (Historial Personal)
     await cliente.query(`
       CREATE TABLE IF NOT EXISTS pronosticos_usuario (
@@ -122,6 +150,34 @@ async function inicializarBaseDeDatos() {
       );
     `);
     await cliente.query('CREATE INDEX IF NOT EXISTS idx_user_pronosticos ON pronosticos_usuario(usuario_id);');
+
+    // 7. Tokens de restablecimiento de contraseña (Fase 9).
+    await cliente.query(`
+      CREATE TABLE IF NOT EXISTS password_reset_tokens (
+        id SERIAL PRIMARY KEY,
+        email TEXT UNIQUE NOT NULL,
+        token_hash TEXT NOT NULL,
+        expira TIMESTAMP WITH TIME ZONE NOT NULL,
+        usado BOOLEAN NOT NULL DEFAULT false,
+        creado TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    await cliente.query('CREATE UNIQUE INDEX IF NOT EXISTS idx_password_reset_email ON password_reset_tokens(email);');
+
+    // 8. Auditoría de aprobaciones (Fase 9): registro inmutable de decisiones.
+    await cliente.query(`
+      CREATE TABLE IF NOT EXISTS auditoria_aprobaciones (
+        id SERIAL PRIMARY KEY,
+        accion TEXT NOT NULL,
+        actor TEXT NOT NULL,
+        descripcion TEXT,
+        ip TEXT,
+        hash TEXT NOT NULL,
+        hash_input TEXT NOT NULL,
+        creado TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    await cliente.query('CREATE INDEX IF NOT EXISTS idx_auditoria_aprobaciones_creado ON auditoria_aprobaciones(creado);');
 
     console.log('✅ Migraciones completadas exitosamente.');
     return { omitido: false };

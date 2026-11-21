@@ -22,29 +22,56 @@ import xgboost as xgb
 import warnings
 warnings.filterwarnings('ignore')
 
+# Versión del modelo (Fase 5.1): punto único de verdad JS/Python,
+# paridad probada por test_model_version.py.
+MODEL_VERSION = "2026-11"
 
-def cargar_parametros_aprobados(path="parametros_aprobados.json"):
+
+def cargar_parametros_aprobados(path="parametros_aprobados.json", con_metadata=False):
     """
     Lee overrides aprobados y los aplica sobre la calibración activa.
     No rompe si el archivo no existe, está mal formado, o el estado no es 'aprobada'.
+
+    La aprobación es manual (recalibracion.py --aprobar). Este lector solo aplica
+    lo que ya fue aprobado y registrado. `FULBITO_IGNORE_APPROVED_PARAMS=1`
+    permite ignorar los overrides sin borrar el archivo (kill switch).
     """
     import json, os
 
+    def sin_overrides(motivo=None):
+        if motivo:
+            print(motivo)
+        return (None, {}) if con_metadata else None
+
+    if os.environ.get("FULBITO_IGNORE_APPROVED_PARAMS") == "1":
+        return sin_overrides(
+            "[INFO] parametros_aprobados.json ignorado por FULBITO_IGNORE_APPROVED_PARAMS=1"
+        )
+
     if not os.path.exists(path):
-        return None
+        return sin_overrides()
 
     try:
         with open(path, "r", encoding="utf-8") as f:
             data = json.load(f)
     except (json.JSONDecodeError, OSError) as e:
-        print(f"[WARN] No se pudo leer {path}: {e}")
-        return None
+        return sin_overrides(f"[WARN] No se pudo leer {path}: {e}")
 
     if data.get("estado") != "aprobada":
-        print(f"[INFO] parametros_aprobados.json existe pero estado='{data.get('estado')}', se ignora")
-        return None
+        return sin_overrides(
+            f"[INFO] parametros_aprobados.json existe pero estado='{data.get('estado')}', se ignora"
+        )
 
-    return data.get("overrides", {})
+    overrides = data.get("overrides", {})
+    if con_metadata:
+        return overrides, {
+            "propuestaId": data.get("propuestaId"),
+            "aprobadoPor": data.get("aprobadoPor"),
+            "version": data.get("version"),
+            "aprobadoEn": data.get("aprobadoEn"),
+            "hashOverrides": data.get("hashOverrides"),
+        }
+    return overrides
 
 # ==================== CONFIGURACIÓN ====================
 # Ingesta desde el backend real (ver GeneradorPronosticos.cargarDatosDesdeBackend).
@@ -216,41 +243,78 @@ def sumaMatriz(matriz, max_goles, condicion):
                 s += getter(i, j)
     return s
 
+def _numero(valor):
+    """Convierte a float finito o devuelve None. Evita que un parametro roto
+    liquide como acierto por comparaciones con None."""
+    try:
+        n = float(valor)
+    except (TypeError, ValueError):
+        return None
+    return n if math.isfinite(n) else None
+
+
 def verificarMercado(categoria, parametros, goles_local, goles_visita):
-    """Verifica si un mercado se cumple dado el marcador"""
+    """Verifica si un mercado se cumple dado el marcador real.
+
+    Contrato unico compartido con app-model.js y server/liquidacion.js.
+    Los fixtures viven en tests/fixtures/settlement.json y se ejecutan con
+    `npm run test:settlement`. No usar ratings ni probabilidades aqui:
+    esto liquida hechos, no predicciones.
+    """
+    gl = _numero(goles_local)
+    gv = _numero(goles_visita)
+    if gl is None or gv is None:
+        return False
+
+    p = parametros or {}
+    lado = p.get('lado')
+
     if categoria == 'resultado':
-        if parametros['lado'] == 'local':
-            return goles_local > goles_visita
-        elif parametros['lado'] == 'visita':
-            return goles_visita > goles_local
-        else:
-            return goles_local == goles_visita
-    elif categoria == 'doble':
-        if parametros['lado'] == '1X':
-            return goles_local >= goles_visita
-        elif parametros['lado'] == 'X2':
-            return goles_visita >= goles_local
-        else:
-            return goles_local != goles_visita
-    elif categoria == 'totalgoles':
-        total = goles_local + goles_visita
-        if parametros['direccion'] == 'menos':
-            return total < parametros['linea']
-        else:
-            return total > parametros['linea']
-    elif categoria == 'btts':
-        ambos = goles_local >= 1 and goles_visita >= 1
-        return parametros['si'] if ambos else not parametros['si']
-    elif categoria == 'equipomarca':
-        if parametros['lado'] == 'local':
-            return goles_local >= 1
-        else:
-            return goles_visita >= 1
-    elif categoria == 'handicap':
-        margen = parametros['lado'] == 'local' and (goles_local - goles_visita) or (goles_visita - goles_local)
-        return margen >= parametros['valor']
-    elif categoria == 'marcador':
-        return goles_local == parametros['gl'] and goles_visita == parametros['gv']
+        if lado == 'local':
+            return gl > gv
+        if lado == 'visita':
+            return gv > gl
+        return gl == gv
+    if categoria == 'doble':
+        if lado == '1X':
+            return gl >= gv
+        if lado == 'X2':
+            return gv >= gl
+        return gl != gv
+    if categoria == 'totalgoles':
+        linea = _numero(p.get('linea'))
+        if linea is None:
+            return False
+        total = gl + gv
+        if p.get('direccion') == 'menos':
+            return total < linea
+        return total > linea
+    if categoria == 'btts':
+        ambos = gl >= 1 and gv >= 1
+        si = bool(p.get('si'))
+        return si if ambos else not si
+    if categoria == 'equipomarca':
+        if lado == 'local':
+            return gl >= 1
+        return gv >= 1
+    if categoria == 'handicap':
+        valor = _numero(p.get('valor'))
+        if valor is None:
+            return False
+        margen = (gl - gv) if lado == 'local' else (gv - gl)
+        return margen >= valor
+    if categoria == 'dnb':
+        if lado == 'local':
+            return gl > gv
+        if lado == 'visita':
+            return gv > gl
+        return False
+    if categoria == 'marcador':
+        mgl = _numero(p.get('gl'))
+        mgv = _numero(p.get('gv'))
+        if mgl is None or mgv is None:
+            return False
+        return gl == mgl and gv == mgv
     return False
 
 # ==================== MODELO ESTADÍSTICO ====================
@@ -370,7 +434,7 @@ class ModeloEstadistico:
         self.config = config
         self.calibracion_actual = self._calibracionPorDefecto()
 
-        overrides = cargar_parametros_aprobados()
+        overrides, meta_overrides = cargar_parametros_aprobados(con_metadata=True)
 
         if overrides:
             calibracion = overrides.get("calibracion", {})
@@ -400,6 +464,12 @@ class ModeloEstadistico:
                 self.calibracion_actual["multH2H"] = mult["h2h"]
 
             self.calibracion_actual["platt"] = overrides.get("platt", {})
+            print(
+                "[INFO] Overrides aprobados aplicados: "
+                f"propuesta={meta_overrides.get('propuestaId')} "
+                f"version={meta_overrides.get('version')} "
+                f"actor={meta_overrides.get('aprobadoPor')}"
+            )
     
     def _calibracionPorDefecto(self):
         return {

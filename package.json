@@ -6,9 +6,16 @@
   "scripts": {
     "start": "cd server && node server.js",
     "dev": "cd server && node --watch server.js",
-    "test": "python test_recalibracion.py",
+    "test": "python test_recalibracion.py && python test_gobernanza.py && python test_model_version.py && python test_data_quality.py && node server/test-metrics.js && node server/test-alertas.js && node server/test-recovery.js && node server/test-audit.js && node server/test-frontend-namespaces.js",
     "test:parity": "python test_paridad.py",
+    "test:settlement": "python test_settlement.py && node test-settlement.js",
+    "test:gobernanza": "python test_gobernanza.py",
     "test:server": "node server/test-persistence.js",
+    "test:evaluation": "node server/test-evaluation.js",
+    "test:evaluation-report": "node server/test-evaluation-report.js",
+    "test:version": "node server/test-version.js",
+    "test:metrics": "node server/test-metrics.js",
+    "test:alertas": "node server/test-alertas.js",
     "test:seguridad": "node server/test-seguridad.js",
     "test:auth": "node server/test-auth.js",
     "test:liquidacion": "node server/test-liquidacion.js",
@@ -16,7 +23,10 @@
     "test:events": "node test-events.js",
     "verify": "node verify-model.js",
     "smoke": "node smoke-frontend.js",
-    "check": "node -c bootstrap.js && node -c events.js && node -c app-model.js && node -c app-ui.js && node -c app-init.js && node -c app-animaciones.js && node -c menu-toggle.js && node -c sw.js && node -c v-multideporte.js && node -c server/server.js && node -c server/db.js && node -c server/seguridad.js && node -c auth.js && node -c server/liquidacion.js && node -c verify-model.js && node -c historial-artefacto.js && node -c sync-historial.js && node -c upload-artifacts-to-release.js"
+    "check": "node -c bootstrap.js && node -c events.js && node -c app-model.js && node -c app-ui.js && node -c app-init.js && node -c app-animaciones.js && node -c menu-toggle.js && node -c sw.js && node -c v-multideporte.js && node -c server/server.js && node -c server/db.js && node -c server/repositories.js && node -c server/services/auth.js && node -c server/services/history.js && node -c server/services/predictions.js && node -c server/services/models.js && node -c server/services/evaluation.js && node -c packages/domain/settlement/index.js && node -c server/seguridad.js && node -c auth.js && node -c server/liquidacion.js && node -c verify-model.js && node -c historial-artefacto.js && node -c sync-historial.js && node -c upload-artifacts-to-release.js && node -c packages/domain/version.js && node -c server/services/evaluation-report.js && node -c server/test-version.js && node -c server/test-evaluation-report.js && node -c server/metrics.js && node -c server/alertas.js && node -c server/test-metrics.js && node -c server/test-alertas.js && node -c server/services/recovery.js && node -c server/services/audit.js && node -c server/test-frontend-namespaces.js",
+    "test:recovery": "node server/test-recovery.js",
+    "test:audit": "node server/test-audit.js",
+    "test:frontend-namespaces": "node server/test-frontend-namespaces.js"
   },
   "keywords": [
     "futbol",

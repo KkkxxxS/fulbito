@@ -1,0 +1,82 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Fulbito API",
+    "version": "1.0.0",
+    "description": "Contrato HTTP actual del backend. Fase 4: prefijo /api de historia y auth con servicios; sin cambios de contrato para el frontend existente."
+  },
+  "servers": [
+    {
+      "url": "/",
+      "description": "Instancia del backend en ese origen"
+    }
+  ],
+  "paths": {
+    "/": {
+      "get": { "operationId": "rootHealth", "summary": "Root lightweight", "responses": { "200": { "description": "ok" } } }
+    },
+    "/health": {
+      "get": { "operationId": "health", "summary": "Health check", "responses": { "200": { "description": "ok" } } }
+    },
+    "/api/historial": {
+      "get": { "operationId": "getHistorial", "summary": "Historial global público", "responses": { "200": { "description": "historial + ok" } } },
+      "post": { "operationId": "putHistorial", "summary": "Guarda historial (X-Api-Key)", "responses": { "200": { "description": "ok" } } },
+      "put": { "operationId": "putHistorialFull", "summary": "Reemplaza historial (X-Api-Key)", "responses": { "200": { "description": "ok" } } }
+    },
+    "/api/historial/stats": {
+      "get": { "operationId": "getHistorialStats", "summary": "Estadísticas del historial", "responses": { "200": { "description": "total, verificados, ultimo" } } }
+    },
+    "/api/historial/ingest": {
+      "post": { "operationId": "ingestHistorial", "summary": "Ingesta idempotente del artefacto", "responses": { "200": { "description": "insertados, omitidos, total" } } }
+    },
+    "/api/historial/liquidar": {
+      "post": { "operationId": "liquidarHistorial", "summary": "Liquidación server-side", "responses": { "200": { "description": "liquidados" } } }
+    },
+    "/api/log": {
+      "post": { "operationId": "clientLog", "summary": "Telemetría anónima del frontend", "responses": { "202": { "description": "accepted" } } }
+    },
+    "/api/auth/register": {
+      "post": { "operationId": "register", "summary": "Registra usuario", "responses": { "200": { "description": "ok, token"}, "400": { "description": "bad_usuario/bad_password/usuario_reservado" } } }
+    },
+    "/api/auth/login": {
+      "post": { "operationId": "login", "summary": "Inicia sesión", "responses": { "200": { "description": "ok, token" }, "401": { "description": "invalid_credentials" } } }
+    },
+    "/api/auth/logout": {
+      "post": { "operationId": "logout", "summary": "Revoca token", "responses": { "200": { "description": "ok" } } }
+    },
+    "/api/auth/logout-all": {
+      "post": { "operationId": "logoutAll", "summary": "Revoca todas las sesiones del usuario", "responses": { "200": { "description": "ok" } } }
+    },
+    "/api/auth/me": {
+      "get": { "operationId": "me", "summary": "Datos de sesión", "responses": { "200": { "description": "ok, usuario, usuarioId, expira" } } }
+    },
+    "/api/mi-historial": {
+      "get": { "operationId": "getPersonalHistory", "summary": "Historial personal de sesión", "responses": { "200": { "description": "historial" } } },
+      "put": { "operationId": "putPersonalHistory", "summary": "Reemplaza historial personal de sesión", "responses": { "200": { "description": "ok" } } }
+    },
+    "/api/pronosticos": {
+      "get": { "operationId": "getPronosticos", "summary": "Artefacto diario de pronósticos", "responses": { "200": { "description": "version, generadoEn, pronosticos" } } }
+    },
+    "/api/partidos": {
+      "get": { "operationId": "getPartidos", "summary": "Partidos por rango/competición", "responses": { "200": { "description": "matches" } } }
+    },
+    "/api/equipo/:id/stats": {
+      "get": { "operationId": "equipoStats", "summary": "Estadísticas del equipo", "responses": { "200": { "description": "matches" } } }
+    },
+    "/api/partido/:id/h2h": {
+      "get": { "operationId": "h2h", "summary": "Historial de enfrentamientos", "responses": { "200": { "description": "head2head" } } }
+    },
+    "/api/liga/:code/standings": {
+      "get": { "operationId": "standings", "summary": "Tabla de posiciones", "responses": { "200": { "description": "standings" } } }
+    },
+    "/api/sports": {
+      "get": { "operationId": "sports", "summary": "Catálogo de deportes de The Odds API", "responses": { "200": { "description": "sports" } } }
+    },
+    "/api/odds/:sport": {
+      "get": { "operationId": "odds", "summary": "Cuotas por deporte", "responses": { "200": { "description": "markets" } } }
+    },
+    "/api/predicciones/:deporte": {
+      "get": { "operationId": "prediccionesDeporte", "summary": "Predicciones multideporte", "responses": { "200": { "description": "predicciones" } } }
+    }
+  }
+}

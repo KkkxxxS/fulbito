@@ -1,3 +1,7 @@
+  // Namespace raíz del frontend (Fase 10): bootstrap.js lo crea antes; lo
+  // idempotentizamos aquí por si cambia el orden de carga.
+  window.FULBITO = window.FULBITO || {};
+
   // ============ INICIALIZACION ============
   const inputFechaPersonalizada = document.getElementById('input-fecha-personalizada');
   if (inputFechaPersonalizada) inputFechaPersonalizada.min = formatearFecha(new Date());

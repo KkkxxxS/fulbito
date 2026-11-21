@@ -6,7 +6,8 @@
  * correctamente los pendientes, sea idempotente y no toque entradas ya verificadas.
  */
 const assert = require('assert');
-const { verificarMercado, evaluarMercados, marcadorDePartido, rangosDeFechas, liquidarHistorial } = require('./liquidacion');
+const { verificarMercado, evaluarMercados } = require('../packages/domain/settlement');
+const { marcadorDePartido, rangosDeFechas, liquidarHistorial } = require('./liquidacion');
 
 let pasadas = 0;
 let fallidas = 0;

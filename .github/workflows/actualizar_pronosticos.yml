@@ -28,8 +28,14 @@ jobs:
           gh release download artifacts-daily --pattern bitacora_recalibracion.jsonl --clobber || true
       - name: Validar paridad del modelo (Python vs JS)
         run: python test_paridad.py
+      - name: Contrato de liquidación (Python/JS/servidor)
+        run: npm run test:settlement
       - name: Suite de recalibración (12 escenarios)
         run: python test_recalibracion.py
+      - name: Versiones de modelo y calidad de datos (Fase 5.1)
+        run: npm run test:version && python test_model_version.py && python test_data_quality.py
+      - name: Gobernanza de parámetros (aprobación/rechazo)
+        run: python test_gobernanza.py
       - run: python pronosticos.py
       - name: Recalibración supervisada (diagnóstico + propuesta)
         id: recalibracion
@@ -85,8 +91,8 @@ jobs:
             --title "Recalibración $ID — requiere tu aprobación o rechazo" \
             --body "Propuesta generada automáticamente por el sistema de recalibración (diseño aprobado). Revisá \`propuesta_recalibracion.json\` en este PR.
 
-          - **Aprobar:** haz merge del PR. Los overrides quedan en \`parametros_aprobados.json\`, que \`pronosticos.py\` ya consume: se aplican en la siguiente corrida diaria.
-          - **Rechazar:** cierra el PR y registra el motivo con: \`python recalibracion.py --rechazar $ID --motivo \"...\"\` (queda en la bitácora para Transparencia)." \
+          - **Aprobar:** revisá la propuesta en este PR, haz merge del PR y luego ejecutá en `main`: `python recalibracion.py --aprobar $ID --actor "<tu nombre>"`. El merge por sí solo NO escribe overrides en `parametros_aprobados.json`.
+          - **Rechazar:** cerrá el PR y ejecutá: `python recalibracion.py --rechazar $ID --motivo "..." --actor "<tu nombre>"`." \
             --head "$RAMA" --base main; then
             # Fallback: si no se pudo crear el PR, la propuesta se publica en main
             git checkout main

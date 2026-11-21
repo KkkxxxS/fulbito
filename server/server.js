@@ -3,7 +3,9 @@ const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
 const compression = require('compression');
-const { liquidarHistorial, marcadorDePartido, verificarMercado, rangosDeFechas } = require('./liquidacion');
+const { randomUUID } = require('crypto');
+const { liquidarHistorial, marcadorDePartido, rangosDeFechas } = require('./liquidacion');
+const { verificarMercado } = require('../packages/domain/settlement');
 const { construirEntradasDesdeArtefacto } = require('../historial-artefacto');
 const app = express();
 
@@ -19,6 +21,21 @@ try {
 } catch (e) { /* dotenv no instalado: ignora y usa process.env */ }
 
 const db = require('./db'); // Conexión centralizada (lazy: lee DATABASE_URL al usar)
+const authService = require('./services/auth');
+const DATA_DIR = path.resolve(__dirname, 'data');
+const {
+  repoUsuarioPorNombre,
+  repoUsuarioIdPorToken,
+  repoCrearUsuarioYSesion,
+  repoCrearSesion,
+  repoRevocarSesionesUsuario,
+  repoRevocarSesionPorTokenHash,
+  repoLimpiarSesionesExpiradas,
+  repoGetPersonalHistory,
+  repoSavePersonalHistory,
+  repoGetHistorialPendientes,
+  repoLiquidarPendientes
+} = require('./repositories');
 const {
   crearLimitador,
   compararSeguro,
@@ -52,11 +69,54 @@ app.set('trust proxy', 1);
 // Compresión gzip para todas las respuestas (mejora ~70% el tamaño transferido)
 app.use(compression());
 
+// Fase 6: ocultar tecnología y ampliar cabeceras de seguridad.
+app.disable('x-powered-by');
+
 // Cabeceras de seguridad y caché
 app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+  res.setHeader('Cross-Origin-Resource-Policy', 'same-origin');
+  if (process.env.NODE_ENV === 'production') {
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  }
+  // CSP (Fase 9): sin unsafe-inline ni eval. Motion.js vienes del CDN del index.
+  res.setHeader('Content-Security-Policy', [
+    "default-src 'self'",
+    "script-src 'self' https://cdn.jsdelivr.net",
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' data: https:",
+    "font-src 'self' data:",
+    "connect-src 'self' https://api.football-data.org https://api.the-odds-api.com",
+    "frame-ancestors 'none'",
+    "base-uri 'self'",
+    "object-src 'none'",
+    "form-action 'self'"
+  ].join('; '));
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=()');
+  next();
+});
+
+// Log estructurado por request con request_id (Fase 6, observabilidad).
+// Sin secretos: método, ruta, estado y latencia.
+app.use((req, res, next) => {
+  const requestId = req.headers['x-request-id'] || randomUUID();
+  res.setHeader('X-Request-Id', requestId);
+  const inicio = Date.now();
+  metrics.incuirRequest();
+  res.on('finish', () => {
+    if (res.statusCode >= 400) metrics.incuirError();
+    metrics.incuirLatencia(Date.now() - inicio);
+    console.log(JSON.stringify({
+      request_id: requestId,
+      method: req.method,
+      path: req.path,
+      status: res.statusCode,
+      latenciaMs: Date.now() - inicio
+    }));
+  });
   next();
 });
 
@@ -99,373 +159,26 @@ function requireHistorialWriteKey(req, res, next){
   next();
 }
 
-// ============ HISTORIAL COMPARTIDO GLOBAL (DB primero, archivo legacy) ============
-// Directorio de datos locales (SQLite/ELO). Los tests lo redirigen a un
-// directorio temporal para no tocar el historial real del usuario.
-const DATA_DIR = process.env.FULBITO_DATA_DIR
-  ? path.resolve(process.env.FULBITO_DATA_DIR)
-  : path.join(__dirname, 'data');
-
-// El filesystem de Render free es efímero (se pierde en cada redeploy/restart),
-// así que la persistencia primaria va a una base de datos:
-//   - Postgres gestionada si existe la env DATABASE_URL (recomendado en producción)
-//   - SQLite local por defecto (server/data/historial.db)
-// server/data/historial.json se mantiene como espejo legacy legible para humanos.
-const HISTORIAL_PATH = path.join(DATA_DIR, 'historial.json');
-
-let storageHistorial = null;
-let storageHistorialFallo = null;
-
-function cargarStorageHistorial() {
-  if (storageHistorial) return storageHistorial;
-  const url = process.env.DATABASE_URL;
-  if (url) {
-    const { Pool } = require('pg');
-    const pool = new Pool({
-      connectionString: url,
-      connectionTimeoutMillis: 5000,
-      max: 3,
-      ssl: process.env.DATABASE_SSL === 'false' ? false : { rejectUnauthorized: false }
-    });
-    storageHistorial = {
-      tipo: 'postgres',
-      async inicializar() {
-        await pool.query(
-          "CREATE TABLE IF NOT EXISTS kv (clave TEXT PRIMARY KEY, valor JSONB NOT NULL)"
-        );
-      },
-      async leer() {
-        const r = await pool.query("SELECT valor FROM kv WHERE clave = 'historial'");
-        return r.rows.length ? r.rows[0].valor : null;
-      },
-      async guardar(valor) {
-        await pool.query(
-          "INSERT INTO kv (clave, valor) VALUES ('historial', $1) ON CONFLICT (clave) DO UPDATE SET valor = EXCLUDED.valor",
-          [JSON.stringify(valor)]
-        );
-      },
-      async leerClave(clave) {
-        const r = await pool.query("SELECT valor FROM kv WHERE clave = $1", [clave]);
-        return r.rows.length ? r.rows[0].valor : null;
-      },
-      async guardarClave(clave, valor) {
-        await pool.query(
-          "INSERT INTO kv (clave, valor) VALUES ($1, $2) ON CONFLICT (clave) DO UPDATE SET valor = EXCLUDED.valor",
-          [clave, JSON.stringify(valor)]
-        );
-      },
-      async borrarClave(clave) {
-        await pool.query("DELETE FROM kv WHERE clave = $1", [clave]);
-      },
-      cerrar: () => pool.end()
-    };
-  } else {
-    const dir = path.dirname(HISTORIAL_PATH);
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-    const Database = require('better-sqlite3');
-    const db = new Database(path.join(dir, 'historial.db'));
-    db.pragma('journal_mode = WAL');
-    db.exec('CREATE TABLE IF NOT EXISTS kv (clave TEXT PRIMARY KEY, valor TEXT NOT NULL)');
-    storageHistorial = {
-      tipo: 'sqlite',
-      leer() {
-        const fila = db.prepare("SELECT valor FROM kv WHERE clave = 'historial'").get();
-        return fila ? JSON.parse(fila.valor) : null;
-      },
-      guardar(valor) {
-        db.prepare(
-          "INSERT INTO kv (clave, valor) VALUES ('historial', ?) ON CONFLICT (clave) DO UPDATE SET valor = excluded.valor"
-        ).run(JSON.stringify(valor));
-      },
-      leerClave(clave) {
-        const fila = db.prepare("SELECT valor FROM kv WHERE clave = ?").get(clave);
-        return fila ? JSON.parse(fila.valor) : null;
-      },
-      guardarClave(clave, valor) {
-        db.prepare(
-          "INSERT INTO kv (clave, valor) VALUES (?, ?) ON CONFLICT (clave) DO UPDATE SET valor = excluded.valor"
-        ).run(clave, JSON.stringify(valor));
-      },
-      borrarClave(clave) {
-        db.prepare("DELETE FROM kv WHERE clave = ?").run(clave);
-      },
-      cerrar: () => db.close()
-    };
-  }
-  return storageHistorial;
-}
-
-async function kvLeer(clave) {
-  try { return await cargarStorageHistorial().leerClave(clave); } catch (e) { return null; }
-}
-async function kvGuardar(clave, valor) {
-  return cargarStorageHistorial().guardarClave(clave, valor);
-}
-async function kvBorrar(clave) {
-  return cargarStorageHistorial().borrarClave(clave);
-}
-
-async function guardarHistorialEnStorage(historial) {
-  try {
-    const storage = cargarStorageHistorial();
-    await storage.guardar(historial);
-    storageHistorialFallo = null;
-  } catch (error) {
-    // Log una sola vez por fallo sostenido para no spamear, y seguimos con el archivo.
-    if (!storageHistorialFallo) {
-      storageHistorialFallo = error.message;
-      console.warn(`No se pudo escribir el historial en ${storageHistorial ? storageHistorial.tipo : 'storage'} (queda el archivo legacy):`, error.message);
-    }
-  }
-}
-
-function asegurarHistorialGlobal() {
-  const dir = path.dirname(HISTORIAL_PATH);
-  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-  if (!fs.existsSync(HISTORIAL_PATH)) {
-    fs.writeFileSync(HISTORIAL_PATH, JSON.stringify([], null, 2), 'utf8');
-  }
-}
-
-let historialCacheMemoria = null;
-
-// Lectura legacy (SQLite/archivo) usada cuando no hay DATABASE_URL o cuando
-// Postgres falla. El cache se llena en el boot desde el storage.
-function leerHistorialLegacy() {
-  if (historialCacheMemoria) return historialCacheMemoria;
-  try {
-    asegurarHistorialGlobal();
-    const datos = JSON.parse(fs.readFileSync(HISTORIAL_PATH, 'utf8'));
-    historialCacheMemoria = Array.isArray(datos) ? datos : [];
-    return historialCacheMemoria;
-  } catch (error) {
-    return [];
-  }
-}
-
-async function leerHistorialGlobal() {
-  if (!db.disponible()) return leerHistorialLegacy();
-
-  try {
-    const res = await db.query(`
-      SELECT p.*,
-             (SELECT json_agg(m.* ORDER BY m.id) FROM mercados_pronostico m WHERE m.pronostico_id = p.id) as mercados
-      FROM pronosticos_globales p
-      ORDER BY p.fecha DESC
-    `);
-    return res.rows.map(p => ({
-      ...p,
-      partidoId: p.partido_id,
-      id: p.id,
-      // Mapeamos los nombres de columna para mantener compatibilidad con el frontend
-      local: p.local,
-      visita: p.visita,
-      liga: p.liga,
-      fecha: p.fecha,
-      verificado: p.verificado,
-      marcadorFinal: p.marcador_final,
-      liquidadoEn: p.liquidado_en,
-      mercados: (p.mercados || []).map(m => ({
-        ...m,
-        parametros: m.parametros || {},
-        // NUMERIC llega como string desde el driver de PostgreSQL.
-        probabilidad: m.probabilidad == null ? null : Number(m.probabilidad)
-      }))
-    }));
-  } catch (e) {
-    console.error('Error leyendo historial global (se usa el storage local):', e.message);
-    return leerHistorialLegacy();
-  }
-}
-
-let escrituraPendiente = null;
-
-// Tope de entradas del pool global. 0 = sin tope (full history), que es lo
-// que habilita el track-record liquidado a escala. Configurable por env para
-// poder acotarlo si el JSON/payload crece demasiado.
-const HISTORIAL_MAX_ENTRIES = (() => {
-  const n = parseInt(process.env.HISTORIAL_MAX_ENTRIES || '0', 10);
-  return Number.isFinite(n) && n > 0 ? n : 0;
-})();
-
-function recortarHistorial(historial) {
-  if (!Array.isArray(historial)) return [];
-  return HISTORIAL_MAX_ENTRIES > 0 ? historial.slice(-HISTORIAL_MAX_ENTRIES) : historial;
-}
-
-// Escritura legacy con debounce: mantiene el cache en memoria y persiste en
-// SQLite (o el storage configurado) sin bloquear la respuesta HTTP.
-function guardarHistorialLegacy(recortado) {
-  historialCacheMemoria = recortado;
-  if (escrituraPendiente) clearTimeout(escrituraPendiente);
-  escrituraPendiente = setTimeout(async () => {
-    await guardarHistorialEnStorage(recortado);
-    asegurarHistorialGlobal();
-    fs.promises.writeFile(HISTORIAL_PATH, JSON.stringify(recortado, null, 2), 'utf8')
-      .catch(err => console.warn('No se pudo guardar el historial en archivo:', err.message));
-    escrituraPendiente = null;
-  }, 500);
-  return recortado;
-}
-
-async function guardarHistorialGlobal(historial, opciones = {}) {
-  if (!Array.isArray(historial)) return [];
-  const recortado = recortarHistorial(historial);
-  // `espejo` permite persistir solo las entradas nuevas en la DB pero mantener
-  // el cache/archivo legacy con el historial completo (usado por el ingest).
-  const completo = Array.isArray(opciones.espejo) ? recortarHistorial(opciones.espejo) : recortado;
-
-  if (!db.disponible()) return guardarHistorialLegacy(completo);
-
-  try {
-    // Para simplificar la actualización masiva, usamos una transacción.
-    await db.pool.connect().then(async (client) => {
-      try {
-        await client.query('BEGIN');
-
-        for (const registro of historial) {
-          if (!registro || !registro.partidoId) continue;
-
-          // 1. Insertar o actualizar el pronóstico base. No hay constraint
-          // único sobre partido_id (puede haber datos viejos duplicados), así
-          // que resolvemos el upsert con SELECT + UPDATE/INSERT.
-          const fecha = registro.fecha || registro.timestamp || new Date().toISOString();
-          const existente = await client.query(
-            'SELECT id FROM pronosticos_globales WHERE partido_id = $1 ORDER BY id DESC LIMIT 1',
-            [String(registro.partidoId)]
-          );
-
-          let pId;
-          if (existente.rows.length > 0) {
-            pId = existente.rows[0].id;
-            await client.query(`
-              UPDATE pronosticos_globales
-              SET fecha = $1, verificado = $2, marcador_final = $3, liquidado_en = $4,
-                  local = COALESCE($6, local), visita = COALESCE($7, visita), liga = COALESCE($8, liga)
-              WHERE id = $5`,
-              [fecha, Boolean(registro.verificado), registro.marcadorFinal || null,
-               registro.liquidadoEn || null, pId, registro.local || null,
-               registro.visita || null, registro.liga || null]
-            );
-          } else {
-            const pRes = await client.query(`
-              INSERT INTO pronosticos_globales
-                (partido_id, fecha, verificado, marcador_final, liquidado_en, local, visita, liga)
-              VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-              RETURNING id`,
-              [String(registro.partidoId), fecha, Boolean(registro.verificado),
-               registro.marcadorFinal || null, registro.liquidadoEn || null,
-               registro.local || null, registro.visita || null, registro.liga || null]
-            );
-            pId = pRes.rows[0].id;
-          }
-
-          // 2. Limpiar mercados antiguos y re-insertar los actuales
-          await client.query('DELETE FROM mercados_pronostico WHERE pronostico_id = $1', [pId]);
-          if (registro.mercados && Array.isArray(registro.mercados)) {
-            for (const m of registro.mercados) {
-              await client.query(
-                `INSERT INTO mercados_pronostico
-                   (pronostico_id, categoria, parametros, acierto, seleccion, probabilidad)
-                 VALUES ($1, $2, $3, $4, $5, $6)`,
-                [pId, m.categoria, JSON.stringify(m.parametros || {}),
-                 typeof m.acierto === 'boolean' ? m.acierto : null,
-                 m.seleccion || null,
-                 Number.isFinite(Number(m.probabilidad)) ? Number(m.probabilidad) : null]
-              );
-            }
-          }
-        }
-        await client.query('COMMIT');
-      } catch (e) {
-        await client.query('ROLLBACK');
-        throw e;
-      } finally {
-        client.release();
-      }
-    });
-
-    // Espejo legacy en archivo para no romper logs externos.
-    historialCacheMemoria = completo;
-    fs.promises.writeFile(HISTORIAL_PATH, JSON.stringify(completo, null, 2), 'utf8').catch(() => {});
-
-    return recortado;
-  } catch (e) {
-    console.error('Error guardando historial global (se usa el storage local):', e.message);
-    return guardarHistorialLegacy(completo);
-  }
-}
-
-// Convierte una entrada arbitraria (p. ej. la que arma sync-historial.js desde
-// el artefacto Python) al shape que persiste el servidor. Los campos de texto
-// se recortan para que una escritura con la API key no pueda inflar la DB.
-function normalizarEntradaHistorial(entrada) {
-  if (!entrada || !entrada.partidoId) return null;
-  const mercados = (Array.isArray(entrada.mercados) ? entrada.mercados : [])
-    .filter(m => m && m.categoria)
-    .map(m => ({
-      categoria: String(m.categoria).slice(0, 40),
-      parametros: m.parametros && typeof m.parametros === 'object' ? m.parametros : {},
-      seleccion: m.seleccion == null ? null : String(m.seleccion).slice(0, 200),
-      probabilidad: Number.isFinite(Number(m.probabilidad)) ? Number(m.probabilidad) : null,
-      acierto: typeof m.acierto === 'boolean' ? m.acierto : null
-    }));
-  return {
-    partidoId: String(entrada.partidoId).slice(0, 64),
-    local: entrada.local ? String(entrada.local).slice(0, 120) : null,
-    visita: entrada.visita ? String(entrada.visita).slice(0, 120) : null,
-    liga: entrada.liga ? String(entrada.liga).slice(0, 120) : null,
-    fecha: entrada.fecha || entrada.timestamp || new Date().toISOString(),
-    mercados,
-    verificado: false,
-    marcadorFinal: null,
-    liquidadoEn: null
-  };
-}
-
-// Ingest idempotente del pool público: inserta solo partidos que aún no
-// existen. Si un partido ya fue liquidado, se conserva tal cual (nunca se
-// reemplaza por una predicción nueva).
-async function ingestarHistorialGlobal(entradas) {
-  const lista = (Array.isArray(entradas) ? entradas : [])
-    .map(normalizarEntradaHistorial)
-    .filter(Boolean);
-
-  const actual = await leerHistorialGlobal();
-  const existentes = new Set(actual.map(r => String(r.partidoId)));
-  const nuevas = [];
-  for (const entrada of lista) {
-    if (existentes.has(entrada.partidoId)) continue;
-    existentes.add(entrada.partidoId);
-    nuevas.push(entrada);
-  }
-
-  if (nuevas.length === 0) {
-    return { insertados: 0, omitidos: lista.length, total: actual.length };
-  }
-
-  const total = actual.concat(nuevas);
-  await guardarHistorialGlobal(nuevas, { espejo: total });
-  return { insertados: nuevas.length, omitidos: lista.length - nuevas.length, total: total.length };
-}
-
-async function inicializarHistorial() {
-  try {
-    const storage = cargarStorageHistorial();
-    if (storage.inicializar) await storage.inicializar();
-    const previo = await storage.leer();
-    if (Array.isArray(previo) && previo.length > 0) {
-      historialCacheMemoria = recortarHistorial(previo);
-      // Rehidrata el archivo legacy para que sirva de espejo legible.
-      asegurarHistorialGlobal();
-      fs.promises.writeFile(HISTORIAL_PATH, JSON.stringify(historialCacheMemoria, null, 2), 'utf8').catch(() => {});
-    }
-    console.log(`Historial cargado desde ${storage.tipo} (${(historialCacheMemoria || []).length} entradas).`);
-  } catch (error) {
-    storageHistorialFallo = error.message;
-    console.warn('No se pudo inicializar el storage de historial (se usará el archivo legacy):', error.message);
-  }
-}
+// Fase 4.1: historial migrado a server/services/history.js.
+const historyService = require('./services/history');
+const predictionsService = require('./services/predictions');
+const modelsService = require('./services/models');
+const metrics = require('./metrics');
+const { reporteEvaluacion } = require('./services/evaluation-report');
+const { iniciarAlertas } = require('./alertas');
+const recoveryService = require('./services/recovery');
+const auditService = require('./services/audit');
+const leerHistorialGlobal = historyService.leerHistorialGlobal;
+const guardarHistorialGlobal = historyService.guardarHistorialGlobal;
+const ingestarHistorialGlobal = historyService.ingestarHistorialGlobal;
+const inicializarHistorial = historyService.inicializarHistorial;
+const cargarStorageHistorial = historyService.cargarStorageHistorial;
+const guardarHistorialEnStorage = historyService.guardarHistorialEnStorage;
+const leerHistorialLegacy = historyService.leerHistorialLegacy;
+const normalizarEntradaHistorial = historyService.normalizarEntradaHistorial;
+const recortarHistorial = historyService.recortarHistorial;
+const getHistorialCacheMemoria = historyService.getHistorialCacheMemoria;
+const getStorageHistorial = historyService.getStorageHistorial;
 
 // ============ CACHE EN MEMORIA ============
 // Evita golpear football-data.org (que tiene limite de requests/minuto) cada vez
@@ -481,6 +194,7 @@ function obtenerDeCache(clave, ttlMs) {
     cache.delete(clave);
     return null;
   }
+  metrics.incuirCacheHit();
   return entrada.datos;
 }
 
@@ -706,16 +420,7 @@ async function liquidarHistorialDesdeApi() {
   }
 
   // 1. Buscar pronósticos globales que no estén verificados y cuya fecha ya pasó
-  const resPendientes = await db.query(`
-    SELECT p.id, p.partido_id,
-           (SELECT json_agg(m.*) FROM mercados_pronostico m WHERE m.pronostico_id = p.id) as mercados
-    FROM pronosticos_globales p
-    WHERE p.verificado = FALSE
-      AND p.fecha <= $1`,
-    [hoy.toISOString()]
-  );
-
-  const pendientes = resPendientes.rows;
+  const pendientes = await repoGetHistorialPendientes(hoy);
   if (pendientes.length === 0) {
     return { ok: true, liquidados: 0, pendientes: 0, mensaje: 'Sin entradas pendientes' };
   }
@@ -725,53 +430,8 @@ async function liquidarHistorialDesdeApi() {
   const mapaResultados = new Map();
   for (const partido of finalizados) mapaResultados.set(String(partido.id), partido);
 
-  let liquidadosCount = 0;
-
-  // 2. Procesar y guardar resultados en la DB usando una transacción
-  await db.pool.connect().then(async (client) => {
-    try {
-      await client.query('BEGIN');
-
-      for (const p of pendientes) {
-        const partido = mapaResultados.get(String(p.partido_id));
-        if (!partido) continue;
-
-        const marcador = marcadorDePartido(partido);
-        if (!marcador) continue;
-
-        // Evaluar cada mercado del pronóstico
-        const mercadosActualizados = (p.mercados || []).map(m => ({
-          ...m,
-          acierto: verificarMercado(m.categoria, m.parametros, marcador.local, marcador.visita)
-        }));
-
-        // Actualizar pronóstico base
-        await client.query(`
-          UPDATE pronosticos_globales
-          SET verificado = TRUE, marcador_final = $1, liquidado_en = $2
-          WHERE id = $3`,
-          [`${marcador.local}-${marcador.visita}`, new Date().toISOString(), p.id]
-        );
-
-        // Actualizar mercados
-        for (const m of mercadosActualizados) {
-          await client.query(
-            'UPDATE mercados_pronostico SET acierto = $1 WHERE pronostico_id = $2 AND categoria = $3',
-            [m.acierto, p.id, m.categoria]
-          );
-        }
-        liquidadosCount++;
-      }
-      await client.query('COMMIT');
-    } catch (e) {
-      await client.query('ROLLBACK');
-      throw e;
-    } finally {
-      client.release();
-    }
-  });
-
-  return { ok: true, liquidados: liquidadosCount, pendientes: pendientes.length, finalizados: finalizados.length };
+  const liquidados = await repoLiquidarPendientes(pendientes, mapaResultados);
+  return { ok: true, liquidados, pendientes: pendientes.length, finalizados: finalizados.length };
 }
 
 // Dispara la liquidación (protegido con la misma clave que las escrituras).
@@ -832,7 +492,7 @@ function dbNoConfigurada(res) {
 
 async function limpiarSesionesExpiradas() {
   try {
-    await db.query('DELETE FROM sesiones WHERE expira < NOW()');
+    await repoLimpiarSesionesExpiradas();
   } catch (e) {
     // No es crítico: la sesión expirada igual se rechaza al leerla.
   }
@@ -863,10 +523,9 @@ async function obtenerSesion(req) {
   const ht = hashToken(token);
 
   try {
-    const res = await db.query('SELECT s.*, u.usuario as username FROM sesiones s JOIN usuarios u ON s.usuario_id = u.id WHERE s.token_hash = $1', [ht]);
-    const ses = res.rows[0];
+    const ses = await repoSesionPorTokenHash(ht);
     if (!ses || !ses.expira || new Date(ses.expira).getTime() < Date.now()) {
-      if (ses) await db.query('DELETE FROM sesiones WHERE token_hash = $1', [ht]);
+      if (ses) await repoRevocarSesionPorTokenHash(ht);
       return null;
     }
     return { usuarioId: ses.usuario_id, usuario: ses.username, expira: ses.expira };
@@ -891,127 +550,103 @@ const RESERVA_NOMBRES = new Set(['system', 'admin', 'root', 'fulbito', 'api']);
 
 app.post('/api/auth/register', limitarAuth(limitadorRegistro), async (req, res) => {
   if (!db.disponible()) return dbNoConfigurada(res);
-  const usuario = normalizarUsuario(req.body && req.body.usuario);
-  const password = String(req.body && req.body.password || '');
-  if (!USUARIO_RE.test(usuario)) return res.status(400).json({ error: 'bad_usuario', message: 'El usuario debe tener 3-32 caracteres: letras, números, _ . - .' });
-  if (RESERVA_NOMBRES.has(usuario)) return res.status(400).json({ error: 'usuario_reservado', message: 'Nombre no disponible.' });
-  const errorPassword = validarPassword(password);
-  if (errorPassword) return res.status(400).json({ error: 'bad_password', message: errorPassword });
-
   try {
-    await limpiarSesionesExpiradas();
-    // Verificar existencia
-    const existente = await db.query('SELECT id FROM usuarios WHERE usuario = $1', [usuario]);
-    if (existente.rows.length > 0) return res.status(409).json({ error: 'ya_existe', message: 'Ese usuario ya está registrado. Iniciá sesión en su lugar.' });
-
-    const salt = crypto.randomBytes(SAL_LONGITUD).toString('hex');
-    const hash = hashPassword(password, salt);
-    const token = tokenAleatorio();
-    const ht = hashToken(token);
-    const expira = new Date(Date.now() + PROLONGACION_SESION_MS).toISOString();
-
-    // Transacción para crear usuario y sesión
-    await db.pool.connect().then(async (client) => {
-      try {
-        await client.query('BEGIN');
-        const userRes = await client.query(
-          'INSERT INTO usuarios (usuario, password_hash, salt) VALUES ($1, $2, $3) RETURNING id',
-          [usuario, hash, salt]
-        );
-        const userId = userRes.rows[0].id;
-        await client.query(
-          'INSERT INTO sesiones (token_hash, usuario_id, expira) VALUES ($1, $2, $3)',
-          [ht, userId, expira]
-        );
-        await client.query('COMMIT');
-      } catch (e) {
-        await client.query('ROLLBACK');
-        throw e;
-      } finally {
-        client.release();
-      }
-    });
-
-    res.json({ ok: true, usuario, token });
+    const resultado = await authService.registrarUsuario(req.body || {});
+    res.status(resultado.status || 200).json(resultado);
   } catch (e) {
-    if (e && e.code === '23505') {
-      return res.status(409).json({ error: 'ya_existe', message: 'Ese usuario ya está registrado. Iniciá sesión en su lugar.' });
-    }
     console.error('Error en register:', e);
     res.status(500).json({ error: 'internal', message: 'Error interno del servidor' });
   }
 });
 app.post('/api/auth/login', limitarAuth(limitadorLogin, { incluirUsuario: true }), async (req, res) => {
   if (!db.disponible()) return dbNoConfigurada(res);
-  const usuario = normalizarUsuario(req.body && req.body.usuario);
-  const password = String(req.body && req.body.password || '');
-  if (!usuario || !password) return res.status(400).json({ error: 'bad_request', message: 'Faltan usuario y contraseña.' });
-  if (password.length > 128) return res.status(401).json({ error: 'invalid_credentials', message: 'Credenciales incorrectas.' });
-
   try {
-    const resUser = await db.query('SELECT id, salt, password_hash FROM usuarios WHERE usuario = $1', [usuario]);
-    const registro = resUser.rows[0];
-    if (!registro) {
-      // Mismo coste de scrypt que un usuario real para no filtrar existencia
-      // de cuentas por diferencias de tiempo.
-      crypto.scryptSync(password, 'fulbito-dummy-salt', 64);
-      return res.status(401).json({ error: 'invalid_credentials', message: 'Credenciales incorrectas.' });
+    const resultado = await authService.ingresarUsuario(req.body || {});
+    res.status(resultado.status || 200).json(resultado);
+    if (resultado.ok) {
+      await auditService.registrarAprobacion('login', resultado.usuario, null, req.ip);
     }
-
-    const hash = hashPassword(password, registro.salt);
-    if (!compararSeguro(hash, registro.password_hash)) {
-      return res.status(401).json({ error: 'invalid_credentials', message: 'Credenciales incorrectas.' });
-    }
-
-    await limpiarSesionesExpiradas();
-    const token = tokenAleatorio();
-    const ht = hashToken(token);
-    const expira = new Date(Date.now() + PROLONGACION_SESION_MS).toISOString();
-
-    await db.query(
-      'INSERT INTO sesiones (token_hash, usuario_id, expira) VALUES ($1, $2, $3)',
-      [ht, registro.id, expira]
-    );
-
-    res.json({ ok: true, usuario, token });
   } catch (e) {
     console.error('Error en login:', e);
     res.status(500).json({ error: 'internal', message: 'Error interno del servidor' });
   }
 });
+
+// Recuperación de contraseña (Fase 9): token de restablecimiento (sin DB, sin email).
+app.post('/api/auth/recuperar', limitarAuth(limitadorLogin), async (req, res) => {
+  const email = String((req.body && req.body.email) || '').trim().toLowerCase();
+  if (!email) return res.status(400).json({ error: 'bad_request', message: 'Se requiere email' });
+  try {
+    const r = await recoveryService.crearTokenRecuperacion(email);
+    if (!r.ok) return res.status(503).json({ error: 'db_no_disponible', message: 'Auth requiere PostgreSQL' });
+    return res.status(202).json({ ok: true, mensaje: 'Si el correo está registrado, recibirá un enlace de restablecimiento.' });
+  } catch (e) {
+    console.error('Error generando token de recuperación:', e);
+    res.status(500).json({ error: 'internal', message: 'Error interno del servidor' });
+  }
+});
+
+// Restablecer contraseña (Fase 9) y crear nueva sesión.
+app.put('/api/auth/restablecer', limitarAuth(limitadorLogin), async (req, res) => {
+  const body = req.body || {};
+  const token = String(body.token || '');
+  if (!token) return res.status(400).json({ error: 'bad_request', message: 'Se requiere token' });
+  try {
+    const validado = await recoveryService.validarToken(token);
+    if (!validado.ok) return res.status(401).json({ error: validado.motivo || 'token_invalido', message: 'Token no válido o expirado' });
+    const errorPassword = validarPassword(String(body.password || ''));
+    if (errorPassword) return res.status(400).json({ error: 'password_invalid', message: errorPassword });
+    const restablecido = await recoveryService.restablecerContrasena(validado.email, body.password);
+    if (!restablecido.ok) return res.status(500).json({ error: restablecido.motivo || 'error', message: 'Error restableciendo contraseña' });
+    await recoveryService.consumirToken(token);
+    await authService.revocarSesionesUsuario(restablecido.usuarioId);
+    const tokenNuevo = authService.tokenAleatorio();
+    const expira = new Date(Date.now() + 7 * 24 * 3600 * 1000).toISOString();
+    await repoCrearSesion(recoveryService.hashToken(tokenNuevo), restablecido.usuarioId, expira);
+    await auditService.registrarAprobacion('restablecer_contraseña', restablecido.usuario, validado.email, req.ip);
+    return res.json({ ok: true, usuario: restablecido.usuario });
+  } catch (e) {
+    console.error('Error restableciendo contraseña:', e);
+    res.status(500).json({ error: 'internal', message: 'Error interno del servidor' });
+  }
+});
+
+// Auditoría de decisiones (Fase 9): auditoría en PostgreSQL de aprobaciones/eventos.
+app.get('/api/auditoria', requerirSesion(async (req, res) => {
+  try {
+    const lista = await auditService.listarAuditoria(Number(req.query && req.query.limite) || 50);
+    res.json({ ok: true, total: lista.length, lista });
+  } catch (e) {
+    console.error('Error listando auditoría:', e);
+    res.status(500).json({ error: true, mensaje: 'Error interno' });
+  }
+}));
 app.post('/api/auth/logout', async (req, res) => {
   if (db.disponible()) {
-    const auth = req.headers['authorization'] || '';
-    const m = /^Bearer\s+(.+)$/i.exec(auth);
-    if (m) {
-      try {
-        const ht = hashToken(m[1].trim());
-        await db.query('DELETE FROM sesiones WHERE token_hash = $1', [ht]);
-      } catch (e) {
-        console.error('Error cerrando sesión:', e.message);
-      }
+    try {
+      const auth = req.headers['authorization'] || '';
+      const m = /^Bearer\s+(.+)$/i.exec(auth);
+      if (m) await authService.revocarSesionToken(m[1].trim());
+    } catch (e) {
+      console.error('Error cerrando sesión:', e.message);
     }
   }
   res.json({ ok: true });
 });
 app.post('/api/auth/logout-all', requerirSesion(async (req, res) => {
-  await db.query('DELETE FROM sesiones WHERE usuario_id = $1', [req.sesion.usuarioId]);
+  await authService.revocarSesionesUsuario(req.sesion.usuarioId);
   res.json({ ok: true, message: 'Sesiones cerradas en todos los dispositivos.' });
 }));
 app.get('/api/auth/me', async (req, res) => {
   if (!db.disponible()) return dbNoConfigurada(res);
-  const ses = await obtenerSesion(req);
+  const ses = await authService.obtenerSesion(req);
   if (!ses) return res.status(401).json({ error: 'unauthorized', message: 'Sesión requerida' });
   res.json({ ok: true, usuario: ses.usuario, usuarioId: ses.usuarioId, expira: ses.expira });
 });
 function claveHistorialUsuario(usuarioId) { return `historial:${usuarioId}`; }
 app.get('/api/mi-historial', requerirSesion(async (req, res) => {
   try {
-    const filas = await db.query(
-      'SELECT datos FROM pronosticos_usuario WHERE usuario_id = $1 ORDER BY id ASC',
-      [req.sesion.usuarioId]
-    );
-    const historial = filas.rows.map(r => r.datos);
+    const historial = await repoGetPersonalHistory(req.sesion.usuarioId);
     res.setHeader('Cache-Control', 'private, max-age=0, no-store');
     res.json({ ok: true, historial: Array.isArray(historial) ? historial : [] });
   } catch (e) {
@@ -1021,30 +656,10 @@ app.get('/api/mi-historial', requerirSesion(async (req, res) => {
 }));
 app.put('/api/mi-historial', requerirSesion(async (req, res) => {
   const historial = Array.isArray(req.body && req.body.historial) ? req.body.historial : [];
-  if (historial.length > 500) return res.status(400).json({ error: 'payload_too_large', message: 'Máximo 500 entradas' });
-  const usuarioHistorial = historial.slice(-500);
-
+  if (historial.length > 500) return res.status(400).json({ error: 'payload_too_large', message: 'Mǭximo 500 entradas' });
   try {
-    // Limpiamos el historial actual y guardamos el nuevo (estilo reemplazo como el original)
-    await db.pool.connect().then(async (client) => {
-      try {
-        await client.query('BEGIN');
-        await client.query('DELETE FROM pronosticos_usuario WHERE usuario_id = $1', [req.sesion.usuarioId]);
-        for (const registro of usuarioHistorial) {
-          await client.query(
-            'INSERT INTO pronosticos_usuario (usuario_id, partido_id, datos) VALUES ($1, $2, $3)',
-            [req.sesion.usuarioId, String(registro.partidoId || 'unknown'), JSON.stringify(registro)]
-          );
-        }
-        await client.query('COMMIT');
-      } catch (e) {
-        await client.query('ROLLBACK');
-        throw e;
-      } finally {
-        client.release();
-      }
-    });
-    res.json({ ok: true, historial: usuarioHistorial, total: usuarioHistorial.length });
+    const resultado = await repoSavePersonalHistory(req.sesion.usuarioId, historial);
+    res.json(resultado);
   } catch (e) {
     console.error('Error guardando mi-historial:', e);
     res.status(500).json({ error: 'internal', message: 'Error interno del servidor' });
@@ -1065,73 +680,58 @@ function responderConCache(req, res, datos, maxAgeSegundos = 60) {
   res.json(datos);
 }
 
-// ============ ARTEFACTO OFICIAL DE PRONÓSTICOS ============
-// El pipeline Python publica `pronosticos.json` en un GitHub Release diario.
-// El navegador no puede consumir ese asset directamente porque la redirección
-// final a release-assets.githubusercontent.com no envía CORS. El backend lo
-// descarga y lo sirve desde su propio origen, con cache y copia local de
-// respaldo si GitHub no responde.
-const PRONOSTICOS_ARTIFACT_URL = process.env.FULBITO_ARTIFACT_URL
-  || 'https://github.com/KkkxxxS/fulbito/releases/download/artifacts-daily/pronosticos.json';
-const TTL_PRONOSTICOS_OFICIALES = 15 * 60 * 1000;
-
-function leerPronosticosLocales() {
-  try {
-    return JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'pronosticos.json'), 'utf8'));
-  } catch (e) {
-    return null;
-  }
-}
-
-async function obtenerPronosticosOficiales() {
-  const cacheado = obtenerDeCache('pronosticos-oficiales', TTL_PRONOSTICOS_OFICIALES);
-  if (cacheado) return { datos: cacheado, fuente: 'cache' };
-
-  try {
-    const control = new AbortController();
-    const temporizador = setTimeout(() => control.abort(), FETCH_TIMEOUT_MS);
-    let resp;
-    try {
-      resp = await fetch(PRONOSTICOS_ARTIFACT_URL, {
-        headers: { Accept: 'application/json', 'User-Agent': 'Fulbito/1.0' },
-        signal: control.signal
-      });
-    } finally {
-      clearTimeout(temporizador);
-    }
-    if (!resp.ok) throw new Error(`el artefacto respondió ${resp.status}`);
-    const datos = await resp.json();
-    if (!datos || typeof datos !== 'object' || !datos.pronosticos) {
-      throw new Error('el artefacto no tiene el formato esperado');
-    }
-    // Un artefacto de ejemplo nunca debe mostrarse como pronóstico oficial.
-    if (datos.datosDeEjemplo === true) {
-      throw new Error('el artefacto está marcado como datos de ejemplo');
-    }
-    guardarEnCache('pronosticos-oficiales', datos);
-    return { datos, fuente: 'release' };
-  } catch (error) {
-    console.warn('No se pudo descargar el artefacto oficial (se usa la copia local):', error.message);
-  }
-
-  const local = leerPronosticosLocales();
-  if (local && local.pronosticos && local.datosDeEjemplo !== true) {
-    guardarEnCache('pronosticos-oficiales', local);
-    return { datos: local, fuente: 'local' };
-  }
-
-  const error = new Error('No hay artefacto de pronósticos disponible.');
-  error.status = 503;
-  throw error;
-}
-
 app.get('/api/pronosticos', async (req, res) => {
   try {
-    const { datos, fuente } = await obtenerPronosticosOficiales();
+    const { datos, fuente } = await predictionsService.obtenerPronosticosOficiales({
+          obtenerDeCache,
+          guardarEnCache,
+          timeoutMs: FETCH_TIMEOUT_MS
+        });
     res.setHeader('X-Fulbito-Fuente', fuente);
+    res.setHeader('X-Model-Version', modelsService.versionModelo());
     responderConCache(req, res, datos, fuente === 'local' ? 60 : 300);
   } catch (error) {
     enviarErrorFuente(res, error, 'GET /api/pronosticos');
+  }
+});
+
+// Versión del modelo (Fase 5.1): punto único de verdad JS/Python.
+app.get('/api/version', (req, res) => {
+  res.json({
+    model_version: modelsService.versionModelo(),
+    engine: 'settlement',
+    fechaGenerado: new Date().toISOString()
+  });
+});
+
+// Métricas de infraestructura (Fase 6.2).
+app.get('/api/metrics', (req, res) => {
+  res.json(metrics.snapshot());
+});
+
+// Agregado de evaluación (Fase 5.1): Brier/LogLoss globales + bandas + desglose por version.
+app.get('/api/evaluation', async (req, res) => {
+  try {
+    const historial = await leerHistorialGlobal();
+    const muestras = [];
+    for (const p of historial || []) {
+      const gl = Number(p.local);
+      const gv = Number(p.visita);
+      for (const m of (p.mercados || [])) {
+        const y = verificarMercado(m.categoria, m.parametros || {}, gl, gv) ? 1 : 0;
+        muestras.push({
+          p: Number(m.probabilidad == null ? 0 : m.probabilidad) / 100,
+          y,
+          model_version: p.model_version || null,
+          liga: p.liga,
+          fecha: p.fecha,
+          partidoId: p.partidoId
+        });
+      }
+    }
+    res.json(reporteEvaluacion(muestras, { nBins: Number(req.query && req.query.nBins) || 10 }));
+  } catch (e) {
+    enviarErrorFuente(res, e, 'GET /api/evaluation');
   }
 });
 
@@ -1152,7 +752,11 @@ async function sincronizarTrackRecord() {
   trackRecordEnCurso = true;
   try {
     try {
-      const { datos, fuente } = await obtenerPronosticosOficiales();
+      const { datos, fuente } = await predictionsService.obtenerPronosticosOficiales({
+          obtenerDeCache,
+          guardarEnCache,
+          timeoutMs: FETCH_TIMEOUT_MS
+        });
       const entradas = construirEntradasDesdeArtefacto(datos);
       if (entradas.length === 0) {
         console.log(`[track-record] sin partidos futuros en el artefacto (${fuente}).`);
@@ -1356,17 +960,8 @@ function normalizarPartidos(partidos, provider) {
 // ============ MULTISPORT (The Odds API) ============
 
 app.get('/api/sports', async (req, res) => {
-  const claveCache = 'odds-sports';
-  const cacheado = obtenerDeCache(claveCache, 24 * 60 * 60 * 1000);
-  if (cacheado) return responderConCache(req, res, cacheado, 3600);
-
   try {
-    const url = `${THE_ODDS_BASE_URL}/sports/?apiKey=${THE_ODDS_API_KEY}`;
-    const resp = await fetch(url);
-    const datos = await resp.json();
-    if (!resp.ok) throw new Error(datos.message || 'Error de The Odds API');
-    
-    guardarEnCache(claveCache, datos);
+    const datos = await modelsService.oddsCatalogo({ obtenerDeCache, guardarEnCache });
     responderConCache(req, res, datos, 3600);
   } catch (e) {
     enviarErrorFuente(res, e, '/api/sports');
@@ -1433,53 +1028,19 @@ async function oddsVolleyPredictions() {
 }
 
 app.get('/api/odds/:sport', async (req, res) => {
-  const { sport } = req.params;
-  const { regions = 'us', markets = 'h2h' } = req.query;
-  if (sport === 'volleyball' || sport === 'voley') {
-    try {
-      const datos = await cargarOddsVolley();
-      if (datos === null) {
-        return res.status(503).json({
-          error: 'sin_cobertura',
-          mensaje: 'Cobertura de vóley en implementación',
-          detalle: 'La API de vóleibol se conecta por RapidAPI. Pide a tu administrador configurar RAPIDAPI_VOLLEY_HOST.'
-        });
-      }
-      return responderConCache(req, res, datos, 300);
-    } catch (e) {
-      return enviarErrorFuente(res, e, '/api/odds/volleyball');
-    }
-  }
-  if (sport === 'tenis') {
-    try {
-      const datos = await oddsTenisAgregadas();
-      return responderConCache(req, res, datos, 300);
-    } catch (e) {
-      return enviarErrorFuente(res, e, '/api/odds/tenis');
-    }
-  }
-  const claveCache = `odds-${sport}-${regions}-${markets}`;
-  const cacheado = obtenerDeCache(claveCache, 15 * 60 * 1000);
-  if (cacheado) return responderConCache(req, res, cacheado, 300);
-
-  if (!THE_ODDS_API_KEY || THE_ODDS_API_KEY.trim() === '') {
-    return res.status(503).json({
-      error: 'sin_cobertura',
-      mensaje: 'Cobertura de datos en implementación',
-      detalle: 'La fuente de datos The Odds API no está configurada. Pide al administrador configurar THE_ODDS_API_KEY en las variables de entorno del servicio Render.'
-    });
-  }
-
   try {
-    const url = `${THE_ODDS_BASE_URL}/sports/${sport}/odds/?apiKey=${THE_ODDS_API_KEY}&regions=${regions}&markets=${markets}`;
-    const resp = await fetch(url);
-    const datos = await resp.json();
-    if (!resp.ok) throw new Error(datos.message || 'Error de The Odds API');
-
-    guardarEnCache(claveCache, datos);
+    const datos = await modelsService.oddsPorDeporte(req.params.sport, { obtenerDeCache, guardarEnCache });
+    if (!datos) {
+      return res.status(503).json({
+        error: 'sin_cobertura',
+        mensaje: 'Cobertura de vóley en implementación',
+        detalle: 'La API de vóley se conecta por RapidAPI. Pide a tu administrador configurar RAPIDAPI_VOLLEY_HOST.'
+      });
+    }
     responderConCache(req, res, datos, 300);
   } catch (e) {
-    enviarErrorFuente(res, e, `/api/odds/${sport}`);
+    if (e && e.status) return res.status(e.status).json({ error: 'sin_cobertura', mensaje: e.message });
+    enviarErrorFuente(res, e, `/api/odds/${req.params.sport}`);
   }
 });
 
@@ -1799,62 +1360,17 @@ async function oddsTenisAgregadas() {
 // Devuelve, por partido: probabilidad del modelo, cuota justa, confianza,
 // valor vs el mejor precio de mercado y extras del deporte.
 app.get('/api/predicciones/:deporte', async (req, res) => {
-  const { deporte } = req.params;
-  const mapa = { basquet: 'basketball_nba', tenis: 'tenis', voley: 'volleyball' };
-  const sportKey = mapa[deporte];
-  if (!sportKey) {
-    return res.status(404).json({ error: 'deporte_no_soportado', mensaje: `Sin motor para "${deporte}". Soportados: basquet, tenis, voley.` });
+  const { departe } = req.params;
+  if (!['basquet', 'tenis', 'voley'].includes(departe)) {
+    return res.status(404).json({ error: 'deporte_no_soportado', mensaje: `Sin motor para "${departe}". Soportados: basquet, tenis, voley.` });
   }
-  const claveCache = `predicciones-${deporte}`;
-  const cacheado = obtenerDeCache(claveCache, 5 * 60 * 1000);
-  if (cacheado) return responderConCache(req, res, cacheado, 300);
-
   try {
-    let partidos;
-    if (deporte === 'tenis') {
-      partidos = await oddsTenisAgregadas();
-    } else if (deporte === 'voley') {
-      partidos = await oddsVolleyPredictions();
-    } else {
-      const url = `${THE_ODDS_BASE_URL}/sports/${sportKey}/odds/?apiKey=${THE_ODDS_API_KEY}&regions=us&markets=h2h,spreads,totals`;
-      const resp = await fetch(url);
-      if (!resp.ok) {
-        const datos = await resp.json().catch(() => ({}));
-        throw new Error(datos.message || 'Error de The Odds API');
-      }
-      partidos = await resp.json();
-      await entrenarEloDesdeScores(sportKey, 'basquet');
-    }
-
-    const predicciones = (partidos || []).map(p => {
-    const pred = prediccionPartido(p, deporte);
-
-    // Enriquecemos cada mercado con señales de valor
-    if (pred.modelo) {
-      // Para simplicidad, aplicamos las señales a los resultados principales
-      // En una versión más compleja, esto se haría por cada mercado evaluado
-      pred.senalesGlobales = generarSenalesDeValor({
-        probabilidad: Math.max(pred.modelo.local.probabilidad, pred.modelo.visita.probabilidad),
-        categoria: 'resultado'
-      });
-    }
-
-    return pred;
-  });
-
-    const salida = {
-      deporte,
-      generadoEn: new Date().toISOString(),
-      partidosEntrenamiento: estadoElo.entrenamientos[deporte] || 0,
-      partidos: predicciones
-    };
-    guardarEnCache(claveCache, salida);
+    const salida = await modelsService.prediccionesPorDeporte(departe, { obtenerDeCache, guardarEnCache });
     responderConCache(req, res, salida, 300);
   } catch (e) {
     enviarErrorFuente(res, e, `/api/predicciones/${deporte}`);
   }
 });
-
 // Manejador de errores global
 app.use((err, req, res, next) => {
   console.error('Error no manejado:', err);
@@ -1876,6 +1392,8 @@ inicializarHistorial().finally(async () => {
       console.log('[track-record] sincronización automática activada (cada 60 min).');
     }
     programarSincronizacionTrackRecord();
+    // Alertas de salud del servicio (Fase 6.3).
+    iniciarAlertas({ getSnapshot: () => metrics.snapshot() });
   });
 });
 
@@ -1884,15 +1402,18 @@ function cerrarServidor(senial) {
   console.log(`\nRecibida señal ${senial}, cerrando servidor limpiamente...`);
   // Flush: si hay una escritura pendiente por el debounce, forzarla antes de salir.
   const flushPendiente = () => {
+    const escrituraPendiente = historyService.getEscrituraPendiente();
     if (!escrituraPendiente) return Promise.resolve();
     clearTimeout(escrituraPendiente);
-    escrituraPendiente = null;
+    historyService.setEscrituraPendiente(null);
+    const historialCacheMemoria = historyService.getHistorialCacheMemoria();
     if (historialCacheMemoria) {
       return guardarHistorialEnStorage(historialCacheMemoria).catch(() => {});
     }
     return Promise.resolve();
   };
   const cerrarStorage = () => {
+    const storageHistorial = historyService.getStorageHistorial();
     if (storageHistorial && storageHistorial.cerrar) {
       try {
         const r = storageHistorial.cerrar();

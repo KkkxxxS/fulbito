@@ -23,13 +23,15 @@ Uso:
   python recalibracion.py --modo status        # estado del sistema
   python recalibracion.py --modo diagnostico   # solo lectura: reporta sesgos
   python recalibracion.py --modo propuesta     # genera propuesta si hay cambios
-  python recalibracion.py --aprobar <id>       # aplica una propuesta aprobada
+  python recalibracion.py --aprobar <id>       # aprueba y escribe overrides
+  python recalibracion.py --aprobar <id> --dry-run
   python recalibracion.py --rechazar <id> --motivo "..."
 
 Nota importante: este módulo NO modifica la lógica de cálculo de
-pronosticos.py. Solo lee, evalúa y produce archivos. La aplicación de
-overrides (fase 4) se habilita en pronosticos.py por separado y solo después
-de la primera aprobación manual.
+pronosticos.py. Solo lee, evalúa y produce archivos. La aprobación es un
+comando manual y queda en la bitácora. Los overrides aprobados son consumidos
+por pronosticos.py en la siguiente corrida diaria; se pueden ignorar con
+FULBITO_IGNORE_APPROVED_PARAMS=1.
 """
 
 import argparse
@@ -1154,7 +1156,7 @@ def construir_overrides(propuesta):
     return overrides
 
 
-def aprobar_propuesta(id_propuesta, rutas):
+def aprobar_propuesta(id_propuesta, rutas, actor="operador-local", dry_run=False):
     propuesta = leer_json(rutas["propuesta"])
     if not propuesta or propuesta.get("id") != id_propuesta:
         print(f"ERROR: la propuesta activa no coincide con el id '{id_propuesta}'.")
@@ -1168,27 +1170,41 @@ def aprobar_propuesta(id_propuesta, rutas):
         print("ERROR: la propuesta no contiene cambios; nada que aprobar.")
         return 1
 
+    overrides = construir_overrides(propuesta)
     aprobados = {
         "estado": "aprobada",
         "propuestaId": id_propuesta,
         "aprobadoEn": ahora_utc(),
-        "aprobadoPor": "usuario",
-        "overrides": construir_overrides(propuesta),
-        "camposPendientesDeConsumo": (
-            "Este archivo es el CONTRATO de fase 4: pronosticos.py todavía NO lo consume "
-            "(se implementará en un PR separado, solo después de esta aprobación)."
+        "aprobadoPor": actor,
+        "version": f"params-{id_propuesta}",
+        "hashOverrides": hash_estable(overrides),
+        "aplicacion": (
+            "pronosticos.py aplica estos overrides en la próxima corrida diaria "
+            "cuando estado == 'aprobada'. Se pueden ignorar con "
+            "FULBITO_IGNORE_APPROVED_PARAMS=1."
         ),
+        "overrides": overrides,
     }
+
+    if dry_run:
+        print("DRY-RUN: validación correcta; no se escribe ningún archivo.")
+        print(json.dumps(aprobados, indent=2, ensure_ascii=False))
+        return 0
+
     escribir_json(rutas["aprobados"], aprobados)
 
     propuesta["estado"] = "aprobada"
     propuesta["resueltaEn"] = ahora_utc()
+    propuesta["resueltaPor"] = actor
     escribir_json(rutas["propuesta"], propuesta)
 
     registrar_bitacora(rutas["bitacora"], {
         "tipo": "resolucion",
         "propuestaId": id_propuesta,
         "estado": "aprobada",
+        "actor": actor,
+        "version": aprobados["version"],
+        "hashOverrides": aprobados["hashOverrides"],
         "cambiosResumidos": [
             {"parametro": c["parametro"], "alcance": c.get("alcance", "global"),
              "de": c["valorActual"], "a": c["valorPropuesto"]}
@@ -1196,12 +1212,12 @@ def aprobar_propuesta(id_propuesta, rutas):
         ],
         "archivoOverrides": rutas["aprobados"],
     })
-    print(f"Propuesta {id_propuesta} APROBADA. Overrides escritos en {rutas['aprobados']}.")
+    print(f"Propuesta {id_propuesta} APROBADA por '{actor}'. Overrides escritos en {rutas['aprobados']}.")
     print(json.dumps(aprobados["overrides"], indent=2, ensure_ascii=False))
     return 0
 
 
-def rechazar_propuesta(id_propuesta, motivo, rutas):
+def rechazar_propuesta(id_propuesta, motivo, rutas, actor="operador-local"):
     propuesta = leer_json(rutas["propuesta"])
     if not propuesta or propuesta.get("id") != id_propuesta:
         print(f"ERROR: la propuesta activa no coincide con el id '{id_propuesta}'.")
@@ -1212,6 +1228,7 @@ def rechazar_propuesta(id_propuesta, motivo, rutas):
 
     propuesta["estado"] = "rechazada"
     propuesta["resueltaEn"] = ahora_utc()
+    propuesta["resueltaPor"] = actor
     propuesta["motivoRechazo"] = motivo or "(sin motivo declarado)"
     escribir_json(rutas["propuesta"], propuesta)
 
@@ -1219,6 +1236,7 @@ def rechazar_propuesta(id_propuesta, motivo, rutas):
         "tipo": "resolucion",
         "propuestaId": id_propuesta,
         "estado": "rechazada",
+        "actor": actor,
         "motivo": propuesta["motivoRechazo"],
         "cambiosResumidos": [
             {"parametro": c["parametro"], "alcance": c.get("alcance", "global"),
@@ -1226,7 +1244,7 @@ def rechazar_propuesta(id_propuesta, motivo, rutas):
             for c in propuesta.get("cambios", [])
         ],
     })
-    print(f"Propuesta {id_propuesta} RECHAZADA y registrada en la bitácora.")
+    print(f"Propuesta {id_propuesta} RECHAZADA por '{actor}' y registrada en la bitácora.")
     return 0
 
 
@@ -1415,15 +1433,42 @@ def resolver_rutas(dir_salida):
     }
 
 
+def modo_calidad(args, rutas):
+    """Control de calidad de los datos de entrada (Fase 5.1).
+
+    Devuelve 0 si la calidad esta bien, 1 si hay problemas detectados.
+    """
+    from data_quality import verificar_calidad
+
+    print("=== CONTROL DE CALIDAD DE DATOS (Fase 5.1) ===")
+    insumos = cargar_insumos(args, rutas)
+    if insumos is None:
+        print("  Sin insumos para verificar calidad (sin historico oficial o historial).")
+        return 1
+    muestras, reporte = insumos
+    ver = verificar_calidad(muestras)
+    print(f"  Partidos verificados: {reporte.get('partidosVerificados', len(muestras))}")
+    print(f"  Muestras: {ver['total']}  Problemas: {len(ver['problemas'])}")
+    for p in ver['problemas']:
+        print(f"   - {p['tipo']}: {p['descripcion']}")
+    if ver['ok']:
+        print("  [OK] Calidad de datos verificada.")
+    return 0 if ver['ok'] else 1
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Recalibración supervisada del motor de pronósticos (diseño aprobado).")
-    parser.add_argument("--modo", choices=["status", "diagnostico", "propuesta"], default="status",
+    parser.add_argument("--modo", choices=["status", "diagnostico", "propuesta", "calidad"], default="status",
                         help="status: estado del sistema | diagnostico: solo lectura | "
                              "propuesta: genera propuesta si hay cambios justificados")
     parser.add_argument("--aprobar", metavar="ID", help="Aprueba la propuesta con ese id.")
     parser.add_argument("--rechazar", metavar="ID", help="Rechaza la propuesta con ese id.")
     parser.add_argument("--motivo", default="", help="Motivo del rechazo (para la bitácora).")
+    parser.add_argument("--actor", default=os.environ.get("FULBITO_APPROVER", "operador-local"),
+                        help="Identidad registrada al aprobar o rechazar (default: FULBITO_APPROVER).")
+    parser.add_argument("--dry-run", action="store_true",
+                        help="Valida la aprobación y muestra el resultado sin escribir archivos.")
     parser.add_argument("--backend-url", default=BACKEND_URL)
     parser.add_argument("--historial-archivo", default=None,
                         help="Ruta a un JSON con el historial (para pruebas locales).")
@@ -1442,9 +1487,11 @@ def main():
     rutas = resolver_rutas(args.dir_salida)
 
     if args.aprobar:
-        return aprobar_propuesta(args.aprobar, rutas)
+        return aprobar_propuesta(args.aprobar, rutas, actor=args.actor, dry_run=args.dry_run)
     if args.rechazar:
-        return rechazar_propuesta(args.rechazar, args.motivo, rutas)
+        return rechazar_propuesta(args.rechazar, args.motivo, rutas, actor=args.actor)
+    if args.modo == "calidad":
+        return modo_calidad(args, rutas)
     if args.modo == "diagnostico":
         return modo_diagnostico(args, rutas)
     if args.modo == "propuesta":

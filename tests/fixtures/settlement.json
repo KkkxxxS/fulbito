@@ -1,0 +1,71 @@
+{
+  "version": 1,
+  "descripcion": "Contrato unico de liquidacion de mercados. Debe pasar en pronosticos.py, app-model.js y server/liquidacion.js. Cualquier cambio de semantica exige actualizar este archivo y los tres consumidores.",
+  "casos": [
+    { "id": "res-local-gana", "categoria": "resultado", "parametros": { "lado": "local" }, "gl": 2, "gv": 1, "esperado": true },
+    { "id": "res-empate", "categoria": "resultado", "parametros": { "lado": "empate" }, "gl": 1, "gv": 1, "esperado": true },
+    { "id": "res-visita-gana", "categoria": "resultado", "parametros": { "lado": "visita" }, "gl": 0, "gv": 1, "esperado": true },
+    { "id": "res-local-no-gana", "categoria": "resultado", "parametros": { "lado": "local" }, "gl": 1, "gv": 1, "esperado": false },
+    { "id": "res-empate-no", "categoria": "resultado", "parametros": { "lado": "empate" }, "gl": 2, "gv": 1, "esperado": false },
+    { "id": "res-visita-no", "categoria": "resultado", "parametros": { "lado": "visita" }, "gl": 1, "gv": 0, "esperado": false },
+
+    { "id": "doble-1x-empate", "categoria": "doble", "parametros": { "lado": "1X" }, "gl": 1, "gv": 1, "esperado": true },
+    { "id": "doble-1x-local", "categoria": "doble", "parametros": { "lado": "1X" }, "gl": 2, "gv": 1, "esperado": true },
+    { "id": "doble-1x-visita", "categoria": "doble", "parametros": { "lado": "1X" }, "gl": 0, "gv": 1, "esperado": false },
+    { "id": "doble-x2-visita", "categoria": "doble", "parametros": { "lado": "X2" }, "gl": 0, "gv": 1, "esperado": true },
+    { "id": "doble-x2-empate", "categoria": "doble", "parametros": { "lado": "X2" }, "gl": 1, "gv": 1, "esperado": true },
+    { "id": "doble-x2-local", "categoria": "doble", "parametros": { "lado": "X2" }, "gl": 1, "gv": 0, "esperado": false },
+    { "id": "doble-12-local", "categoria": "doble", "parametros": { "lado": "12" }, "gl": 1, "gv": 0, "esperado": true },
+    { "id": "doble-12-visita", "categoria": "doble", "parametros": { "lado": "12" }, "gl": 0, "gv": 1, "esperado": true },
+    { "id": "doble-12-empate", "categoria": "doble", "parametros": { "lado": "12" }, "gl": 1, "gv": 1, "esperado": false },
+
+    { "id": "total-1.5-mas-cumple", "categoria": "totalgoles", "parametros": { "linea": 1.5, "direccion": "mas" }, "gl": 2, "gv": 1, "esperado": true },
+    { "id": "total-1.5-mas-no", "categoria": "totalgoles", "parametros": { "linea": 1.5, "direccion": "mas" }, "gl": 1, "gv": 0, "esperado": false },
+    { "id": "total-1.5-menos-cumple", "categoria": "totalgoles", "parametros": { "linea": 1.5, "direccion": "menos" }, "gl": 1, "gv": 0, "esperado": true },
+    { "id": "total-1.5-menos-no", "categoria": "totalgoles", "parametros": { "linea": 1.5, "direccion": "menos" }, "gl": 2, "gv": 1, "esperado": false },
+    { "id": "total-2.5-mas-cumple", "categoria": "totalgoles", "parametros": { "linea": 2.5, "direccion": "mas" }, "gl": 2, "gv": 1, "esperado": true },
+    { "id": "total-2.5-mas-no", "categoria": "totalgoles", "parametros": { "linea": 2.5, "direccion": "mas" }, "gl": 1, "gv": 1, "esperado": false },
+    { "id": "total-2.5-menos-cumple", "categoria": "totalgoles", "parametros": { "linea": 2.5, "direccion": "menos" }, "gl": 1, "gv": 1, "esperado": true },
+    { "id": "total-2.5-menos-no", "categoria": "totalgoles", "parametros": { "linea": 2.5, "direccion": "menos" }, "gl": 2, "gv": 1, "esperado": false },
+    { "id": "total-3.5-mas-no", "categoria": "totalgoles", "parametros": { "linea": 3.5, "direccion": "mas" }, "gl": 2, "gv": 1, "esperado": false },
+    { "id": "total-3.5-menos-cumple", "categoria": "totalgoles", "parametros": { "linea": 3.5, "direccion": "menos" }, "gl": 2, "gv": 1, "esperado": true },
+    { "id": "total-0.5-mas-cumple", "categoria": "totalgoles", "parametros": { "linea": 0.5, "direccion": "mas" }, "gl": 1, "gv": 0, "esperado": true },
+    { "id": "total-0.5-mas-no", "categoria": "totalgoles", "parametros": { "linea": 0.5, "direccion": "mas" }, "gl": 0, "gv": 0, "esperado": false },
+    { "id": "total-0.5-menos-cumple", "categoria": "totalgoles", "parametros": { "linea": 0.5, "direccion": "menos" }, "gl": 0, "gv": 0, "esperado": true },
+    { "id": "total-sin-linea", "categoria": "totalgoles", "parametros": {}, "gl": 2, "gv": 1, "esperado": false, "nota": "parametros incompletos no deben liquidar como acierto" },
+    { "id": "total-sin-direccion-default-mas", "categoria": "totalgoles", "parametros": { "linea": 1.5 }, "gl": 2, "gv": 1, "esperado": true, "nota": "direccion ausente conserva el default historico: mas" },
+
+    { "id": "btts-si-cumple", "categoria": "btts", "parametros": { "si": true }, "gl": 1, "gv": 1, "esperado": true },
+    { "id": "btts-si-no", "categoria": "btts", "parametros": { "si": true }, "gl": 2, "gv": 0, "esperado": false },
+    { "id": "btts-no-cumple", "categoria": "btts", "parametros": { "si": false }, "gl": 2, "gv": 0, "esperado": true },
+    { "id": "btts-no-no", "categoria": "btts", "parametros": { "si": false }, "gl": 1, "gv": 1, "esperado": false },
+
+    { "id": "marca-local-cumple", "categoria": "equipomarca", "parametros": { "lado": "local" }, "gl": 1, "gv": 0, "esperado": true },
+    { "id": "marca-local-no", "categoria": "equipomarca", "parametros": { "lado": "local" }, "gl": 0, "gv": 1, "esperado": false },
+    { "id": "marca-visita-cumple", "categoria": "equipomarca", "parametros": { "lado": "visita" }, "gl": 0, "gv": 1, "esperado": true },
+    { "id": "marca-visita-no", "categoria": "equipomarca", "parametros": { "lado": "visita" }, "gl": 1, "gv": 0, "esperado": false },
+    { "id": "marca-local-cero", "categoria": "equipomarca", "parametros": { "lado": "local" }, "gl": 0, "gv": 0, "esperado": false },
+
+    { "id": "handicap-local-1-cumple", "categoria": "handicap", "parametros": { "lado": "local", "valor": 1 }, "gl": 2, "gv": 1, "esperado": true },
+    { "id": "handicap-local-1-no", "categoria": "handicap", "parametros": { "lado": "local", "valor": 1 }, "gl": 1, "gv": 1, "esperado": false },
+    { "id": "handicap-local-2-cumple", "categoria": "handicap", "parametros": { "lado": "local", "valor": 2 }, "gl": 3, "gv": 1, "esperado": true },
+    { "id": "handicap-local-2-no", "categoria": "handicap", "parametros": { "lado": "local", "valor": 2 }, "gl": 2, "gv": 1, "esperado": false },
+    { "id": "handicap-visita-1-cumple", "categoria": "handicap", "parametros": { "lado": "visita", "valor": 1 }, "gl": 1, "gv": 2, "esperado": true },
+    { "id": "handicap-visita-1-no", "categoria": "handicap", "parametros": { "lado": "visita", "valor": 1 }, "gl": 1, "gv": 1, "esperado": false },
+    { "id": "handicap-visita-2-cumple", "categoria": "handicap", "parametros": { "lado": "visita", "valor": 2 }, "gl": 1, "gv": 3, "esperado": true },
+    { "id": "handicap-sin-valor", "categoria": "handicap", "parametros": { "lado": "local" }, "gl": 3, "gv": 1, "esperado": false, "nota": "parametros incompletos no deben liquidar como acierto" },
+
+    { "id": "dnb-local-cumple", "categoria": "dnb", "parametros": { "lado": "local" }, "gl": 2, "gv": 1, "esperado": true },
+    { "id": "dnb-local-empate", "categoria": "dnb", "parametros": { "lado": "local" }, "gl": 1, "gv": 1, "esperado": false },
+    { "id": "dnb-visita-cumple", "categoria": "dnb", "parametros": { "lado": "visita" }, "gl": 0, "gv": 1, "esperado": true },
+    { "id": "dnb-visita-empate", "categoria": "dnb", "parametros": { "lado": "visita" }, "gl": 1, "gv": 1, "esperado": false },
+    { "id": "dnb-local-pierde", "categoria": "dnb", "parametros": { "lado": "local" }, "gl": 0, "gv": 1, "esperado": false },
+
+    { "id": "marcador-exacto", "categoria": "marcador", "parametros": { "gl": 2, "gv": 1 }, "gl": 2, "gv": 1, "esperado": true },
+    { "id": "marcador-distinto", "categoria": "marcador", "parametros": { "gl": 2, "gv": 1 }, "gl": 1, "gv": 1, "esperado": false },
+    { "id": "marcador-cero", "categoria": "marcador", "parametros": { "gl": 0, "gv": 0 }, "gl": 0, "gv": 0, "esperado": true },
+    { "id": "marcador-incompleto", "categoria": "marcador", "parametros": { "gl": 0 }, "gl": 0, "gv": 0, "esperado": false, "nota": "parametros incompletos no deben liquidar como acierto" },
+
+    { "id": "categoria-desconocida", "categoria": "corneres", "parametros": {}, "gl": 1, "gv": 0, "esperado": false }
+  ]
+}

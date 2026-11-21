@@ -10,57 +10,11 @@
  * (app-model.js verificarMercado) para que el resultado sea idéntico.
  */
 
-const CATEGORIAS_SOPORTADAS = [
-  'resultado', 'doble', 'totalgoles', 'btts', 'equipomarca', 'handicap', 'dnb', 'marcador'
-];
-
-function verificarMercado(categoria, parametros, golesLocal, golesVisita) {
-  const gl = Number(golesLocal);
-  const gv = Number(golesVisita);
-  if (!Number.isFinite(gl) || !Number.isFinite(gv)) return false;
-  const p = parametros || {};
-
-  switch (categoria) {
-    case 'resultado':
-      if (p.lado === 'local') return gl > gv;
-      if (p.lado === 'visita') return gv > gl;
-      return gl === gv;
-    case 'doble':
-      if (p.lado === '1X') return gl >= gv;
-      if (p.lado === 'X2') return gv >= gl;
-      return gl !== gv;
-    case 'totalgoles': {
-      const total = gl + gv;
-      return p.direccion === 'menos' ? total < p.linea : total > p.linea;
-    }
-    case 'btts': {
-      const ambos = gl >= 1 && gv >= 1;
-      return p.si ? ambos : !ambos;
-    }
-    case 'equipomarca':
-      return p.lado === 'local' ? gl >= 1 : gv >= 1;
-    case 'handicap': {
-      const margen = p.lado === 'local' ? (gl - gv) : (gv - gl);
-      return margen >= p.valor;
-    }
-    case 'dnb':
-      if (p.lado === 'local') return gl > gv;
-      if (p.lado === 'visita') return gv > gl;
-      return false;
-    case 'marcador':
-      return gl === p.gl && gv === p.gv;
-    default:
-      return false;
-  }
-}
-
-function evaluarMercados(mercados, golesLocal, golesVisita) {
-  if (!Array.isArray(mercados)) return [];
-  return mercados.map(m => ({
-    ...m,
-    acierto: verificarMercado(m.categoria, m.parametros, golesLocal, golesVisita)
-  }));
-}
+const {
+  CATEGORIAS_SOPORTADAS,
+  verificarMercado,
+  evaluarMercados
+} = require('../packages/domain/settlement');
 
 function marcadorDePartido(partido) {
   const score = partido && partido.score;
